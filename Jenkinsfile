@@ -3,7 +3,7 @@ pipeline {
        stages {
         stage('Test Scala code') {
             steps {
-                slackSend botUser: true, channel: '#project-genomicranges', message: 'started ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)', teamDomain: 'zsibio.slack.com'
+                slackSend botUser: true, channel: '#project-genomicranges', message: "started ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)", teamDomain: 'zsibio.slack.com'
                 echo 'Testing Scala code....'
                 sh "${tool name: 'sbt-0.13.15', type: 'org.jvnet.hudson.plugins.SbtPluginBuilder$SbtInstallation'}/bin/sbt test"
             }
