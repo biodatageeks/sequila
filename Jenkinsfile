@@ -20,15 +20,12 @@ pipeline {
                         sh "${tool name: 'sbt-0.13.15', type: 'org.jvnet.hudson.plugins.SbtPluginBuilder$SbtInstallation'}/bin/sbt package"
 			            echo "Generating documentation"
 			            sh "${tool name: 'sbt-0.13.15', type: 'org.jvnet.hudson.plugins.SbtPluginBuilder$SbtInstallation'}/bin/sbt doc"
-			            publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: false, reportDir: 'target/scala-2.11/api/', reportFiles: 'package.html', reportName: 'Scala Doc', reportTitles: ''])
+			            #publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: false, reportDir: 'target/scala-2.11/api/', reportFiles: 'package.html', reportName: 'Scala Doc', reportTitles: ''])
 
                     }
 
         }
         stage('Publish to Nexus snapshots') {
-           when {
-                 branch 'master'
-                }
             steps {
                     echo "branch: ${env.BRANCH_NAME}"
                     echo 'Publishing to ZSI-BIO snapshots repository....'
