@@ -36,8 +36,8 @@ class IntervalTreeTestSuite extends FunSuite with DataFrameSuiteBase with Before
   }
   test("non strict inequality range join") {
     val sqlQuery = "select * from s1 JOIN s2 on start1 <= end1 and start2 <= end2 and start1 <= start2 and start2 <= end1"
-    sqlContext.sql(sqlQuery).explain
-    sqlContext.sql(sqlQuery).show
+    sqlContext.sql(sqlQuery).orderBy("start1").explain
+    sqlContext.sql(sqlQuery).orderBy("start1").show
     assertDataFrameEquals(
       sqlContext.createDataFrame(sc.parallelize(
 
@@ -49,21 +49,21 @@ class IntervalTreeTestSuite extends FunSuite with DataFrameSuiteBase with Before
           Row(400L, 600L, 500L, 700L) ::
 
 
-            Nil),schema3),
-      sqlContext.sql(sqlQuery))
+            Nil),schema3).orderBy("start1"),
+      sqlContext.sql(sqlQuery).orderBy("start1"))
   }
 
   test("strict inequality range join") {
     val sqlQuery = "select * from s1 JOIN s2 on start1 < end1 and start2 < end2 and start1 < start2 and start2 < end1"
-    sqlContext.sql(sqlQuery).explain
-    sqlContext.sql(sqlQuery).show
+    sqlContext.sql(sqlQuery).orderBy("start1").explain
+    sqlContext.sql(sqlQuery).orderBy("start1").show
     assertDataFrameEquals(
       sqlContext.createDataFrame(sc.parallelize(
           Row(100L, 199L, 150L, 250L) ::
           Row(200L, 299L, 150L, 250L) ::
           Row(400L, 600L, 300L, 500L) ::
           Row(400L, 600L, 500L, 700L) ::
-           Nil),schema3),
-      sqlContext.sql(sqlQuery))
+           Nil),schema3).sort(),
+      sqlContext.sql(sqlQuery).orderBy("start1"))
   }
 }
