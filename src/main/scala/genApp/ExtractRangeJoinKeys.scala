@@ -43,37 +43,27 @@ object ExtractRangeJoinKeys extends Logging with  PredicateHelper {
           Some((r, l))
         case _ => None
       })
-      /* Look for expressions a < c, b < d such that a, b belong to one LogicalPlan and
-+       * c, d belong to the other.
-+       */
-      val heterogeneousKeys = predicates.flatMap(x => x match {
-        case LessThanOrEqual(l, r) if (canEvaluate(l, left) && canEvaluate(r, right)) ||
-          (canEvaluate(l, right) && canEvaluate(r, left)) => Some((l, r))
-        case LessThan(l, r) if (canEvaluate(l, left) && canEvaluate(r, right)) ||
-          (canEvaluate(l, right) && canEvaluate(r, left)) => Some((l, r))
-        case GreaterThan(l, r) if (canEvaluate(l, left) && canEvaluate(r, right)) ||
-          (canEvaluate(l, right) && canEvaluate(r, left)) => Some((r, l))
-        case GreaterThanOrEqual(l, r) if (canEvaluate(l, left) && canEvaluate(r, right)) ||
-          (canEvaluate(l, right) && canEvaluate(r, left)) => Some((r, l))
-        case _ => None
-      })
-      /* Now verify that the condition does indeed describe an overlapping. The criteria are:
-     * 1) There is exactly one element on the left and right rangeKeys
-     * (let's call them (a,b) and (c,d) respectively)
-     * 2) There are exectly two elements on the heterogeneousKeys and they are of the form of
-     * * either ((a, c), (c, b)) or ((c, a), (a, d))
-     **/
-
-      (leftRangeKeys, rightRangeKeys, heterogeneousKeys) match{
-        case (l, r, _) if (l.size != 1 || r.size != 1) => None
-        case (_, _, h) if (h.size != 2) => None
-        case (l, r, h) if ((h.contains((l.head._1, r.head._1)) //a-c, c-b
-          && h.contains((r.head._1, l.head._2))) ||
-          (h.contains((r.head._1, l.head._1)) && //c-a, a-d
-            h.contains((l.head._1, r.head._2)))
-          ) => Some((joinType,
-          List(l.head._1, l.head._2, r.head._1, r.head._2).toSeq,
+      condition.head match {
+        case Or(And(LessThanOrEqual(_, _), LessThanOrEqual(_, _)), And(LessThanOrEqual(_, _), LessThanOrEqual(_, _))) |
+          Or(And(GreaterThanOrEqual(_, _), LessThanOrEqual(_, _)), And(LessThanOrEqual(_, _), LessThanOrEqual(_, _))) |
+          Or(And(LessThanOrEqual(_, _), GreaterThanOrEqual(_, _)), And(LessThanOrEqual(_, _), LessThanOrEqual(_, _))) |
+          Or(And(GreaterThanOrEqual(_, _), GreaterThanOrEqual(_, _)), And(LessThanOrEqual(_, _), LessThanOrEqual(_, _))) |
+          Or(And(LessThanOrEqual(_, _), LessThanOrEqual(_, _)), And(GreaterThanOrEqual(_, _), LessThanOrEqual(_, _))) |
+          Or(And(GreaterThanOrEqual(_, _), LessThanOrEqual(_, _)), And(GreaterThanOrEqual(_, _), LessThanOrEqual(_, _))) |
+          Or(And(LessThanOrEqual(_, _), GreaterThanOrEqual(_, _)), And(GreaterThanOrEqual(_, _), LessThanOrEqual(_, _))) |
+          Or(And(GreaterThanOrEqual(_, _), GreaterThanOrEqual(_, _)), And(GreaterThanOrEqual(_, _), LessThanOrEqual(_, _))) |
+          Or(And(LessThanOrEqual(_, _), LessThanOrEqual(_, _)), And(LessThanOrEqual(_, _), GreaterThanOrEqual(_, _))) |
+          Or(And(GreaterThanOrEqual(_, _), LessThanOrEqual(_, _)), And(LessThanOrEqual(_, _), GreaterThanOrEqual(_, _))) |
+          Or(And(LessThanOrEqual(_, _), GreaterThanOrEqual(_, _)), And(LessThanOrEqual(_, _), GreaterThanOrEqual(_, _))) |
+          Or(And(GreaterThanOrEqual(_, _), GreaterThanOrEqual(_, _)), And(LessThanOrEqual(_, _), GreaterThanOrEqual(_, _))) |
+          Or(And(LessThanOrEqual(_, _), LessThanOrEqual(_, _)), And(GreaterThanOrEqual(_, _), GreaterThanOrEqual(_, _))) |
+          Or(And(GreaterThanOrEqual(_, _), LessThanOrEqual(_, _)), And(GreaterThanOrEqual(_, _), GreaterThanOrEqual(_, _))) |
+          Or(And(LessThanOrEqual(_, _), GreaterThanOrEqual(_, _)), And(GreaterThanOrEqual(_, _), GreaterThanOrEqual(_, _))) |
+          Or(And(GreaterThanOrEqual(_, _), GreaterThanOrEqual(_, _)), And(GreaterThanOrEqual(_, _), GreaterThanOrEqual(_, _))) =>
+          Some((joinType,
+          List(leftRangeKeys.head._1, leftRangeKeys.head._2, rightRangeKeys.head._1, rightRangeKeys.head._2).toSeq,
           left, right))
+        case _ => None
       }
     case _ =>
       None

@@ -9,10 +9,10 @@ class IntervalTreeTestSuite extends FunSuite with DataFrameSuiteBase with Before
   val schema1 = StructType(Seq(StructField("start1", LongType), StructField("end1", LongType)))
   val schema2 = StructType(Seq(StructField("start2", LongType), StructField("end2", LongType)))
   val schema3 = StructType(Seq(StructField("start1", LongType), StructField("end1", LongType), StructField("start2", LongType), StructField("end2", LongType)))
+  val schema4 = StructType(Seq(StructField("start1", LongType)))
 
   before {
     spark.experimental.extraStrategies = new IntervalTreeJoinStrategy(spark) :: Nil
-
     var rdd1 = sc.parallelize(Seq(
       (100L, 199L),
       (200L, 299L),
@@ -22,6 +22,7 @@ class IntervalTreeTestSuite extends FunSuite with DataFrameSuiteBase with Before
       .map(i => Row(i._1, i._2))
     var rdd2 = sc.parallelize(Seq(
       (150L, 250L),
+      (199L,300L),
       (300L, 500L),
       (500L, 700L),
       (22000L, 22300L),
@@ -34,9 +35,11 @@ class IntervalTreeTestSuite extends FunSuite with DataFrameSuiteBase with Before
     var ds2 = sqlContext.createDataFrame(rdd2, schema2)
     ds2.createOrReplaceTempView("s2")
   }
+  /*
   test("non strict inequality range join") {
-    val sqlQuery = "select * from s1 JOIN s2 on start1 <= end1 and start2 <= end2 and start1 <= start2 and start2 <= end1"
-    sqlContext.sql(sqlQuery).orderBy("start1").explain
+    val sqlQuery = "select * from s1 JOIN s2 on (start1>=start2 and start1<=end2 ) or (end1>=start2 and end1<= end2)"
+    println(sqlQuery)
+    sqlContext.sql(sqlQuery).explain
     sqlContext.sql(sqlQuery).orderBy("start1").show
     assertDataFrameEquals(
       sqlContext.createDataFrame(sc.parallelize(
@@ -52,10 +55,10 @@ class IntervalTreeTestSuite extends FunSuite with DataFrameSuiteBase with Before
             Nil),schema3).orderBy("start1"),
       sqlContext.sql(sqlQuery).orderBy("start1"))
   }
-
-  test("strict inequality range join") {
-    val sqlQuery = "select * from s1 JOIN s2 on start1 < end1 and start2 < end2 and start1 < start2 and start2 < end1"
-    sqlContext.sql(sqlQuery).orderBy("start1").explain
+*/
+  /*test("strict inequality range join") {
+    val sqlQuery = "select * from s1 JOIN s2 on (start1>=start2 and start1<=end2 ) or (end1>=start2 and end1<= end2)"
+    sqlContext.sql(sqlQuery).explain
     sqlContext.sql(sqlQuery).orderBy("start1").show
     assertDataFrameEquals(
       sqlContext.createDataFrame(sc.parallelize(
@@ -63,7 +66,45 @@ class IntervalTreeTestSuite extends FunSuite with DataFrameSuiteBase with Before
           Row(200L, 299L, 150L, 250L) ::
           Row(400L, 600L, 300L, 500L) ::
           Row(400L, 600L, 500L, 700L) ::
-           Nil),schema3).sort(),
+           Nil),schema3).orderBy("start1"),
+      sqlContext.sql(sqlQuery).orderBy("start1"))
+  }
+*/
+  test("range join select one field") {
+    val sqlQuery = "select start1 from s1 JOIN s2 on (((start1<=end1) and (start2<=end2)) and ((start1>=start2 and start1<=end2 ) or (end1>=start2 and end1<= end2)))"
+    println(sqlQuery)
+    sqlContext.sql(sqlQuery).explain
+    sqlContext.sql(sqlQuery).orderBy("start1").show
+    assertDataFrameEquals(
+      sqlContext.createDataFrame(sc.parallelize(
+        Row(100L) ::
+          Row(100L) ::
+          Row(200L) ::
+          Row(200L) ::
+          Row(400L) ::
+          Row(400L) ::
+          Row(10000L) ::
+          Row(22100L) ::
+          Nil),schema4).orderBy("start1"),
+      sqlContext.sql(sqlQuery).orderBy("start1"))
+  }
+
+  test("range join select *") {
+    val sqlQuery = "select * from s1 JOIN s2 on (((start1<=end1) and (start2<=end2)) and ((start1>=start2 and start1<=end2 ) or (end1>=start2 and end1<= end2)))"
+    println(sqlQuery)
+    sqlContext.sql(sqlQuery).explain
+    sqlContext.sql(sqlQuery).orderBy("start1").show
+    assertDataFrameEquals(
+      sqlContext.createDataFrame(sc.parallelize(
+        Row(100L, 199L, 150L, 250L) ::
+          Row(100L, 199L, 199L, 300L) ::
+          Row(200L, 299L, 150L, 250L) ::
+          Row(200L, 299L, 199L, 300L) ::
+          Row(400L, 600L, 300L, 500L) ::
+          Row(400L, 600L, 500L, 700L) ::
+          Row(10000L, 20000L, 15000L, 15000L) ::
+          Row(22100L, 22100L, 22000L, 22300L) ::
+          Nil),schema3).orderBy("start1"),
       sqlContext.sql(sqlQuery).orderBy("start1"))
   }
 }
