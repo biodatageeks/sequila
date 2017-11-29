@@ -35,43 +35,9 @@ class IntervalTreeTestSuite extends FunSuite with DataFrameSuiteBase with Before
     var ds2 = sqlContext.createDataFrame(rdd2, schema2)
     ds2.createOrReplaceTempView("s2")
   }
-  /*
-  test("non strict inequality range join") {
-    val sqlQuery = "select * from s1 JOIN s2 on (start1>=start2 and start1<=end2 ) or (end1>=start2 and end1<= end2)"
-    println(sqlQuery)
-    sqlContext.sql(sqlQuery).explain
-    sqlContext.sql(sqlQuery).orderBy("start1").show
-    assertDataFrameEquals(
-      sqlContext.createDataFrame(sc.parallelize(
 
-        Row(22100L,22100L,22000L, 22300L) ::
-          Row(100L, 199L, 150L, 250L) ::
-          Row(200L, 299L, 150L, 250L) ::
-          Row(10000L, 20000L,15000L, 15000L) ::
-          Row(400L, 600L, 300L, 500L) ::
-          Row(400L, 600L, 500L, 700L) ::
-
-
-            Nil),schema3).orderBy("start1"),
-      sqlContext.sql(sqlQuery).orderBy("start1"))
-  }
-*/
-  /*test("strict inequality range join") {
-    val sqlQuery = "select * from s1 JOIN s2 on (start1>=start2 and start1<=end2 ) or (end1>=start2 and end1<= end2)"
-    sqlContext.sql(sqlQuery).explain
-    sqlContext.sql(sqlQuery).orderBy("start1").show
-    assertDataFrameEquals(
-      sqlContext.createDataFrame(sc.parallelize(
-          Row(100L, 199L, 150L, 250L) ::
-          Row(200L, 299L, 150L, 250L) ::
-          Row(400L, 600L, 300L, 500L) ::
-          Row(400L, 600L, 500L, 700L) ::
-           Nil),schema3).orderBy("start1"),
-      sqlContext.sql(sqlQuery).orderBy("start1"))
-  }
-*/
   test("range join select one field") {
-    val sqlQuery = "select start1 from s1 JOIN s2 on (((start1<=end1) and (start2<=end2)) and ((start1>=start2 and start1<=end2 ) or (end1>=start2 and end1<= end2)))"
+    val sqlQuery = "select start1 from s1 JOIN s2 on (end1>=start2 and start1<=end2 )"
     println(sqlQuery)
     sqlContext.sql(sqlQuery).explain
     sqlContext.sql(sqlQuery).orderBy("start1").show
@@ -90,7 +56,7 @@ class IntervalTreeTestSuite extends FunSuite with DataFrameSuiteBase with Before
   }
 
   test("range join select *") {
-    val sqlQuery = "select * from s1 JOIN s2 on (((start1<=end1) and (start2<=end2)) and ((start1>=start2 and start1<=end2 ) or (end1>=start2 and end1<= end2)))"
+    val sqlQuery = "select * from s1 JOIN s2 on (end1>=start2 and start1<=end2 )"
     println(sqlQuery)
     sqlContext.sql(sqlQuery).explain
     sqlContext.sql(sqlQuery).orderBy("start1").show

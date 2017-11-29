@@ -25,8 +25,6 @@ libraryDependencies +=  "org.apache.spark" % "spark-sql_2.11" % sparkVersion
 libraryDependencies += "com.holdenkarau" % "spark-testing-base_2.11" % "2.2.0_0.7.4" % "test" excludeAll ExclusionRule(organization = "javax.servlet") excludeAll (ExclusionRule("org.apache.hadoop"))
 
 libraryDependencies += "org.apache.spark" %% "spark-hive"       % "2.0.0" % "test"
-
-
 fork := true
 
 javaOptions in run ++= Seq(

@@ -17,55 +17,59 @@ object ExtractRangeJoinKeys extends Logging with  PredicateHelper {
       val predicates = condition.map(splitConjunctivePredicates).getOrElse(Nil)
       /* Look for expressions a < b and c < d where a,b and c,d belong to the same LogicalPlan
     **/
-
-      val leftExpressions = left.expressions.head
-      val rightExpressions = right.expressions.head
-
-      val leftRangeKeys = leftExpressions.flatMap(x => x match {
-        case LessThanOrEqual(l, r) if (canEvaluate(l, left) && canEvaluate(r, left)) =>
-          Some((l, r))
-        case LessThan(l, r) if (canEvaluate(l, left) && canEvaluate(r, left)) =>
-          Some((l, r))
-        case GreaterThan(l, r) if (canEvaluate(l, left) && canEvaluate(r, left)) =>
-          Some((r, l))
-        case GreaterThanOrEqual(l, r) if (canEvaluate(l, left) && canEvaluate(r, left)) =>
-          Some((r, l))
-        case _ => None
-      })
-      val rightRangeKeys = rightExpressions.flatMap(x => x match {
-        case LessThanOrEqual(l, r) if (canEvaluate(l, right) && canEvaluate(r, right)) =>
-          Some((l, r))
-        case LessThan(l, r) if (canEvaluate(l, right) && canEvaluate(r, right)) =>
-          Some((l, r))
-        case GreaterThan(l, r) if (canEvaluate(l, right) && canEvaluate(r, right)) =>
-          Some((r, l))
-        case GreaterThanOrEqual(l, r) if (canEvaluate(l, right) && canEvaluate(r, right)) =>
-          Some((r, l))
-        case _ => None
-      })
       condition.head match {
-        case Or(And(LessThanOrEqual(_, _), LessThanOrEqual(_, _)), And(LessThanOrEqual(_, _), LessThanOrEqual(_, _))) |
-          Or(And(GreaterThanOrEqual(_, _), LessThanOrEqual(_, _)), And(LessThanOrEqual(_, _), LessThanOrEqual(_, _))) |
-          Or(And(LessThanOrEqual(_, _), GreaterThanOrEqual(_, _)), And(LessThanOrEqual(_, _), LessThanOrEqual(_, _))) |
-          Or(And(GreaterThanOrEqual(_, _), GreaterThanOrEqual(_, _)), And(LessThanOrEqual(_, _), LessThanOrEqual(_, _))) |
-          Or(And(LessThanOrEqual(_, _), LessThanOrEqual(_, _)), And(GreaterThanOrEqual(_, _), LessThanOrEqual(_, _))) |
-          Or(And(GreaterThanOrEqual(_, _), LessThanOrEqual(_, _)), And(GreaterThanOrEqual(_, _), LessThanOrEqual(_, _))) |
-          Or(And(LessThanOrEqual(_, _), GreaterThanOrEqual(_, _)), And(GreaterThanOrEqual(_, _), LessThanOrEqual(_, _))) |
-          Or(And(GreaterThanOrEqual(_, _), GreaterThanOrEqual(_, _)), And(GreaterThanOrEqual(_, _), LessThanOrEqual(_, _))) |
-          Or(And(LessThanOrEqual(_, _), LessThanOrEqual(_, _)), And(LessThanOrEqual(_, _), GreaterThanOrEqual(_, _))) |
-          Or(And(GreaterThanOrEqual(_, _), LessThanOrEqual(_, _)), And(LessThanOrEqual(_, _), GreaterThanOrEqual(_, _))) |
-          Or(And(LessThanOrEqual(_, _), GreaterThanOrEqual(_, _)), And(LessThanOrEqual(_, _), GreaterThanOrEqual(_, _))) |
-          Or(And(GreaterThanOrEqual(_, _), GreaterThanOrEqual(_, _)), And(LessThanOrEqual(_, _), GreaterThanOrEqual(_, _))) |
-          Or(And(LessThanOrEqual(_, _), LessThanOrEqual(_, _)), And(GreaterThanOrEqual(_, _), GreaterThanOrEqual(_, _))) |
-          Or(And(GreaterThanOrEqual(_, _), LessThanOrEqual(_, _)), And(GreaterThanOrEqual(_, _), GreaterThanOrEqual(_, _))) |
-          Or(And(LessThanOrEqual(_, _), GreaterThanOrEqual(_, _)), And(GreaterThanOrEqual(_, _), GreaterThanOrEqual(_, _))) |
-          Or(And(GreaterThanOrEqual(_, _), GreaterThanOrEqual(_, _)), And(GreaterThanOrEqual(_, _), GreaterThanOrEqual(_, _))) =>
+        case And(LessThanOrEqual(l1, g1), LessThanOrEqual(l2, g2)) =>
           Some((joinType,
-          List(leftRangeKeys.head._1, leftRangeKeys.head._2, rightRangeKeys.head._1, rightRangeKeys.head._2).toSeq,
-          left, right))
+            getKeys(l1,l2,g1,g2,left,right),
+            left, right))
+        case  And(GreaterThanOrEqual(g1, l1), LessThanOrEqual(l2, g2)) =>
+          Some((joinType,
+            getKeys(l1,l2,g1,g2,left,right),
+            left, right))
+        case  And(LessThanOrEqual(l1, g1), GreaterThanOrEqual(g2, l2)) =>
+          Some((joinType,
+            getKeys(l1,l2,g1,g2,left,right),
+            left, right))
+        case  And(GreaterThanOrEqual(g1, l1), GreaterThanOrEqual(g2, l2)) =>
+          Some((joinType,
+            getKeys(l1,l2,g1,g2,left,right),
+            left, right))
         case _ => None
       }
     case _ =>
       None
+  }
+
+  def getKeys(l1:Expression,l2:Expression,g1:Expression,g2:Expression,left:LogicalPlan,right:LogicalPlan): Seq[Expression] ={
+    var leftStart:Expression = null
+    var leftEnd:Expression = null
+    var rightStart:Expression = null
+    var rightEnd:Expression = null
+    if (canEvaluate(g1, right)) {
+      if (canEvaluate(l1, left)) {
+        leftStart=l1
+        leftEnd=g2
+        rightStart=l2
+        rightEnd=g1
+      } else {
+        leftStart=l2
+        leftEnd=g2
+        rightStart=l1
+        rightEnd=g1
+      }
+    } else {
+      if (canEvaluate(l1, left)) {
+        leftStart=l1
+        leftEnd=g1
+        rightStart=l2
+        rightEnd=g2
+      } else {
+        leftStart=l2
+        leftEnd=g1
+        rightStart=l1
+        rightEnd=g2
+      }
+    }
+    List(leftStart, leftEnd, rightStart, rightEnd).toSeq
   }
 }

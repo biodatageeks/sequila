@@ -1,6 +1,6 @@
 package genApp
 
-import genApp.ExtractRangeJoinKeys.canEvaluate
+import genApp.ExtractRangeJoinKeys.{canEvaluate, logDebug, splitConjunctivePredicates}
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.execution.SparkPlan
 import org.apache.spark.sql.{SparkSession, Strategy}
