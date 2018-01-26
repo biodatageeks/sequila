@@ -2,10 +2,12 @@ package pl.edu.pw.ii.biodatageeks.tests
 
 import com.holdenkarau.spark.testing.DataFrameSuiteBase
 import genApp.IntervalTreeJoinStrategy
+import ncl.NCListsJoinStrategy
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types.{LongType, StructField, StructType}
 import org.scalatest.{BeforeAndAfter, FunSuite}
-class IntervalTreeTestSuite extends FunSuite with DataFrameSuiteBase with BeforeAndAfter{
+
+class NCListsTestSuite extends FunSuite with DataFrameSuiteBase with BeforeAndAfter{
   val schema1 = StructType(Seq(StructField("start1", LongType), StructField("end1", LongType)))
   val schema2 = StructType(Seq(StructField("start2", LongType), StructField("end2", LongType)))
   val schema3 = StructType(Seq(StructField("start1", LongType), StructField("end1", LongType), StructField("start2", LongType), StructField("end2", LongType)))
@@ -13,7 +15,7 @@ class IntervalTreeTestSuite extends FunSuite with DataFrameSuiteBase with Before
   val schema5 = StructType(Seq(StructField("start2", LongType), StructField("end2", LongType), StructField("start1", LongType), StructField("end1", LongType)))
 
   before {
-    spark.experimental.extraStrategies = new IntervalTreeJoinStrategy(spark) :: Nil
+    spark.experimental.extraStrategies = new NCListsJoinStrategy(spark) :: Nil
     var rdd1 = sc.parallelize(Seq(
       (100L, 199L),
       (200L, 299L),

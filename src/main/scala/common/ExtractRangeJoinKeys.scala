@@ -1,9 +1,10 @@
-package genApp
+package common
 
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.plans._
 import org.apache.spark.sql.catalyst.plans.logical._
+
 /**
  * A pattern that finds joins with equality conditions that can be evaluated using range-join.
  */
