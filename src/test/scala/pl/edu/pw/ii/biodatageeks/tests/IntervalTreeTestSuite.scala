@@ -1,34 +1,46 @@
 package pl.edu.pw.ii.biodatageeks.tests
 
+import java.io.{OutputStreamWriter, PrintWriter}
+
 import com.holdenkarau.spark.testing.DataFrameSuiteBase
 import genApp.IntervalTreeJoinStrategy
+import org.biodatageeks.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
 import org.apache.spark.sql.Row
-import org.apache.spark.sql.types.{LongType, StructField, StructType}
+import org.apache.spark.sql.types.{IntegerType, StructField, StructType}
+import org.bdgenomics.utils.instrumentation.{Metrics, MetricsListener, RecordedMetrics}
 import org.scalatest.{BeforeAndAfter, FunSuite}
+
 class IntervalTreeTestSuite extends FunSuite with DataFrameSuiteBase with BeforeAndAfter{
-  val schema1 = StructType(Seq(StructField("start1", LongType), StructField("end1", LongType)))
-  val schema2 = StructType(Seq(StructField("start2", LongType), StructField("end2", LongType)))
-  val schema3 = StructType(Seq(StructField("start1", LongType), StructField("end1", LongType), StructField("start2", LongType), StructField("end2", LongType)))
-  val schema4 = StructType(Seq(StructField("start1", LongType)))
-  val schema5 = StructType(Seq(StructField("start2", LongType), StructField("end2", LongType), StructField("start1", LongType), StructField("end1", LongType)))
+  val schema1 = StructType(Seq(StructField("start1",IntegerType ), StructField("end1", IntegerType)))
+  val schema2 = StructType(Seq(StructField("start2", IntegerType), StructField("end2", IntegerType)))
+  val schema3 = StructType(Seq(StructField("start1", IntegerType), StructField("end1", IntegerType), StructField("start2", IntegerType), StructField("end2", IntegerType)))
+  val schema4 = StructType(Seq(StructField("start1", IntegerType)))
+  val schema5 = StructType(Seq(StructField("start2", IntegerType), StructField("end2", IntegerType), StructField("start1", IntegerType), StructField("end1", IntegerType)))
+
+  val metricsListener = new MetricsListener(new RecordedMetrics())
+  val writer = new PrintWriter(new OutputStreamWriter(System.out))
 
   before {
-    spark.experimental.extraStrategies = new IntervalTreeJoinStrategy(spark) :: Nil
+    spark.experimental.extraStrategies = new IntervalTreeJoinStrategyOptim(spark) :: Nil
+    Metrics.initialize(sc)
+
+    sc.addSparkListener(metricsListener)
+
     var rdd1 = sc.parallelize(Seq(
-      (100L, 199L),
-      (200L, 299L),
-      (400L, 600L),
-      (10000L, 20000L),
-      (22100L, 22100L)))
-      .map(i => Row(i._1, i._2))
+      (100, 190),
+      (200, 290),
+      (400, 600),
+      (10000, 20000),
+      (22100, 22100)))
+      .map(i => Row(i._1.toInt, i._2.toInt))
     var rdd2 = sc.parallelize(Seq(
-      (150L, 250L),
-      (199L,300L),
-      (300L, 500L),
-      (500L, 700L),
-      (22000L, 22300L),
-      (15000L, 15000L)))
-      .map(i => Row(i._1, i._2))
+      (150, 250),
+      (190,300),
+      (300, 500),
+      (500, 700),
+      (22000, 22300),
+      (15000, 15000)))
+      .map(i => Row(i._1.toInt, i._2.toInt))
 
 
     var ds1 = sqlContext.createDataFrame(rdd1, schema1)
@@ -44,14 +56,14 @@ class IntervalTreeTestSuite extends FunSuite with DataFrameSuiteBase with Before
     sqlContext.sql(sqlQuery).orderBy("start1").show
     assertDataFrameEquals(
       sqlContext.createDataFrame(sc.parallelize(
-        Row(100L) ::
-          Row(100L) ::
-          Row(200L) ::
-          Row(200L) ::
-          Row(400L) ::
-          Row(400L) ::
-          Row(10000L) ::
-          Row(22100L) ::
+        Row(100) ::
+          Row(100) ::
+          Row(200) ::
+          Row(200) ::
+          Row(400) ::
+          Row(400) ::
+          Row(10000) ::
+          Row(22100) ::
           Nil),schema4).orderBy("start1"),
       sqlContext.sql(sqlQuery).orderBy("start1"))
   }
@@ -63,14 +75,14 @@ class IntervalTreeTestSuite extends FunSuite with DataFrameSuiteBase with Before
     sqlContext.sql(sqlQuery).orderBy("start1").show
     assertDataFrameEquals(
       sqlContext.createDataFrame(sc.parallelize(
-        Row(100L, 199L, 150L, 250L) ::
-          Row(100L, 199L, 199L, 300L) ::
-          Row(200L, 299L, 150L, 250L) ::
-          Row(200L, 299L, 199L, 300L) ::
-          Row(400L, 600L, 300L, 500L) ::
-          Row(400L, 600L, 500L, 700L) ::
-          Row(10000L, 20000L, 15000L, 15000L) ::
-          Row(22100L, 22100L, 22000L, 22300L) ::
+        Row(100, 190, 150, 250) ::
+          Row(100, 190, 190, 300) ::
+          Row(200, 290, 150, 250) ::
+          Row(200, 290, 190, 300) ::
+          Row(400, 600, 300, 500) ::
+          Row(400, 600, 500, 700) ::
+          Row(10000, 20000, 15000, 15000) ::
+          Row(22100, 22100, 22000, 22300) ::
           Nil),schema3).orderBy("start1"),
       sqlContext.sql(sqlQuery).orderBy("start1"))
   }
@@ -82,14 +94,14 @@ class IntervalTreeTestSuite extends FunSuite with DataFrameSuiteBase with Before
     sqlContext.sql(sqlQuery).orderBy("start1").show
     assertDataFrameEquals(
       sqlContext.createDataFrame(sc.parallelize(
-        Row(100L) ::
-          Row(100L) ::
-          Row(200L) ::
-          Row(200L) ::
-          Row(400L) ::
-          Row(400L) ::
-          Row(10000L) ::
-          Row(22100L) ::
+        Row(100) ::
+          Row(100) ::
+          Row(200) ::
+          Row(200) ::
+          Row(400) ::
+          Row(400) ::
+          Row(10000) ::
+          Row(22100) ::
           Nil),schema4).orderBy("start1"),
       sqlContext.sql(sqlQuery).orderBy("start1"))
   }
@@ -101,15 +113,22 @@ class IntervalTreeTestSuite extends FunSuite with DataFrameSuiteBase with Before
     sqlContext.sql(sqlQuery).orderBy("start1").show
     assertDataFrameEquals(
       sqlContext.createDataFrame(sc.parallelize(
-        Row(150L, 250L, 100L, 199L) ::
-          Row(199L, 300L, 100L, 199L) ::
-          Row(150L, 250L, 200L, 299L) ::
-          Row(199L, 300L, 200L, 299L) ::
-          Row(300L, 500L, 400L, 600L) ::
-          Row(500L, 700L, 400L, 600L) ::
-          Row(15000L, 15000L, 10000L, 20000L) ::
-          Row(22000L, 22300L, 22100L, 22100L) ::
+        Row(150, 250, 100, 190) ::
+          Row(190, 300, 100, 190) ::
+          Row(150, 250, 200, 290) ::
+          Row(190, 300, 200, 290) ::
+          Row(300, 500, 400, 600) ::
+          Row(500, 700, 400, 600) ::
+          Row(15000, 15000, 10000, 20000) ::
+          Row(22000, 22300, 22100, 22100) ::
           Nil),schema5).orderBy("start1"),
       sqlContext.sql(sqlQuery).orderBy("start1"))
+  }
+
+  after{
+
+    Metrics.print(writer, Some(metricsListener.metrics.sparkMetrics.stageTimes))
+    writer.close()
+
   }
 }

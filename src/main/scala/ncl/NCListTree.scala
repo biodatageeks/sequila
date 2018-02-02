@@ -3,15 +3,15 @@ package ncl
 import scala.collection.mutable
 import scala.util.control.Breaks._
 
-class NCListTree[T](allRegions: List[(Interval[Long], T)]) extends Serializable {
+class NCListTree[T](allRegions: List[(Interval[Int], T)]) extends Serializable {
 
   val ncList = NCListBuilder.build(allRegions)
 
-  def getAllOverlappings(processedInterval: Interval[Long]) = allOverlappingRegions(processedInterval, ncList, allRegions)
+  def getAllOverlappings(processedInterval: Interval[Int]) = allOverlappingRegions(processedInterval, ncList, allRegions)
 
-  private def allOverlappingRegions(processedInterval: Interval[Long], topNcList: NCList, intervalList: List[(Interval[Long],T)]): List[(Interval[Long], T)] = {
+  private def allOverlappingRegions(processedInterval: Interval[Int], topNcList: NCList, intervalList: List[(Interval[Int],T)]): List[(Interval[Int], T)] = {
     var backpack = Backpack(intervalList, processedInterval)
-    var resultList = List[(Interval[Long], T)]()
+    var resultList = List[(Interval[Int], T)]()
     var walkingStack = mutable.Stack[NCListWalkingStack]()
     walkingStack.clear()
 
@@ -52,7 +52,7 @@ class NCListTree[T](allRegions: List[(Interval[Long], T)]) extends Serializable 
     return n
   }
 
-  private def intBsearch(subset: Array[Int], subsetLen: Int, base: Array[Long], min: Long): Int = {
+  private def intBsearch(subset: Array[Int], subsetLen: Int, base: Array[Int], min: Int): Int = {
     /* Check first element. */
     var n1 = 0
     var b = base(subset(n1))
