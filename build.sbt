@@ -33,10 +33,12 @@ libraryDependencies += "org.bdgenomics.adam" %% "adam-cli-spark2" % "0.22.0"
 libraryDependencies += "org.bdgenomics.utils" %% "utils-misc-spark2" % "0.2.10"
 libraryDependencies += "org.scala-lang" % "scala-library" % "2.11.8"
 
-libraryDependencies += "com.breinify" % "brein-time-utilities" % "1.6.4"
+//libraryDependencies += "com.breinify" % "brein-time-utilities" % "1.6.4"
 libraryDependencies += "org.scala-lang.modules" %% "scala-java8-compat" % "0.7.0"
 
 libraryDependencies += "org.hammerlab.bdg-utils" %% "cli" % "0.3.0"
+
+libraryDependencies += "com.github.samtools" % "htsjdk" % "2.14.1"
 
 fork := true
 

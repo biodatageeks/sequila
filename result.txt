@@ -1,0 +1,187 @@
+Total time: 6.383105509 seconds
+
+scala> Metrics.print(writer, Some(metricsListener.metrics.sparkMetrics.stageTimes))
+
+scala> writer.close()
+Timings
++--------------------------------------------------------+--------------+--------------+-------------+---------+-----------+-----------+-----------+
+|                         Metric                         | Worker Total | Driver Total | Driver Only |  Count  |   Mean    |    Min    |    Max    |
++--------------------------------------------------------+--------------+--------------+-------------+---------+-----------+-----------+-----------+
+| └─ collect at IntervalTreeJoinOptimImpl.scala:54       |            - |    207.59 ms |           - |       1 | 207.59 ms | 207.59 ms | 207.59 ms |
+| └─ Driver - IntervalTree Build                         |            - |     2.5 secs |    2.5 secs |       1 |  2.5 secs |  2.5 secs |  2.5 secs |
+| └─ map at IntervalTreeJoinOptimImpl.scala:62           |            - |     25.22 ms |           - |       1 |  25.22 ms |  25.22 ms |  25.22 ms |
+|     └─ function call                                   |    2.54 secs |            - |           - | 1000000 |   2.54 µs |    427 ns |  43.74 ms |
+|         └─ Worker -  IntervalTreeLookup                |    1.96 secs |            - |           - | 1000000 |   1.96 µs |     20 ns |  43.74 ms |
+| └─ mapPartitions at IntervalTreeJoinOptimImpl.scala:63 |            - |      6.99 ms |           - |       1 |   6.99 ms |   6.99 ms |   6.99 ms |
+|     └─ function call                                   |      6.39 ms |            - |           - |       4 |    1.6 ms |   1.56 ms |   1.61 ms |
+| └─ flatMap at IntervalTreeJoinOptimImpl.scala:70       |            - |      6.21 ms |           - |       1 |   6.21 ms |   6.21 ms |   6.21 ms |
+|     └─ function call                                   |    231.87 ms |            - |           - | 1000000 |    231 ns |      3 ns |   1.23 ms |
+| └─ map at IntervalTreeJoinOptim.scala:63               |            - |      6.06 ms |           - |       1 |   6.06 ms |   6.06 ms |   6.06 ms |
+|     └─ function call                                   |    2.62 secs |            - |           - |  100000 |  26.18 µs |  16.65 µs |  43.69 ms |
+| └─ show at <console>:35                                |            - |      6.16 ms |           - |       1 |   6.16 ms |   6.16 ms |   6.16 ms |
+|     └─ function call                                   |    346.88 µs |            - |           - |       4 |  86.72 µs |  78.95 µs |  94.76 µs |
++--------------------------------------------------------+--------------+--------------+-------------+---------+-----------+-----------+-----------+
+
+time: 7.77565904 seconds
+
+scala> Metrics.print(writer, Some(metricsListener.metrics.sparkMetrics.stageTimes))
+
+scala> writer.close()
+Timings
++--------------------------------------------------+--------------+--------------+-------------+---------+-----------+-----------+-----------+
+|                      Metric                      | Worker Total | Driver Total | Driver Only |  Count  |   Mean    |    Min    |    Max    |
++--------------------------------------------------+--------------+--------------+-------------+---------+-----------+-----------+-----------+
+| └─ zipWithIndex at IntervalTreeJoinImpl.scala:47 |            - |    129.36 ms |           - |       1 | 129.36 ms | 129.36 ms | 129.36 ms |
+| └─ map at IntervalTreeJoinImpl.scala:48          |            - |      44.5 ms |           - |       1 |   44.5 ms |   44.5 ms |   44.5 ms |
+|     └─ function call                             |    165.81 ms |            - |           - |  200000 |    829 ns |     99 ns |   2.46 ms |
+| └─ map at IntervalTreeJoinImpl.scala:51          |            - |      8.07 ms |           - |       1 |   8.07 ms |   8.07 ms |   8.07 ms |
+|     └─ function call                             |    114.71 ms |            - |           - |  100000 |   1.15 µs |    297 ns |   2.09 ms |
+| └─ collect at IntervalTreeJoinImpl.scala:51      |            - |    779.32 ms |           - |       1 | 779.32 ms | 779.32 ms | 779.32 ms |
+| └─ Driver - IntervalTree Build                   |            - |    2.81 secs |   2.81 secs |       1 | 2.81 secs | 2.81 secs | 2.81 secs |
+| └─ map at IntervalTreeJoinImpl.scala:57          |            - |      5.72 ms |           - |       1 |   5.72 ms |   5.72 ms |   5.72 ms |
+|     └─ function call                             |     1.9 secs |            - |           - | 1000000 |    1.9 µs |    707 ns |  41.07 ms |
+|         └─ Worker -  IntervalTreeLookup          |    1.28 secs |            - |           - | 1000000 |   1.28 µs |     28 ns |  38.74 ms |
+| └─ filter at IntervalTreeJoinImpl.scala:58       |            - |     12.37 ms |           - |       1 |  12.37 ms |  12.37 ms |  12.37 ms |
+|     └─ function call                             |    303.03 ms |            - |           - | 1000000 |    303 ns |     10 ns |   1.61 ms |
+| └─ flatMap at IntervalTreeJoinImpl.scala:59      |            - |      9.78 ms |           - |       1 |   9.78 ms |   9.78 ms |   9.78 ms |
+|     └─ function call                             |     58.76 ms |            - |           - |  100000 |    587 ns |     63 ns |   2.66 ms |
+| └─ reduceByKey at IntervalTreeJoinImpl.scala:60  |            - |     33.61 ms |           - |       1 |  33.61 ms |  33.61 ms |  33.61 ms |
+| └─ map at IntervalTreeJoinImpl.scala:63          |            - |      5.76 ms |           - |       1 |   5.76 ms |   5.76 ms |   5.76 ms |
+|     └─ function call                             |      47.6 ms |            - |           - |  100000 |    476 ns |      2 ns |   2.24 ms |
+| └─ join at IntervalTreeJoinImpl.scala:64         |            - |     11.96 ms |           - |       1 |  11.96 ms |  11.96 ms |  11.96 ms |
+| └─ map at IntervalTreeJoinImpl.scala:65          |            - |      5.38 ms |           - |       1 |   5.38 ms |   5.38 ms |   5.38 ms |
+|     └─ function call                             |     52.99 ms |            - |           - |  100000 |    529 ns |    295 ns | 424.04 µs |
+| └─ flatMap at IntervalTreeJoin.scala:62          |            - |      5.35 ms |           - |       1 |   5.35 ms |   5.35 ms |   5.35 ms |
+|     └─ function call                             |     65.17 ms |            - |           - |  100000 |    651 ns |    288 ns | 782.34 µs |
+| └─ map at IntervalTreeJoin.scala:64              |            - |      6.29 ms |           - |       1 |   6.29 ms |   6.29 ms |   6.29 ms |
+|     └─ function call                             |    4.62 secs |            - |           - |  100000 |  46.18 µs |  18.37 µs |     45 ms |
+| └─ show at <console>:35                          |            - |      7.87 ms |           - |       1 |   7.87 ms |   7.87 ms |   7.87 ms |
+|     └─ function call                             |    258.55 µs |            - |           - |       4 |  64.64 µs |  44.14 µs | 103.58 µs |
++--------------------------------------------------+--------------+--------------+-------------+---------+-----------+-----------+-----------+
+
+
+
+NCList
+======
+
+
++--------+
+|count(1)|
++--------+
+|  100000|
++--------+
+
+time: 294.641057405 seconds
+
+
+Timings
++---------------------------------------------+-----------------+---------------+---------------+--------+---------------+---------------+---------------+
+|                   Metric                    |  Worker Total   | Driver Total  |  Driver Only  | Count  |     Mean      |      Min      |      Max      |
++---------------------------------------------+-----------------+---------------+---------------+--------+---------------+---------------+---------------+
+| └─ zipWithIndex at NCListsJoinImpl.scala:43 |               - |      68.97 ms |             - |      1 |      68.97 ms |      68.97 ms |      68.97 ms |
+| └─ map at NCListsJoinImpl.scala:44          |               - |      33.37 ms |             - |      1 |      33.37 ms |      33.37 ms |      33.37 ms |
+|     └─ function call                        |        82.87 ms |             - |             - | 200000 |        414 ns |         94 ns |       1.42 ms |
+| └─ map at NCListsJoinImpl.scala:47          |               - |        6.2 ms |             - |      1 |        6.2 ms |        6.2 ms |        6.2 ms |
+|     └─ function call                        |         59.3 ms |             - |             - | 100000 |        593 ns |        168 ns |      344.8 µs |
+| └─ collect at NCListsJoinImpl.scala:47      |               - |     796.44 ms |             - |      1 |     796.44 ms |     796.44 ms |     796.44 ms |
+| └─ Driver - NCList Build                    |               - | 1 min 47 secs | 1 min 47 secs |      1 | 1 min 47 secs | 1 min 47 secs | 1 min 47 secs |
+| └─ map at NCListsJoinImpl.scala:53          |               - |       6.01 ms |             - |      1 |       6.01 ms |       6.01 ms |       6.01 ms |
+|     └─ function call                        | 10 mins 40 secs |             - |             - | 100000 |       6.41 ms |       3.37 ms |      24.42 ms |
+|         └─ Worker -  NCListLookup           | 10 mins 40 secs |             - |             - | 100000 |       6.41 ms |       3.37 ms |      24.42 ms |
+| └─ filter at NCListsJoinImpl.scala:54       |               - |       7.53 ms |             - |      1 |       7.53 ms |       7.53 ms |       7.53 ms |
+|     └─ function call                        |        114.9 ms |             - |             - | 100000 |       1.15 µs |        226 ns |      78.52 µs |
+| └─ flatMap at NCListsJoinImpl.scala:55      |               - |        7.2 ms |             - |      1 |        7.2 ms |        7.2 ms |        7.2 ms |
+|     └─ function call                        |        89.68 ms |             - |             - | 100000 |        896 ns |        202 ns |     816.66 µs |
+| └─ groupByKey at NCListsJoinImpl.scala:56   |               - |       19.7 ms |             - |      1 |       19.7 ms |       19.7 ms |       19.7 ms |
+| └─ map at NCListsJoinImpl.scala:59          |               - |        4.5 ms |             - |      1 |        4.5 ms |        4.5 ms |        4.5 ms |
+|     └─ function call                        |        18.57 ms |             - |             - | 100000 |        185 ns |         71 ns |      67.21 µs |
+| └─ join at NCListsJoinImpl.scala:60         |               - |      10.97 ms |             - |      1 |      10.97 ms |      10.97 ms |      10.97 ms |
+| └─ map at NCListsJoinImpl.scala:61          |               - |       4.49 ms |             - |      1 |       4.49 ms |       4.49 ms |       4.49 ms |
+|     └─ function call                        |        23.17 ms |             - |             - | 100000 |        231 ns |         73 ns |      83.16 µs |
+| └─ flatMap at NCListsJoin.scala:65          |               - |       4.58 ms |             - |      1 |       4.58 ms |       4.58 ms |       4.58 ms |
+|     └─ function call                        |        55.68 ms |             - |             - | 100000 |        556 ns |        192 ns |       1.52 ms |
+| └─ map at NCListsJoin.scala:66              |               - |       5.37 ms |             - |      1 |       5.37 ms |       5.37 ms |       5.37 ms |
+|     └─ function call                        |       3.77 secs |             - |             - | 100000 |      37.75 µs |      17.77 µs |       48.3 ms |
+| └─ show at <console>:35                     |               - |       6.45 ms |             - |      1 |       6.45 ms |       6.45 ms |       6.45 ms |
+|     └─ function call                        |       258.84 µs |             - |             - |      4 |      64.71 µs |      47.91 µs |      80.52 µs |
++---------------------------------------------+-----------------+---------------+---------------+--------+---------------+---------------+---------------+
+
+
+IntervalTreeJoinOptim
+======================
+
++--------+
+|count(1)|
++--------+
+|  100000|
++--------+
+
+time: 6.371053109 seconds
+
+scala> Metrics.print(writer, Some(metricsListener.metrics.sparkMetrics.stageTimes))
+
+scala> writer.close()
+Timings
++--------------------------------------------------------+--------------+--------------+-------------+--------+-----------+-----------+-----------+
+|                         Metric                         | Worker Total | Driver Total | Driver Only | Count  |   Mean    |    Min    |    Max    |
++--------------------------------------------------------+--------------+--------------+-------------+--------+-----------+-----------+-----------+
+| └─ collect at IntervalTreeJoinOptimImpl.scala:54       |            - |    742.92 ms |           - |      1 | 742.92 ms | 742.92 ms | 742.92 ms |
+| └─ Driver - IntervalTree Build                         |            - |    3.11 secs |   3.11 secs |      1 | 3.11 secs | 3.11 secs | 3.11 secs |
+| └─ map at IntervalTreeJoinOptimImpl.scala:62           |            - |     30.61 ms |           - |      1 |  30.61 ms |  30.61 ms |  30.61 ms |
+|     └─ function call                                   |    608.99 ms |            - |           - | 100000 |   6.09 µs |    765 ns |  52.57 ms |
+|         └─ Worker -  IntervalTreeLookup                |    508.96 ms |            - |           - | 100000 |   5.09 µs |    496 ns |  52.56 ms |
+| └─ mapPartitions at IntervalTreeJoinOptimImpl.scala:63 |            - |     10.02 ms |           - |      1 |  10.02 ms |  10.02 ms |  10.02 ms |
+|     └─ function call                                   |      7.48 ms |            - |           - |      4 |   1.87 ms |   1.82 ms |   1.96 ms |
+| └─ flatMap at IntervalTreeJoinOptimImpl.scala:70       |            - |      8.96 ms |           - |      1 |   8.96 ms |   8.96 ms |   8.96 ms |
+|     └─ function call                                   |     57.08 ms |            - |           - | 100000 |    570 ns |     79 ns |  19.94 ms |
+| └─ map at IntervalTreeJoinOptim.scala:63               |            - |     17.68 ms |           - |      1 |  17.68 ms |  17.68 ms |  17.68 ms |
+|     └─ function call                                   |     5.4 secs |            - |           - | 100000 |  53.98 µs |   18.9 µs |  52.75 ms |
+| └─ show at <console>:35                                |            - |      8.89 ms |           - |      1 |   8.89 ms |   8.89 ms |   8.89 ms |
+|     └─ function call                                   |     874.9 µs |            - |           - |      4 | 218.72 µs | 202.32 µs | 224.42 µs |
++--------------------------------------------------------+--------------+--------------+-------------+--------+-----------+-----------+-----------+
+
+
+
+IntervalTree - Genapp
+======================
+
++--------+
+|count(1)|
++--------+
+|  100000|
++--------+
+
+time: 8.099497905 seconds
+
+scala> writer.close()
+Timings
++--------------------------------------------------+--------------+--------------+-------------+--------+-----------+-----------+-----------+
+|                      Metric                      | Worker Total | Driver Total | Driver Only | Count  |   Mean    |    Min    |    Max    |
++--------------------------------------------------+--------------+--------------+-------------+--------+-----------+-----------+-----------+
+| └─ zipWithIndex at IntervalTreeJoinImpl.scala:47 |            - |    160.08 ms |           - |      1 | 160.08 ms | 160.08 ms | 160.08 ms |
+| └─ map at IntervalTreeJoinImpl.scala:48          |            - |     44.51 ms |           - |      1 |  44.51 ms |  44.51 ms |  44.51 ms |
+|     └─ function call                             |    138.44 ms |            - |           - | 200000 |    692 ns |     12 ns |   3.14 ms |
+| └─ map at IntervalTreeJoinImpl.scala:51          |            - |     11.03 ms |           - |      1 |  11.03 ms |  11.03 ms |  11.03 ms |
+|     └─ function call                             |     85.36 ms |            - |           - | 100000 |    853 ns |    114 ns | 394.41 µs |
+| └─ collect at IntervalTreeJoinImpl.scala:51      |            - |    908.59 ms |           - |      1 | 908.59 ms | 908.59 ms | 908.59 ms |
+| └─ Driver - IntervalTree Build                   |            - |    2.87 secs |   2.87 secs |      1 | 2.87 secs | 2.87 secs | 2.87 secs |
+| └─ map at IntervalTreeJoinImpl.scala:57          |            - |      5.14 ms |           - |      1 |   5.14 ms |   5.14 ms |   5.14 ms |
+|     └─ function call                             |    708.33 ms |            - |           - | 100000 |   7.08 µs |    612 ns |  27.65 ms |
+|         └─ Worker -  IntervalTreeLookup          |    648.05 ms |            - |           - | 100000 |   6.48 µs |    416 ns |  27.65 ms |
+| └─ filter at IntervalTreeJoinImpl.scala:58       |            - |     14.19 ms |           - |      1 |  14.19 ms |  14.19 ms |  14.19 ms |
+|     └─ function call                             |     53.36 ms |            - |           - | 100000 |    533 ns |     42 ns |   1.48 ms |
+| └─ flatMap at IntervalTreeJoinImpl.scala:59      |            - |     13.91 ms |           - |      1 |  13.91 ms |  13.91 ms |  13.91 ms |
+|     └─ function call                             |     79.28 ms |            - |           - | 100000 |    792 ns |    171 ns |   2.09 ms |
+| └─ reduceByKey at IntervalTreeJoinImpl.scala:60  |            - |     81.95 ms |           - |      1 |  81.95 ms |  81.95 ms |  81.95 ms |
+| └─ map at IntervalTreeJoinImpl.scala:63          |            - |      5.15 ms |           - |      1 |   5.15 ms |   5.15 ms |   5.15 ms |
+|     └─ function call                             |     30.24 ms |            - |           - | 100000 |    302 ns |      2 ns |   3.25 ms |
+| └─ join at IntervalTreeJoinImpl.scala:64         |            - |     12.41 ms |           - |      1 |  12.41 ms |  12.41 ms |  12.41 ms |
+| └─ map at IntervalTreeJoinImpl.scala:65          |            - |      5.69 ms |           - |      1 |   5.69 ms |   5.69 ms |   5.69 ms |
+|     └─ function call                             |     98.03 ms |            - |           - | 100000 |    980 ns |     76 ns |  53.12 ms |
+| └─ flatMap at IntervalTreeJoin.scala:62          |            - |       5.9 ms |           - |      1 |    5.9 ms |    5.9 ms |    5.9 ms |
+|     └─ function call                             |     70.53 ms |            - |           - | 100000 |    705 ns |    345 ns |   3.41 ms |
+| └─ map at IntervalTreeJoin.scala:64              |            - |      5.34 ms |           - |      1 |   5.34 ms |   5.34 ms |   5.34 ms |
+|     └─ function call                             |    5.09 secs |            - |           - | 100000 |  50.91 µs |  19.79 µs |  53.28 ms |
+| └─ show at <console>:35                          |            - |      6.61 ms |           - |      1 |   6.61 ms |   6.61 ms |   6.61 ms |
+|     └─ function call                             |    224.04 µs |            - |           - |      4 |  56.01 µs |  30.73 µs |  92.11 µs |
++--------------------------------------------------+--------------+--------------+-------------+--------+-----------+-----------+-----------+

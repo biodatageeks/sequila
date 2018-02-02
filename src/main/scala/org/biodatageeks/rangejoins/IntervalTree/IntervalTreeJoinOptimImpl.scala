@@ -18,16 +18,19 @@
 package org.biodatageeks.rangejoins.IntervalTree
 
 
+//import com.brein.time.timeintervals.collections.{IntervalCollection, IntervalCollectionFactory, ListIntervalCollection, SetIntervalCollection}
+//import com.brein.time.timeintervals.indexes.IntervalTreeBuilder
+//import com.brein.time.timeintervals.indexes.IntervalTreeBuilder.IntervalType
+//import com.brein.time.timeintervals.intervals.IntegerInterval
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.catalyst.InternalRow
-
 import org.bdgenomics.utils.instrumentation.Metrics
-import org.bdgenomics.utils.instrumentation.{RecordedMetrics, MetricsListener}
+import org.bdgenomics.utils.instrumentation.{MetricsListener, RecordedMetrics}
 import org.apache.spark.rdd.MetricsContext._
-
-
 import common.performance.timers.IntervalTreeTimer._
+import scala.collection.JavaConversions._
+import htsjdk.samtools.util.IntervalTree
 
 object IntervalTreeJoinOptimImpl extends Serializable {
 
@@ -47,31 +50,36 @@ object IntervalTreeJoinOptimImpl extends Serializable {
     /* Collect only Reference regions and the index of indexedRdd1 */
 
 
+
+
+
+
   val localIntervals =
     rdd1
     .instrument()
-    // .map(r=>IntervalWithRow(r._1.start,r._1.end,r._2))
     .collect()
-  val intervalTree = IntervalTreeBuild.time {
-    sc.broadcast(new IntervalTree[Int](localIntervals.toList))
+  val intervalTree = IntervalTreeHTSBuild.time {
+    val tree = new IntervalTreeHTS[InternalRow]()
+    localIntervals
+      .foreach(r => tree.put(r.start, r.end, r.row))
+    sc.broadcast(tree)
   }
-
     val kvrdd2 = rdd2
-        .instrument()
-     // .map(x => (x._2,intervalTree.value.getAllOverlappings(IntervalWithRow(x._1.start,x._1.end,x._2))))
-      .map(x =>(x.row,IntervalTreeLookup.time{ intervalTree.value.getAllOverlappings(x) } ) )
+      .instrument()
       .mapPartitions(p=>{
-        p.map(record => {
-          if(record._2 != Nil)
-            record._2.map(overlap => (overlap.row,record._1))
-          else Iterator.empty
-        }
-        )
-      }).flatMap(r=>r)
-//      .filter(x => x._2 != Nil)
-//      .flatMap(r=>r._2.map(k=>(k.row,r._1))) //FIXME swap just for passing unit tests
-      kvrdd2
+        p.map(r => {
+          IntervalTreeHTSLookup.time {
+            val record =
+              intervalTree.value.overlappers(r.start, r.end)
 
+            record
+              .toIterator
+              .map(k => (k.getValue, r.row))
+          }
+        })
+      })
+      .flatMap(r=>r)
+      kvrdd2
   }
 
 }

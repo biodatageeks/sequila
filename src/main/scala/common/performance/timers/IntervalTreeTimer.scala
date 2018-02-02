@@ -10,4 +10,11 @@ object IntervalTreeTimer extends Metrics {
   val IntervalTreeLookup = timer("Worker -  IntervalTreeLookup")
 
 
+  val IntervalTreeBreifyBuild = timer("Driver - IntervalTreeBreify Build")
+  val IntervalTreeBreifyLookup = timer("Worker -  IntervalTreeBreifyLookup")
+
+  val IntervalTreeHTSBuild = timer("Driver - IntervalTreeHTS Build")
+  val IntervalTreeHTSLookup = timer("Worker -  IntervalTreeHTSLookup")
+
+
 }

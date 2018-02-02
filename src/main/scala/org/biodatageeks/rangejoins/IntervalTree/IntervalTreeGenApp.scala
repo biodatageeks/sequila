@@ -19,7 +19,7 @@ package org.biodatageeks.rangejoins.IntervalTree
 
 import org.apache.spark.sql.catalyst.InternalRow
 
-class IntervalTree[T](allRegions: List[IntervalWithRow[Int]]) extends Serializable {
+class IntervalTreeGenApp[T](allRegions: List[IntervalWithRow[Int]]) extends Serializable {
 
   val root = new Node(allRegions)
 

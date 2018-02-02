@@ -56,8 +56,8 @@ object IntervalTreeJoinImpl extends Serializable {
       // join entry with the intervals returned from the interval tree
       .map(x => (IntervalTreeLookup.time{intervalTree.value.getAllOverlappings(x._1)}, x._2))
       .filter(x => x._1 != Nil) // filter out entries that do not join anywhere
-      .flatMap(t => t._1.map(s => (s._2, Iterable(t._2)))) // create pairs of (index1, rdd2Elem)
-      .reduceByKey((a,b) => a ++ b )
+      .flatMap(t => t._1.map(s => (s._2, t._2))) // create pairs of (index1, rdd2Elem)
+      .groupByKey()
 
     indexedRdd1 // this is RDD[(Int, (Interval[Int], Row))]
       .map(x => (x._1, x._2._2)) // convert it to (Int, Row)

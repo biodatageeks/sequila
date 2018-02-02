@@ -47,34 +47,39 @@ case class IntervalTreeJoinOptim(left: SparkPlan,
       val v1Key = buildKeyGenerator(x)
 
       (new IntervalWithRow[Int](v1Key.getInt(0), v1Key.getInt(1),
-        x.copy()) )
+        x) )
 
     })
     val v2 = right.execute()
     val v2kv = v2.map(x => {
       val v2Key = streamKeyGenerator(x)
       (new IntervalWithRow[Int](v2Key.getInt(0), v2Key.getInt(1),
-        x.copy()) )
+        x) )
     })
     /* As we are going to collect v1 and build an interval tree on its intervals,
     make sure that its size is the smaller one. */
     if (v1.count <= v2.count) {
-      val v3 = IntervalTreeJoinOptimImpl.overlapJoin(context.sparkContext, v1kv, v2kv)//.flatMap(l => l._2.map(r => (l._1, r)))
-      v3.map {
-        case (l: InternalRow, r: InternalRow) => {
-          val joiner = GenerateUnsafeRowJoiner.create(left.schema, right.schema);
-          joiner.join(l.asInstanceOf[UnsafeRow], r.asInstanceOf[UnsafeRow]).asInstanceOf[InternalRow] //resultProj(joinedRow(l, r)) joiner.joiner
-        }
-      }
+      val v3 = IntervalTreeJoinOptimImpl.overlapJoin(context.sparkContext, v1kv, v2kv)
+     v3.mapPartitions(
+       p => {
+         val joiner = GenerateUnsafeRowJoiner.create(left.schema, right.schema)
+         p.map(r=>joiner.join(r._1.asInstanceOf[UnsafeRow],r._2.asInstanceOf[UnsafeRow]))
+       }
+
+
+
+     )
+
     }
     else {
-      val v3 = IntervalTreeJoinOptimImpl.overlapJoin(context.sparkContext, v2kv, v1kv)//.flatMap(l => l._2.map(r => (l._1, r)))
-      v3.map {
-        case (r: InternalRow, l: InternalRow) => {
-          val joiner = GenerateUnsafeRowJoiner.create(left.schema, right.schema);
-          joiner.join(l.asInstanceOf[UnsafeRow], r.asInstanceOf[UnsafeRow]).asInstanceOf[InternalRow] //resultProj(joinedRow(l, r)) joiner.joiner
+      val v3 = IntervalTreeJoinOptimImpl.overlapJoin(context.sparkContext, v2kv, v1kv)
+      v3.mapPartitions(
+        p => {
+          val joiner = GenerateUnsafeRowJoiner.create(left.schema, right.schema)
+          p.map(r=>joiner.join(r._2.asInstanceOf[UnsafeRow],r._1.asInstanceOf[UnsafeRow]))
         }
-      }
+
+      )
     }
 
   }
