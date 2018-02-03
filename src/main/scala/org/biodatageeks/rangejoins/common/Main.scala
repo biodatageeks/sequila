@@ -15,13 +15,12 @@
   * See the License for the specific language governing permissions and
   * limitations under the License.
   */
-package common
+package org.biodatageeks.rangejoins.common
 
 import java.io.PrintWriter
 import java.util.Date
 
-import genApp.IntervalTreeJoinStrategy
-import ncl.NCListsJoinStrategy
+import org.biodatageeks.rangejoins.NCList.NCListsJoinStrategy
 import org.apache.spark.sql.types.{LongType, StructField, StructType}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{Row, SparkSession}
@@ -35,6 +34,8 @@ import org.apache.spark.sql.types._
 import scala.util.Random
 import java.io._
 import java.text.SimpleDateFormat
+
+import org.biodatageeks.rangejoins.genApp.IntervalTreeJoinStrategy
 
 object Main {
   case class RecordData1(start1: Long, end1: Long) extends Serializable

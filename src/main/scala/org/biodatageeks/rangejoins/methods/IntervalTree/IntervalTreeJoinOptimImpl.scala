@@ -15,16 +15,21 @@
  * limitations under the License.
  */
 
-package ncl
+package org.biodatageeks.rangejoins.IntervalTree
+
+
 
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.catalyst.InternalRow
-
+import org.bdgenomics.utils.instrumentation.Metrics
+import org.bdgenomics.utils.instrumentation.{MetricsListener, RecordedMetrics}
 import org.apache.spark.rdd.MetricsContext._
-import common.performance.timers.NCListTimer._
+import org.biodatageeks.rangejoins.common.performance.timers.IntervalTreeTimer._
+import scala.collection.JavaConversions._
+import htsjdk.samtools.util.IntervalTree
 
-object NCListsJoinImpl extends Serializable {
+object IntervalTreeJoinOptimImpl extends Serializable {
 
   /**
     * Multi-joins together two RDDs that contain objects that map to reference regions.
@@ -36,29 +41,42 @@ object NCListsJoinImpl extends Serializable {
     * @param rdd1 RDD of values on which we build an interval tree. Assume |rdd1| < |rdd2|
     */
   def overlapJoin(sc: SparkContext,
-                  rdd1: RDD[(Interval[Int], InternalRow)],
-                  rdd2: RDD[(Interval[Int], InternalRow)]): RDD[(InternalRow, Iterable[InternalRow])] = {
-    val indexedRdd1 = rdd1
-      .instrument()
-      .zipWithIndex()
-      .map(_.swap)
+                  rdd1: RDD[(IntervalWithRow[Int])],
+                  rdd2: RDD[(IntervalWithRow[Int])]): RDD[(InternalRow, InternalRow)] = {
 
     /* Collect only Reference regions and the index of indexedRdd1 */
-    val localIntervals = indexedRdd1.map(x => (x._2._1, x._1.toInt)).collect()
-    /* Create and broadcast an interval tree */
-    val nclist = NCListBuild.time{sc.broadcast(new NCListTree[Int](localIntervals.toList))}
-    val kvrdd2: RDD[(Int, Iterable[InternalRow])] = rdd2
-        .instrument()
-      // join entry with the intervals returned from the interval tree
-      .map(x => (NCListLookup.time{nclist.value.getAllOverlappings(x._1)}, x._2))
-      .filter(x => x._1 != Nil) // filter out entries that do not join anywhere
-      .flatMap(t => t._1.map(s => (s._2, t._2))) // create pairs of (index1, rdd2Elem)
-      .groupByKey
 
-    indexedRdd1 // this is RDD[(Int, (Interval[Int], Row))]
-      .map(x => (x._1.toInt, x._2._2)) // convert it to (Int, Row)
-      .join(kvrdd2) // join produces RDD[(Int, (Row, Iterable[Row]))]
-      .map(_._2) // end up with RDD[(Row, Iterable[Row])]
+
+
+
+
+
+  val localIntervals =
+    rdd1
+    .instrument()
+    .collect()
+  val intervalTree = IntervalTreeHTSBuild.time {
+    val tree = new IntervalTreeHTS[InternalRow]()
+    localIntervals
+      .foreach(r => tree.put(r.start, r.end, r.row))
+    sc.broadcast(tree)
+  }
+    val kvrdd2 = rdd2
+      .instrument()
+      .mapPartitions(p=>{
+        p.map(r => {
+          IntervalTreeHTSLookup.time {
+            val record =
+              intervalTree.value.overlappers(r.start, r.end)
+
+            record
+              .toIterator
+              .map(k => (k.getValue, r.row))
+          }
+        })
+      })
+      .flatMap(r=>r)
+      kvrdd2
   }
 
 }

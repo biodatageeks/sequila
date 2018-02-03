@@ -1,7 +1,7 @@
 package org.biodatageeks.rangejoins.IntervalTree
 
-import common.ExtractRangeJoinKeys
-//import genApp.IntervalTreeJoin
+import org.biodatageeks.rangejoins.common.ExtractRangeJoinKeys
+//import org.biodatageeks.rangejoins.methods.genApp.IntervalTreeJoin
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.expressions.PredicateHelper
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan

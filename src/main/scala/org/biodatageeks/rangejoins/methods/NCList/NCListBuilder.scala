@@ -1,4 +1,4 @@
-package ncl
+package org.biodatageeks.rangejoins.NCList
 
 import scala.collection.mutable
 

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package ncl
+package org.biodatageeks.rangejoins.NCList
 
 import org.apache.spark.annotation.DeveloperApi
 import org.apache.spark.rdd.RDD

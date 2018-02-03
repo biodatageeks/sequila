@@ -1,6 +1,6 @@
-package ncl
+package org.biodatageeks.rangejoins.NCList
 
-import common.ExtractRangeJoinKeys
+import org.biodatageeks.rangejoins.common.ExtractRangeJoinKeys
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.execution.SparkPlan

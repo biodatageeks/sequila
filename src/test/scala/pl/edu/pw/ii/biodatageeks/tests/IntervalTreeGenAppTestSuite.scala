@@ -3,7 +3,6 @@ package pl.edu.pw.ii.biodatageeks.tests
 import java.io.{OutputStreamWriter, PrintWriter}
 
 import com.holdenkarau.spark.testing.DataFrameSuiteBase
-import org.biodatageeks.rangejoins.NCList.NCListsJoinStrategy
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types.{IntegerType, StructField, StructType}
 import org.bdgenomics.utils.instrumentation.{Metrics, MetricsListener, RecordedMetrics}
@@ -11,8 +10,8 @@ import org.biodatageeks.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
 import org.biodatageeks.rangejoins.genApp.IntervalTreeJoinStrategy
 import org.scalatest.{BeforeAndAfter, FunSuite}
 
-class NCListsTestSuite extends FunSuite with DataFrameSuiteBase with BeforeAndAfter{
-  val schema1 = StructType(Seq(StructField("start1", IntegerType), StructField("end1", IntegerType)))
+class IntervalTreeGenAppTestSuite extends FunSuite with DataFrameSuiteBase with BeforeAndAfter{
+  val schema1 = StructType(Seq(StructField("start1",IntegerType ), StructField("end1", IntegerType)))
   val schema2 = StructType(Seq(StructField("start2", IntegerType), StructField("end2", IntegerType)))
   val schema3 = StructType(Seq(StructField("start1", IntegerType), StructField("end1", IntegerType), StructField("start2", IntegerType), StructField("end2", IntegerType)))
   val schema4 = StructType(Seq(StructField("start1", IntegerType)))
@@ -22,26 +21,26 @@ class NCListsTestSuite extends FunSuite with DataFrameSuiteBase with BeforeAndAf
   val writer = new PrintWriter(new OutputStreamWriter(System.out))
 
   before {
+    spark.experimental.extraStrategies = new IntervalTreeJoinStrategy(spark) :: Nil
     Metrics.initialize(sc)
 
     sc.addSparkListener(metricsListener)
 
-    spark.experimental.extraStrategies = new NCListsJoinStrategy(spark) :: Nil
     var rdd1 = sc.parallelize(Seq(
-      (100, 199),
-      (200, 299),
+      (100, 190),
+      (200, 290),
       (400, 600),
       (10000, 20000),
       (22100, 22100)))
-      .map(i => Row(i._1, i._2))
+      .map(i => Row(i._1.toInt, i._2.toInt))
     var rdd2 = sc.parallelize(Seq(
       (150, 250),
-      (199,300),
+      (190,300),
       (300, 500),
       (500, 700),
       (22000, 22300),
       (15000, 15000)))
-      .map(i => Row(i._1, i._2))
+      .map(i => Row(i._1.toInt, i._2.toInt))
 
 
     var ds1 = sqlContext.createDataFrame(rdd1, schema1)
@@ -76,10 +75,10 @@ class NCListsTestSuite extends FunSuite with DataFrameSuiteBase with BeforeAndAf
     sqlContext.sql(sqlQuery).orderBy("start1").show
     assertDataFrameEquals(
       sqlContext.createDataFrame(sc.parallelize(
-        Row(100, 199, 150, 250) ::
-          Row(100, 199, 199, 300) ::
-          Row(200, 299, 150, 250) ::
-          Row(200, 299, 199, 300) ::
+        Row(100, 190, 150, 250) ::
+          Row(100, 190, 190, 300) ::
+          Row(200, 290, 150, 250) ::
+          Row(200, 290, 190, 300) ::
           Row(400, 600, 300, 500) ::
           Row(400, 600, 500, 700) ::
           Row(10000, 20000, 15000, 15000) ::
@@ -114,10 +113,10 @@ class NCListsTestSuite extends FunSuite with DataFrameSuiteBase with BeforeAndAf
     sqlContext.sql(sqlQuery).orderBy("start1").show
     assertDataFrameEquals(
       sqlContext.createDataFrame(sc.parallelize(
-        Row(150, 250, 100, 199) ::
-          Row(199, 300, 100, 199) ::
-          Row(150, 250, 200, 299) ::
-          Row(199, 300, 200, 299) ::
+        Row(150, 250, 100, 190) ::
+          Row(190, 300, 100, 190) ::
+          Row(150, 250, 200, 290) ::
+          Row(190, 300, 200, 290) ::
           Row(300, 500, 400, 600) ::
           Row(500, 700, 400, 600) ::
           Row(15000, 15000, 10000, 20000) ::
@@ -130,7 +129,7 @@ class NCListsTestSuite extends FunSuite with DataFrameSuiteBase with BeforeAndAf
 
     Metrics.print(writer, Some(metricsListener.metrics.sparkMetrics.stageTimes))
     writer.flush()
-
+    //writer.
 
   }
 }

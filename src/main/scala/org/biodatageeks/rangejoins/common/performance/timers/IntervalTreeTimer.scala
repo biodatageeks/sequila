@@ -1,4 +1,4 @@
-package common.performance.timers
+package org.biodatageeks.rangejoins.common.performance.timers
 
 import org.bdgenomics.utils.instrumentation.Metrics
 

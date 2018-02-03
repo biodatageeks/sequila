@@ -1,4 +1,4 @@
-package genApp
+package org.biodatageeks.rangejoins.genApp
 
 case class Interval[T <% Int](start: T, end: T) {
   def overlaps(other: Interval[T]): Boolean = {

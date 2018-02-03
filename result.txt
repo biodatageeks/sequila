@@ -61,7 +61,7 @@ Timings
 
 
 
-NCList
+org.biodatageeks.rangejoins.methods.NCList
 ======
 
 
@@ -84,7 +84,7 @@ Timings
 | └─ map at NCListsJoinImpl.scala:47          |               - |        6.2 ms |             - |      1 |        6.2 ms |        6.2 ms |        6.2 ms |
 |     └─ function call                        |         59.3 ms |             - |             - | 100000 |        593 ns |        168 ns |      344.8 µs |
 | └─ collect at NCListsJoinImpl.scala:47      |               - |     796.44 ms |             - |      1 |     796.44 ms |     796.44 ms |     796.44 ms |
-| └─ Driver - NCList Build                    |               - | 1 min 47 secs | 1 min 47 secs |      1 | 1 min 47 secs | 1 min 47 secs | 1 min 47 secs |
+| └─ Driver - org.biodatageeks.rangejoins.methods.NCList Build                    |               - | 1 min 47 secs | 1 min 47 secs |      1 | 1 min 47 secs | 1 min 47 secs | 1 min 47 secs |
 | └─ map at NCListsJoinImpl.scala:53          |               - |       6.01 ms |             - |      1 |       6.01 ms |       6.01 ms |       6.01 ms |
 |     └─ function call                        | 10 mins 40 secs |             - |             - | 100000 |       6.41 ms |       3.37 ms |      24.42 ms |
 |         └─ Worker -  NCListLookup           | 10 mins 40 secs |             - |             - | 100000 |       6.41 ms |       3.37 ms |      24.42 ms |

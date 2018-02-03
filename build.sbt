@@ -4,20 +4,17 @@ name := """bdg-spark-granges"""
 
 version := "0.1-SNAPSHOT"
 
-organization := "pl.edu.pw.ii.biodatageeks"
+organization := "org.biodatageeks"
 
 scalaVersion := "2.11.8"
 
-val DEFAULT_SPARK_2_VERSION = "2.2.0"
-val DEFAULT_HADOOP_VERSION = "2.6.0-cdh5.11.0"
+val DEFAULT_SPARK_2_VERSION = "2.2.1"
+val DEFAULT_HADOOP_VERSION = "2.6.5"
 
 
 lazy val sparkVersion = Properties.envOrElse("SPARK_VERSION", DEFAULT_SPARK_2_VERSION)
 lazy val hadoopVersion = Properties.envOrElse("SPARK_HADOOP_VERSION", DEFAULT_HADOOP_VERSION)
 
-libraryDependencies += "org.apache.hadoop" % "hadoop-mapreduce-client-core" % hadoopVersion excludeAll ExclusionRule(organization = "javax.servlet")
-libraryDependencies += "org.apache.hadoop" % "hadoop-client" % hadoopVersion excludeAll ExclusionRule(organization = "javax.servlet")
-libraryDependencies += "org.apache.hadoop" % "hadoop-common" % hadoopVersion excludeAll ExclusionRule(organization = "javax.servlet")
 
 libraryDependencies +=  "org.apache.spark" % "spark-core_2.11" % sparkVersion % "provided"
 
@@ -26,15 +23,12 @@ libraryDependencies += "com.holdenkarau" % "spark-testing-base_2.11" % "2.2.0_0.
 
 libraryDependencies += "org.apache.spark" %% "spark-hive"       % "2.0.0" % "test"
 
-libraryDependencies += "org.apache.hadoop" % "hadoop-mapred" % "0.22.0"
 libraryDependencies += "org.bdgenomics.adam" %% "adam-core-spark2" % "0.22.0"
 libraryDependencies += "org.bdgenomics.adam" %% "adam-apis-spark2" % "0.22.0"
 libraryDependencies += "org.bdgenomics.adam" %% "adam-cli-spark2" % "0.22.0"
 libraryDependencies += "org.bdgenomics.utils" %% "utils-misc-spark2" % "0.2.10"
 libraryDependencies += "org.scala-lang" % "scala-library" % "2.11.8"
 
-//libraryDependencies += "com.breinify" % "brein-time-utilities" % "1.6.4"
-libraryDependencies += "org.scala-lang.modules" %% "scala-java8-compat" % "0.7.0"
 
 libraryDependencies += "org.hammerlab.bdg-utils" %% "cli" % "0.3.0"
 

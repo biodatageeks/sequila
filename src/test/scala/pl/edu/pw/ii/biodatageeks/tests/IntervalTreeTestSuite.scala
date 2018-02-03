@@ -3,11 +3,11 @@ package pl.edu.pw.ii.biodatageeks.tests
 import java.io.{OutputStreamWriter, PrintWriter}
 
 import com.holdenkarau.spark.testing.DataFrameSuiteBase
-import genApp.IntervalTreeJoinStrategy
 import org.biodatageeks.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types.{IntegerType, StructField, StructType}
 import org.bdgenomics.utils.instrumentation.{Metrics, MetricsListener, RecordedMetrics}
+import org.biodatageeks.rangejoins.genApp.IntervalTreeJoinStrategy
 import org.scalatest.{BeforeAndAfter, FunSuite}
 
 class IntervalTreeTestSuite extends FunSuite with DataFrameSuiteBase with BeforeAndAfter{
@@ -128,7 +128,7 @@ class IntervalTreeTestSuite extends FunSuite with DataFrameSuiteBase with Before
   after{
 
     Metrics.print(writer, Some(metricsListener.metrics.sparkMetrics.stageTimes))
-    writer.close()
+    writer.flush()
 
   }
 }

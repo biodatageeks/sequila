@@ -15,17 +15,15 @@
  * limitations under the License.
  */
 
-package org.biodatageeks.rangejoins.IntervalTree
+package org.biodatageeks.rangejoins.genApp
 
-import org.apache.spark.sql.catalyst.InternalRow
-
-class IntervalTreeGenApp[T](allRegions: List[IntervalWithRow[Int]]) extends Serializable {
+class IntervalTree[T](allRegions: List[(Interval[Int], T)]) extends Serializable {
 
   val root = new Node(allRegions)
 
-  def getAllOverlappings(r: IntervalWithRow[Int]) = allOverlappingRegions(r, root)
+  def getAllOverlappings(r: Interval[Int]) = allOverlappingRegions(r, root)
 
-  private def allOverlappingRegions(r: IntervalWithRow[Int], rt: Node): List[(IntervalWithRow[Int])] = {
+  private def allOverlappingRegions(r: Interval[Int], rt: Node): List[(Interval[Int], T)] = {
     if (rt == null) {
       return Nil
     }
@@ -33,9 +31,9 @@ class IntervalTreeGenApp[T](allRegions: List[IntervalWithRow[Int]]) extends Seri
       case x if (rt.inclusiveIntervals == Nil) => Nil // Sometimes a node can have zero intervals
       // Save unnecessary filtering
       case x if (x.end < rt.minPointOfCollection || x.start > rt.maxPointOfCollection) => Nil
-      case _ => rt.inclusiveIntervals.filter(t => r.overlaps(t))
+      case _ => rt.inclusiveIntervals.filter(t => r.overlaps(t._1))
     }
-    if (r.overlaps(IntervalWithRow[Int](rt.centerPoint, rt.centerPoint + 1,r.row))) {
+    if (r.overlaps(Interval[Int](rt.centerPoint, rt.centerPoint + 1))) {
       return resultFromThisNode ++ allOverlappingRegions(r, rt.leftChild) ++
         allOverlappingRegions(r, rt.rightChild)
     }
@@ -47,30 +45,30 @@ class IntervalTreeGenApp[T](allRegions: List[IntervalWithRow[Int]]) extends Seri
     }
     else throw new NoSuchElementException("Interval Tree Exception. Illegal " +
       "comparison for centerpoint " + rt.centerPoint + " " + r.toString + " cmp: " +
-      r.overlaps(IntervalWithRow[Int](rt.centerPoint, rt.centerPoint + 1,r.row)))
+      r.overlaps(Interval[Int](rt.centerPoint, rt.centerPoint + 1)))
   }
 
-  class Node(allRegions: List[IntervalWithRow[Int]]) extends Serializable {
-    private val largestPoint = allRegions.maxBy(_.end).end
-    private val smallestPoint = allRegions.minBy(_.start).start
+  class Node(allRegions: List[(Interval[Int], T)]) extends Serializable {
+    private val largestPoint = allRegions.maxBy(_._1.end)._1.end
+    private val smallestPoint = allRegions.minBy(_._1.start)._1.start
     val centerPoint = smallestPoint + (largestPoint - smallestPoint) / 2
     val (inclusiveIntervals, leftChild, rightChild) = distributeRegions()
     val minPointOfCollection: Int = inclusiveIntervals match {
       case Nil => -1
-      case _ => inclusiveIntervals.minBy(_.start).start
+      case _ => inclusiveIntervals.minBy(_._1.start)._1.start
     }
     val maxPointOfCollection: Int = inclusiveIntervals match {
       case Nil => -1
-      case _ => inclusiveIntervals.maxBy(_.end).end
+      case _ => inclusiveIntervals.maxBy(_._1.end)._1.end
     }
 
     def distributeRegions() = {
-      var leftRegions: List[(IntervalWithRow[Int])] = Nil
-      var rightRegions: List[(IntervalWithRow[Int])] = Nil
-      var centerRegions: List[(IntervalWithRow[Int])] = Nil
+      var leftRegions: List[(Interval[Int], T)] = Nil
+      var rightRegions: List[(Interval[Int], T)] = Nil
+      var centerRegions: List[(Interval[Int], T)] = Nil
       allRegions.foreach(x => {
-        if (x.end < centerPoint) leftRegions ::= x
-        else if (x.start > centerPoint) rightRegions ::= x
+        if (x._1.end < centerPoint) leftRegions ::= x
+        else if (x._1.start > centerPoint) rightRegions ::= x
         else centerRegions ::= x
       })
       val leftChild: Node = leftRegions match {

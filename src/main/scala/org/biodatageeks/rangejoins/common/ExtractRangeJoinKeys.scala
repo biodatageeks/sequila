@@ -1,4 +1,4 @@
-package common
+package org.biodatageeks.rangejoins.common
 
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.catalyst.expressions._
