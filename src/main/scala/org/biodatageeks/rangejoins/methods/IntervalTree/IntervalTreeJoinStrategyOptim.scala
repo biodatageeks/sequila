@@ -15,7 +15,7 @@ import org.apache.spark.sql.catalyst.plans.logical.{Join, LogicalPlan}
 class IntervalTreeJoinStrategyOptim(spark: SparkSession) extends Strategy with Serializable with  PredicateHelper {
   def apply(plan: LogicalPlan): Seq[SparkPlan] = plan match {
     case ExtractRangeJoinKeys(joinType, rangeJoinKeys, left, right) =>
-      IntervalTreeJoinOptim(planLater(left), planLater(right), rangeJoinKeys, spark) :: Nil
+      IntervalTreeJoinOptim(planLater(left), planLater(right), rangeJoinKeys, spark,left,right) :: Nil
     case _ =>
       Nil
   }

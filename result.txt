@@ -185,3 +185,84 @@ Timings
 | └─ show at <console>:35                          |            - |      6.61 ms |           - |      1 |   6.61 ms |   6.61 ms |   6.61 ms |
 |     └─ function call                             |    224.04 µs |            - |           - |      4 |  56.01 µs |  30.73 µs |  92.11 µs |
 +--------------------------------------------------+--------------+--------------+-------------+--------+-----------+-----------+-----------+
+
+
+Optimizer
+==========
+
+
+scala> time(spark.sqlContext.sql(sqlQuery).show)
+18/02/06 20:38:55 WARN IntervalTreeJoinOptimImpl$:
+Broadcast structure size is ~ 1406 kb
+spark.biodatageeks.rangejoin.maxBroadcastSize is set to 1024 kb"
+Using TwoPhaseJoin join method
+
++--------+
+|count(1)|
++--------+
+|  100000|
++--------+
+
+time: 2.774053873 seconds
+
+scala> Metrics.print(writer, Some(metricsListener.metrics.sparkMetrics.stageTimes))
+
+scala> writer.close()
+Timings
++---------------------------------------------------------+--------------+--------------+-------------+--------+-----------+-----------+-----------+
+|                         Metric                          | Worker Total | Driver Total | Driver Only | Count  |   Mean    |    Min    |    Max    |
++---------------------------------------------------------+--------------+--------------+-------------+--------+-----------+-----------+-----------+
+| └─ zipWithIndex at IntervalTreeJoinOptimImpl.scala:96   |            - |     60.78 ms |           - |      1 |  60.78 ms |  60.78 ms |  60.78 ms |
+| └─ map at IntervalTreeJoinOptimImpl.scala:100           |            - |     29.76 ms |           - |      1 |  29.76 ms |  29.76 ms |  29.76 ms |
+|     └─ function call                                    |    182.67 ms |            - |           - | 100000 |   1.83 µs |    373 ns | 937.21 µs |
+| └─ collect at IntervalTreeJoinOptimImpl.scala:101       |            - |    525.79 ms |           - |      1 | 525.79 ms | 525.79 ms | 525.79 ms |
+| └─ Driver - IntervalTreeHTS Build                       |            - |    278.45 ms |   278.45 ms |      1 | 278.45 ms | 278.45 ms | 278.45 ms |
+| └─ mapPartitions at IntervalTreeJoinOptimImpl.scala:112 |            - |      9.22 ms |           - |      1 |   9.22 ms |   9.22 ms |   9.22 ms |
+|     └─ function call                                    |      3.86 ms |            - |           - |      4 | 964.57 µs | 953.83 µs |  977.5 µs |
+| └─ flatMap at IntervalTreeJoinOptimImpl.scala:123       |            - |      7.83 ms |           - |      1 |   7.83 ms |   7.83 ms |   7.83 ms |
+|     └─ function call                                    |     32.18 ms |            - |           - | 100000 |    321 ns |     90 ns |   55.1 µs |
+| └─ reduceByKey at IntervalTreeJoinOptimImpl.scala:124   |            - |     24.44 ms |           - |      1 |  24.44 ms |  24.44 ms |  24.44 ms |
+| └─ map at IntervalTreeJoinOptimImpl.scala:127           |            - |      5.13 ms |           - |      1 |   5.13 ms |   5.13 ms |   5.13 ms |
+|     └─ function call                                    |     24.84 ms |            - |           - | 100000 |    248 ns |     49 ns | 355.09 µs |
+| └─ join at IntervalTreeJoinOptimImpl.scala:128          |            - |     12.98 ms |           - |      1 |  12.98 ms |  12.98 ms |  12.98 ms |
+| └─ flatMap at IntervalTreeJoinOptimImpl.scala:129       |            - |      5.12 ms |           - |      1 |   5.12 ms |   5.12 ms |   5.12 ms |
+|     └─ function call                                    |    125.53 ms |            - |           - | 100000 |   1.25 µs |    346 ns |  22.89 ms |
+| └─ mapPartitions at IntervalTreeJoinOptim.scala:65      |            - |      8.34 ms |           - |      1 |   8.34 ms |   8.34 ms |   8.34 ms |
+|     └─ function call                                    |      76.6 ms |            - |           - |      4 |  19.15 ms |  16.41 ms |  20.74 ms |
+| └─ show at <console>:35                                 |            - |     13.82 ms |           - |      1 |  13.82 ms |  13.82 ms |  13.82 ms |
+|     └─ function call                                    |    630.81 µs |            - |           - |      4 |  157.7 µs | 109.33 µs | 266.26 µs |
++---------------------------------------------------------+--------------+--------------+-------------+--------+-----------+-----------+-----------+
+
+
+scala> time(spark.sqlContext.sql(sqlQuery).show)
+18/02/06 20:42:58 WARN IntervalTreeJoinOptimImpl$:
+Broadcast structure size is ~ 1406 kb
+spark.biodatageeks.rangejoin.maxBroadcastSize is set to 10240 kb"
+Using JointWithRowBroadcast join method
+
++--------+
+|count(1)|
++--------+
+|  100000|
++--------+
+
+time: 1.610301315 seconds
+
+scala> Metrics.print(writer, Some(metricsListener.metrics.sparkMetrics.stageTimes))
+
+scala> writer.close()
+Timings
++--------------------------------------------------------+--------------+--------------+-------------+--------+-----------+-----------+-----------+
+|                         Metric                         | Worker Total | Driver Total | Driver Only | Count  |   Mean    |    Min    |    Max    |
++--------------------------------------------------------+--------------+--------------+-------------+--------+-----------+-----------+-----------+
+| └─ collect at IntervalTreeJoinOptimImpl.scala:69       |            - |     517.2 ms |           - |      1 |  517.2 ms |  517.2 ms |  517.2 ms |
+| └─ Driver - IntervalTreeHTS Build                      |            - |    305.79 ms |   305.79 ms |      1 | 305.79 ms | 305.79 ms | 305.79 ms |
+| └─ mapPartitions at IntervalTreeJoinOptimImpl.scala:78 |            - |     27.93 ms |           - |      1 |  27.93 ms |  27.93 ms |  27.93 ms |
+|     └─ function call                                   |      4.92 ms |            - |           - |      4 |   1.23 ms |   1.22 ms |   1.23 ms |
+| └─ flatMap at IntervalTreeJoinOptimImpl.scala:89       |            - |      9.08 ms |           - |      1 |   9.08 ms |   9.08 ms |   9.08 ms |
+|     └─ function call                                   |     89.75 ms |            - |           - | 100000 |    897 ns |    158 ns | 748.99 µs |
+| └─ mapPartitions at IntervalTreeJoinOptim.scala:65     |            - |         6 ms |           - |      1 |      6 ms |      6 ms |      6 ms |
+|     └─ function call                                   |     73.18 ms |            - |           - |      4 |  18.29 ms |  18.28 ms |  18.31 ms |
+| └─ show at <console>:35                                |            - |      8.27 ms |           - |      1 |   8.27 ms |   8.27 ms |   8.27 ms |
+|     └─ function call                                   |    417.49 µs |            - |           - |      4 | 104.37 µs |  94.11 µs | 132.72 µs |
++--------------------------------------------------------+--------------+--------------+-------------+--------+-----------+-----------+-----------+

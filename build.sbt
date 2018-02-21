@@ -19,6 +19,8 @@ lazy val hadoopVersion = Properties.envOrElse("SPARK_HADOOP_VERSION", DEFAULT_HA
 libraryDependencies +=  "org.apache.spark" % "spark-core_2.11" % sparkVersion % "provided"
 
 libraryDependencies +=  "org.apache.spark" % "spark-sql_2.11" % sparkVersion
+libraryDependencies +=  "org.apache.spark" %% "spark-hive" % sparkVersion
+
 libraryDependencies += "com.holdenkarau" % "spark-testing-base_2.11" % "2.2.0_0.7.4" % "test" excludeAll ExclusionRule(organization = "javax.servlet") excludeAll (ExclusionRule("org.apache.hadoop"))
 
 libraryDependencies += "org.apache.spark" %% "spark-hive"       % "2.0.0" % "test"
@@ -74,6 +76,8 @@ assemblyMergeStrategy in assembly := {
   case "META-INF/mimetypes.default" => MergeStrategy.last
   case "plugin.properties" => MergeStrategy.last
   case "log4j.properties" => MergeStrategy.last
+  case "parquet.thrift" => MergeStrategy.last
+  case "plugin.xml" => MergeStrategy.last
 
   case x =>
     val oldStrategy = (assemblyMergeStrategy in assembly).value

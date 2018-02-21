@@ -26,10 +26,16 @@ import org.bdgenomics.utils.instrumentation.Metrics
 import org.bdgenomics.utils.instrumentation.{MetricsListener, RecordedMetrics}
 import org.apache.spark.rdd.MetricsContext._
 import org.biodatageeks.rangejoins.common.performance.timers.IntervalTreeTimer._
+
 import scala.collection.JavaConversions._
 import htsjdk.samtools.util.IntervalTree
+import org.apache.log4j.{LogManager, Logger}
+import org.biodatageeks.rangejoins.methods.IntervalTree.IntervalTreeHTS
+import org.biodatageeks.rangejoins.optimizer.{JoinOptimizer, RangeJoinMethod}
 
 object IntervalTreeJoinOptimImpl extends Serializable {
+
+  val logger =  Logger.getLogger(this.getClass.getCanonicalName)
 
   /**
     * Multi-joins together two RDDs that contain objects that map to reference regions.
@@ -42,41 +48,89 @@ object IntervalTreeJoinOptimImpl extends Serializable {
     */
   def overlapJoin(sc: SparkContext,
                   rdd1: RDD[(IntervalWithRow[Int])],
-                  rdd2: RDD[(IntervalWithRow[Int])]): RDD[(InternalRow, InternalRow)] = {
+                  rdd2: RDD[(IntervalWithRow[Int])], rdd1Count:Long ): RDD[(InternalRow, InternalRow)] = {
 
     /* Collect only Reference regions and the index of indexedRdd1 */
 
 
+    /**
+      * Broadcast join pattern - use if smaller RDD is narrow otherwise follow 2-step join operation
+      * first zipWithIndex and then perform a regular join
+      */
 
+    val optimizer = new JoinOptimizer(sc, rdd1, rdd1Count)
+    sc.setLogLevel("WARN")
+    logger.warn(optimizer.debugInfo )
 
+    if (optimizer.getRangeJoinMethod == RangeJoinMethod.JointWithRowBroadcast) {
 
-
-  val localIntervals =
-    rdd1
-    .instrument()
-    .collect()
-  val intervalTree = IntervalTreeHTSBuild.time {
-    val tree = new IntervalTreeHTS[InternalRow]()
-    localIntervals
-      .foreach(r => tree.put(r.start, r.end, r.row))
-    sc.broadcast(tree)
-  }
-    val kvrdd2 = rdd2
-      .instrument()
-      .mapPartitions(p=>{
-        p.map(r => {
-          IntervalTreeHTSLookup.time {
-            val record =
-              intervalTree.value.overlappers(r.start, r.end)
-
-            record
-              .toIterator
-              .map(k => (k.getValue, r.row))
-          }
+      val localIntervals =
+        rdd1
+        .instrument()
+        .collect()
+      val intervalTree = IntervalTreeHTSBuild.time {
+        val tree = new IntervalTreeHTS[InternalRow]()
+        localIntervals
+          .foreach(r => tree.put(r.start, r.end, r.row))
+        sc.broadcast(tree)
+      }
+      val kvrdd2 = rdd2
+        .instrument()
+        .mapPartitions(p => {
+          p.map(r => {
+            IntervalTreeHTSLookup.time {
+              val record =
+                intervalTree.value.overlappers(r.start, r.end)
+              record
+                .toIterator
+                .map(k => (k.getValue, r.row))
+            }
+          })
         })
-      })
-      .flatMap(r=>r)
+        .flatMap(r => r)
       kvrdd2
+    }
+    else {
+
+      val intervalsWithId =
+        rdd1
+        .instrument()
+        .zipWithIndex()
+
+      val localIntervals =
+        intervalsWithId
+            .map(r=>((r._1.start,r._1.end),r._2) )
+        .collect()
+
+      /* Create and broadcast an interval tree */
+      val intervalTree = IntervalTreeHTSBuild.time {
+        val tree = new IntervalTreeHTS[Long]()
+        localIntervals
+          .foreach(r => tree.put(r._1._1,r._1._2,r._2))
+        sc.broadcast(tree)
+      }
+      val kvrdd2: RDD[(Long, Iterable[InternalRow])] = rdd2
+        .instrument()
+        .mapPartitions(p => {
+          p.map(r => {
+            IntervalTreeHTSLookup.time {
+              val record =
+                intervalTree.value.overlappers(r.start, r.end)
+              record
+                .toIterator
+                .map(k => (k.getValue,Iterable(r.row)))
+            }
+          })
+        })
+        .flatMap(r => r)
+        .reduceByKey((a,b) => a ++ b)
+
+      intervalsWithId
+        .map(_.swap)
+        .join(kvrdd2)
+        .flatMap(l => l._2._2.map(r => (l._2._1.row, r)))
+    }
+
   }
 
 }

@@ -52,7 +52,7 @@ class IntervalTreeTestSuite extends FunSuite with DataFrameSuiteBase with Before
   test("range join select one field - left larger") {
     val sqlQuery = "select start1 from s1 JOIN s2 on (end1>=start2 and start1<=end2 )"
     println(sqlQuery)
-    sqlContext.sql(sqlQuery).explain
+    sqlContext.sql(sqlQuery).explain(false)
     sqlContext.sql(sqlQuery).orderBy("start1").show
     assertDataFrameEquals(
       sqlContext.createDataFrame(sc.parallelize(

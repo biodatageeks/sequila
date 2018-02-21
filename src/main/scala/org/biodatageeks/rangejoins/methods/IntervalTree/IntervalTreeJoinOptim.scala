@@ -23,13 +23,15 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.expressions.codegen.GenerateUnsafeRowJoiner
+import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.execution.{SparkPlan, _}
+import org.apache.spark.sql.internal.SQLConf
 
 @DeveloperApi
 case class IntervalTreeJoinOptim(left: SparkPlan,
                                  right: SparkPlan,
                                  condition: Seq[Expression],
-                                 context: SparkSession) extends BinaryExecNode {
+                                 context: SparkSession,leftLogicalPlan: LogicalPlan, righLogicalPlan: LogicalPlan) extends BinaryExecNode {
   def output = left.output ++ right.output
 
   lazy val (buildPlan, streamedPlan) = (left, right)
@@ -58,8 +60,22 @@ case class IntervalTreeJoinOptim(left: SparkPlan,
     })
     /* As we are going to collect v1 and build an interval tree on its intervals,
     make sure that its size is the smaller one. */
-    if (v1.count <= v2.count) {
-      val v3 = IntervalTreeJoinOptimImpl.overlapJoin(context.sparkContext, v1kv, v2kv)
+
+    val conf = new SQLConf()
+    val v1Size =
+      if(leftLogicalPlan
+      .stats(conf)
+      .sizeInBytes >0) leftLogicalPlan.stats(conf).sizeInBytes.toLong
+      else
+        v1.count
+
+    val v2Size = if(righLogicalPlan
+      .stats(conf)
+      .sizeInBytes >0) righLogicalPlan.stats(conf).sizeInBytes.toLong
+    else
+      v2.count
+    if ( v1Size <= v2Size ) {
+      val v3 = IntervalTreeJoinOptimImpl.overlapJoin(context.sparkContext, v1kv, v2kv,v1.count())
      v3.mapPartitions(
        p => {
          val joiner = GenerateUnsafeRowJoiner.create(left.schema, right.schema)
@@ -72,7 +88,7 @@ case class IntervalTreeJoinOptim(left: SparkPlan,
 
     }
     else {
-      val v3 = IntervalTreeJoinOptimImpl.overlapJoin(context.sparkContext, v2kv, v1kv)
+      val v3 = IntervalTreeJoinOptimImpl.overlapJoin(context.sparkContext, v2kv, v1kv, v2.count())
       v3.mapPartitions(
         p => {
           val joiner = GenerateUnsafeRowJoiner.create(left.schema, right.schema)
