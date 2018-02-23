@@ -5,7 +5,7 @@ import java.io.{OutputStreamWriter, PrintWriter}
 import com.holdenkarau.spark.testing.DataFrameSuiteBase
 import org.biodatageeks.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
 import org.apache.spark.sql.Row
-import org.apache.spark.sql.types.{IntegerType, StructField, StructType}
+import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
 import org.bdgenomics.utils.instrumentation.{Metrics, MetricsListener, RecordedMetrics}
 import org.biodatageeks.rangejoins.genApp.IntervalTreeJoinStrategy
 import org.scalatest.{BeforeAndAfter, FunSuite}
@@ -13,9 +13,12 @@ import org.scalatest.{BeforeAndAfter, FunSuite}
 class IntervalTreeTestSuite extends FunSuite with DataFrameSuiteBase with BeforeAndAfter{
   val schema1 = StructType(Seq(StructField("start1",IntegerType ), StructField("end1", IntegerType)))
   val schema2 = StructType(Seq(StructField("start2", IntegerType), StructField("end2", IntegerType)))
-  val schema3 = StructType(Seq(StructField("start1", IntegerType), StructField("end1", IntegerType), StructField("start2", IntegerType), StructField("end2", IntegerType)))
-  val schema4 = StructType(Seq(StructField("start1", IntegerType)))
-  val schema5 = StructType(Seq(StructField("start2", IntegerType), StructField("end2", IntegerType), StructField("start1", IntegerType), StructField("end1", IntegerType)))
+  val schema3 = StructType(Seq(StructField("chr1",StringType ),StructField("start1",IntegerType ), StructField("end1", IntegerType)))
+  val schema4 = StructType(Seq(StructField("chr2",StringType ),StructField("start2", IntegerType), StructField("end2", IntegerType)))
+
+  val schema5 = StructType(Seq(StructField("start1", IntegerType), StructField("end1", IntegerType), StructField("start2", IntegerType), StructField("end2", IntegerType)))
+  val schema6 = StructType(Seq(StructField("start1", IntegerType)))
+  val schema7 = StructType(Seq(StructField("start2", IntegerType), StructField("end2", IntegerType), StructField("start1", IntegerType), StructField("end1", IntegerType)))
 
   val metricsListener = new MetricsListener(new RecordedMetrics())
   val writer = new PrintWriter(new OutputStreamWriter(System.out))
@@ -42,11 +45,49 @@ class IntervalTreeTestSuite extends FunSuite with DataFrameSuiteBase with Before
       (15000, 15000)))
       .map(i => Row(i._1.toInt, i._2.toInt))
 
+    var rdd3 = sc.parallelize(Seq(
+      ("1",100, 190),
+      ("1",200, 290),
+      ("1",400, 600),
+      ("1",10000, 20000),
+      ("1",22100, 22100),
+      ("2",100, 190),
+      ("2",200, 290),
+      ("2",400, 600),
+      ("2",10000, 20000),
+      ("2",22100, 22100)))
+      .map(i => Row(i._1,i._2.toInt, i._3.toInt))
+    var rdd4 = sc.parallelize(Seq(
+      ("1",150, 250),
+      ("1",190,300),
+      ("1",300, 500),
+      ("1",500, 700),
+      ("1",22000, 22300),
+      ("1",15000, 15000),
+      ("2",150, 250),
+      ("2",190,300),
+      ("2",300, 500),
+      ("2",500, 700),
+      ("2",22000, 22300),
+      ("2",15000, 15000)
+    ))
+      .map(i => Row(i._1,i._2.toInt, i._3.toInt))
 
     var ds1 = sqlContext.createDataFrame(rdd1, schema1)
     ds1.createOrReplaceTempView("s1")
     var ds2 = sqlContext.createDataFrame(rdd2, schema2)
     ds2.createOrReplaceTempView("s2")
+    var ds3 = sqlContext.createDataFrame(rdd3, schema3)
+    ds3.createOrReplaceTempView("s3")
+    var ds4 = sqlContext.createDataFrame(rdd4, schema4)
+    ds4.createOrReplaceTempView("s4")
+  }
+
+  test("range join chromosome") {
+    val sqlQuery = "select * from s4 JOIN s3 on (chr1=chr2 and (end2>=start1 and start2<=end1 ))"
+    println(sqlQuery)
+    sqlContext.sql(sqlQuery).explain
+    sqlContext.sql(sqlQuery).orderBy("start1").show
   }
 
   test("range join select one field - left larger") {
@@ -64,7 +105,7 @@ class IntervalTreeTestSuite extends FunSuite with DataFrameSuiteBase with Before
           Row(400) ::
           Row(10000) ::
           Row(22100) ::
-          Nil),schema4).orderBy("start1"),
+          Nil),schema6).orderBy("start1"),
       sqlContext.sql(sqlQuery).orderBy("start1"))
   }
 
@@ -83,7 +124,7 @@ class IntervalTreeTestSuite extends FunSuite with DataFrameSuiteBase with Before
           Row(400, 600, 500, 700) ::
           Row(10000, 20000, 15000, 15000) ::
           Row(22100, 22100, 22000, 22300) ::
-          Nil),schema3).orderBy("start1"),
+          Nil),schema5).orderBy("start1"),
       sqlContext.sql(sqlQuery).orderBy("start1"))
   }
 
@@ -102,7 +143,7 @@ class IntervalTreeTestSuite extends FunSuite with DataFrameSuiteBase with Before
           Row(400) ::
           Row(10000) ::
           Row(22100) ::
-          Nil),schema4).orderBy("start1"),
+          Nil),schema6).orderBy("start1"),
       sqlContext.sql(sqlQuery).orderBy("start1"))
   }
 
@@ -121,7 +162,7 @@ class IntervalTreeTestSuite extends FunSuite with DataFrameSuiteBase with Before
           Row(500, 700, 400, 600) ::
           Row(15000, 15000, 10000, 20000) ::
           Row(22000, 22300, 22100, 22100) ::
-          Nil),schema5).orderBy("start1"),
+          Nil),schema7).orderBy("start1"),
       sqlContext.sql(sqlQuery).orderBy("start1"))
   }
 

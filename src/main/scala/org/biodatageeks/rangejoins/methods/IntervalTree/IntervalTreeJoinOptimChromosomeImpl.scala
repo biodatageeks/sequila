@@ -15,27 +15,21 @@
  * limitations under the License.
  */
 
-package org.biodatageeks.rangejoins.IntervalTree
+package org.biodatageeks.rangejoins.methods.IntervalTree
 
-
-
+import org.apache.log4j.Logger
 import org.apache.spark.SparkContext
-import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.catalyst.InternalRow
-import org.bdgenomics.utils.instrumentation.Metrics
-import org.bdgenomics.utils.instrumentation.{MetricsListener, RecordedMetrics}
 import org.apache.spark.rdd.MetricsContext._
+import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.Row
+import org.apache.spark.sql.catalyst.InternalRow
+import org.biodatageeks.rangejoins.IntervalTree.{Interval, IntervalWithRow}
 import org.biodatageeks.rangejoins.common.performance.timers.IntervalTreeTimer._
+import org.biodatageeks.rangejoins.optimizer.{JoinOptimizer, JoinOptimizerChromosome, RangeJoinMethod}
 
 import scala.collection.JavaConversions._
-import htsjdk.samtools.util.IntervalTree
-import org.apache.log4j.{LogManager, Logger}
-import org.biodatageeks.rangejoins.methods.IntervalTree.IntervalTreeHTS
-import org.biodatageeks.rangejoins.optimizer.{JoinOptimizer, RangeJoinMethod}
 
-object IntervalTreeJoinOptimImpl extends Serializable {
-
-  val logger =  Logger.getLogger(this.getClass.getCanonicalName)
+object IntervalTreeJoinOptimChromosomeImpl extends Serializable {
 
   /**
     * Multi-joins together two RDDs that contain objects that map to reference regions.
@@ -47,8 +41,10 @@ object IntervalTreeJoinOptimImpl extends Serializable {
     * @param rdd1 RDD of values on which we build an interval tree. Assume |rdd1| < |rdd2|
     */
   def overlapJoin(sc: SparkContext,
-                  rdd1: RDD[(IntervalWithRow[Int])],
-                  rdd2: RDD[(IntervalWithRow[Int])], rdd1Count:Long ): RDD[(InternalRow, InternalRow)] = {
+                  rdd1: RDD[(String,Interval[Int],InternalRow)],
+                  rdd2: RDD[(String,Interval[Int],InternalRow)], rdd1Count:Long): RDD[(InternalRow, InternalRow)] = {
+
+    val logger =  Logger.getLogger(this.getClass.getCanonicalName)
 
     /* Collect only Reference regions and the index of indexedRdd1 */
 
@@ -58,7 +54,7 @@ object IntervalTreeJoinOptimImpl extends Serializable {
       * first zipWithIndex and then perform a regular join
       */
 
-    val optimizer = new JoinOptimizer(sc, rdd1, rdd1Count)
+    val optimizer = new JoinOptimizerChromosome(sc, rdd1, rdd1Count)
     sc.setLogLevel("WARN")
     logger.warn(optimizer.debugInfo )
 
@@ -68,28 +64,30 @@ object IntervalTreeJoinOptimImpl extends Serializable {
         rdd1
         .instrument()
         .collect()
-      val intervalTree = IntervalTreeHTSBuild.time {
-        val tree = new IntervalTreeHTS[InternalRow]()
-        localIntervals
-          .foreach(r => tree.put(r.start, r.end, r.row))
-        sc.broadcast(tree)
-      }
-      val kvrdd2 = rdd2
-        .instrument()
-        .mapPartitions(p => {
-          p.map(r => {
+  val intervalTree = IntervalTreeHTSBuild.time {
+    val tree = new IntervalTreeHTSChromosome[InternalRow](localIntervals.toList)
+    sc.broadcast(tree)
+  }
+    val kvrdd2 = rdd2
+      .instrument()
+        .mapPartitions(p=> {
+          p.map(r=> {
             IntervalTreeHTSLookup.time {
               val record =
-                intervalTree.value.overlappers(r.start, r.end)
+                intervalTree.value.getIntervalTreeByChromosome(r._1)
+                  .overlappers(r._2.start, r._2.end)
+
               record
                 .toIterator
-                .map(k => (k.getValue, r.row))
+                .map(k => (k.getValue, r._3
+                ))
             }
           })
         })
-        .flatMap(r => r)
+      .flatMap(r => r)
       kvrdd2
     }
+
     else {
 
       val intervalsWithId =
@@ -99,14 +97,12 @@ object IntervalTreeJoinOptimImpl extends Serializable {
 
       val localIntervals =
         intervalsWithId
-            .map(r=>((r._1.start,r._1.end),r._2) )
+            .map(r=>(r._1._1,r._1._2,r._2) )
         .collect()
 
       /* Create and broadcast an interval tree */
       val intervalTree = IntervalTreeHTSBuild.time {
-        val tree = new IntervalTreeHTS[Long]()
-        localIntervals
-          .foreach(r => tree.put(r._1._1,r._1._2,r._2))
+        val tree = new IntervalTreeHTSChromosome[Long](localIntervals.toList)
         sc.broadcast(tree)
       }
       val kvrdd2: RDD[(Long, Iterable[InternalRow])] = rdd2
@@ -114,12 +110,12 @@ object IntervalTreeJoinOptimImpl extends Serializable {
         .mapPartitions(p => {
           p.map(r => {
             IntervalTreeHTSLookup.time {
-
               val record =
-                intervalTree.value.overlappers(r.start, r.end)
+                intervalTree.value.getIntervalTreeByChromosome(r._1)
+                  .overlappers(r._2.start, r._2.end)
               record
                 .toIterator
-                .map(k => (k.getValue,Iterable(r.row)))
+                .map(k => (k.getValue,Iterable(r._3)))
             }
           })
         })
@@ -129,7 +125,7 @@ object IntervalTreeJoinOptimImpl extends Serializable {
       intervalsWithId
         .map(_.swap)
         .join(kvrdd2)
-        .flatMap(l => l._2._2.map(r => (l._2._1.row, r)))
+        .flatMap(l => l._2._2.map(r => (l._2._1._3, r)))
     }
 
   }
