@@ -36,12 +36,15 @@ libraryDependencies += "org.hammerlab.bdg-utils" %% "cli" % "0.3.0"
 
 libraryDependencies += "com.github.samtools" % "htsjdk" % "2.14.1"
 
-fork := true
-
+//fork := true
+fork in Test := true
+parallelExecution in Test := false
+javaOptions in test += "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=9999"
 javaOptions in run ++= Seq(
   "-Dlog4j.debug=true",
   "-Dlog4j.configuration=log4j.properties")
 
+javaOptions ++= Seq("-Xms512M", "-Xmx2048M", "-XX:+CMSClassUnloadingEnabled")
 
 updateOptions := updateOptions.value.withLatestSnapshots(false)
 

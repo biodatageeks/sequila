@@ -16,9 +16,10 @@ object ExtractRangeJoinKeysWithEquality extends Logging with  PredicateHelper {
     case join @ Join(left, right, joinType, condition) =>
       logDebug(s"Considering join on: $condition")
       val predicates = condition.map(splitConjunctivePredicates).getOrElse(Nil)
+//      predicates.foreach(r=>println(r.simpleString))
       /* Look for expressions a < b and c < d where a,b and c,d belong to the same LogicalPlan
     **/
-      println(condition.head)
+      //println(condition.head)
       condition.head match {
         case And(And(EqualTo(l3,r3),LessThanOrEqual(l1, g1)), LessThanOrEqual(l2, g2)) =>
           Some((joinType,
@@ -84,6 +85,6 @@ object ExtractRangeJoinKeysWithEquality extends Logging with  PredicateHelper {
       rightEquality = l3
     }
 
-    List(leftStart, leftEnd, rightStart, rightEnd,leftEquality,rightEquality).toSeq
+    List(leftStart, leftEnd, rightStart, rightEnd,leftEquality,rightEquality)
   }
 }

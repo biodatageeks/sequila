@@ -4,7 +4,7 @@ import java.io.{OutputStreamWriter, PrintWriter}
 
 import com.holdenkarau.spark.testing.DataFrameSuiteBase
 import org.biodatageeks.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
-import org.apache.spark.sql.Row
+import org.apache.spark.sql.{Row, SparkSession}
 import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
 import org.bdgenomics.utils.instrumentation.{Metrics, MetricsListener, RecordedMetrics}
 import org.biodatageeks.rangejoins.genApp.IntervalTreeJoinStrategy
@@ -24,7 +24,13 @@ class IntervalTreeTestSuite extends FunSuite with DataFrameSuiteBase with Before
   val writer = new PrintWriter(new OutputStreamWriter(System.out))
 
   before {
+    val spark = SparkSession
+      .builder()
+      .appName("SparkSessionZipsExample")
+      .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+      .getOrCreate()
     spark.experimental.extraStrategies = new IntervalTreeJoinStrategyOptim(spark) :: Nil
+
     Metrics.initialize(sc)
 
     sc.addSparkListener(metricsListener)
@@ -55,12 +61,14 @@ class IntervalTreeTestSuite extends FunSuite with DataFrameSuiteBase with Before
       ("2",200, 290),
       ("2",400, 600),
       ("2",10000, 20000),
-      ("2",22100, 22100)))
+      ("2",22100, 22100)
+      )
+      )
       .map(i => Row(i._1,i._2.toInt, i._3.toInt))
     var rdd4 = sc.parallelize(Seq(
       ("1",150, 250),
       ("1",190,300),
-      ("1",300, 500),
+      ("1",300, 501),
       ("1",500, 700),
       ("1",22000, 22300),
       ("1",15000, 15000),
@@ -79,15 +87,25 @@ class IntervalTreeTestSuite extends FunSuite with DataFrameSuiteBase with Before
     ds2.createOrReplaceTempView("s2")
     var ds3 = sqlContext.createDataFrame(rdd3, schema3)
     ds3.createOrReplaceTempView("s3")
-    var ds4 = sqlContext.createDataFrame(rdd4, schema4)
+    var ds4 = sqlContext.createDataFrame(rdd4, schema3)
     ds4.createOrReplaceTempView("s4")
   }
 
   test("range join chromosome") {
-    val sqlQuery = "select * from s4 JOIN s3 on (chr1=chr2 and (end2>=start1 and start2<=end1 ))"
+
+    spark.experimental.extraStrategies = Nil
+    val sqlQuery = "select s3.chr1 as s3_chr,s3.start1 as s3_start1, s3.*,s4.* from s4 JOIN s3 on (s3.chr1=s4.chr1 and (s3.end1>=s4.start1 and s3.start1<=s4.end1 ))"
+    val sqlQuery2 = "select s3.chr1 as s3_chr,s3.start1 as s3_start1, s3.*,s4.* from s3 JOIN s4 on (s3.chr1=s4.chr1 and (s3.end1>=s4.start1 and s3.start1<=s4.end1 ))"
+    val df1 = spark.sql(sqlQuery).cache()
+    df1.count
+    spark.experimental.extraStrategies = new IntervalTreeJoinStrategyOptim(spark) :: Nil
+    val df2 = spark.sql(sqlQuery2).cache()
+    sqlContext.sql(sqlQuery2).explain
+    df2.count
     println(sqlQuery)
+    assertDataFrameEquals(df1.orderBy("s3_chr","s3_start1"),df2.orderBy("s3_chr","s3_start1"))
     sqlContext.sql(sqlQuery).explain
-    sqlContext.sql(sqlQuery).orderBy("start1").show
+    sqlContext.sql(sqlQuery).orderBy("s3_start1").show
   }
 
   test("range join select one field - left larger") {

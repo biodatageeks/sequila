@@ -30,9 +30,11 @@ import org.biodatageeks.rangejoins.IntervalTree.{Interval, IntervalTreeJoinOptim
 
 @DeveloperApi
 case class IntervalTreeJoinOptimChromosome(left: SparkPlan,
-                                 right: SparkPlan,
-                                 condition: Seq[Expression],
-                                 context: SparkSession,leftLogicalPlan: LogicalPlan, righLogicalPlan: LogicalPlan) extends BinaryExecNode {
+                                           right: SparkPlan,
+                                           condition: Seq[Expression],
+                                           context: SparkSession, leftLogicalPlan: LogicalPlan,
+                                           rightLogicalPlan: LogicalPlan,
+                                           minOverlap: Int, maxGap: Int) extends BinaryExecNode {
   def output = left.output ++ right.output
 
   lazy val (buildPlan, streamedPlan) = (left, right)
@@ -41,58 +43,57 @@ case class IntervalTreeJoinOptimChromosome(left: SparkPlan,
     List(condition(2), condition(3),condition(5)))
 
   @transient lazy val buildKeyGenerator = new InterpretedProjection(buildKeys, buildPlan.output)
-  @transient lazy val streamKeyGenerator = new InterpretedProjection(streamedKeys,
-    streamedPlan.output)
+  @transient lazy val streamKeyGenerator = new InterpretedProjection(streamedKeys, streamedPlan.output)
 
   protected override def doExecute(): RDD[InternalRow] = {
     val v1 = left.execute()
     val v1kv = v1.map(x => {
       val v1Key = buildKeyGenerator(x)
-
-      (v1Key.getString(2), new Interval[Int](v1Key.getInt(0), v1Key.getInt(1)),
+      (v1Key.getString(2), (new Interval[Int](v1Key.getInt(0), v1Key.getInt(1))),
         x )
 
     })
     val v2 = right.execute()
     val v2kv = v2.map(x => {
       val v2Key = streamKeyGenerator(x)
-      (v2Key.getString(2), new Interval[Int](v2Key.getInt(0), v2Key.getInt(1)),
+      (v2Key.getString(2), (new Interval[Int](v2Key.getInt(0), v2Key.getInt(1))),
         x )
     })
     /* As we are going to collect v1 and build an interval tree on its intervals,
     make sure that its size is the smaller one. */
 
     val conf = new SQLConf()
-    val v1Size =
-      if(leftLogicalPlan
-      .stats(conf)
-      .sizeInBytes >0) leftLogicalPlan.stats(conf).sizeInBytes.toLong
+    val v1Size = {
+      if (leftLogicalPlan
+        .stats(conf)
+        .sizeInBytes != Long.MaxValue) leftLogicalPlan.stats(conf).sizeInBytes.toLong
       else
         v1.count
+    }
 
-    val v2Size = if(righLogicalPlan
+    val v2Size = {if(rightLogicalPlan
       .stats(conf)
-      .sizeInBytes >0) righLogicalPlan.stats(conf).sizeInBytes.toLong
+      .sizeInBytes != Long.MaxValue) rightLogicalPlan.stats(conf).sizeInBytes.toLong
     else
       v2.count
-    if ( v1Size <= v2Size ) {
-      val v3 = IntervalTreeJoinOptimChromosomeImpl.overlapJoin(context.sparkContext, v1kv, v2kv,v1.count())
+    }
+    if ( v1Size < v2Size ) {
+      val v3 = IntervalTreeJoinOptimChromosomeImpl.overlapJoin(context.sparkContext, v1kv, v2kv,
+        v1.count(), minOverlap, maxGap) //FIXME:can be further optimized!
      v3.mapPartitions(
        p => {
          val joiner = GenerateUnsafeRowJoiner.create(left.schema, right.schema)
          p.map(r=>joiner.join(r._1.asInstanceOf[UnsafeRow],r._2.asInstanceOf[UnsafeRow]))
        }
 
-
-
      )
 
     }
     else {
-      val v3 = IntervalTreeJoinOptimChromosomeImpl.overlapJoin(context.sparkContext, v2kv, v1kv,v2.count())
+      val v3 = IntervalTreeJoinOptimChromosomeImpl.overlapJoin(context.sparkContext, v2kv, v1kv,v2.count(), minOverlap, maxGap)
       v3.mapPartitions(
         p => {
-          val joiner = GenerateUnsafeRowJoiner.create(left.schema, right.schema)
+          val joiner = GenerateUnsafeRowJoiner.create(right.schema, left.schema)
           p.map(r=>joiner.join(r._2.asInstanceOf[UnsafeRow],r._1.asInstanceOf[UnsafeRow]))
         }
 

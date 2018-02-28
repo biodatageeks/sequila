@@ -27,6 +27,7 @@ package org.biodatageeks.rangejoins.methods.IntervalTree;
  */
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -135,7 +136,7 @@ public class IntervalTreeHTS<V> implements Iterable<IntervalTreeHTS.Node<V>>, Se
             final int cmpVal = node.compare(start,end);
             if ( cmpVal == 0 )
             {
-                result = node.getValue();
+                result = node.getValue().get(0);
                 mRoot = node.remove(mRoot);
                 break;
             }
@@ -459,7 +460,7 @@ public class IntervalTreeHTS<V> implements Iterable<IntervalTreeHTS.Node<V>>, Se
         {
             mStart = start;
             mEnd = end;
-            mValue = value;
+            mValue.add(value);
             mSize = 1;
             mMaxEnd = mEnd;
             mIsBlack = true;
@@ -470,7 +471,7 @@ public class IntervalTreeHTS<V> implements Iterable<IntervalTreeHTS.Node<V>>, Se
             mParent = parent;
             mStart = start;
             mEnd = end;
-            mValue = value;
+            mValue.add(value);
             mMaxEnd = mEnd;
             mSize = 1;
         }
@@ -507,15 +508,15 @@ public class IntervalTreeHTS<V> implements Iterable<IntervalTreeHTS.Node<V>>, Se
             return mStart == interval.getEnd() + 1 || mEnd + 1 == interval.getStart();
         }
 
-        public V1 getValue()
+        public ArrayList<V1> getValue()
         {
             return mValue;
         }
 
         public V1 setValue( final V1 value )
         {
-            final V1 result = mValue;
-            mValue = value;
+            final V1 result = mValue.get(0);
+            mValue.add(value);
             return result;
         }
 
@@ -1060,7 +1061,7 @@ public class IntervalTreeHTS<V> implements Iterable<IntervalTreeHTS.Node<V>>, Se
         private Node<V1> mRight;
         private final int mStart;
         private final int mEnd;
-        private V1 mValue;
+        private ArrayList<V1> mValue = new ArrayList<>();
         private int mSize;
         private int mMaxEnd;
         private boolean mIsBlack;
@@ -1230,7 +1231,7 @@ public class IntervalTreeHTS<V> implements Iterable<IntervalTreeHTS.Node<V>>, Se
         @Override
         public V1 next()
         {
-            return mItr.next().getValue();
+            return mItr.next().getValue().get(0);
         }
 
         @Override

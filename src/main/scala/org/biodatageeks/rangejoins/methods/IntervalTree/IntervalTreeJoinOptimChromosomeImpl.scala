@@ -17,18 +17,22 @@
 
 package org.biodatageeks.rangejoins.methods.IntervalTree
 
+import org.apache.calcite.schema.Schema
 import org.apache.log4j.Logger
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.MetricsContext._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.catalyst.InternalRow
+import org.apache.spark.sql.types.StructType
 import org.biodatageeks.rangejoins.IntervalTree.{Interval, IntervalWithRow}
 import org.biodatageeks.rangejoins.common.performance.timers.IntervalTreeTimer._
 import org.biodatageeks.rangejoins.optimizer.{JoinOptimizer, JoinOptimizerChromosome, RangeJoinMethod}
 
 import scala.collection.JavaConversions._
 
+
+case class InternalRowPacker (ir: InternalRow)
 object IntervalTreeJoinOptimChromosomeImpl extends Serializable {
 
   /**
@@ -42,7 +46,8 @@ object IntervalTreeJoinOptimChromosomeImpl extends Serializable {
     */
   def overlapJoin(sc: SparkContext,
                   rdd1: RDD[(String,Interval[Int],InternalRow)],
-                  rdd2: RDD[(String,Interval[Int],InternalRow)], rdd1Count:Long): RDD[(InternalRow, InternalRow)] = {
+                  rdd2: RDD[(String,Interval[Int],InternalRow)], rdd1Count:Long,
+                  minOverlap:Int, maxGap: Int): RDD[(InternalRow, InternalRow)] = {
 
     val logger =  Logger.getLogger(this.getClass.getCanonicalName)
 
@@ -63,7 +68,9 @@ object IntervalTreeJoinOptimChromosomeImpl extends Serializable {
       val localIntervals =
         rdd1
         .instrument()
+        .map(r=>(r._1,Interval(r._2.start - maxGap,r._2.end + maxGap), r._3.copy()))
         .collect()
+
   val intervalTree = IntervalTreeHTSBuild.time {
     val tree = new IntervalTreeHTSChromosome[InternalRow](localIntervals.toList)
     sc.broadcast(tree)
@@ -73,14 +80,15 @@ object IntervalTreeJoinOptimChromosomeImpl extends Serializable {
         .mapPartitions(p=> {
           p.map(r=> {
             IntervalTreeHTSLookup.time {
-              val record =
-                intervalTree.value.getIntervalTreeByChromosome(r._1)
-                  .overlappers(r._2.start, r._2.end)
-
-              record
-                .toIterator
-                .map(k => (k.getValue, r._3
-                ))
+                intervalTree.value.getIntervalTreeByChromosome(r._1) match {
+                  case Some(t) => {
+                    val record = t.overlappers(r._2.start, r._2.end)
+                      record
+                        .filter(f=>calcOverlap(r._2.start,r._2.end,f.getStart,f.getEnd) >= minOverlap)
+                        .flatMap(k => (k.getValue.map(s=>(s,r._3))) )
+                  }
+                  case _ => Iterator.empty
+                }
             }
           })
         })
@@ -110,12 +118,17 @@ object IntervalTreeJoinOptimChromosomeImpl extends Serializable {
         .mapPartitions(p => {
           p.map(r => {
             IntervalTreeHTSLookup.time {
-              val record =
-                intervalTree.value.getIntervalTreeByChromosome(r._1)
-                  .overlappers(r._2.start, r._2.end)
-              record
-                .toIterator
-                .map(k => (k.getValue,Iterable(r._3)))
+
+                intervalTree.value.getIntervalTreeByChromosome(r._1) match {
+                  case Some(t) =>{
+                    val record = t.overlappers(r._2.start - maxGap, r._2.end + maxGap)
+                    record
+                      .filter(f=>calcOverlap(r._2.start,r._2.end,f.getStart,f.getEnd) >= minOverlap) //FIXME: Optimize for length=1 and skip filtering
+                      .flatMap(k => (k.getValue.map(s=>(s,Iterable(r._3)))) )
+                  }
+                  case _ => Iterator.empty
+                }
+
             }
           })
         })
@@ -129,5 +142,7 @@ object IntervalTreeJoinOptimChromosomeImpl extends Serializable {
     }
 
   }
+
+  private def calcOverlap(start1:Int, end1: Int, start2:Int, end2: Int ) = (math.min(end1,end2) - math.max(start1,start2) + 1)
 
 }

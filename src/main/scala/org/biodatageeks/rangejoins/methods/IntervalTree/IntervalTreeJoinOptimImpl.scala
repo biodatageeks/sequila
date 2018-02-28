@@ -67,6 +67,7 @@ object IntervalTreeJoinOptimImpl extends Serializable {
       val localIntervals =
         rdd1
         .instrument()
+        .map(r=>IntervalWithRow(r.start,r.end,r.row.copy()) )
         .collect()
       val intervalTree = IntervalTreeHTSBuild.time {
         val tree = new IntervalTreeHTS[InternalRow]()
@@ -82,8 +83,7 @@ object IntervalTreeJoinOptimImpl extends Serializable {
               val record =
                 intervalTree.value.overlappers(r.start, r.end)
               record
-                .toIterator
-                .map(k => (k.getValue, r.row))
+                .flatMap(k => (k.getValue.map(s=>(s,r.row))) )
             }
           })
         })
@@ -118,8 +118,7 @@ object IntervalTreeJoinOptimImpl extends Serializable {
               val record =
                 intervalTree.value.overlappers(r.start, r.end)
               record
-                .toIterator
-                .map(k => (k.getValue,Iterable(r.row)))
+                .flatMap(k => (k.getValue.map(s=>(s,Iterable(r.row)))) )
             }
           })
         })

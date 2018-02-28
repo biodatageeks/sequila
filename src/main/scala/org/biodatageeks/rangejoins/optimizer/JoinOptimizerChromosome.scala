@@ -4,6 +4,7 @@ import jdk.nashorn.internal.ir.debug.ObjectSizeCalculator
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.catalyst.InternalRow
+import org.apache.spark.sql.catalyst.expressions.GenericInternalRow
 import org.apache.spark.util.SizeEstimator
 import org.biodatageeks.rangejoins.IntervalTree.{Interval, IntervalWithRow}
 import org.biodatageeks.rangejoins.optimizer.RangeJoinMethod.RangeJoinMethod
