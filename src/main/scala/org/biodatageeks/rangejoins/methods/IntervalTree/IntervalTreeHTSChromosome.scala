@@ -3,7 +3,7 @@ package org.biodatageeks.rangejoins.methods.IntervalTree
 import org.apache.spark.sql.catalyst.InternalRow
 import org.biodatageeks.rangejoins.IntervalTree.{Interval, IntervalWithRow}
 
-class IntervalTreeHTSChromosome[T](allRegions: List[(String,Interval[Int],T)]) extends Serializable {
+class IntervalTreeHTSChromosome[T](allRegions: Array[(String,Interval[Int],T)]) extends Serializable {
 
   val intervalTreeHashMap:Map[String,IntervalTreeHTS[T]] = {
 

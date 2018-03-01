@@ -44,7 +44,7 @@ class JoinOptimizer(sc: SparkContext, rdd: RDD[IntervalWithRow[Int]], rddCount :
   def getRangeJoinMethod : RangeJoinMethod ={
 
     if (estimateBroadcastSize(rdd, rddCount) <= maxBroadcastSize)
-      RangeJoinMethod.JointWithRowBroadcast
+      RangeJoinMethod.JoinWithRowBroadcast
     else
       RangeJoinMethod.TwoPhaseJoin
 

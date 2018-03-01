@@ -17,10 +17,12 @@ class IntervalTreeJoinStrategyOptim(spark: SparkSession) extends Strategy with S
     case ExtractRangeJoinKeys(joinType, rangeJoinKeys, left, right) =>
       IntervalTreeJoinOptim(planLater(left), planLater(right), rangeJoinKeys, spark,left,right) :: Nil
     case ExtractRangeJoinKeysWithEquality(joinType, rangeJoinKeys, left, right) => {
-      val minOverlap = spark.sqlContext.getConf("minOverlap","1")
-      val maxGap = spark.sqlContext.getConf("maxGap","0")
+      val minOverlap = spark.sqlContext.getConf("spark.biodatageeks.rangejoin.minOverlap","1")
+      val maxGap = spark.sqlContext.getConf("spark.biodatageeks.rangejoin.maxGap","0")
+      val maxBroadcastSize = spark.sqlContext.getConf("spark.biodatageeks.rangejoin.maxBroadcastSize", (10*(1024*1024)).toString)
+
       IntervalTreeJoinOptimChromosome(planLater(left), planLater(right),
-        rangeJoinKeys, spark, left, right, minOverlap.toInt, maxGap.toInt) :: Nil
+        rangeJoinKeys, spark, left, right, minOverlap.toInt, maxGap.toInt, maxBroadcastSize.toInt) :: Nil
     }
     case _ =>
       Nil

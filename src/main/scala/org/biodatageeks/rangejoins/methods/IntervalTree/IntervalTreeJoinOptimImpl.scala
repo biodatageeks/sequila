@@ -62,7 +62,7 @@ object IntervalTreeJoinOptimImpl extends Serializable {
     sc.setLogLevel("WARN")
     logger.warn(optimizer.debugInfo )
 
-    if (optimizer.getRangeJoinMethod == RangeJoinMethod.JointWithRowBroadcast) {
+    if (optimizer.getRangeJoinMethod == RangeJoinMethod.JoinWithRowBroadcast) {
 
       val localIntervals =
         rdd1

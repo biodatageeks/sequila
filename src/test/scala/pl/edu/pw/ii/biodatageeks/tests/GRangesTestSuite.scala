@@ -77,8 +77,8 @@ class GRangesTestSuite extends FunSuite with DataFrameSuiteBase with BeforeAndAf
          |)
          |
        """.stripMargin
-    spark.sqlContext.setConf("minOverlap","1")
-    spark.sqlContext.setConf("maxGap","0")
+    spark.sqlContext.setConf("spark.biodatageeks.rangejoin.minOverlap","1")
+    spark.sqlContext.setConf("spark.biodatageeks.rangejoin.maxGap","0")
     assert(spark.sql(query).count === 616404L)
   }
 
@@ -95,8 +95,8 @@ class GRangesTestSuite extends FunSuite with DataFrameSuiteBase with BeforeAndAf
          |
        """.stripMargin
 
-    spark.sqlContext.setConf("minOverlap","10")
-    spark.sqlContext.setConf("maxGap","0")
+    spark.sqlContext.setConf("spark.biodatageeks.rangejoin.minOverlap","10")
+    spark.sqlContext.setConf("spark.biodatageeks.rangejoin.maxGap","0")
     assert(spark.sql(query).count === 7923L)
   }
 
@@ -115,8 +115,8 @@ class GRangesTestSuite extends FunSuite with DataFrameSuiteBase with BeforeAndAf
          |
        """.stripMargin
 
-    spark.sqlContext.setConf("minOverlap","1")
-    spark.sqlContext.setConf("maxGap","10000")
+    spark.sqlContext.setConf("spark.biodatageeks.rangejoin.minOverlap","1")
+    spark.sqlContext.setConf("spark.biodatageeks.rangejoin.maxGap","10000")
     assert(spark.sql(query).count === 804488L)
 
   }
@@ -135,15 +135,15 @@ class GRangesTestSuite extends FunSuite with DataFrameSuiteBase with BeforeAndAf
          |) ) b
          |WHERE a.chr = b.chr AND a.start=b.start AND a.end = b.end
        """.stripMargin
-    spark.sqlContext.setConf("minOverlap","1")
-    spark.sqlContext.setConf("maxGap","0")
+    spark.sqlContext.setConf("spark.biodatageeks.rangejoin.minOverlap","1")
+    spark.sqlContext.setConf("spark.biodatageeks.rangejoin.maxGap","0")
     assert(spark.sql(query).count === 35941L)
   }
 
   test( "Basic operation - shift"){
     spark.sqlContext.udf.register("shift", RangeMethods.shift _)
-    spark.sqlContext.setConf("minOverlap","1")
-    spark.sqlContext.setConf("maxGap","0")
+    spark.sqlContext.setConf("spark.biodatageeks.rangejoin.minOverlap","1")
+    spark.sqlContext.setConf("spark.biodatageeks.rangejoin.maxGap","0")
 
     val query =
       """

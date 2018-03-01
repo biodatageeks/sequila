@@ -13,7 +13,7 @@ import scala.util.Random
 
 class IntervalTreeCBOTestSuite extends FunSuite with DataFrameSuiteBase with BeforeAndAfter{
 
-  val schema = StructType(Seq(StructField("start",IntegerType ), StructField("end", IntegerType)))
+  val schema = StructType(Seq(StructField("chr",StringType ),StructField("start",IntegerType ), StructField("end", IntegerType)))
   val metricsListener = new MetricsListener(new RecordedMetrics())
   val writer = new PrintWriter(new OutputStreamWriter(System.out))
 
@@ -24,8 +24,11 @@ class IntervalTreeCBOTestSuite extends FunSuite with DataFrameSuiteBase with Bef
       .getOrCreate()
 
     spark.experimental.extraStrategies = new IntervalTreeJoinStrategyOptim(spark) :: Nil
+    spark.sqlContext.setConf("minOverlap","1")
+    spark.sqlContext.setConf("maxGap","0")
+    
     Metrics.initialize(sc)
-    val rdd = sc.parallelize(1 to 100).map(k=>Row(k,k))
+    val rdd = sc.parallelize(1 to 10000).map(k=>Row("1",k,k))
     val ds1 = spark.sqlContext.createDataFrame(rdd, schema)
     ds1.createOrReplaceTempView("s1")
 
@@ -57,12 +60,20 @@ class IntervalTreeCBOTestSuite extends FunSuite with DataFrameSuiteBase with Bef
       """.stripMargin)
   }
 
-  test("Check stats"){
+  test("CBO using stats using JoinWithRowBroadcast algorithm"){
 
     sqlContext.sql("DESC EXTENDED t1").show
-    val sqlQuery = "select count(*) from t2 JOIN t1 on (t1.end>=t2.start and t1.start<=t2.end )"
-    sqlContext.sql(sqlQuery)
-      .show()
+    sqlContext.setConf("spark.biodatageeks.rangejoin.maxBroadcastSize", (10 *1024*1024).toString)
+    val sqlQuery = "SELECT * FROM t2 JOIN t1 ON (t1.chr=t2.chr AND t1.end>=t2.start AND t1.start<=t2.end )"
+    assert(sqlContext.sql(sqlQuery).count === 10000)
+  }
+
+  test("CBO using stats using TwoPhaseJoin algorithm"){
+
+    sqlContext.sql("DESC EXTENDED t1").show
+    sqlContext.setConf("spark.biodatageeks.rangejoin.maxBroadcastSize", (1024*1024).toString)
+    val sqlQuery = "SELECT * FROM t2 JOIN t1 ON (t1.chr=t2.chr AND t1.end>=t2.start AND t1.start<=t2.end )"
+    assert(sqlContext.sql(sqlQuery).count === 10000)
   }
 
   after{

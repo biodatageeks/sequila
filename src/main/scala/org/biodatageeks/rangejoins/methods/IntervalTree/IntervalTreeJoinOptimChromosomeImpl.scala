@@ -47,7 +47,7 @@ object IntervalTreeJoinOptimChromosomeImpl extends Serializable {
   def overlapJoin(sc: SparkContext,
                   rdd1: RDD[(String,Interval[Int],InternalRow)],
                   rdd2: RDD[(String,Interval[Int],InternalRow)], rdd1Count:Long,
-                  minOverlap:Int, maxGap: Int): RDD[(InternalRow, InternalRow)] = {
+                  minOverlap:Int, maxGap: Int, maxBroadCastSize: Int): RDD[(InternalRow, InternalRow)] = {
 
     val logger =  Logger.getLogger(this.getClass.getCanonicalName)
 
@@ -59,20 +59,26 @@ object IntervalTreeJoinOptimChromosomeImpl extends Serializable {
       * first zipWithIndex and then perform a regular join
       */
 
-    val optimizer = new JoinOptimizerChromosome(sc, rdd1, rdd1Count)
+    val optimizer = new JoinOptimizerChromosome(sc,rdd1, rdd1Count, maxBroadCastSize)
     sc.setLogLevel("WARN")
     logger.warn(optimizer.debugInfo )
 
-    if (optimizer.getRangeJoinMethod == RangeJoinMethod.JointWithRowBroadcast) {
+    if (optimizer.getRangeJoinMethod == RangeJoinMethod.JoinWithRowBroadcast) {
 
-      val localIntervals =
-        rdd1
-        .instrument()
-        .map(r=>(r._1,Interval(r._2.start - maxGap,r._2.end + maxGap), r._3.copy()))
+      val localIntervals = {
+        if (maxGap != 0)
+          rdd1
+            .instrument()
+            .map(r => (r._1, Interval(r._2.start - maxGap, r._2.end + maxGap), r._3.copy()))
+        else
+          rdd1
+            .instrument()
+            .map(r => (r._1, Interval(r._2.start, r._2.end), r._3.copy()))
+      }
         .collect()
 
   val intervalTree = IntervalTreeHTSBuild.time {
-    val tree = new IntervalTreeHTSChromosome[InternalRow](localIntervals.toList)
+    val tree = new IntervalTreeHTSChromosome[InternalRow](localIntervals)
     sc.broadcast(tree)
   }
     val kvrdd2 = rdd2
@@ -83,9 +89,14 @@ object IntervalTreeJoinOptimChromosomeImpl extends Serializable {
                 intervalTree.value.getIntervalTreeByChromosome(r._1) match {
                   case Some(t) => {
                     val record = t.overlappers(r._2.start, r._2.end)
+                    if(minOverlap != 1)
                       record
                         .filter(f=>calcOverlap(r._2.start,r._2.end,f.getStart,f.getEnd) >= minOverlap)
                         .flatMap(k => (k.getValue.map(s=>(s,r._3))) )
+                    else
+                      record
+                        .flatMap(k => (k.getValue.map(s=>(s,r._3))) )
+
                   }
                   case _ => Iterator.empty
                 }
@@ -110,7 +121,7 @@ object IntervalTreeJoinOptimChromosomeImpl extends Serializable {
 
       /* Create and broadcast an interval tree */
       val intervalTree = IntervalTreeHTSBuild.time {
-        val tree = new IntervalTreeHTSChromosome[Long](localIntervals.toList)
+        val tree = new IntervalTreeHTSChromosome[Long](localIntervals)
         sc.broadcast(tree)
       }
       val kvrdd2: RDD[(Long, Iterable[InternalRow])] = rdd2
@@ -121,10 +132,14 @@ object IntervalTreeJoinOptimChromosomeImpl extends Serializable {
 
                 intervalTree.value.getIntervalTreeByChromosome(r._1) match {
                   case Some(t) =>{
-                    val record = t.overlappers(r._2.start - maxGap, r._2.end + maxGap)
-                    record
-                      .filter(f=>calcOverlap(r._2.start,r._2.end,f.getStart,f.getEnd) >= minOverlap) //FIXME: Optimize for length=1 and skip filtering
+                    val record = t.overlappers(r._2.start, r._2.end)
+                    if(minOverlap != 1)
+                      record
+                      .filter(f=>calcOverlap(r._2.start,r._2.end,f.getStart,f.getEnd) >= minOverlap)
                       .flatMap(k => (k.getValue.map(s=>(s,Iterable(r._3)))) )
+                    else
+                      record
+                        .flatMap(k => (k.getValue.map(s=>(s,Iterable(r._3)))) )
                   }
                   case _ => Iterator.empty
                 }
