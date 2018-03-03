@@ -46,7 +46,7 @@ object NCListsJoinImpl extends Serializable {
     /* Collect only Reference regions and the index of indexedRdd1 */
     val localIntervals = indexedRdd1.map(x => (x._2._1, x._1.toInt)).collect()
     /* Create and broadcast an interval tree */
-    val nclist = NCListBuild.time{sc.broadcast(new NCListTree[Int](localIntervals.toList))}
+    val nclist = NCListBuild.time{sc.broadcast(new NCListTree[Int](localIntervals))}
     val kvrdd2: RDD[(Int, Iterable[InternalRow])] = rdd2
         .instrument()
       // join entry with the intervals returned from the interval tree

@@ -1,5 +1,5 @@
 package org.biodatageeks.rangejoins.NCList
 
-case class Backpack[T](intervalList: List[(Interval[Int],T)], processedInterval: Interval[Int]) {
+case class Backpack[T](intervalArray: Array[(Interval[Int],T)], processedInterval: Interval[Int]) {
 
 }

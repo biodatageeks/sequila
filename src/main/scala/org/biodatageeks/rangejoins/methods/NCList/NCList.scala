@@ -1,5 +1,8 @@
 package org.biodatageeks.rangejoins.NCList
 
-case class NCList(var childrenBuf: Array[NCList],var nChildren: Int, var rgidBuf: Array[Int]) extends Serializable {
+import scala.collection.mutable.ArrayBuffer
+
+
+case class NCList(var childrenBuf: ArrayBuffer[NCList], var nChildren: Int, var rgidBuf: ArrayBuffer[Int]) extends Serializable {
 
 }

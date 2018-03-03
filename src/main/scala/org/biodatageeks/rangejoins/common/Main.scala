@@ -38,8 +38,8 @@ import java.text.SimpleDateFormat
 import org.biodatageeks.rangejoins.genApp.IntervalTreeJoinStrategy
 
 object Main {
-  case class RecordData1(start1: Long, end1: Long) extends Serializable
-  case class RecordData2(start2: Long, end2: Long) extends Serializable
+  case class RecordData1(start1: Integer, end1: Integer) extends Serializable
+  case class RecordData2(start2: Integer, end2: Integer) extends Serializable
   def main(args: Array[String]) {
     if (!("random".equals(args(0))) && !("bio".equals(args(0)))) {
       System.err.println("first argument should be one of two: random; bio")
@@ -112,8 +112,8 @@ object Main {
     var alignmentsRdd: RDD[AlignmentRecord] = alignments.rdd
     //get only interesting columns
 
-    val fRdd = featuresRdd.map(rec => Row(rec.getStart(), rec.getEnd()));
-    val aRdd = alignmentsRdd.map(rec => Row(rec.getStart(), rec.getEnd()));
+    val fRdd = featuresRdd.map(rec => Row(rec.getStart().toInt, rec.getEnd().toInt));
+    val aRdd = alignmentsRdd.map(rec => Row(rec.getStart().toInt, rec.getEnd().toInt));
     //val alignmentsSchema = StructType(Seq(StructField("start2", LongType), StructField("end2", LongType)))
     //val featuresSchema = StructType(Seq(StructField("start1", LongType), StructField("end1", LongType)))
 
@@ -139,8 +139,8 @@ object Main {
       //var rdd1 = sc.parallelize(a1Rdd.takeSample(false,size,4242))
       //var rdd2 = sc.parallelize(a2Rdd.takeSample(false,size,4242))
 
-      val schema1 = StructType(Seq(StructField("start1", LongType), StructField("end1", LongType)))
-      val schema2 = StructType(Seq(StructField("start2", LongType), StructField("end2", LongType)))
+      val schema1 = StructType(Seq(StructField("start1", IntegerType), StructField("end1", IntegerType)))
+      val schema2 = StructType(Seq(StructField("start2", IntegerType), StructField("end2", IntegerType)))
       var ds1 = sqlContext.createDataFrame(rdd1, schema1)
       ds1.createOrReplaceTempView("s1")
       var ds2 = sqlContext.createDataFrame(rdd2, schema2)
@@ -217,10 +217,10 @@ object Main {
     for (i <-start to stop) {
       var sizeFeatures = i*stepFeatures
       var sizeAlignments = i*stepAlignments
-      var rdd1 = sc.parallelize((1 to sizeFeatures).map(x => {val r1=Random.nextInt(1000).toLong; val r2=Random.nextInt(1000).toLong; if (r1<=r2) {Row(r1,r2)} else {Row(r2,r1)}}))
-      var rdd2 = sc.parallelize((1 to sizeAlignments).map(x => {val r1=Random.nextInt(1000).toLong; val r2=Random.nextInt(1000).toLong; if (r1<=r2) {Row(r1,r2)} else {Row(r2,r1)}}))
-      val schema1 = StructType(Seq(StructField("start1", LongType), StructField("end1", LongType)))
-      val schema2 = StructType(Seq(StructField("start2", LongType), StructField("end2", LongType)))
+      var rdd1 = sc.parallelize((1 to sizeFeatures).map(x => {val r1=Random.nextInt(1000); val r2=Random.nextInt(1000); if (r1<=r2) {Row(r1,r2)} else {Row(r2,r1)}}))
+      var rdd2 = sc.parallelize((1 to sizeAlignments).map(x => {val r1=Random.nextInt(1000); val r2=Random.nextInt(1000); if (r1<=r2) {Row(r1,r2)} else {Row(r2,r1)}}))
+      val schema1 = StructType(Seq(StructField("start1", IntegerType), StructField("end1", IntegerType)))
+      val schema2 = StructType(Seq(StructField("start2", IntegerType), StructField("end2", IntegerType)))
       var ds1 = sqlContext.createDataFrame(rdd1, schema1)
       ds1.createOrReplaceTempView("s1")
       var ds2 = sqlContext.createDataFrame(rdd2, schema2)
