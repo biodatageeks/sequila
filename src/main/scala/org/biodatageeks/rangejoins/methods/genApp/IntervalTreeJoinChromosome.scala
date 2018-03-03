@@ -46,21 +46,22 @@ IntervalTreeJoinChromosome(left: SparkPlan,
       val v3 = IntervalTreeJoinChromosomeImpl.overlapJoin(context.sparkContext, v1kv, v2kv)
         .flatMap(l => l._2
           .map(r => (l._1, r)))
-      v3.map {
-        case (l: InternalRow, r: InternalRow) => {
-          val joiner = GenerateUnsafeRowJoiner.create(left.schema, right.schema);
-          joiner.join(l.asInstanceOf[UnsafeRow], r.asInstanceOf[UnsafeRow]).asInstanceOf[InternalRow] //resultProj(joinedRow(l, r)) joiner.joiner
+      v3.mapPartitions(
+        p => {
+          val joiner = GenerateUnsafeRowJoiner.create(left.schema, right.schema)
+          p.map(r => joiner.join(r._1.asInstanceOf[UnsafeRow], r._2.asInstanceOf[UnsafeRow]))
         }
-      }
+      )
     }
     else {
       val v3 = IntervalTreeJoinChromosomeImpl.overlapJoin(context.sparkContext, v2kv, v1kv).flatMap(l => l._2.map(r => (l._1, r)))
-      v3.map {
-        case (r: InternalRow, l: InternalRow) => {
-          val joiner = GenerateUnsafeRowJoiner.create(left.schema, right.schema);
-          joiner.join(l.asInstanceOf[UnsafeRow], r.asInstanceOf[UnsafeRow]).asInstanceOf[InternalRow] //resultProj(joinedRow(l, r)) joiner.joiner
+      v3.mapPartitions(
+        p => {
+          val joiner = GenerateUnsafeRowJoiner.create(right.schema, left.schema)
+          p.map(r=>joiner.join(r._2.asInstanceOf[UnsafeRow],r._1.asInstanceOf[UnsafeRow]))
         }
-      }
+
+      )
     }
 
   }

@@ -94,7 +94,7 @@ node {
            stage('Test Scala code') {
 
                     echo 'Testing Scala code....'
-                    sh "${tool name: 'sbt-0.13.15', type: 'org.jvnet.hudson.plugins.SbtPluginBuilder$SbtInstallation'}/bin/sbt test"
+                    sh "${tool name: 'sbt-0.13.15', type: 'org.jvnet.hudson.plugins.SbtPluginBuilder$SbtInstallation'}/bin/sbt clean test"
 
 
 

@@ -15,35 +15,48 @@
  * limitations under the License.
  */
 
+
+/**
+  *
+  * Code inspired by https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4741060/
+  *
+  *
+  */
+
 package org.biodatageeks.rangejoins.methods.IntervalTree
 
-import org.apache.calcite.schema.Schema
+
 import org.apache.log4j.Logger
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.MetricsContext._
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.Row
+
 import org.apache.spark.sql.catalyst.InternalRow
-import org.apache.spark.sql.types.StructType
-import org.biodatageeks.rangejoins.IntervalTree.{Interval, IntervalWithRow}
+
+import org.biodatageeks.rangejoins.IntervalTree.{Interval}
 import org.biodatageeks.rangejoins.common.performance.timers.IntervalTreeTimer._
-import org.biodatageeks.rangejoins.optimizer.{JoinOptimizer, JoinOptimizerChromosome, RangeJoinMethod}
+import org.biodatageeks.rangejoins.optimizer.{JoinOptimizerChromosome, RangeJoinMethod}
 
 import scala.collection.JavaConversions._
+
+
 
 
 case class InternalRowPacker (ir: InternalRow)
 object IntervalTreeJoinOptimChromosomeImpl extends Serializable {
 
   /**
-    * Multi-joins together two RDDs that contain objects that map to reference regions.
-    * The elements from the first RDD become the key of the output RDD, and the value
-    * contains all elements from the second RDD which overlap the region of the key.
-    * This is a multi-join, so it preserves n-to-m relationships between regions.
     *
-    * @param sc A spark context from the cluster that will perform the join
-    * @param rdd1 RDD of values on which we build an interval tree. Assume |rdd1| < |rdd2|
+    * @param sc
+    * @param rdd1
+    * @param rdd2
+    * @param rdd1Count
+    * @param minOverlap
+    * @param maxGap
+    * @param maxBroadCastSize
+    * @return
     */
+
   def overlapJoin(sc: SparkContext,
                   rdd1: RDD[(String,Interval[Int],InternalRow)],
                   rdd2: RDD[(String,Interval[Int],InternalRow)], rdd1Count:Long,
@@ -56,7 +69,8 @@ object IntervalTreeJoinOptimChromosomeImpl extends Serializable {
 
     /**
       * Broadcast join pattern - use if smaller RDD is narrow otherwise follow 2-step join operation
-      * first zipWithIndex and then perform a regular join
+      * first zipWithIndex and then perform a regular join as  suggested in
+      * https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4741060/
       */
 
     val optimizer = new JoinOptimizerChromosome(sc,rdd1, rdd1Count, maxBroadCastSize)
@@ -81,7 +95,7 @@ object IntervalTreeJoinOptimChromosomeImpl extends Serializable {
     val tree = new IntervalTreeHTSChromosome[InternalRow](localIntervals)
     sc.broadcast(tree)
   }
-    val kvrdd2 = rdd2
+    val joinedRDD = rdd2
       .instrument()
         .mapPartitions(p=> {
           p.map(r=> {
@@ -96,7 +110,6 @@ object IntervalTreeJoinOptimChromosomeImpl extends Serializable {
                     else
                       record
                         .flatMap(k => (k.getValue.map(s=>(s,r._3))) )
-
                   }
                   case _ => Iterator.empty
                 }
@@ -104,7 +117,7 @@ object IntervalTreeJoinOptimChromosomeImpl extends Serializable {
           })
         })
       .flatMap(r => r)
-      kvrdd2
+      joinedRDD
     }
 
     else {
@@ -124,22 +137,21 @@ object IntervalTreeJoinOptimChromosomeImpl extends Serializable {
         val tree = new IntervalTreeHTSChromosome[Long](localIntervals)
         sc.broadcast(tree)
       }
-      val kvrdd2: RDD[(Long, Iterable[InternalRow])] = rdd2
+      val kvrdd2 = rdd2
         .instrument()
         .mapPartitions(p => {
           p.map(r => {
             IntervalTreeHTSLookup.time {
-
                 intervalTree.value.getIntervalTreeByChromosome(r._1) match {
                   case Some(t) =>{
                     val record = t.overlappers(r._2.start, r._2.end)
                     if(minOverlap != 1)
                       record
                       .filter(f=>calcOverlap(r._2.start,r._2.end,f.getStart,f.getEnd) >= minOverlap)
-                      .flatMap(k => (k.getValue.map(s=>(s,Iterable(r._3)))) )
+                      .flatMap(k => (k.getValue.map(s=>(s,r._3 ) ) ) )
                     else
                       record
-                        .flatMap(k => (k.getValue.map(s=>(s,Iterable(r._3)))) )
+                        .flatMap(k => (k.getValue.map(s=>(s,r._3 ))) )
                   }
                   case _ => Iterator.empty
                 }
@@ -147,13 +159,13 @@ object IntervalTreeJoinOptimChromosomeImpl extends Serializable {
             }
           })
         })
-        .flatMap(r => r)
-        .reduceByKey((a,b) => a ++ b)
+        .flatMap(s => s)
+        //.reduceByKey((a,b) => a ++ b)
 
       intervalsWithId
         .map(_.swap)
         .join(kvrdd2)
-        .flatMap(l => l._2._2.map(r => (l._2._1._3, r)))
+        .map(l => (l._2._2,l._2._1._3))
     }
 
   }

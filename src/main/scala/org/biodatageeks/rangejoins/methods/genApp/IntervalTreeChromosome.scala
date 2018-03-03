@@ -23,6 +23,9 @@ class IntervalTreeChromosome[T](allRegions: List[((String,Interval[Int]), T)]) e
 
   val intervalTreeHashMap:Map[String,IntervalTree[T]] = allRegions.groupBy(_._1._1).map(x => (x._1,new IntervalTree[T](x._2.map(y => (y._1._2,y._2)))))
 
-  def getAllOverlappings(r: (String,Interval[Int])) = intervalTreeHashMap(r._1).getAllOverlappings(r._2)
+  def getAllOverlappings(r: (String,Interval[Int])) = intervalTreeHashMap.get(r._1) match {
+    case Some(t) => t.getAllOverlappings(r._2)
+    case _ => Nil
+  }
 
 }

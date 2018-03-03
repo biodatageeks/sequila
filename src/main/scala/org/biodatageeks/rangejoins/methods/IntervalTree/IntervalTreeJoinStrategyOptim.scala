@@ -22,7 +22,7 @@ class IntervalTreeJoinStrategyOptim(spark: SparkSession) extends Strategy with S
       val maxBroadcastSize = spark.sqlContext.getConf("spark.biodatageeks.rangejoin.maxBroadcastSize", (10*(1024*1024)).toString)
 
       IntervalTreeJoinOptimChromosome(planLater(left), planLater(right),
-        rangeJoinKeys, spark, left, right, minOverlap.toInt, maxGap.toInt, maxBroadcastSize.toInt) :: Nil
+        rangeJoinKeys, spark, minOverlap.toInt, maxGap.toInt, maxBroadcastSize.toInt) :: Nil
     }
     case _ =>
       Nil
