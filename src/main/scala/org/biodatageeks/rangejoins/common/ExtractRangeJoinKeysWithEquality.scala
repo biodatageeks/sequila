@@ -4,6 +4,7 @@ import org.apache.spark.internal.Logging
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.plans._
 import org.apache.spark.sql.catalyst.plans.logical._
+import org.apache.spark.sql.catalyst.plans.Inner
 
 /**
  * A pattern that finds joins with equality conditions that can be evaluated using range-join.
@@ -20,24 +21,28 @@ object ExtractRangeJoinKeysWithEquality extends Logging with  PredicateHelper {
       /* Look for expressions a < b and c < d where a,b and c,d belong to the same LogicalPlan
     **/
       //println(condition.head)
-      condition.head match {
-        case And(And(EqualTo(l3,r3),LessThanOrEqual(l1, g1)), LessThanOrEqual(l2, g2)) =>
-          Some((joinType,
-            getKeys(l1,l2,g1,g2,l3,r3,left,right),
-            left, right))
-        case  And(And(EqualTo(l3,r3),GreaterThanOrEqual(g1, l1)), LessThanOrEqual(l2, g2)) =>
-          Some((joinType,
-            getKeys(l1,l2,g1,g2,l3,r3,left,right),
-            left, right))
-        case  And(And(EqualTo(l3,r3),LessThanOrEqual(l1, g1)), GreaterThanOrEqual(g2, l2)) =>
-          Some((joinType,
-            getKeys(l1,l2,g1,g2,l3,r3,left,right),
-            left, right))
-        case  And(And(EqualTo(l3,r3),GreaterThanOrEqual(g1, l1)), GreaterThanOrEqual(g2, l2)) =>
-          Some((joinType,
-            getKeys(l1,l2,g1,g2,l3,r3,left,right),
-            left, right))
-        case _ => None
+      if (condition.size!=0 && joinType == Inner) {
+        condition.head match {
+          case And(And(EqualTo(l3, r3), LessThanOrEqual(l1, g1)), LessThanOrEqual(l2, g2)) =>
+            Some((joinType,
+              getKeys(l1, l2, g1, g2, l3, r3, left, right),
+              left, right))
+          case And(And(EqualTo(l3, r3), GreaterThanOrEqual(g1, l1)), LessThanOrEqual(l2, g2)) =>
+            Some((joinType,
+              getKeys(l1, l2, g1, g2, l3, r3, left, right),
+              left, right))
+          case And(And(EqualTo(l3, r3), LessThanOrEqual(l1, g1)), GreaterThanOrEqual(g2, l2)) =>
+            Some((joinType,
+              getKeys(l1, l2, g1, g2, l3, r3, left, right),
+              left, right))
+          case And(And(EqualTo(l3, r3), GreaterThanOrEqual(g1, l1)), GreaterThanOrEqual(g2, l2)) =>
+            Some((joinType,
+              getKeys(l1, l2, g1, g2, l3, r3, left, right),
+              left, right))
+          case _ => None
+        }
+      } else {
+        None
       }
     case _ =>
       None

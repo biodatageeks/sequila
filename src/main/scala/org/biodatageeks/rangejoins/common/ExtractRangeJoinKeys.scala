@@ -18,24 +18,28 @@ object ExtractRangeJoinKeys extends Logging with  PredicateHelper {
       val predicates = condition.map(splitConjunctivePredicates).getOrElse(Nil)
       /* Look for expressions a < b and c < d where a,b and c,d belong to the same LogicalPlan
     **/
-      condition.head match {
-        case And(LessThanOrEqual(l1, g1), LessThanOrEqual(l2, g2)) =>
-          Some((joinType,
-            getKeys(l1,l2,g1,g2,left,right),
-            left, right))
-        case  And(GreaterThanOrEqual(g1, l1), LessThanOrEqual(l2, g2)) =>
-          Some((joinType,
-            getKeys(l1,l2,g1,g2,left,right),
-            left, right))
-        case  And(LessThanOrEqual(l1, g1), GreaterThanOrEqual(g2, l2)) =>
-          Some((joinType,
-            getKeys(l1,l2,g1,g2,left,right),
-            left, right))
-        case  And(GreaterThanOrEqual(g1, l1), GreaterThanOrEqual(g2, l2)) =>
-          Some((joinType,
-            getKeys(l1,l2,g1,g2,left,right),
-            left, right))
-        case _ => None
+      if (condition.size!=0 && joinType == Inner ) {
+        condition.head match {
+          case And(LessThanOrEqual(l1, g1), LessThanOrEqual(l2, g2)) =>
+            Some((joinType,
+              getKeys(l1,l2,g1,g2,left,right),
+              left, right))
+          case  And(GreaterThanOrEqual(g1, l1), LessThanOrEqual(l2, g2)) =>
+            Some((joinType,
+              getKeys(l1,l2,g1,g2,left,right),
+              left, right))
+          case  And(LessThanOrEqual(l1, g1), GreaterThanOrEqual(g2, l2)) =>
+            Some((joinType,
+              getKeys(l1,l2,g1,g2,left,right),
+              left, right))
+          case  And(GreaterThanOrEqual(g1, l1), GreaterThanOrEqual(g2, l2)) =>
+            Some((joinType,
+              getKeys(l1,l2,g1,g2,left,right),
+              left, right))
+          case _ => None
+        }
+      } else {
+        None
       }
     case _ =>
       None
