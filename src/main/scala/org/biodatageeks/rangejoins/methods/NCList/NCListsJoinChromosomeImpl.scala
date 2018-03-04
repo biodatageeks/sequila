@@ -21,8 +21,12 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.MetricsContext._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.catalyst.InternalRow
-import org.biodatageeks.rangejoins.NCList.Interval
+import org.biodatageeks.rangejoins.NCList.{Interval, NCListTree}
+import org.biodatageeks.rangejoins.common.performance.timers.IntervalTreeTimer.IntervalTreeHTSLookup
 import org.biodatageeks.rangejoins.common.performance.timers.NCListTimer._
+import org.biodatageeks.rangejoins.methods.IntervalTree.IntervalTreeJoinOptimChromosomeImpl.calcOverlap
+
+import scala.collection.immutable.Stream.Empty
 
 object NCListsJoinChromosomeImpl extends Serializable {
 
@@ -37,28 +41,40 @@ object NCListsJoinChromosomeImpl extends Serializable {
     */
   def overlapJoin(sc: SparkContext,
                   rdd1: RDD[((String,Interval[Int]), InternalRow)],
-                  rdd2: RDD[((String,Interval[Int]), InternalRow)]): RDD[(InternalRow, Iterable[InternalRow])] = {
+                  rdd2: RDD[((String,Interval[Int]), InternalRow)]): RDD[(InternalRow, InternalRow)] = {
     val indexedRdd1 = rdd1
       .instrument()
       .zipWithIndex()
       .map(_.swap)
 
-    /* Collect only Reference regions and the index of indexedRdd1 */
-    val localIntervals = indexedRdd1.map(x => (x._2._1, x._1.toInt)).collect()
-    /* Create and broadcast an interval tree */
-    val nclist = NCListBuild.time{sc.broadcast(new NCListTreeChromosome[Int](localIntervals))}
-    val kvrdd2: RDD[(Int, Iterable[InternalRow])] = rdd2
-        .instrument()
-      // join entry with the intervals returned from the interval tree
-      .map(x => (NCListLookup.time{nclist.value.getAllOverlappings(x._1)}, x._2))
-      .filter(x => x._1 != Nil) // filter out entries that do not join anywhere
-      .flatMap(t => t._1.map(s => (s._2, t._2))) // create pairs of (index1, rdd2Elem)
-      .groupByKey
 
-    indexedRdd1 // this is RDD[(Int, (Interval[Int], Row))]
-      .map(x => (x._1.toInt, x._2._2)) // convert it to (Int, Row)
-      .join(kvrdd2) // join produces RDD[(Int, (Row, Iterable[Row]))]
-      .map(_._2) // end up with RDD[(Row, Iterable[Row])]
+    /* Collect only Reference regions and the index of indexedRdd1 */
+    val localIntervals = indexedRdd1.map(x => (x._2._1, x._1)).collect()
+    /* Create and broadcast an interval tree */
+    val nclist = NCListBuild.time{sc.broadcast(new NCListTreeChromosome[Long](localIntervals))}
+
+    val joinedRDD = rdd2
+      .instrument()
+      .mapPartitions(p=> {
+        p.map(r=> {
+          IntervalTreeHTSLookup.time {
+            val ncl = nclist.value.getAllOverlappings(r._1)
+            if(ncl != Nil) {
+                  ncl
+                    .map(k => (k,r._2))
+                    .toIterator
+              }
+            else Iterator.empty
+          }
+        })
+      })
+      .flatMap(r=>r)
+
+    indexedRdd1
+      .map(r=>(r._1,r._2._2))
+      .join(joinedRDD.map(r=>(r._1._2,r._2)))
+      .map(r=>r._2)
   }
+
 
 }

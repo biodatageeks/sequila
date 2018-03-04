@@ -155,12 +155,10 @@ object IntervalTreeJoinOptimChromosomeImpl extends Serializable {
                   }
                   case _ => Iterator.empty
                 }
-
             }
           })
         })
         .flatMap(s => s)
-        //.reduceByKey((a,b) => a ++ b)
 
       intervalsWithId
         .map(_.swap)

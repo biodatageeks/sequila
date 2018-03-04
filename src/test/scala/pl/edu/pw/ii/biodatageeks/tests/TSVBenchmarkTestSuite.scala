@@ -1,8 +1,10 @@
 package pl.edu.pw.ii.biodatageeks.tests
 
 import java.io.{OutputStreamWriter, PrintWriter}
-import org.bdgenomics.adam.rdd.ADAMContext._
+
 import com.holdenkarau.spark.testing.{DataFrameSuiteBase, SharedSparkContext}
+import org.apache.spark.sql.Row
+import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
 import org.bdgenomics.utils.instrumentation.{Metrics, MetricsListener, RecordedMetrics}
 import org.biodatageeks.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
 import org.biodatageeks.rangejoins.NCList.NCListsJoinStrategy
@@ -10,7 +12,7 @@ import org.biodatageeks.rangejoins.genApp.IntervalTreeJoinStrategy
 import org.scalatest.{BeforeAndAfter, FunSuite}
 
 
-class ADAMBenchmarkTestSuite extends FunSuite with DataFrameSuiteBase with BeforeAndAfter with SharedSparkContext {
+class TSVBenchmarkTestSuite extends FunSuite with DataFrameSuiteBase with BeforeAndAfter with SharedSparkContext {
 
   def time[A](f: => A) = {
     val s = System.nanoTime
@@ -18,6 +20,9 @@ class ADAMBenchmarkTestSuite extends FunSuite with DataFrameSuiteBase with Befor
     println("time: " + (System.nanoTime - s) / 1e9 + " seconds")
     ret
   }
+
+  val schema = StructType(Seq(StructField("contigName",StringType ),StructField("start",IntegerType ), StructField("end", IntegerType)))
+
   val query = (
     s"""
        |SELECT * FROM snp JOIN ref
@@ -38,11 +43,33 @@ class ADAMBenchmarkTestSuite extends FunSuite with DataFrameSuiteBase with Befor
     //spark.sparkContext.setLogLevel("INFO")
     spark.experimental.extraStrategies = new IntervalTreeJoinStrategyOptim(spark) :: Nil
     sqlContext.setConf("spark.biodatageeks.rangejoin.maxBroadcastSize", (100 *1024*1024).toString)
-    val ref = spark.read.parquet(getClass.getResource("/refFlat.adam").getPath)
+    val rdd1 = sc
+      .textFile(getClass.getResource("/refFlat.txt.bz2").getPath)
+      .map(r=>r.split('\t'))
+      .map(r=>Row(
+        (r(2).toString),
+        r(4).toInt,
+        r(5).toInt
+      ))
+    val ref = spark
+      .createDataFrame(rdd1,schema)
+    ref.cache().count
     ref.createOrReplaceTempView("ref")
 
-    val snp = spark.read.parquet(getClass.getResource("/snp150Flagged.adam").getPath)
+
+    val rdd2 = sc
+      .textFile(getClass.getResource("/snp150Flagged.txt.bz2").getPath)
+      .map(r=>r.split('\t'))
+      .map(r=>Row(
+        (r(1).toString),
+        r(2).toInt,
+        r(3).toInt
+      ))
+    val snp = spark
+      .createDataFrame(rdd2,schema)
+    snp.cache().count
     snp.createOrReplaceTempView("snp")
+
 
     Metrics.initialize(sc)
 
@@ -80,23 +107,6 @@ class ADAMBenchmarkTestSuite extends FunSuite with DataFrameSuiteBase with Befor
     spark.experimental.extraStrategies =  new IntervalTreeJoinStrategy(spark) :: Nil
     time(assert(spark.sqlContext.sql(query).count === 616404L))
   }
-//
-//  test("Join using ADAM broadcast join"){
-//
-//    val featuresRef = sc.loadFeatures(getClass.getResource("/refFlat.adam").getPath)
-//    val featuresSnp = sc.loadFeatures (getClass.getResource("/snp150Flagged.adam").getPath)
-//    val res = featuresRef.broadcastRegionJoin(featuresSnp)
-//    time(println(res.rdd.count()))
-//  }
-//
-//  test("Join using ADAM shuffle join"){
-//
-//    val featuresRef = sc.loadFeatures(getClass.getResource("/refFlat.adam").getPath)
-//    val featuresSnp = sc.loadFeatures (getClass.getResource("/snp150Flagged.adam").getPath)
-//    val res = featuresRef.shuffleRegionJoin(featuresSnp)
-//    //time(res.rdd.collect().size)
-//    time(res.rdd.count())
-//  }
 
 
   after{
