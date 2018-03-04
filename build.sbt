@@ -36,6 +36,11 @@ libraryDependencies += "org.hammerlab.bdg-utils" %% "cli" % "0.3.0"
 
 libraryDependencies += "com.github.samtools" % "htsjdk" % "2.14.1"
 
+
+libraryDependencies += "com.github.potix2" %% "spark-google-spreadsheets" % "0.5.0"
+
+libraryDependencies += "ch.cern.sparkmeasure" %% "spark-measure" % "0.11"
+
 //fork := true
 fork in Test := true
 parallelExecution in Test := false

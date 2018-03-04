@@ -28,7 +28,7 @@ class ADAMBenchmarkTestSuite extends FunSuite with DataFrameSuiteBase with Befor
        |CAST(snp.start AS INTEGER)<=CAST(ref.end AS INTEGER)
        |)
        |
-       """.stripMargin)
+       """).stripMargin
 
   val metricsListener = new MetricsListener(new RecordedMetrics())
   val writer = new PrintWriter(new OutputStreamWriter(System.out))
@@ -53,15 +53,27 @@ class ADAMBenchmarkTestSuite extends FunSuite with DataFrameSuiteBase with Befor
 
   test ("Join using bgd-spark-granges - broadcast"){
 
+    val stageMetrics = ch.cern.sparkmeasure.StageMetrics(spark)
+
     spark.experimental.extraStrategies = new IntervalTreeJoinStrategyOptim(spark) :: Nil
-    time(assert(spark.sqlContext.sql(query).count === 616404L))
+    time(assert(stageMetrics.runAndMeasure(spark.sqlContext.sql(query).count) === 616404L))
+
   }
 
   test ("Join using bgd-spark-granges - twophase"){
-
+    val stageMetrics = ch.cern.sparkmeasure.StageMetrics(spark)
     spark.experimental.extraStrategies = new IntervalTreeJoinStrategyOptim(spark) :: Nil
     sqlContext.setConf("spark.biodatageeks.rangejoin.maxBroadcastSize", (1024*1024).toString)
-    time(assert(spark.sqlContext.sql(query).count === 616404L))
+    time(assert(stageMetrics.runAndMeasure(spark.sqlContext.sql(query).count) === 616404L))
+    val a = stageMetrics.createStageMetricsDF()
+    val b= a
+      .drop("jobId","stageId","name","submissionTime", "completionTime")
+      .groupBy()
+      .sum()
+
+
+    b.select("sum(executorRunTime)","sum(executorCpuTime)","sum(shuffleTotalBytesRead)","sum(shuffleBytesWritten)")
+      .show(100,false)
   }
 
   test ("Join using bgd-spark-granges NCList"){
