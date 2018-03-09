@@ -127,6 +127,14 @@ node {
                sh "${tool name: 'sbt-0.13.15', type: 'org.jvnet.hudson.plugins.SbtPluginBuilder$SbtInstallation'}/bin/sbt stats"
 
                                     }
+          stage('Readthedocs') {
+
+             echo 'Generating readthedocs....'
+             sh "cd docs && make html"
+             publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'docs/build/html/', reportFiles: 'index.html', reportName: 'Readthedocs', reportTitles: ''])
+          }
+
+
  }
  catch (e){currentBuild.result="FAIL"}
  stage('Notify'){
