@@ -120,6 +120,13 @@ node {
 
 
             }
+
+            stage('Code stats') {
+
+               echo 'Gathering code stats....'
+               sh "${tool name: 'sbt-0.13.15', type: 'org.jvnet.hudson.plugins.SbtPluginBuilder$SbtInstallation'}/bin/sbt stats"
+
+                                    }
  }
  catch (e){currentBuild.result="FAIL"}
  stage('Notify'){
