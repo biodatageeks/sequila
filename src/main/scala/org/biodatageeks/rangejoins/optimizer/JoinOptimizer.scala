@@ -14,7 +14,7 @@ class JoinOptimizer(sc: SparkContext, rdd: RDD[IntervalWithRow[Int]], rddCount :
     .getConf
     .getOption("spark.biodatageeks.rangejoin.maxBroadcastSize") match {
       case Some(size) => size.toLong
-      case _ =>  10*(1024*1024) //defaults to 10Mb
+      case _ => 0.1*scala.math.max((sc.getConf.getSizeAsBytes("spark.driver.memory","0")).toLong,1024*(1024*1024)) //defaults 128MB or 0.1 * Spark Driver's memory
     }
    val estBroadcastSize = estimateBroadcastSize(rdd,rddCount)
 

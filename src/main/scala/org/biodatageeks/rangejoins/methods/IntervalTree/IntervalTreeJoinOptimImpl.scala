@@ -58,7 +58,6 @@ object IntervalTreeJoinOptimImpl extends Serializable {
       */
 
     val optimizer = new JoinOptimizer(sc, rdd1, rdd1Count)
-    sc.setLogLevel("WARN")
     logger.warn(optimizer.debugInfo )
 
     if (optimizer.getRangeJoinMethod == RangeJoinMethod.JoinWithRowBroadcast) {

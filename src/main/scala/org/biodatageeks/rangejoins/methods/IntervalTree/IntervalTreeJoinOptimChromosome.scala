@@ -26,14 +26,17 @@ import org.apache.spark.sql.catalyst.expressions.codegen.GenerateUnsafeRowJoiner
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.execution.{SparkPlan, _}
 import org.apache.spark.sql.internal.SQLConf
-import org.biodatageeks.rangejoins.IntervalTree.{Interval}
+import org.biodatageeks.rangejoins.IntervalTree.Interval
+import org.biodatageeks.rangejoins.IntervalTree.IntervalTreeJoinOptimImpl.logger
 
 @DeveloperApi
 case class IntervalTreeJoinOptimChromosome(left: SparkPlan,
                                            right: SparkPlan,
                                            condition: Seq[Expression],
                                            context: SparkSession,
-                                           minOverlap: Int, maxGap: Int, maxBroadcastSize : Int) extends BinaryExecNode with Serializable {
+                                           minOverlap: Int, maxGap: Int, maxBroadcastSize : Int,
+                                           useJoinOrder: Boolean
+                                          ) extends BinaryExecNode with Serializable {
   @transient lazy val output = left.output ++ right.output
 
   @transient lazy val (buildPlan, streamedPlan) = (left, right)
@@ -62,7 +65,7 @@ case class IntervalTreeJoinOptimChromosome(left: SparkPlan,
     make sure that its size is the smaller one. */
 
     val conf = new SQLConf()
-    val v1Size = v1.count
+    val v1Size = if(useJoinOrder) Long.MaxValue else v1.count
 //    val v1Size = {
 //     if(ifStatsAvailable(leftLogicalPlan,conf))
 //       leftLogicalPlan.stats(conf).sizeInBytes.toLong
@@ -76,9 +79,10 @@ case class IntervalTreeJoinOptimChromosome(left: SparkPlan,
 //      v2.count
 //    }
 
-    val v2Size = v2.count()
+    val v2Size = if(useJoinOrder) Long.MinValue else v2.count()
 
     if ( v1Size < v2Size ) {
+      logger.warn(s"Broadcasting first table")
       val v3 = IntervalTreeJoinOptimChromosomeImpl.overlapJoin(context.sparkContext, v1kv, v2kv,
          v1.count(), minOverlap, maxGap, maxBroadcastSize) //FIXME:can be further optimized!
      v3.mapPartitions(
@@ -91,6 +95,7 @@ case class IntervalTreeJoinOptimChromosome(left: SparkPlan,
 
     }
     else {
+      logger.warn(s"Broadcasting second table")
       val v3 = IntervalTreeJoinOptimChromosomeImpl.overlapJoin(context.sparkContext, v2kv, v1kv,
          v2.count(), minOverlap, maxGap, maxBroadcastSize)
       v3.mapPartitions(

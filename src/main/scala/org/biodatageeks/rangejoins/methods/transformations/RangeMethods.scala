@@ -31,6 +31,15 @@ object RangeMethods {
     }
   }
 
+  /**
+    *
+    * @param start1
+    * @param end1
+    * @param start2
+    * @param end2
+    * @return
+    */
+  def calcOverlap(start1:Int, end1: Int, start2:Int, end2: Int ) = (math.min(end1,end2) - math.max(start1,start2) + 1)
 
 
 }

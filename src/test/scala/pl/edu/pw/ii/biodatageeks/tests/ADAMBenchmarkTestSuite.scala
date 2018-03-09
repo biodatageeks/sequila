@@ -40,9 +40,11 @@ class ADAMBenchmarkTestSuite extends FunSuite with DataFrameSuiteBase with Befor
     sqlContext.setConf("spark.biodatageeks.rangejoin.maxBroadcastSize", (100 *1024*1024).toString)
     val ref = spark.read.parquet(getClass.getResource("/refFlat.adam").getPath)
     ref.createOrReplaceTempView("ref")
+    time(println(ref.count))
 
     val snp = spark.read.parquet(getClass.getResource("/snp150Flagged.adam").getPath)
     snp.createOrReplaceTempView("snp")
+    time(println(snp.count))
 
     Metrics.initialize(sc)
 
@@ -97,8 +99,10 @@ class ADAMBenchmarkTestSuite extends FunSuite with DataFrameSuiteBase with Befor
 //
 //    val featuresRef = sc.loadFeatures(getClass.getResource("/refFlat.adam").getPath)
 //    val featuresSnp = sc.loadFeatures (getClass.getResource("/snp150Flagged.adam").getPath)
+//    val stageMetrics = ch.cern.sparkmeasure.StageMetrics(spark)
 //    val res = featuresRef.broadcastRegionJoin(featuresSnp)
-//    time(println(res.rdd.count()))
+//    time(println(stageMetrics.runAndMeasure(res.rdd.count() ) ) )
+//    //time(println(res.rdd.count()))
 //  }
 //
 //  test("Join using ADAM shuffle join"){

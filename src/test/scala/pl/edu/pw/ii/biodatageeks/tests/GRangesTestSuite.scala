@@ -82,6 +82,29 @@ class GRangesTestSuite extends FunSuite with DataFrameSuiteBase with BeforeAndAf
     assert(spark.sql(query).count === 616404L)
   }
 
+  test("Basic operation - test overlap counts with min overlap-join condition"){
+    spark.sqlContext.udf.register("overlaplength", RangeMethods.calcOverlap _)
+    spark.experimental.extraStrategies = new IntervalTreeJoinStrategyOptim(spark) :: Nil
+    val query =
+      s"""
+         |SELECT ref.*,snp.* FROM snp JOIN ref
+         |ON (ref.chr=snp.chr
+         |AND
+         |snp.end>=ref.start
+         |AND
+         |snp.start<=ref.end
+         |AND
+         |overlaplength(snp.start,snp.end,ref.start,ref.end)>=10
+         |)
+         |
+       """.stripMargin
+
+    spark.sqlContext.setConf("spark.biodatageeks.rangejoin.maxGap","0")
+    spark.sql(query).explain()
+    assert(spark.sql(query).count === 7923L)
+    spark.experimental.extraStrategies = new IntervalTreeJoinStrategyOptim(spark) :: Nil
+  }
+
   test("Basic operation - test overlap counts with min overlap"){
     val query =
       s"""
@@ -99,6 +122,8 @@ class GRangesTestSuite extends FunSuite with DataFrameSuiteBase with BeforeAndAf
     spark.sqlContext.setConf("spark.biodatageeks.rangejoin.maxGap","0")
     assert(spark.sql(query).count === 7923L)
   }
+
+
 
   test("Basic operation - test overlap counts with max gap") {
 
