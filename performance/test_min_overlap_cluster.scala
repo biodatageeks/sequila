@@ -25,14 +25,14 @@ spark.sqlContext.udf.register("overlaplength", RangeMethods.calcOverlap _)
 spark.experimental.extraStrategies = new IntervalTreeJoinStrategyOptim(spark) :: Nil
 val query2 =
   s"""
-     |SELECT ref.*,snp.* FROM snp JOIN ref
-     |ON (ref.chr=snp.chr
+     |SELECT * FROM reads JOIN targets
+     |ON (targets.contigName=reads.contigName
      |AND
-     |snp.end>=ref.start
+     |CAST(reads.end AS INTEGER)>=CAST(targets.start AS INTEGER)
      |AND
-     |snp.start<=ref.end
-     |AND
-     |overlaplength(snp.start,snp.end,ref.start,ref.end)>=10
+     |CAST(reads.start AS INTEGER)<=CAST(targets.end AS INTEGER)
+     | AND
+     |overlaplength(reads.start,reads.end,targets.start,targets.end)>=10
      |)
      |
        """.stripMargin
@@ -49,7 +49,7 @@ minOverlap.foreach(mo=> {
   val mc1 = new MetricsCollector(spark, metricsTable)
   mc1.initMetricsTable
   mc1.runAndCollectMetrics(
-    s"q_overlap_reads_target_adam_wgs_min${mo}",
+    s"q_overlap_reads_target_adam_wgs_min${mo}_fix",
     "spark_granges_it_bc_all",
     Array("reads", "targets"),
     query
@@ -58,10 +58,10 @@ minOverlap.foreach(mo=> {
 
   /*bdg-spark-granges - broadcast intervals*/
   spark.experimental.extraStrategies = new IntervalTreeJoinStrategyOptim(spark) :: Nil
-  spark.sqlContext.setConf("spark.biodatageeks.rangejoin.maxBroadcastSize", (1024 * 1024).toString)
+  spark.sqlContext.setConf("spark.biodatageeks.rangejoin.maxBroadcastSize", (1024).toString)
   val mc2 = new MetricsCollector(spark, metricsTable)
   mc2.runAndCollectMetrics(
-    s"q_overlap_reads_target_adam_wgs_min${mo}",
+    s"q_overlap_reads_target_adam_wgs_min${mo}_fix",
     "spark_granges_it_bc_int",
     Array("reads", "targets"),
     query
@@ -73,7 +73,7 @@ minOverlap.foreach(mo=> {
   spark.experimental.extraStrategies = Nil
   val mc3 = new MetricsCollector(spark, metricsTable)
   mc3.runAndCollectMetrics(
-    s"q_overlap_reads_target_adam_wgs_min${mo}",
+    s"q_overlap_reads_target_adam_wgs_min${mo}_fix",
     "spark_default",
     Array("reads", "targets"),
     query2
@@ -83,4 +83,4 @@ minOverlap.foreach(mo=> {
 }
 )
 
-  System.exit(0)
+System.exit(0)

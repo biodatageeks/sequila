@@ -76,7 +76,7 @@ class MetricsCollector( sparkSession: SparkSession, metricsTableName: String) {
 
 
 
-  def runAndCollectMetrics(queryId:String,algoName:String,tables:Array[String],query:String) = {
+  def runAndCollectMetrics(queryId:String,algoName:String,tables:Array[String],query:String, saveOutput:Boolean = false) = {
 
     val arraysCount = new Array[Long](tables.size)
     for(i<- 0 to arraysCount.size - 1 ){
@@ -86,7 +86,11 @@ class MetricsCollector( sparkSession: SparkSession, metricsTableName: String) {
         .getLong(0)
     }
     val stageMetrics = ch.cern.sparkmeasure.StageMetrics(spark)
-    val executionTime = time(stageMetrics.runAndMeasure(spark.sql(query).count()))._2
+    val executionTime = saveOutput match {
+      case false => time(stageMetrics.runAndMeasure(spark.sql(query).count()))._2
+      case _ => time(stageMetrics.runAndMeasure(spark.sql(query).write.csv(s"/tmp/${queryId}_${scala.util.Random.nextLong()}.csv")))._2
+    }
+
     val metrics = stageMetrics.createStageMetricsDF()
     val aggMetrics = metrics
       .drop(columnsToDrop: _*)
