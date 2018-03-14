@@ -3,18 +3,39 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to bdg-spark-granges's documentation!
-=============================================
+SeQuiLa documentation
+======================
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   
+   quickstart/quickstart
+
+.. toctree::
+   :maxdepth: 2
+
+   overview/overview
+
+.. toctree::
+   :maxdepth: 3
+
+   usage/usage
+
+.. toctree::
+   :maxdepth: 2
+
+   function/function
 
 
 
-Indices and tables
-==================
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+
+
+
+
+.. Indices and tables
+.. ==================
+
+.. * :ref:`genindex`
+.. * :ref:`modindex`
+.. * :ref:`search`
