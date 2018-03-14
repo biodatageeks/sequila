@@ -34,7 +34,7 @@ case class IntervalTreeJoinOptimChromosome(left: SparkPlan,
                                            right: SparkPlan,
                                            condition: Seq[Expression],
                                            context: SparkSession,
-                                           minOverlap: Int, maxGap: Int, maxBroadcastSize : Int,
+                                           minOverlap: Int, maxGap: Int,
                                            useJoinOrder: Boolean
                                           ) extends BinaryExecNode with Serializable {
   @transient lazy val output = left.output ++ right.output
@@ -84,7 +84,7 @@ case class IntervalTreeJoinOptimChromosome(left: SparkPlan,
     if ( v1Size < v2Size ) {
       logger.warn(s"Broadcasting first table")
       val v3 = IntervalTreeJoinOptimChromosomeImpl.overlapJoin(context.sparkContext, v1kv, v2kv,
-         v1.count(), minOverlap, maxGap, maxBroadcastSize) //FIXME:can be further optimized!
+         v1.count(), minOverlap, maxGap) //FIXME:can be further optimized!
      v3.mapPartitions(
        p => {
          val joiner = GenerateUnsafeRowJoiner.create(left.schema, right.schema)
@@ -97,7 +97,7 @@ case class IntervalTreeJoinOptimChromosome(left: SparkPlan,
     else {
       logger.warn(s"Broadcasting second table")
       val v3 = IntervalTreeJoinOptimChromosomeImpl.overlapJoin(context.sparkContext, v2kv, v1kv,
-         v2.count(), minOverlap, maxGap, maxBroadcastSize)
+         v2.count(), minOverlap, maxGap)
       v3.mapPartitions(
         p => {
           val joiner = GenerateUnsafeRowJoiner.create(right.schema, left.schema)

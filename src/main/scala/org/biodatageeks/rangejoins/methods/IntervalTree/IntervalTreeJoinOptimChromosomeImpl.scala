@@ -60,7 +60,7 @@ object IntervalTreeJoinOptimChromosomeImpl extends Serializable {
   def overlapJoin(sc: SparkContext,
                   rdd1: RDD[(String,Interval[Int],InternalRow)],
                   rdd2: RDD[(String,Interval[Int],InternalRow)], rdd1Count:Long,
-                  minOverlap:Int, maxGap: Int, maxBroadCastSize: Int): RDD[(InternalRow, InternalRow)] = {
+                  minOverlap:Int, maxGap: Int): RDD[(InternalRow, InternalRow)] = {
 
     val logger =  Logger.getLogger(this.getClass.getCanonicalName)
 
@@ -73,7 +73,7 @@ object IntervalTreeJoinOptimChromosomeImpl extends Serializable {
       * https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4741060/
       */
 
-    val optimizer = new JoinOptimizerChromosome(sc,rdd1, rdd1Count, maxBroadCastSize)
+    val optimizer = new JoinOptimizerChromosome(sc,rdd1, rdd1Count)
     sc.setLogLevel("WARN")
     logger.warn(optimizer.debugInfo )
 

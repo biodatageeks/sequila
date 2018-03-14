@@ -54,6 +54,7 @@ class FeatureCountsTestSuite extends FunSuite with DataFrameSuiteBase with Befor
     targets
       .createOrReplaceTempView("targets")
 
+    spark.sql(query).explain(false)
     assert(spark.sql(query).first().getLong(0) === 1484L)
   }
 

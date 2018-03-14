@@ -24,7 +24,7 @@ class IntervalTreeJoinStrategyOptim(spark: SparkSession) extends Strategy with S
       spark.sparkContext.setLogLevel("WARN")
       /*register functions*/
       IntervalTreeJoinOptimChromosome(planLater(left), planLater(right),
-        rangeJoinKeys, spark, minOverlap.toInt, maxGap.toInt, maxBroadcastSize.toInt, useJoinOrder.toBoolean) :: Nil
+        rangeJoinKeys, spark, minOverlap.toInt, maxGap.toInt, useJoinOrder.toBoolean) :: Nil
     }
     case _ =>
       Nil
