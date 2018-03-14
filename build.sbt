@@ -2,7 +2,7 @@ import scala.util.Properties
 
 name := """bdg-spark-granges"""
 
-version := "0.1-SNAPSHOT"
+version := "0.3-SNAPSHOT"
 
 organization := "org.biodatageeks"
 
