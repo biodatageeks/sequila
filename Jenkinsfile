@@ -10,7 +10,7 @@ import net.sf.json.JSONObject;
 
 author = ""
 message = ""
-channel = "#project-genomicranges"
+channel = "#project-sequila"
 
 
 def getGitAuthor = {
