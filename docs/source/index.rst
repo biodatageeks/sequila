@@ -7,7 +7,7 @@ SeQuiLa documentation
 ======================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    
    quickstart/quickstart
 
@@ -17,7 +17,7 @@ SeQuiLa documentation
    overview/overview
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
 
    usage/usage
 
@@ -26,16 +26,22 @@ SeQuiLa documentation
 
    function/function
 
+.. toctree::
+   :maxdepth: 2
+
+   tests/tests
+
+.. toctree::
+   :maxdepth: 2
+
+   citation/citation
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
 
 
 
-
-
-
-
-.. Indices and tables
-.. ==================
-
-.. * :ref:`genindex`
-.. * :ref:`modindex`
-.. * :ref:`search`

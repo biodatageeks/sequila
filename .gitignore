@@ -4,3 +4,7 @@
 target/
 
 \.idea/
+
+build/
+
+.DS_Store
