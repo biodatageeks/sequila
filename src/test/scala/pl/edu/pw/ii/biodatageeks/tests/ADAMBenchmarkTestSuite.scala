@@ -37,7 +37,7 @@ class ADAMBenchmarkTestSuite extends FunSuite with DataFrameSuiteBase with Befor
     System.setSecurityManager(null)
     //spark.sparkContext.setLogLevel("INFO")
     spark.experimental.extraStrategies = new IntervalTreeJoinStrategyOptim(spark) :: Nil
-    sqlContext.setConf("spark.biodatageeks.rangejoin.maxBroadcastSize", (100 *1024*1024).toString)
+    spark.sqlContext.setConf("spark.biodatageeks.rangejoin.maxBroadcastSize", (5*1024*1024).toString)
     val ref = spark.read.parquet(getClass.getResource("/refFlat.adam").getPath)
     ref.createOrReplaceTempView("ref")
     time(println(ref.count))

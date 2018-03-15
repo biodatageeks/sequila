@@ -30,10 +30,9 @@ import org.apache.log4j.Logger
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.MetricsContext._
 import org.apache.spark.rdd.RDD
-
+import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.InternalRow
-
-import org.biodatageeks.rangejoins.IntervalTree.{Interval}
+import org.biodatageeks.rangejoins.IntervalTree.Interval
 import org.biodatageeks.rangejoins.common.performance.timers.IntervalTreeTimer._
 import org.biodatageeks.rangejoins.optimizer.{JoinOptimizerChromosome, RangeJoinMethod}
 
@@ -53,11 +52,10 @@ object IntervalTreeJoinOptimChromosomeImpl extends Serializable {
     * @param rdd1Count
     * @param minOverlap
     * @param maxGap
-    * @param maxBroadCastSize
     * @return
     */
 
-  def overlapJoin(sc: SparkContext,
+  def overlapJoin(spark: SparkSession,
                   rdd1: RDD[(String,Interval[Int],InternalRow)],
                   rdd2: RDD[(String,Interval[Int],InternalRow)], rdd1Count:Long,
                   minOverlap:Int, maxGap: Int): RDD[(InternalRow, InternalRow)] = {
@@ -73,8 +71,8 @@ object IntervalTreeJoinOptimChromosomeImpl extends Serializable {
       * https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4741060/
       */
 
-    val optimizer = new JoinOptimizerChromosome(sc,rdd1, rdd1Count)
-    sc.setLogLevel("WARN")
+    val optimizer = new JoinOptimizerChromosome(spark,rdd1, rdd1Count)
+    spark.sparkContext.setLogLevel("WARN")
     logger.warn(optimizer.debugInfo )
 
     if (optimizer.getRangeJoinMethod == RangeJoinMethod.JoinWithRowBroadcast) {
@@ -93,7 +91,7 @@ object IntervalTreeJoinOptimChromosomeImpl extends Serializable {
 
   val intervalTree = IntervalTreeHTSBuild.time {
     val tree = new IntervalTreeHTSChromosome[InternalRow](localIntervals)
-    sc.broadcast(tree)
+    spark.sparkContext.broadcast(tree)
   }
     val joinedRDD = rdd2
       .instrument()
@@ -127,6 +125,7 @@ object IntervalTreeJoinOptimChromosomeImpl extends Serializable {
         .instrument()
         .zipWithIndex()
 
+
       val localIntervals =
         intervalsWithId
             .map(r=>(r._1._1,r._1._2,r._2) )
@@ -135,7 +134,7 @@ object IntervalTreeJoinOptimChromosomeImpl extends Serializable {
       /* Create and broadcast an interval tree */
       val intervalTree = IntervalTreeHTSBuild.time {
         val tree = new IntervalTreeHTSChromosome[Long](localIntervals)
-        sc.broadcast(tree)
+        spark.sparkContext.broadcast(tree)
       }
       val kvrdd2 = rdd2
         .instrument()
@@ -148,22 +147,21 @@ object IntervalTreeJoinOptimChromosomeImpl extends Serializable {
                     if(minOverlap != 1)
                       record
                       .filter(f=>calcOverlap(r._2.start,r._2.end,f.getStart,f.getEnd) >= minOverlap)
-                      .flatMap(k => (k.getValue.map(s=>(s,r._3 ) ) ) )
+                      .flatMap(k => (k.getValue.map(s=>(s,r._3.copy() ) ) ) )
                     else
                       record
-                        .flatMap(k => (k.getValue.map(s=>(s,r._3 ))) )
+                        .flatMap(k => (k.getValue.map(s=>(s,r._3.copy() ) ) ) )
                   }
                   case _ => Iterator.empty
                 }
             }
           })
-        })
-        .flatMap(s => s)
-
-      intervalsWithId
-        .map(_.swap)
-        .join(kvrdd2)
-        .map(l => (l._2._2,l._2._1._3))
+        }).flatMap(r=>r)
+      val intRDD = intervalsWithId.map(r=>(r._2,r._1._3.copy()))
+      val joinedRDD =  kvrdd2.
+        join(intRDD)
+        .map(l => l._2.swap)
+      joinedRDD
     }
 
   }

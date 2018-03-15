@@ -3,6 +3,7 @@ package org.biodatageeks.rangejoins.optimizer
 import jdk.nashorn.internal.ir.debug.ObjectSizeCalculator
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions.GenericInternalRow
 import org.apache.spark.util.SizeEstimator
@@ -10,15 +11,13 @@ import org.biodatageeks.rangejoins.IntervalTree.{Interval, IntervalWithRow}
 import org.biodatageeks.rangejoins.optimizer.RangeJoinMethod.RangeJoinMethod
 
 
-class JoinOptimizerChromosome(sc: SparkContext, rdd: RDD[(String,Interval[Int],InternalRow)], rddCount : Long) {
+class JoinOptimizerChromosome(spark: SparkSession, rdd: RDD[(String,Interval[Int],InternalRow)], rddCount : Long) {
 
 
-  val maxBroadcastSize = sc
-    .getConf
-    .getOption("spark.biodatageeks.rangejoin.maxBroadcastSize") match {
-    case Some(size) => size.toLong
-    case _ => 0.1*scala.math.max((sc.getConf.getSizeAsBytes("spark.driver.memory","0")),1024*(1024*1024)) //defaults 128MB or 0.1 * Spark Driver's memory
-  }
+  val maxBroadcastSize = spark.sqlContext
+    .getConf("spark.biodatageeks.rangejoin.maxBroadcastSize","0") match {
+    case "0" => 0.1*scala.math.max((spark.sparkContext.getConf.getSizeAsBytes("spark.driver.memory","0")),1024*(1024*1024)) //defaults 128MB or 0.1 * Spark Driver's memory
+    case _ => spark.sqlContext.getConf("spark.biodatageeks.rangejoin.maxBroadcastSize").toLong }
   val estBroadcastSize = estimateBroadcastSize(rdd,rddCount)
 
 
