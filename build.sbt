@@ -1,6 +1,6 @@
 import scala.util.Properties
 
-name := """bdg-spark-granges"""
+name := """bdg-sequila"""
 
 version := "0.3-SNAPSHOT"
 
@@ -42,7 +42,7 @@ libraryDependencies += "com.github.potix2" %% "spark-google-spreadsheets" % "0.5
 
 libraryDependencies += "ch.cern.sparkmeasure" %% "spark-measure" % "0.11"
 
-fork := true
+//fork := true
 fork in Test := true
 parallelExecution in Test := false
 javaOptions in test += "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=9999"
@@ -50,7 +50,7 @@ javaOptions in run ++= Seq(
   "-Dlog4j.debug=true",
   "-Dlog4j.configuration=log4j.properties")
 
-javaOptions ++= Seq("-Xms512M", "-Xmx4096M", "-XX:+CMSClassUnloadingEnabled")
+javaOptions ++= Seq("-Xms512M", "-Xmx8192M", "-XX:+CMSClassUnloadingEnabled")
 
 updateOptions := updateOptions.value.withLatestSnapshots(false)
 
@@ -92,13 +92,13 @@ assemblyMergeStrategy in assembly := {
     oldStrategy(x)
 }
 
-/* only for releasing assemblies
+/* only for releasing assemblies*/
 artifact in (Compile, assembly) := {
   val art = (artifact in (Compile, assembly)).value
   art.withClassifier(Some("assembly"))
 }
 addArtifact(artifact in (Compile, assembly), assembly)
-*/
+
 
 credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
 publishTo := {
