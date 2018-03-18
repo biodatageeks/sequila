@@ -29,6 +29,11 @@ SeQuiLa documentation
 .. toctree::
    :maxdepth: 2
 
+   usecases/usecases
+
+.. toctree::
+   :maxdepth: 2
+
    tests/tests
 
 .. toctree::

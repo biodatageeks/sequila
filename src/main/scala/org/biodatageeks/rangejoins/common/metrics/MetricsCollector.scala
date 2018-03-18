@@ -7,6 +7,8 @@ import org.apache.spark.sql.{Row, SparkSession}
 import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.catalyst.ScalaReflection.Schema
 import org.apache.spark.sql.types.StructType
+import org.bdgenomics.adam.rdd.ADAMContext._
+
 
 case class TestMetaRecord(testId:String,
                       algorithm:String,
@@ -114,6 +116,50 @@ class MetricsCollector( sparkSession: SparkSession, metricsTableName: String) {
     spark.sql(
       s"""
         |INSERT INTO ${metricsTableName} SELECT * FROM metrics_record
+      """.stripMargin)
+
+  }
+  def runAndCollectMetricsADAM(queryId:String,algoName:String,tables:Array[String],targetsPath:String,readsPath:String) = {
+
+    val arraysCount = new Array[Long](tables.size)
+    for(i<- 0 to arraysCount.size - 1 ){
+      arraysCount(i) =
+        spark.sql(s"SELECT count(*) FROM ${tables(i)}")
+          .first()
+          .getLong(0)
+    }
+    val stageMetrics = ch.cern.sparkmeasure.StageMetrics(spark)
+
+    val targets = spark.sparkContext.loadFeatures(targetsPath)
+    val reads = spark.sparkContext.loadAlignments(readsPath)
+    val res = targets.broadcastRegionJoin(reads)
+    val executionTime = {
+      time(stageMetrics.runAndMeasure(res.rdd.count()))._2
+    }
+
+    val metrics = stageMetrics.createStageMetricsDF()
+    val aggMetrics = metrics
+      .drop(columnsToDrop: _*)
+      .groupBy()
+      .sum()
+    val testMetaDF = spark.createDataFrame(Array(TestMetaRecord(
+      queryId,
+      algoName,
+      java.sql.Timestamp.valueOf(LocalDateTime.now()),
+      defaultToNone(spark.sparkContext.getConf.getInt("spark.executor.instances",-1)),
+      defaultToNone(spark.sparkContext.getConf.getInt("spark.executor.cores",-1)),
+      defaultToNone(spark.sparkContext.getConf.getSizeAsGb("spark.executor.memory","0").toInt),
+      defaultToNone(spark.sparkContext.getConf.getSizeAsGb("spark.driver.memory","0").toInt),
+      tables,
+      arraysCount,
+      executionTime
+    )))
+    spark.experimental.extraStrategies =  Nil
+    val result = testMetaDF.crossJoin(aggMetrics)
+    result.createOrReplaceTempView("metrics_record")
+    spark.sql(
+      s"""
+         |INSERT INTO ${metricsTableName} SELECT * FROM metrics_record
       """.stripMargin)
 
   }

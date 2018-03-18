@@ -30,14 +30,20 @@ Afterwards invoke:
 
 This will open bdg-shell (wrapper for spark-shell) and load ``unittest.scala`` code for execution. Since all test data are already packaged and accessible within the container you may just wait for results. Which won't take too long. (Estimated time ~ 1 minute)
 
-At the end you should see output of unit test. 
+At the end you should see the following output:
 
+.. image:: quick_start_check.*
+From the screenshot above you can that our optimized IntervalTree-based join strategy was uses as well as some additional debug information were logged to the console.
+
+The final result should be as follows:
 ::
 
    TEST PASSED
 
 
 Congratulations! Your installation is working on sample data.
+
+
 
 
 

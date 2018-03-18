@@ -19,14 +19,14 @@
 
 # -- Project information -----------------------------------------------------
 
-project = u'bdg-spark-granges'
+project = u'bdg-sequila'
 copyright = u'2018, biodatageeks.org'
 author = u'biodatageeks.org'
 
 # The short X.Y version
-version = u''
+version = u'0.3-SNAPSHOT'
 # The full version, including alpha/beta/rc tags
-release = u'0.1'
+release = u'0.3-SNAPSHOT'
 
 
 # -- General configuration ---------------------------------------------------
@@ -41,8 +41,8 @@ release = u'0.1'
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.todo',
-    'sphinx.ext.mathjax',
-    'sphinx.ext.ifconfig',
+#    'sphinx.ext.ifconfig',
+    'rst2pdf.pdfbuilder'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -108,6 +108,9 @@ html_static_path = ['_static']
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'bdg-spark-grangesdoc'
 
+
+#--- Options for PDF ------------------------
+pdf_documents = [('index', u'rst2pdf', u'SeQuiLa documentation', u'biodatageeks.org'),]
 
 # -- Options for LaTeX output ------------------------------------------------
 
