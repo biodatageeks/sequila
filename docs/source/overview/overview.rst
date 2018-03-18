@@ -1,3 +1,6 @@
+ .. sectnum::
+     :start: 2
+
 Overview
 ========
 
@@ -16,8 +19,18 @@ SeQuiLa is running upon Apache Spark execution engine. At high level it allows d
 
 .. image:: sequila.*
 
+But hey, you don’t need to know Spark or Scala to use SeQuiLa.
 
-Methods and algorithms (Implementation)
-########################################
+SeQuiLa can be easily integrated in your existing processing pipeline. And this is it's essential feature. Whether you prefer to do your analysis via commandline tools or from spark-shell or only inject efficient range joins into your exisiting Spark or non-Spark application - SeQuiLa is there for you.
+
+For details see: :doc:`../usage/usage`
+
+
+Algorithm
+###########
+
+SeQuiLa's range joins are based on IntervalTree algorithm. 
+
+<TODO> ... More on algorithm and optimizations
 
 

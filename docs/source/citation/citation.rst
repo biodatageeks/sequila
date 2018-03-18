@@ -1,3 +1,6 @@
+ .. sectnum::
+     :start: 6
+     
 License and citation
 =====================
 

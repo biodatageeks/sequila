@@ -1,3 +1,6 @@
+ .. sectnum::
+     :start: 1
+
 Quickstart 
 ==========
 
