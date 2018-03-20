@@ -25,10 +25,10 @@ In your command line pull docker image from Docker Hub:
 
 Afterwards invoke:
 
-``docker run --rm biodatageeks/bdg-toolset bdg-shell -i /tmp/unittest.scala``
+``docker run -e USERID=$UID -e GROUPID=$(id -g) -it biodatageeks/bdg-toolset bdg-shell -i /tmp/smoketest.scala``
 
 
-This will open bdg-shell (wrapper for spark-shell) and load ``unittest.scala`` code for execution. Since all test data are already packaged and accessible within the container you may just wait for results. Which won't take too long. (Estimated time ~ 1 minute)
+This will open bdg-shell (wrapper for spark-shell) and load ``smoketest.scala`` code for execution. Since all test data are already packaged and accessible within the container you may just wait for results. Which won't take too long. (Estimated time ~ 1 minute)
 
 At the end you should see the following output:
 
