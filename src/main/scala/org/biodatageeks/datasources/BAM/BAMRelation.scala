@@ -12,7 +12,7 @@ import org.seqdoop.hadoop_bam.util.SAMHeaderReader
 import org.seqdoop.hadoop_bam.{BAMInputFormat, SAMRecordWritable}
 
 
-case class BAMRecord(contigName:String,start:Int,end:Int,cigar:String)
+case class BAMRecord(contigName:String,start:Int,end:Int,cigar:String, quality:Int, basequality: String, reference:String, flags:Int, mateReferenceIndex:Int)
 
 class BAMRelation (path:String)(@transient val sqlContext: SQLContext)
   extends BaseRelation with PrunedFilteredScan {
@@ -32,7 +32,12 @@ class BAMRelation (path:String)(@transient val sqlContext: SQLContext)
         new StructField("contigName", StringType),
         new StructField("start", IntegerType),
         new StructField("end", IntegerType),
-        new StructField("cigar", StringType)
+        new StructField("cigar", StringType),
+        new StructField("mapq", IntegerType),
+        new StructField("baseq", StringType),
+        new StructField("reference", StringType),
+        new StructField("flags", IntegerType),
+        new StructField("materefind", IntegerType)
 
       )
     )
@@ -41,7 +46,7 @@ class BAMRelation (path:String)(@transient val sqlContext: SQLContext)
      val alignments = spark
       .sparkContext.newAPIHadoopFile[LongWritable, SAMRecordWritable, BAMInputFormat](path)
       .map(_._2.get)
-      .map(r => BAMRecord(r.getContig, r.getStart, r.getEnd,r.getCigar.toString))
+      .map(r => BAMRecord(r.getContig, r.getStart, r.getEnd,r.getCigar.toString, r.getMappingQuality, r.getBaseQualityString, r.getReferenceName, r.getFlags, r.getMateReferenceIndex))
 
     val readsTable = spark.sqlContext.createDataFrame(alignments)
     readsTable
