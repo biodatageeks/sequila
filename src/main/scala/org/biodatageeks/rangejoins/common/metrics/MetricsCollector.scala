@@ -103,7 +103,15 @@ class MetricsCollector( sparkSession: SparkSession, metricsTableName: String) {
       algoName,
       java.sql.Timestamp.valueOf(LocalDateTime.now()),
       defaultToNone(spark.sparkContext.getConf.getInt("spark.executor.instances",-1)),
-      defaultToNone(spark.sparkContext.getConf.getInt("spark.executor.cores",-1)),
+      defaultToNone(spark.sparkContext.getConf.getInt("spark.executor.cores",spark
+        .sparkContext
+        .master
+        .replace("local","")
+        .replace("[","")
+        .replace("]","") match {
+          case "*" => -1
+          case r:String  =>r.toInt
+      })),
       defaultToNone(spark.sparkContext.getConf.getSizeAsGb("spark.executor.memory","0").toInt),
       defaultToNone(spark.sparkContext.getConf.getSizeAsGb("spark.driver.memory","0").toInt),
       tables,
