@@ -2,17 +2,26 @@ package org.biodatageeks.datasources.BAM
 
 import htsjdk.samtools.ValidationStringency
 import org.apache.hadoop.io.LongWritable
-import org.apache.spark.rdd.RDD
+import org.apache.spark.rdd.{NewHadoopRDD, RDD}
 import org.apache.spark.sql.{Row, SQLContext}
 import org.apache.spark.sql.sources.{BaseRelation, Filter, PrunedFilteredScan}
 import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
 import org.biodatageeks.apps.FeatureCounts.Region
 import org.biodatageeks.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
 import org.seqdoop.hadoop_bam.util.SAMHeaderReader
-import org.seqdoop.hadoop_bam.{BAMInputFormat, SAMRecordWritable}
+import org.seqdoop.hadoop_bam.{BAMInputFormat, FileVirtualSplit, SAMRecordWritable}
 
 
-case class BAMRecord(contigName:String,start:Int,end:Int,cigar:String, quality:Int, basequality: String, reference:String, flags:Int, mateReferenceIndex:Int)
+case class BAMRecord(sampleId: String,
+                     contigName:String,
+                     start:Int,
+                     end:Int,
+                     cigar:String,
+                     quality:Int,
+                     basequality: String,
+                     reference:String,
+                     flags:Int,
+                     mateReferenceIndex:Int)
 
 class BAMRelation (path:String)(@transient val sqlContext: SQLContext)
   extends BaseRelation with PrunedFilteredScan {
@@ -29,6 +38,7 @@ class BAMRelation (path:String)(@transient val sqlContext: SQLContext)
   override def schema: org.apache.spark.sql.types.StructType = {
     StructType(
       Seq(
+        new StructField("sampleId", StringType),
         new StructField("contigName", StringType),
         new StructField("start", IntegerType),
         new StructField("end", IntegerType),
@@ -42,13 +52,37 @@ class BAMRelation (path:String)(@transient val sqlContext: SQLContext)
       )
     )
   }
-  override def buildScan(requiredColumns: Array[String],  filters: Array[Filter]): RDD[Row] = {
-     val alignments = spark
-      .sparkContext.newAPIHadoopFile[LongWritable, SAMRecordWritable, BAMInputFormat](path)
-      .map(_._2.get)
-      .map(r => BAMRecord(r.getContig, r.getStart, r.getEnd,r.getCigar.toString, r.getMappingQuality, r.getBaseQualityString, r.getReferenceName, r.getFlags, r.getMateReferenceIndex))
 
-    val readsTable = spark.sqlContext.createDataFrame(alignments)
+  override def buildScan(requiredColumns: Array[String],  filters: Array[Filter]): RDD[Row] = {
+
+    val alignments = spark
+      .sparkContext
+      .newAPIHadoopFile[LongWritable, SAMRecordWritable, BAMInputFormat](path)
+    val alignmentsWithFileName = alignments.asInstanceOf[NewHadoopRDD[LongWritable, SAMRecordWritable]]
+      .mapPartitionsWithInputSplit((inputSplit, iterator) => {
+        val file = inputSplit.asInstanceOf[FileVirtualSplit]
+        iterator.map(tup => (file.getPath.getName.split('.')(0), tup._2))
+        }
+      )
+    val sampleAlignments = alignmentsWithFileName
+      .map(r => (r._1, r._2.get()))
+      .map { case (sampleId, r) =>
+        BAMRecord(sampleId,r.getContig, r.getStart, r.getEnd, r.getCigar.toString,
+          r.getMappingQuality, r.getBaseQualityString, r.getReferenceName,
+          r.getFlags, r.getMateReferenceIndex)
+      }
+
+
+//     val alignments = spark
+//      .sparkContext.newAPIHadoopFile[LongWritable, SAMRecordWritable, BAMInputFormat](path)
+//      .map(_._2.get)
+//      .map(r => BAMRecord(r.getContig, r.getStart, r.getEnd,r.getCigar.toString,
+//        r.getMappingQuality, r.getBaseQualityString, r.getReferenceName,
+//        r.getFlags, r.getMateReferenceIndex))
+
+    val readsTable = spark
+      .sqlContext
+      .createDataFrame(sampleAlignments)
     readsTable
       .rdd
 
