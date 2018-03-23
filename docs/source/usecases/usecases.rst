@@ -33,7 +33,6 @@ Multisample analyses
 .. code-block:: scala
 
     val tableNameBAM = "reads"
-    spark.experimental.extraStrategies = new IntervalTreeJoinStrategyOptim(spark) :: Nil
     spark.sql("CREATE DATABASE BDGEEK")
     spark.sql("USE BDGEEK")
     spark.sql(
@@ -71,3 +70,51 @@ Multisample analyses
     | NA12878|
     | NA12879|
     +--------+
+
+
+.. code-block:: scala
+
+    case class Region(contigName:String,start:Int,end:Int)
+     val targets = spark
+      .sqlContext
+      .createDataFrame(Array(Region("chr1",20138,20294)))
+    targets
+      .createOrReplaceTempView("targets")
+
+    val query ="""SELECT sampleId,targets.contigName,targets.start,targets.end,count(*)
+              FROM reads JOIN targets
+        |ON (
+        |  targets.contigName=reads.contigName
+        |  AND
+        |  reads.end >= targets.start
+        |  AND
+        |  reads.start <= targets.end
+        |)
+        |GROUP BY sampleId,targets.contigName,targets.start,targets.end
+        |having contigName='chr1' AND    start=20138 AND  end=20294""".stripMargin
+
+    val fc = spark
+    .sql(query)
+
+    fc.show
+
+.. code-block:: bash
+
+    +--------+----------+-----+-----+--------+
+    |sampleId|contigName|start|  end|count(1)|
+    +--------+----------+-----+-----+--------+
+    | NA12879|      chr1|20138|20294|    1484|
+    | NA12878|      chr1|20138|20294|    1484|
+    +--------+----------+-----+-----+--------+
+
+
+
+.. code-block:: scala
+
+    fc
+    .orderBy("sampleId")
+    .coalesce(1)
+    .write
+    .option("header", "true")
+    .option("delimiter", "\t")
+    .csv("/data/input/fc.txt")
