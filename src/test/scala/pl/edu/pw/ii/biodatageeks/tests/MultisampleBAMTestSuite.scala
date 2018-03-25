@@ -31,36 +31,58 @@ class MultisampleBAMTestSuite extends FunSuite with DataFrameSuiteBase with Befo
 
   }
 
-  test("Multisample BAM Table"){
-    assert(spark
-      .sql(s"SELECT * FROM ${tableNameBAM}")
-      .count === 6344L)
-  }
+//  test("Multisample BAM Table"){
+//    assert(spark
+//      .sql(s"SELECT * FROM ${tableNameBAM}")
+//      .count === 6344L)
+//  }
+//
+//  test("Sample name"){
+//    assert(spark
+//      .sql(s"SELECT sampleId FROM ${tableNameBAM}")
+//      .first.getString(0) === "NA12878")
+//  }
+//
+//  test("Feature counts with multiple samples"){
+//    val query ="""SELECT sampleId,count(*),targets.contigName,targets.start,targets.end
+//              FROM reads JOIN targets
+//        |ON (
+//        |  targets.contigName=reads.contigName
+//        |  AND
+//        |  reads.end >= targets.start
+//        |  AND
+//        |  reads.start <= targets.end
+//        |)
+//        |GROUP BY sampleId,targets.contigName,targets.start,targets.end
+//        |having contigName='chr1' AND  start=20138 AND  end=20294 and sampleId='NA12878'""".stripMargin
+//    val targets = spark
+//      .sqlContext
+//      .createDataFrame(Array(Region("chr1", 20138, 20294)))
+//    targets
+//      .createOrReplaceTempView("targets")
+//    assert(spark.sql(query).first().getLong(1) === 1484L)
+//  }
 
-  test("Sample name"){
-    assert(spark
-      .sql(s"SELECT sampleId FROM ${tableNameBAM}")
-      .first.getString(0) === "NA12878")
-  }
+  test("Multisample groupby - cast issue") {
+    val query =
+      """
+        |SELECT targets.GeneId as GeneId, targets.contigName as Chr,
+        |targets.Start as Start, targets.End as End, targets.Strand as Strand,
+        |count(*) as Counts FROM targets join reads on
+        |(targets.contigName = reads.contigName  AND CAST(reads.end as Integer) >= CAST(targets.Start as Integer)
+        |AND CAST(reads.start as Integer) <= CAST(targets.End as Integer) )
+        |GROUP BY targets.GeneId, targets.contigName, targets.Start, targets.End, targets.Strand
+      """.stripMargin
 
-  test("Feature counts with multiple samples"){
-    val query ="""SELECT sampleId,count(*),targets.contigName,targets.start,targets.end
-              FROM reads JOIN targets
-        |ON (
-        |  targets.contigName=reads.contigName
-        |  AND
-        |  reads.end >= targets.start
-        |  AND
-        |  reads.start <= targets.end
-        |)
-        |GROUP BY sampleId,targets.contigName,targets.start,targets.end
-        |having contigName='chr1' AND  start=20138 AND  end=20294 and sampleId='NA12878'""".stripMargin
     val targets = spark
       .sqlContext
-      .createDataFrame(Array(Region("chr1",20138,20294)))
+      .createDataFrame(Array(Gene("chr1",20138,20294,"TestGene","+")))
     targets
       .createOrReplaceTempView("targets")
-    assert(spark.sql(query).first().getLong(1) === 1484L)
+
+    spark.sql(query).explain(true)
+    spark.sql(query).count
+    //assert(spark.sql(query).first().getLong(1) === 1484L)
   }
 
 }

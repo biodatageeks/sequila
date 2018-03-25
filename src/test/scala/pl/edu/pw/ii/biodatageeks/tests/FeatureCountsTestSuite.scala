@@ -9,6 +9,7 @@ import org.seqdoop.hadoop_bam.{BAMInputFormat, SAMRecordWritable}
 import org.seqdoop.hadoop_bam.util.SAMHeaderReader
 
 case class Region(contigName:String,start:Int,end:Int)
+case class Gene(contigName:String,start:Int,end:Int,geneId:String,strand:String)
 
 class FeatureCountsTestSuite extends FunSuite with DataFrameSuiteBase with BeforeAndAfter with SharedSparkContext{
 

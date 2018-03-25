@@ -4,7 +4,7 @@ import htsjdk.samtools.ValidationStringency
 import org.apache.hadoop.io.LongWritable
 import org.apache.spark.rdd.{NewHadoopRDD, RDD}
 import org.apache.spark.sql.{Row, SQLContext}
-import org.apache.spark.sql.sources.{BaseRelation, Filter, PrunedFilteredScan}
+import org.apache.spark.sql.sources.{BaseRelation, Filter, PrunedFilteredScan, TableScan}
 import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
 import org.biodatageeks.apps.FeatureCounts.Region
 import org.biodatageeks.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
@@ -24,7 +24,7 @@ case class BAMRecord(sampleId: String,
                      mateReferenceIndex:Int)
 
 class BAMRelation (path:String)(@transient val sqlContext: SQLContext)
-  extends BaseRelation with PrunedFilteredScan {
+  extends BaseRelation with TableScan {
 
   val spark = sqlContext
     .sparkSession
@@ -53,7 +53,7 @@ class BAMRelation (path:String)(@transient val sqlContext: SQLContext)
     )
   }
 
-  override def buildScan(requiredColumns: Array[String],  filters: Array[Filter]): RDD[Row] = {
+  override def buildScan: RDD[Row] = {
 
     val alignments = spark
       .sparkContext
