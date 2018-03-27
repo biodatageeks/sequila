@@ -106,10 +106,12 @@ class MetricsCollector( sparkSession: SparkSession, metricsTableName: String) {
       defaultToNone(spark.sparkContext.getConf.getInt("spark.executor.cores",spark
         .sparkContext
         .master
+        .toLowerCase
         .replace("local","")
         .replace("[","")
         .replace("]","") match {
           case "*" => -1
+          case "yarn" => -1
           case r:String  =>r.toInt
       })),
       defaultToNone(spark.sparkContext.getConf.getSizeAsGb("spark.executor.memory","0").toInt),
