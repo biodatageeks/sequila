@@ -36,7 +36,8 @@ Sample usage of SeQuiLa wrapped in docker container's scripts. The snippet below
       -v /data/sequila:/data \ 
       -e USERID=$UID -e GROUPID=$(id -g) \
       biodatageeks/bdg-toolset \ 
-      featureCounts -o /data/featureOutput -F SAF \
+      featureCounts -- \ 
+      -o /data/featureOutput -F SAF \
       -a /data/tgp_exome_hg18.saf /data/NA12878.slice.bam
 
 
