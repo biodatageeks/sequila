@@ -237,3 +237,12 @@ Integration with R
 Once done you should be able to see a similar result on your screen:
 
 .. image:: rstudio.*
+
+Integration with sparkR
+#######################
+
+.. code-block:: bash
+
+    docker run -e USERID=$UID -e GROUPID=$(id -g) -it  -p 4040:4040 \
+    biodatageeks/bdg-sequila bdg-sequilaR
+

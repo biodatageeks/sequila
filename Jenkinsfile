@@ -137,6 +137,14 @@ node {
              sh "docker run -d --name bdg-sequila-doc zsi-bio/bdg-sequila-doc"
           }
 
+           stage('Building Docker images') {
+
+                     echo 'Building Docker images....'
+                     sh './build.sh'
+
+                     }
+           }
+
 
  }
  catch (e){currentBuild.result="FAIL"}
