@@ -8,10 +8,10 @@ RUN useradd -m tempuser
 # Spark related variables.
 ##COMPONENT_VERSION variable will be replaced during the build process
 
-ARG BDG_VERSION={{COMPONENT_VERSION}}
+ARG BDG_VERSION=0.3-SNAPSHOT
 
 ####set variable used in all shell scritps for downloading jars
-ENV BGD_VERSION={{COMPONENT_VERSION}}
+ENV BGD_VERSION=0.3-SNAPSHOT
 
 RUN mkdir /tmp/bdg-toolset
 

@@ -23,7 +23,7 @@ do
   image=`echo $dir| sed 's/^Docker/biodatageeks/'`
   #version=`if [ ! -e $dir/version ]; then bump_version $image; else tail -1 $dir/version; fi`
   #if [ -e $dir/version ]; then
-    ver=`tail -1 $dir/version`;
+    ver=$version
     if [[ $OSTYPE =~ darwin*. ]]; then
       sed -i '' "s/{{COMPONENT_VERSION}}/${ver}/g" $dir/Dockerfile ;
     else
@@ -41,7 +41,7 @@ do
       docker push docker.io/$image:$version
     fi
     ##revert COMPONENT_VERSION variable
-    if [ -e version ]; then ver=`tail -1 version`; sed -i '' "s/${ver}/{{COMPONENT_VERSION}}/g" Dockerfile ; fi
+    if [ -e version ]; then ver=version; sed -i '' "s/${ver}/{{COMPONENT_VERSION}}/g" Dockerfile ; fi
     #keep only last 3 versions of an image locally (2+3 in tail part)
     docker images $image | tail -n +5 | sed 's/ \{1,\}/:/g' | cut -f1,2 -d':' | xargs -i docker rmi {}
 
