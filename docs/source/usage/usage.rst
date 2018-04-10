@@ -40,6 +40,13 @@ Sample usage of SeQuiLa wrapped in docker container's scripts. The snippet below
       -o /data/featureOutput -F SAF \
       -a /data/tgp_exome_hg18.saf /data/NA12878.slice.bam
 
+Parameters passed to featureCounts are divided into two parts: equivalent to parameters passed for spark-submit (master, executor-memory, driver-memory etc.: `<https://spark.apache.org/docs/latest/submitting-applications.html>`_) and parameters passed to featureCounts itself (input files, output files, format).
+
+
+.. note::
+
+   If you are using zsh shell remember to put double-quotes (") when specifying master local with specified number threads. ``--master "local[4]"``
+
 
 Writing short analysis in bdg-shell
 ************************************

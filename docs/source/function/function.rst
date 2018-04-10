@@ -84,7 +84,8 @@ It returns range with start and end fields.
     |    |-- start: integer (nullable = false)
     |    |-- end: integer (nullable = false)
 
-.. highlight:: r
+.. highlight:: console
+
 resize
 *******
 
