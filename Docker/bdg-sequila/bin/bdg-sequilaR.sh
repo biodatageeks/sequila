@@ -14,5 +14,8 @@ echo '
                                              '
 echo $BGD_VERSION
 echo -e "\n"
+
+rm -rf ~/metastore_db
 sparkR --packages org.biodatageeks:bdg-sequila_2.11:${BGD_VERSION} \
   --repositories https://zsibio.ii.pw.edu.pl/nexus/repository/maven-releases/,https://zsibio.ii.pw.edu.pl/nexus/repository/maven-snapshots/  $@
+

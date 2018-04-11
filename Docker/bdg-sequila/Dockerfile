@@ -69,6 +69,9 @@ RUN apt-get update \
 		ca-certificates \
 		apt-transport-https \
 		gsfonts \
+		libxml2-dev \
+		libcurl4-openssl-dev \
+
 	&& rm -rf /var/lib/apt/lists/*
 
 RUN apt-get update \
@@ -87,6 +90,10 @@ RUN apt-get update \
 	&& install.r docopt \
 	&& rm -rf /tmp/downloaded_packages/ /tmp/*.rds \
 	&& rm -rf /var/lib/apt/lists/*
+
+#rna-seq stuff
+RUN Rscript -e 'source("http://bioconductor.org/biocLite.R")' -e 'biocLite("edgeR")'
+RUN Rscript -e 'source("http://bioconductor.org/biocLite.R")' -e 'biocLite("DESeq2")'
 
 USER tempuser
 
