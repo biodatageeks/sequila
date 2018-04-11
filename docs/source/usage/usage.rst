@@ -243,6 +243,40 @@ Integration with sparkR
 
 .. code-block:: bash
 
-    docker run -e USERID=$UID -e GROUPID=$(id -g) -it  -p 4040:4040 \
-    biodatageeks/bdg-sequila bdg-sequilaR
+    docker run -e USERID=$UID -e GROUPID=$(id -g) -it -v /Users/biodatageek/data:/data \
+    -p 4040:4040 biodatageeks/bdg-sequila bdg-sequilaR
 
+
+.. code-block:: R
+
+    #register SeQuilaR extensions
+    sparkR.callJStatic("org.biodatageeks.R.SequilaR","init",spark)
+    #create db
+    sql("CREATE DATABASE sequila")
+    sql("USE sequila")
+    #create a BAM data source with reads
+    sql('CREATE TABLE reads USING org.biodatageeks.datasources.BAM.BAMDataSource OPTIONS(path "/data/c1_10M.bam")')
+    #parse GTF with target regions
+    sql('CREATE TABLE targets_temp(Chr string, TypeDB string, Feature string, Start integer,
+    End integer, t1 string, Strand string, t2 string, Gene_id_temp string ,Gene_id string)
+     USING csv
+     OPTIONS (path "/data/Homo_sapiens.gtf", header "false", inferSchema "false", delimiter "\t")')
+
+    #a query to compute counts per targer
+    query <- "SELECT Gene_id,Chr ,targets.Start ,targets.End ,Strand ,CAST(targets.End AS INTEGER)-
+    CAST(targets.Start AS INTEGER) + 1 AS Length, count(*) AS Counts FROM reads JOIN targets_temp as targets
+    ON (Chr=reads.contigName AND reads.end >= CAST(targets.Start AS INTEGER)
+    AND reads.start <= CAST(targets.End AS INTEGER)) GROUP BY Gene_id, Chr, targets.Start, targets.End, Strand"
+
+    #check physical execution plan to verify if IntervalTreeJoinOptimChromosome strategy is used
+    explain(sql(query))
+    #get sample output
+    head(sql(query))
+
+          Gene_id Chr     Start       End Strand Length Counts
+    1     g1   6  73263359  73301401      +  38043    157
+    2     g2   7   6469654   6484149      -  14496     95
+    3     g3  10 123171535 123171875      -    341    309
+    4     g4  15  82540426  82540456      -     31    272
+    5     g5  20  58891302  58911192      +  19891   6728
+    6     g6   7  42935021  42935136      +    116     64

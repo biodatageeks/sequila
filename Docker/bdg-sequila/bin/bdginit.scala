@@ -1,5 +1,4 @@
-import org.biodatageeks.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
-import org.biodatageeks.rangejoins.methods.transformations.RangeMethods
+import org.biodatageeks.utils.{SequilaRegister, UDFRegister}
 
 /*set params*/
 
@@ -10,12 +9,9 @@ spark.sqlContext.setConf("spark.biodatageeks.rangejoin.minOverlap","1")
 spark.sqlContext.setConf("spark.biodatageeks.rangejoin.maxGap","0")
 
 /*register UDFs*/
-spark.sqlContext.udf.register("shift", RangeMethods.shift _)
-spark.sqlContext.udf.register("resize", RangeMethods.resize _)
-spark.sqlContext.udf.register("overlap", RangeMethods.calcOverlap _)
-spark.sqlContext.udf.register("flank", RangeMethods.flank _)
-spark.sqlContext.udf.register("promoters", RangeMethods.promoters _)
-spark.sqlContext.udf.register("reflect", RangeMethods.reflect _)
+
+UDFRegister.register(spark)
 
 /*inject bdg-granges strategy*/
-spark.experimental.extraStrategies = new IntervalTreeJoinStrategyOptim(spark) :: Nil
+SequilaRegister.register(spark)
+
