@@ -26,7 +26,7 @@ In your command line pull docker image from Docker Hub and invoke smoketests
    docker pull biodatageeks/bdg-toolset
 
    docker run -e USERID=$UID -e GROUPID=$(id -g) \
-     biodatageeks/bdg-toolset \
+     biodatageeks/bdg-sequila \
      bdg-shell -i /tmp/smoketest.scala
 
 

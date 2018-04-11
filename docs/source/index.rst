@@ -34,11 +34,6 @@ SeQuiLa documentation
 .. toctree::
    :maxdepth: 2
 
-   tests/tests
-
-.. toctree::
-   :maxdepth: 2
-
    citation/citation
 
 Indices and tables

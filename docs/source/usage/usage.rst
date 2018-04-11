@@ -4,7 +4,9 @@
 Usage
 =====
 
+SeQuiLa can be used in different ways. Specifically it supports ad-hoc research, which is typically focused on quick analysis on files. Depending on your preferences you can use predefined scripts (findOverlaps and featureCounts) or write your own code snippets within spark-shell or our bdg-shell. Additionally SeQuiLa also can be used along with your existing applications written in Scala/Spark, R or any other language/platform. Please see details below.
 
+.. figure:: integration.*
 
 Ad-hoc analysis
 #################
@@ -35,7 +37,7 @@ Sample usage of SeQuiLa wrapped in docker container's scripts. The snippet below
    docker run --rm -it -p 4040:4040 \ 
       -v /data/sequila:/data \ 
       -e USERID=$UID -e GROUPID=$(id -g) \
-      biodatageeks/bdg-toolset \ 
+      biodatageeks/bdg-sequila \ 
       featureCounts -- \ 
       -o /data/featureOutput -F SAF \
       -a /data/tgp_exome_hg18.saf /data/NA12878.slice.bam
@@ -103,11 +105,14 @@ For Scala enthusiasts - SeQuiLa provides bdg-shell which is a wrapper for spark-
 Integration with existing applications
 #######################################
 
+When you already have working application supporting your analysis pipeline - you may still use SeQuiLa, substituting your existing genomic interval queries with pure SQL.
+
+
 
 
 Integration with Spark-application
 ***********************************
-When you have exisiting analysis pipeline in Spark ecosystem you may beenfit from SeQuiLa extra strategy registered at SparkSQL level.
+When you have exisiting analysis pipeline in Spark ecosystem you may benefit from SeQuiLa extra strategy registered at SparkSQL level.
 
 
 .. figure:: spark-integration.* 
@@ -117,25 +122,81 @@ When you have exisiting analysis pipeline in Spark ecosystem you may beenfit fro
 
 
 
-Integration with non Spark-application
+Integration with R-application
+*******************************
+
+1. Install rJava and RJDBC packages:
+
+.. code-block:: R
+
+    install.packages("RJDBC",dep=TRUE)
+    install.packages("rJava")
+    library(RJDBC)
+
+2. Download Spark JDBC driver - for the convenience we have already prepare a self-contained jar file for you:
+
+.. code-block:: R
+
+    download.file("http://zsibio.ii.pw.edu.pl/nexus/repository/maven-releases/org/biodatageeeks/spark/jdbc/spark-jdbc_2.11/0.12/spark-jdbc_2.11-0.12-assembly.jar",destfile = "spark-jdbc-assembly-0.12.jar")
+
+3. Establish a connection to the Spark Thrift Server you have started in the previous section:
+
+.. code-block:: R
+
+    drv <- JDBC("org.apache.hive.jdbc.HiveDriver",classPath = "./spark-jdbc-assembly-0.12.jar",identifier.quote="`")
+    conn <- dbConnect(drv, "jdbc:hive2://cdh00:12000", "user", "passord")
+
+
+    ds <-dbGetQuery(conn, "SELECT targets.GeneId AS GeneId,
+                         targets.Chr AS Chr,
+                    targets.Start AS Start,
+                    targets.End AS End,
+                    targets.Strand AS Strand,
+                    CAST(targets.End AS INTEGER)-CAST(targets.Start AS INTEGER) + 1 AS Length,
+                    count(*) AS Counts
+                    FROM granges.NA12878_marek reads JOIN granges.targets targets
+                    ON (
+                    targets.Chr=reads.contigName
+                    AND
+                    reads.end >= CAST(targets.Start AS INTEGER)
+                    AND
+                    reads.start <= CAST(targets.End AS INTEGER)
+                    )
+                    GROUP BY targets.GeneId,targets.Chr,targets.Start,targets.End,targets.Strand")
+
+    nrow(ds)
+    head(ds)
+    dbDisconnect(conn)
+
+Once done you should be able to see a similar result on your screen:
+
+.. image:: rstudio.*
+
+
+
+Integration with generic applications
 ***************************************
+
+When integrating SeQuiLa with generic, non-Spark, non-R application you need additional component (namely Spark Thrift Server) with injected SeQuiLa strategy which is exposing JDBC/ODBC interface. Afterwards you can connect to Thrift Server through JDBC interface, load data and query it in SQL language.
 
 .. figure:: thrift-server.* 
    :align: center
 
 
 
-
-Start Spark Thrift Server:
+First of all start Spark Thrift Server:
 
 .. code-block:: bash
 
     export BGD_VERSION=0.3-SNAPSHOT
-    sudo -u superset HADOOP_CONF_DIR=/etc/hadoop/conf ./start-thriftserver.sh --master yarn \
+    export HADOOP_CONF_DIR=/etc/hadoop/conf 
+    ./start-thriftserver.sh --master yarn \
     --executor-memory 4g --num-executors 10 --executor-cores 4  --driver-memory 4g \
     --hiveconf hive.server2.thrift.port=12000 --conf spark.sql.hive.thriftServer.singleSession=true \
     spark.executorEnv.JAVA_HOME=/usr/lib/jvm/java-8-oracle --packages org.biodatageeks:bdg-spark-granges_2.11:${BGD_VERSION} \
     --repositories https://zsibio.ii.pw.edu.pl/nexus/repository/maven-releases/,https://zsibio.ii.pw.edu.pl/nexus/repository/maven-snapshots/
+
+We will show how JDBC integration works with one of the SQL client, for example: `<http://www.squirrelsql.org/>`_
 
 At your favourite SQL client setup connection to Spark Thrift Server.
 
@@ -187,96 +248,3 @@ Afterwards you can play with SQL.
       reads.start <= CAST(targets.End AS INTEGER)
     )
     GROUP BY targets.GeneId,targets.Chr,targets.Start,targets.End,targets.Strand;
-
-Integration with R
-##################
-
-1. Install rJava and RJDBC packages:
-
-.. code-block:: R
-
-    install.packages("RJDBC",dep=TRUE)
-    install.packages("rJava")
-    library(RJDBC)
-
-2. Download Spark JDBC driver - for the convenience we have already prepare a self-contained jar file for you:
-
-.. code-block:: R
-
-    download.file("http://zsibio.ii.pw.edu.pl/nexus/repository/maven-releases/org/biodatageeeks/spark/jdbc/spark-jdbc_2.11/0.12/spark-jdbc_2.11-0.12-assembly.jar",destfile = "spark-jdbc-assembly-0.12.jar")
-
-3. Establish a connection to the Spark Thrift Server you have started in the previous section:
-
-.. code-block:: R
-
-    drv <- JDBC("org.apache.hive.jdbc.HiveDriver",classPath = "./spark-jdbc-assembly-0.12.jar",identifier.quote="`")
-    conn <- dbConnect(drv, "jdbc:hive2://cdh00:12000", "user", "passord")
-
-
-    ds <-dbGetQuery(conn, "SELECT targets.GeneId AS GeneId,
-                         targets.Chr AS Chr,
-                    targets.Start AS Start,
-                    targets.End AS End,
-                    targets.Strand AS Strand,
-                    CAST(targets.End AS INTEGER)-CAST(targets.Start AS INTEGER) + 1 AS Length,
-                    count(*) AS Counts
-                    FROM granges.NA12878_marek reads JOIN granges.targets targets
-                    ON (
-                    targets.Chr=reads.contigName
-                    AND
-                    reads.end >= CAST(targets.Start AS INTEGER)
-                    AND
-                    reads.start <= CAST(targets.End AS INTEGER)
-                    )
-                    GROUP BY targets.GeneId,targets.Chr,targets.Start,targets.End,targets.Strand")
-
-    nrow(ds)
-    head(ds)
-    dbDisconnect(conn)
-
-Once done you should be able to see a similar result on your screen:
-
-.. image:: rstudio.*
-
-Integration with sparkR
-#######################
-
-.. code-block:: bash
-
-    docker run -e USERID=$UID -e GROUPID=$(id -g) -it -v /Users/biodatageek/data:/data \
-    -p 4040:4040 biodatageeks/bdg-sequila bdg-sequilaR
-
-
-.. code-block:: R
-
-    #register SeQuilaR extensions
-    sparkR.callJStatic("org.biodatageeks.R.SequilaR","init",spark)
-    #create db
-    sql("CREATE DATABASE sequila")
-    sql("USE sequila")
-    #create a BAM data source with reads
-    sql('CREATE TABLE reads USING org.biodatageeks.datasources.BAM.BAMDataSource OPTIONS(path "/data/c1_10M.bam")')
-    #parse GTF with target regions
-    sql('CREATE TABLE targets_temp(Chr string, TypeDB string, Feature string, Start integer,
-    End integer, t1 string, Strand string, t2 string, Gene_id_temp string ,Gene_id string)
-     USING csv
-     OPTIONS (path "/data/Homo_sapiens.gtf", header "false", inferSchema "false", delimiter "\t")')
-
-    #a query to compute counts per targer
-    query <- "SELECT Gene_id,Chr ,targets.Start ,targets.End ,Strand ,CAST(targets.End AS INTEGER)-
-    CAST(targets.Start AS INTEGER) + 1 AS Length, count(*) AS Counts FROM reads JOIN targets_temp as targets
-    ON (Chr=reads.contigName AND reads.end >= CAST(targets.Start AS INTEGER)
-    AND reads.start <= CAST(targets.End AS INTEGER)) GROUP BY Gene_id, Chr, targets.Start, targets.End, Strand"
-
-    #check physical execution plan to verify if IntervalTreeJoinOptimChromosome strategy is used
-    explain(sql(query))
-    #get sample output
-    head(sql(query))
-
-          Gene_id Chr     Start       End Strand Length Counts
-    1     g1   6  73263359  73301401      +  38043    157
-    2     g2   7   6469654   6484149      -  14496     95
-    3     g3  10 123171535 123171875      -    341    309
-    4     g4  15  82540426  82540456      -     31    272
-    5     g5  20  58891302  58911192      +  19891   6728
-    6     g6   7  42935021  42935136      +    116     64

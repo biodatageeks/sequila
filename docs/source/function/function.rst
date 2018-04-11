@@ -208,3 +208,15 @@ Parameter is set via coniguration:
    spark.sqlContext.setConf("spark.biodatageeks.rangejoin.maxBroadcastSize", (10*(1024*1024)).toString)
 
 
+useJoinOrder
+**************
+If this parameter is set to FALSE the algorithm itself decides which table is used for broadcasting. It performs row counting on both tables and chooses smaller one. 
+
+To achieve even better performance you can set this parameter to TRUE. In this case, the algorithm does not check table sizes but blindly broadcasts first table.  You should use this parameter if you know table sizes beforehand
+
+By default the parameter is set to false.
+
+Parameter is set via coniguration:
+::
+
+   spark.sqlContext.setConf("spark.biodatageeks.rangejoin.useJoinOrder", "true")

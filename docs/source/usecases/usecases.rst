@@ -27,7 +27,7 @@ Multisample analyses
 
     docker run -p 4040:4040 -it --rm -e USERID=$UID -e GROUPID=$(id -g) \
     -v /Users/marek/git/forks/bdg-spark-granges/src/test/resources/:/data/input \
-    biodatageeks/bdg-toolset bdg-shell
+    biodatageeks/bdg-sequila bdg-shell
 
 
 .. code-block:: scala
