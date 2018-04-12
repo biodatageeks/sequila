@@ -49,9 +49,13 @@ If your dataset contains chromosomes information as well you may want to add add
         |FROM s1 JOIN s2 
         |ON (s1.chr=s2.chr and s1.end>=s2.start and s1.start<=s2.end )
         """
-     val res = spark.sql(query)   
+     val res = spark.sql(query)
 
 
+Using builtin data sources for BAM and ADAM file formats
+########################################################
+
+<TODO describe BAM/ADAM data source and creating tables>
 
 Using UDFs
 ##########
@@ -220,3 +224,5 @@ Parameter is set via coniguration:
 ::
 
    spark.sqlContext.setConf("spark.biodatageeks.rangejoin.useJoinOrder", "true")
+
+

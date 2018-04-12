@@ -1,5 +1,5 @@
  .. sectnum::
-     :start: 7
+     :start: 6
      
 License and citation
 =====================

@@ -8,10 +8,10 @@ RUN useradd -m tempuser
 # Spark related variables.
 ##COMPONENT_VERSION variable will be replaced during the build process
 
-ARG BDG_VERSION=0.3-SNAPSHOT
+ARG BDG_VERSION={{COMPONENT_VERSION}}
 
 ####set variable used in all shell scritps for downloading jars
-ENV BGD_VERSION=0.3-SNAPSHOT
+ENV BGD_VERSION={{COMPONENT_VERSION}}
 
 RUN mkdir /tmp/bdg-toolset
 
@@ -21,6 +21,9 @@ RUN mkdir /tmp/bdg-toolset
 COPY bin/bdg-shell.sh /tmp/bdg-toolset/bdg-shell
 COPY bin/bdginit.scala /tmp/bdg-toolset/bdginit.scala
 COPY warmcache.scala /tmp/bdg-toolset/warmcache.scala
+
+COPY bin/bdg-start-thriftserver.sh /tmp/bdg-toolset/bdg-start-thriftserver
+COPY bin/bdg-stop-thriftserver.sh /tmp/bdg-toolset/bdg-stop-thriftserver
 
 COPY bin/bdg-sequilaR.sh /tmp/bdg-toolset/bdg-sequilaR
 
@@ -37,6 +40,8 @@ RUN ln -s /tmp/unittest.scala /tmp/smoketest.scala
 COPY ivy.xml /tmp/ivy.xml
 
 RUN chmod +x /tmp/bdg-toolset/*
+
+RUN mkdir /usr/local/spark/logs && chmod -R 777 /usr/local/spark/logs
 
 RUN mkdir -p /data/input && mkdir -p /data/output  && chmod -R 777 /data
 ENV PATH="/tmp/bdg-toolset:/usr/local/spark/bin/:${PATH}"

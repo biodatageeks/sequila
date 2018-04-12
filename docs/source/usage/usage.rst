@@ -112,7 +112,7 @@ When you already have working application supporting your analysis pipeline - yo
 
 Integration with Spark-application
 ***********************************
-When you have exisiting analysis pipeline in Spark ecosystem you may benefit from SeQuiLa extra strategy registered at SparkSQL level.
+When you have existing analysis pipeline in Spark ecosystem you may benefit from SeQuiLa extra strategy registered at SparkSQL level.
 
 
 .. figure:: spark-integration.* 
@@ -120,7 +120,75 @@ When you have exisiting analysis pipeline in Spark ecosystem you may benefit fro
 
 <TODO> opis krokow
 
+Integration with R using SparkR
+###############################
 
+.. code-block:: bash
+
+    docker run -e USERID=$UID -e GROUPID=$(id -g) -it -v /Users/biodatageek/data:/data \
+    -p 4040:4040 biodatageeks/bdg-sequila bdg-sequilaR
+
+
+.. code-block:: R
+
+    #register SeQuilaR extensions
+    sparkR.callJStatic("org.biodatageeks.R.SequilaR","init",spark)
+    #create db
+    sql("CREATE DATABASE sequila")
+    sql("USE sequila")
+    #create a BAM data source with reads
+    sql('CREATE TABLE reads USING org.biodatageeks.datasources.BAM.BAMDataSource OPTIONS(path "/data/c1_10M.bam")')
+    #parse GTF with target regions
+    sql('CREATE TABLE targets_temp(Chr string, TypeDB string, Feature string, Start integer,
+    End integer, t1 string, Strand string, t2 string, Gene_id_temp string ,Gene_id string)
+     USING csv
+     OPTIONS (path "/data/Homo_sapiens.gtf", header "false", inferSchema "false", delimiter "\t")')
+
+    #a query to compute counts per targer
+    query <- "SELECT Gene_id,Chr ,targets.Start ,targets.End ,Strand ,CAST(targets.End AS INTEGER)-
+    CAST(targets.Start AS INTEGER) + 1 AS Length, count(*) AS Counts FROM reads JOIN targets_temp as targets
+    ON (Chr=reads.contigName AND reads.end >= CAST(targets.Start AS INTEGER)
+    AND reads.start <= CAST(targets.End AS INTEGER)) GROUP BY Gene_id, Chr, targets.Start, targets.End, Strand"
+
+    #check physical execution plan to verify if IntervalTreeJoinOptimChromosome strategy is used
+    explain(sql(query))
+    #get sample output
+    head(sql(query))
+
+          Gene_id Chr     Start       End Strand Length Counts
+    1     g1   6  73263359  73301401      +  38043    157
+    2     g2   7   6469654   6484149      -  14496     95
+    3     g3  10 123171535 123171875      -    341    309
+    4     g4  15  82540426  82540456      -     31    272
+    5     g5  20  58891302  58911192      +  19891   6728
+    6     g6   7  42935021  42935136      +    116     64
+
+.. note::
+
+    For more detailed instruction on how to work with SparkR API please consult `SparkR <https://spark.apache.org/docs/2.3.0/sparkr.html>`_ documentation.
+
+Integration over JDBC with SeQuiLa Thrift Server
+################################################
+
+In order to start SeQuiLa Spark Thrift server you can use the following prodecure:
+
+.. code-block:: bash
+
+    docker run --rm -p 4040:4040 -p 12000:12000 -e USERID=$UID -e GROUPID=$(id -g) \
+    -it biodatageeks/bdg-sequila bash
+    bdg-start-thriftserver --hiveconf hive.server2.thrift.port=12000
+
+Once done simply stop it as follows:
+
+.. code-block:: bash
+
+    bdg-stop-thriftserver
+
+
+.. note::
+
+    For detailed instructions on how to run Spark Thrift Server please check this `page <https://developer.ibm.com/hadoop/2016/08/22/how-to-run-queries-on-spark-sql-using-jdbc-via-thrift-server/>`_.
+    Please note that all options including resource management can be set in exactly the same way as in Spark Thrift Server.
 
 Integration with R-application
 *******************************
@@ -144,7 +212,7 @@ Integration with R-application
 .. code-block:: R
 
     drv <- JDBC("org.apache.hive.jdbc.HiveDriver",classPath = "./spark-jdbc-assembly-0.12.jar",identifier.quote="`")
-    conn <- dbConnect(drv, "jdbc:hive2://cdh00:12000", "user", "passord")
+    conn <- dbConnect(drv, "jdbc:hive2://localhost:12000", "user", "passord")
 
 
     ds <-dbGetQuery(conn, "SELECT targets.GeneId AS GeneId,
@@ -182,19 +250,6 @@ When integrating SeQuiLa with generic, non-Spark, non-R application you need add
 .. figure:: thrift-server.* 
    :align: center
 
-
-
-First of all start Spark Thrift Server:
-
-.. code-block:: bash
-
-    export BGD_VERSION=0.3-SNAPSHOT
-    export HADOOP_CONF_DIR=/etc/hadoop/conf 
-    ./start-thriftserver.sh --master yarn \
-    --executor-memory 4g --num-executors 10 --executor-cores 4  --driver-memory 4g \
-    --hiveconf hive.server2.thrift.port=12000 --conf spark.sql.hive.thriftServer.singleSession=true \
-    spark.executorEnv.JAVA_HOME=/usr/lib/jvm/java-8-oracle --packages org.biodatageeks:bdg-spark-granges_2.11:${BGD_VERSION} \
-    --repositories https://zsibio.ii.pw.edu.pl/nexus/repository/maven-releases/,https://zsibio.ii.pw.edu.pl/nexus/repository/maven-snapshots/
 
 We will show how JDBC integration works with one of the SQL client, for example: `<http://www.squirrelsql.org/>`_
 
