@@ -42,6 +42,7 @@ project_name = u'bdg-sequila'
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.todo',
+    'sphinxcontrib.github_ribbon'
 #    'sphinx.ext.ifconfig',
 #    'rst2pdf.pdfbuilder'
 ]
@@ -183,6 +184,14 @@ epub_copyright = copyright
 
 # A list of files that should not be packed into the epub file.
 epub_exclude_files = ['search.html']
+
+
+##github
+#pip install sphinxcontrib-github_ribbon
+
+github_ribbon_repo = 'ZSI-Bio/bdg-sequila'
+github_ribbon_position = "right"
+github_ribbon_color ="red"
 
 
 # -- Extension configuration -------------------------------------------------

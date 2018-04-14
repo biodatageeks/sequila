@@ -303,3 +303,7 @@ Afterwards you can play with SQL.
       reads.start <= CAST(targets.End AS INTEGER)
     )
     GROUP BY targets.GeneId,targets.Chr,targets.Start,targets.End,targets.Strand;
+
+
+Running on YARN
+###############
