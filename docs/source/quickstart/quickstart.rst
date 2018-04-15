@@ -28,7 +28,7 @@ In your command line pull docker image from Docker Hub and invoke smoketests
    docker pull biodatageeks/|project_name|:|version|
 
    docker run -e USERID=$UID -e GROUPID=$(id -g) \
-     biodatageeks/|project_name| \
+     biodatageeks/|project_name|:|version| \
      bdg-shell -i /tmp/smoketest.scala
 
 
@@ -64,8 +64,7 @@ Here we will launch bdg-shell which is actually spark-shell wrapped by biodatage
 
 
    docker run -e USERID=$UID -e GROUPID=$(id -g) \
-   	-it --rm \
-     biodatageeks/|project_name|\
+   	-it --rm biodatageeks/|project_name|:|version| \
      bdg-shell 
 
 And voila you should see bdg-shell collecting its depenedencies and starting off. Now you are ready to load your sample data and do some interval queries playing on your own.
@@ -79,8 +78,7 @@ If for any reason you do not want to use bdg-shell and prefer pure spark-shell y
 
 
    docker run -e USERID=$UID -e GROUPID=$(id -g) \
-   	-it --rm \
-     biodatageeks/|project_name| \
+   	-it --rm biodatageeks/|project_name|:|version| \
      spark-shell --packages org.biodatageeks:bdg-sequila_2.11:|version| \
   		--conf spark.sql.warehouse.dir=/home/bdgeek/spark-warehouse \
  		--repositories https://zsibio.ii.pw.edu.pl/nexus/repository/maven-releases/,https://zsibio.ii.pw.edu.pl/nexus/repository/maven-snapshots/

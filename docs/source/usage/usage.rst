@@ -37,7 +37,7 @@ Sample usage of SeQuiLa wrapped in docker container's scripts. The snippet below
    docker run --rm -it -p 4040:4040 \ 
       -v /data/sequila:/data \ 
       -e USERID=$UID -e GROUPID=$(id -g) \
-      biodatageeks/|project_name| \ 
+      biodatageeks/|project_name|:|version| \
       featureCounts -- \ 
       -o /data/featureOutput -F SAF \
       -a /data/tgp_exome_hg18.saf /data/NA12878.slice.bam
@@ -126,7 +126,7 @@ Integration with R using SparkR
 .. code-block:: bash
 
     docker run -e USERID=$UID -e GROUPID=$(id -g) -it -v /Users/biodatageek/data:/data \
-    -p 4040:4040 biodatageeks/|project_name| bdg-sequilaR
+    -p 4040:4040 biodatageeks/|project_name|:|version| bdg-sequilaR
 
 
 .. code-block:: R
@@ -175,7 +175,7 @@ In order to start SeQuiLa Spark Thrift server you can use the following prodecur
 .. code-block:: bash
 
     docker run --rm -p 4040:4040 -p 12000:12000 -e USERID=$UID -e GROUPID=$(id -g) \
-    -it biodatageeks/bdg-sequila bash
+    -it biodatageeks|project_name|:|version| bash
     bdg-start-thriftserver --hiveconf hive.server2.thrift.port=12000
 
 Once done simply stop it as follows:
@@ -307,3 +307,28 @@ Afterwards you can play with SQL.
 
 Running on YARN
 ###############
+
+Running SeQuiLa tools on non-kerberized(not secured) Hadoop cluster is pretty straighforward:
+
+.. code-block:: bash
+
+    #create a home dir for bdgeek user on HDFS
+    sudo -u hdfs hadoop fs -mkdir /user/bdgeek
+    sudo -u hdfs hadoop fs -chown -R bdgeek:bdgeek   /user/bdgeek
+
+    #run bdg-shell with 2 executors
+    docker run --rm --network=host -v /etc/hadoop/conf:/etc/hadoop/conf \
+    -e USERID=$UID -e GROUPID=$(id -g) -p 4040:4040 \
+    -t biodatageeks/|project_name|:|version| bdg-shell \
+    --master yarn-client --num-executors 2 --executor-memory 2g --driver-memory 2g
+
+
+Once started you should be able to see you bdg-shell app in YARN web UI:
+
+.. figure:: yarn.*
+    :align: center
+
+.. note::
+
+    For detailed instructions on how to deploy Apache Spark applications on YARN  please check this `page <https://spark.apache.org/docs/latest/submitting-applications.html>`_.
+    Please note that all options including resource management can be set in exactly the same way for all SeQuiLa's apps including: bdg-shell, sequilaR and featureCounts.
