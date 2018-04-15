@@ -37,7 +37,7 @@ Sample usage of SeQuiLa wrapped in docker container's scripts. The snippet below
    docker run --rm -it -p 4040:4040 \ 
       -v /data/sequila:/data \ 
       -e USERID=$UID -e GROUPID=$(id -g) \
-      biodatageeks/bdg-sequila \ 
+      biodatageeks/|project_name| \ 
       featureCounts -- \ 
       -o /data/featureOutput -F SAF \
       -a /data/tgp_exome_hg18.saf /data/NA12878.slice.bam
@@ -126,7 +126,7 @@ Integration with R using SparkR
 .. code-block:: bash
 
     docker run -e USERID=$UID -e GROUPID=$(id -g) -it -v /Users/biodatageek/data:/data \
-    -p 4040:4040 biodatageeks/bdg-sequila bdg-sequilaR
+    -p 4040:4040 biodatageeks/|project_name| bdg-sequilaR
 
 
 .. code-block:: R

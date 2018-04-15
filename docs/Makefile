@@ -5,7 +5,7 @@
 SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
 SPHINXPROJ    = bdg-spark-granges
-SOURCEDIR     = source
+SOURCEDIR     = source_v
 BUILDDIR      = build
 
 # Put it first so that "make" without argument is like "make help".
