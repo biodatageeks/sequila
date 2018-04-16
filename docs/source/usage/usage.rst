@@ -6,7 +6,7 @@ Usage
 
 SeQuiLa can be used in different ways. Specifically it supports ad-hoc research, which is typically focused on quick analysis on files. Depending on your preferences you can use predefined scripts (findOverlaps and featureCounts) or write your own code snippets within spark-shell or our bdg-shell. Additionally SeQuiLa also can be used along with your existing applications written in Scala/Spark, R or any other language/platform. Please see details below.
 
-.. figure:: integration.*
+.. figure:: usage_patterns.*
 
 Ad-hoc analysis
 #################
@@ -30,9 +30,9 @@ Sample usage of SeQuiLa wrapped in docker container's scripts. The snippet below
 
    cd  /data/sequila
 
-   wget http://.../NA12878.slice.bam
+   wget http://biodatageeks.org/sequila/data/NA12878.slice.bam
 
-   wget http://.../tgp_exome_hg18.saf
+   wget http://biodatageeks.org/sequila/data/tgp_exome_hg18.saf
 
    docker run --rm -it -p 4040:4040 \ 
       -v /data/sequila:/data \ 
