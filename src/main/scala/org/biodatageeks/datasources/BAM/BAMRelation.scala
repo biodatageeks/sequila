@@ -17,11 +17,11 @@ case class BAMRecord(sampleId: String,
                      start:Int,
                      end:Int,
                      cigar:String,
-                     quality:Int,
-                     basequality: String,
+                     mapq:Int,
+                     baseq: String,
                      reference:String,
                      flags:Int,
-                     mateReferenceIndex:Int)
+                     materefind:Int)
 
 class BAMRelation (path:String)(@transient val sqlContext: SQLContext)
   extends BaseRelation with TableScan {
