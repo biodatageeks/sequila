@@ -13,6 +13,8 @@ ARG BDG_VERSION={{COMPONENT_VERSION}}
 ####set variable used in all shell scritps for downloading jars
 ENV BGD_VERSION={{COMPONENT_VERSION}}
 
+
+
 RUN mkdir /tmp/bdg-toolset
 
 ###once the repo is public we can use git instead
@@ -29,7 +31,10 @@ COPY bin/bdg-sequilaR.sh /tmp/bdg-toolset/bdg-sequilaR
 
 #featureCounts scripts
 COPY bin/featureCounts.sh /tmp/bdg-toolset/featureCounts
-RUN wget https://zsibio.ii.pw.edu.pl/nexus/repository/maven-snapshots/org/biodatageeks/bdg-sequila_2.11/${BGD_VERSION}/bdg-sequila_2.11-${BGD_VERSION}-assembly.jar -O /tmp/bdg-toolset/bdg-sequila-assembly-${BGD_VERSION}.jar
+RUN bash -c " if [[ $BDG_VERSION =~ *SNAPSHOT ]]; then \
+    wget https://zsibio.ii.pw.edu.pl/nexus/repository/maven-snapshots/org/biodatageeks/bdg-sequila_2.11/${BGD_VERSION}/bdg-sequila_2.11-${BGD_VERSION}-assembly.jar -O /tmp/bdg-toolset/bdg-sequila-assembly-${BGD_VERSION}.jar ; \
+    else wget https://zsibio.ii.pw.edu.pl/nexus/repository/maven-releases/org/biodatageeks/bdg-sequila_2.11/${BGD_VERSION}/bdg-sequila_2.11-${BGD_VERSION}-assembly.jar -O /tmp/bdg-toolset/bdg-sequila-assembly-${BGD_VERSION}.jar ; \
+    fi"
 
 #copy test data
 COPY NA12878.slice.bam /tmp/NA12878.slice.bam

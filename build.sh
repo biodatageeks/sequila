@@ -31,8 +31,8 @@ do
     fi
   #fi
   echo "Building image ${image}..."
-  diffTs=`echo "$(date +%s) - $(git log -n 1 --pretty=format:%at ${dir})" | bc`
-  if [ $diffTs -lt $MAX_COMMIT_TS_DIFF ]; then
+  #diffTs=`echo "$(date +%s) - $(git log -n 1 --pretty=format:%at ${dir})" | bc`
+  #if [ $diffTs -lt $MAX_COMMIT_TS_DIFF ]; then
     cd $dir
     docker build  -t $image:$version .
     docker build  -t $image:latest .
@@ -50,6 +50,6 @@ do
     docker images $image | tail -n +5 | sed 's/ \{1,\}/:/g' | cut -f1,2 -d':' | xargs -i docker rmi {}
 
     cd ../..
-  fi
+  #fi
 
 done
