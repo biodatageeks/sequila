@@ -1,5 +1,4 @@
- .. sectnum::
-     :start: 1
+
 
 Quickstart 
 ==========
@@ -51,14 +50,15 @@ Congratulations! Your installation is working on sample data.
 
 .. note::
 
-   If you are wondering what this part ``-e USERID=$UID -e GROUPID=$(id -g)``  is for: It allows the docker container's inside-user to write in mounted volumes with host's user id and group id.  
+   If you are wondering what this part ``-e USERID=$UID -e GROUPID=$(id -g)``  is for: It allows the Docker container's inside-user to write in mounted volumes with host's user id and group id.
 
 
 
 Launch bdg-shell
 #################
 
-Here we will launch bdg-shell which is actually spark-shell wrapped by biodatageeks with some additional configuration. So if you are familiar with Scala you will be able to use SeQuiLa right away.
+Here we will launch bdg-shell which is actually spark-shell wrapped by biodatageeks with some additional configuration.
+So if you are familiar with Scala you will be able to use SeQuiLa right away.
 
 .. code-block:: bash
 

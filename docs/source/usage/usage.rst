@@ -1,5 +1,3 @@
- .. sectnum::
-     :start: 3
 
 Usage
 =====
@@ -23,7 +21,9 @@ In SeQuiLa's docker image are two predefined scripts written to be executable fr
 .. figure:: docker.*
 
    
-Sample usage of SeQuiLa wrapped in docker container's scripts. The snippet below shows how to download sample data files into specific directory, then run the container with mounted volume. The result should appear in specified output directory.
+Sample usage of SeQuiLa wrapped in docker container's scripts.
+The snippet below shows how to download sample data files into specific directory, then run the container with mounted volume.
+The result should appear in specified output directory.
 
 
 .. code-block:: bash

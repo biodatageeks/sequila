@@ -1,27 +1,31 @@
- .. sectnum::
-     :start: 4
+
 
 SeQuiLa API
 ===========
 
 
-The API that is provided by SeQuiLa is not a set of predifined functions but rather exposing flexible and enhanced SQL interface to quering genomic datasets. Enhanced in terms of speed in performing range joins between datasets which is crucial to data analysis in bioinformatics
-
-Below we will describe how to construct SQL queries to efficiently join genomic datasets with SeQuiLa.
+The API that is provided by SeQuiLa is not a set of predefined functions but
+rather it  exposes a flexible and enhanced SQL interface for querying genomic datasets.
+Enhanced in terms  range joins performance between datasets which is crucial to data analysis in bioinformatics
+Below we will describe how to implement SQL queries to efficiently join genomic datasets with SeQuiLa.
 
 
 
 
 General usage
 ##############
-Let's assume that you already have prepared or imported two datasets ``s1`` and ``s2`` which both contain location indices of start and end of interval (usually named: start, end). Optionally you may also want to take chromosome name into account (usually chr). 
+Let's assume that you already have prepared or imported two datasets ``s1`` and ``s2`` which both
+contain location indices of start and end of interval (usually named: start, end).
+Optionally you may also want to take chromosome name into account (usually chr).
 
-You have to registral SeQuiLa extrastrategy and prepare SQL query that will be performed.
+You have to register SeQuiLa extra strategy and prepare a SQL query that will be performed.
 
 Find overlaps - basic
 ***********************
 
-Range join on interval on two datasets can be defined in SQL. You may want to select all resulting columns ```select * ``` or just a subset of your preference.  As a result of performing this query by SparkSQL you will get results stored in another dataset
+Range join on interval on two datasets can be defined in SQL.
+You may want to select all resulting columns ```select * ``` or just a subset of them.
+As a result of executing this query by Spark SQL you will another dataset
 
 :: 
 
@@ -39,7 +43,8 @@ This result can be then used for various data manipulations and for further pipe
 Find overlaps within chromosomes
 *********************************
 
-If your dataset contains chromosomes information as well you may want to add additional constraint to join condition so as to find only overlaps from the same chromosome.
+If your dataset contains chromosomes information as well
+you may want to add an additional constraint to join condition so as to find only overlaps from the same chromosome.
 
 ::
 
@@ -55,8 +60,22 @@ If your dataset contains chromosomes information as well you may want to add add
 Using builtin data sources for BAM and ADAM file formats
 ########################################################
 
-<TODO describe BAM/ADAM data source and creating tables>
+SeQuiLa introduces native BAM/ADAM data source that enables user to create a view over the exiting files to
+process and query them using a SQL interface:
 
+.. code-block:: scala
+
+    val tableNameBAM = "reads"
+    spark.sql("CREATE DATABASE BDGEEK")
+    spark.sql("USE BDGEEK")
+    spark.sql(
+      s"""
+         |CREATE TABLE ${tableNameBAM}
+         |USING org.biodatageeks.datasources.BAM.BAMDataSource
+         |OPTIONS(path "/data/input/multisample/*.bam")
+         |
+      """.stripMargin)
+    spark.sql("SELECT sampleId,contigName,start,end,cigar FROM reads").show(5)
 Using UDFs
 ##########
 
@@ -65,7 +84,8 @@ SeQuiLa introduces several UserDefinedFunctions.
 shift
 ******
 
-Shift function is performing operation of shifting the ranges by a specified number of positions. To use the function within query it needs to be registered. Sample query using shift function:
+Shift function is performing operation of shifting the ranges by
+a specified number of positions. To use the function within query it needs to be registered. Sample query using shift function:
 
 ::
 
@@ -93,7 +113,8 @@ It returns range with start and end fields.
 resize
 *******
 
-Resize function is performing operation of extending the range by specified width. It returns range with start and end fields. Sample query using resize function:
+Resize function is performing operation of extending the range by specified width.
+It returns range with start and end fields. Sample query using resize function:
 
 ::
 
@@ -107,7 +128,8 @@ Resize function is performing operation of extending the range by specified widt
 calcOverlap
 ************
 
-calcOverlap function returns the width of overlap between intervals. To use the function within query it needs to be registered. Sample query using overlaplenght function:
+calcOverlap function returns the width of overlap between intervals.
+To use the function within query it needs to be registered. Sample query using overlaplength function:
 
 ::
 
@@ -130,8 +152,10 @@ calcOverlap function returns the width of overlap between intervals. To use the 
 flank
 *******
 
-Flank function is performing operation of calculating the flanking range with specified width. First boolean argument indicates whether flanking should be performed from start of range (true) or end (false). 
-Second boolean argument set to true indicates that flanking range should contain not only outside of original range, but also inside. In that case width of flanking range is doubled. Flank function returns range with start and end fields. Sample query using flank function:
+Flank function is performing operation of calculating the flanking range with specified width. F
+irst boolean argument indicates whether flanking should be performed from start of range (true) or end (false).
+Second boolean argument set to true indicates that flanking range should contain not only outside of original range, but also inside.
+In that case width of flanking range is doubled. Flank function returns range with start and end fields. Sample query using flank function:
 
 ::
 
@@ -145,7 +169,8 @@ Second boolean argument set to true indicates that flanking range should contain
 promoters
 *********
 
-Promoters function is performing operation of calculating promoter for the range with given upstream and downstream. It returns range with start and end fields. Sample query using promoters function:
+Promoters function is performing operation of calculating promoter for the range with given upstream and downstream.
+It returns range with start and end fields. Sample query using promoters function:
 
 ::
 
@@ -159,7 +184,8 @@ Promoters function is performing operation of calculating promoter for the range
 reflect
 *******
 
-Reflect function is performing operation of reversing the range relative to specified reference bounds. It returns range with start and end fields. Sample query using reflect function:
+Reflect function is performing operation of reversing the range relative to specified reference bounds.
+It returns range with start and end fields. Sample query using reflect function:
 
 ::
 
@@ -179,7 +205,8 @@ Currently SeQuiLa provides three additional parameters that impact joining in te
 
 minOverlap
 ***********
-This parameter is defining the minimal overlapping positions for interval. The default value is set to 1, meaning that two intervals are considered overlapping if they have at least one position in common.
+This parameter is defining the minimal overlapping positions for interval.
+The default value is set to 1, meaning that two intervals are considered overlapping if they have at least one position in common.
 
 Parameter is set via configuration:
 ::
@@ -202,7 +229,9 @@ Parameter is set via configuration:
 
 maxBroadcastSize
 *****************
-This parameter is defining the decision boundary for choosing to broadcast whole table (with all columns) to the tree (prefered for narrow dataframes) or just intervals (preferred for wider dataframes). When whole table is broadcast the solution os more memory-demanding but joining happens in one step. When just intervals are broadcast joining happens in two steps.
+This parameter is defining the decision boundary for choosing to broadcast whole table (with all columns) to the tree (peered for narrow dataframes)
+or just intervals (preferred for wider dataframes). If the whole table is broadcasted the solution
+is more memory-demanding but joining happens in one step. If just intervals are broadcast joining happens in two steps.
 
 By default the parameter is set to 10240 kB
 
@@ -214,9 +243,12 @@ Parameter is set via coniguration:
 
 useJoinOrder
 **************
-If this parameter is set to FALSE the algorithm itself decides which table is used for broadcasting. It performs row counting on both tables and chooses smaller one. 
+If this parameter is set to FALSE the algorithm itself decides which table is used for broadcasting.
+It performs row counting on both tables and chooses smaller one.
 
-To achieve even better performance you can set this parameter to TRUE. In this case, the algorithm does not check table sizes but blindly broadcasts first table.  You should use this parameter if you know table sizes beforehand
+To achieve even better performance you can set this parameter to TRUE.
+In this case, the algorithm does not check table sizes but blindly broadcasts the second table.
+You should use this parameter if you know table sizes beforehand
 
 By default the parameter is set to false.
 

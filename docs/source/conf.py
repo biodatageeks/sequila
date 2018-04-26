@@ -24,9 +24,9 @@ copyright = u'2018, biodatageeks.org'
 author = u'biodatageeks.org'
 
 # The short X.Y version
-version = u'0.3-SNAPSHOT'
+version = u'|version|'
 # The full version, including alpha/beta/rc tags
-release = u'0.3-SNAPSHOT'
+release = u'|version|'
 
 project_name = u'bdg-sequila'
 
@@ -42,9 +42,9 @@ project_name = u'bdg-sequila'
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.todo',
-    'sphinxcontrib.github_ribbon'
+    'sphinxcontrib.github_ribbon',
 #    'sphinx.ext.ifconfig',
-#    'rst2pdf.pdfbuilder'
+   'rst2pdf.pdfbuilder'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -104,11 +104,11 @@ html_static_path = ['_static']
 #
 # html_sidebars = {}
 
-html_logo='sequila.png'
+#html_logo='sequila.png'
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'bdg-spark-grangesdoc'
+htmlhelp_basename = 'bdg-sequiladoc'
 
 
 #--- Options for PDF ------------------------
@@ -138,8 +138,8 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'bdg-spark-granges.tex', u'bdg-spark-granges Documentation',
-     u'biodatageekas', 'manual'),
+    (master_doc, 'bdg-sequila.tex', u'SeQuiLa Documentation',
+     u'biodatageeks.org', 'manual'),
 ]
 
 
@@ -148,7 +148,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'bdg-spark-granges', u'bdg-spark-granges Documentation',
+    (master_doc, 'bdg-sequila', u'bdg-spark-granges Documentation',
      [author], 1)
 ]
 
@@ -192,6 +192,11 @@ epub_exclude_files = ['search.html']
 github_ribbon_repo = 'ZSI-Bio/bdg-sequila'
 github_ribbon_position = "right"
 github_ribbon_color ="red"
+
+
+#latexpdf
+text_add_secnumbers = False
+#latex_logo = "sequila.png"
 
 
 # -- Extension configuration -------------------------------------------------
