@@ -118,7 +118,6 @@ When you have existing analysis pipeline in Spark ecosystem you may benefit from
 .. figure:: spark-integration.* 
    :align: center
 
-<TODO> opis krokow
 
 Integration with R using SparkR
 ###############################

@@ -33,6 +33,19 @@ Algorithm
 ###########
 
 SeQuiLa's range joins are based on IntervalTree algorithm. 
+
+Genomic interval intersections can be expressed as follows:
+
+.. code-block:: SQL
+
+	SELECT s2.targetId,count(*)
+	FROM reads s1 JOIN targets s2
+	ON s1.chr=s2.chr
+	AND s1.end>=s2.start
+	AND s1.start<=s2.end
+	GROUP BY targetId;
+
+
 SeQuiLa package at its core introduces a new rule based optimizer (RBO) that chooses most efficient join strategy based on
 input data statistics computed in the runtime. The first step of the algorithm is to obtain value of `spark.biodatageeks.rangejoin.maxBroadcastSize` parameter. It can set explicite by the end user or computed as a fraction of the Apache Spark Driver memory.
 In the next step table row counts are computed and based on that table with the fewer rows is selected for constructing interval forest. This is the default approach - it can be overridden by setting
@@ -55,7 +68,14 @@ Performance tests
 ******************
 
 During performance testing phase we focused on similar tools as well as compared our strategy against default
-Apache Spark strategy used for genomic interval queries. SeQuiLa clearly outperforms all the competing tools:
+Apache Spark strategy used for genomic interval queries. 
+
+Tests have been performed using the following test data sets:
+
+.. image:: test_data.*
+
+
+SeQuiLa clearly outperforms all the competing tools:
 
 .. image:: local_cluster_speedup.*
 
