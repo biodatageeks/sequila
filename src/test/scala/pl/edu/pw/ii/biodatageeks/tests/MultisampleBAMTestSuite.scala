@@ -4,6 +4,7 @@ import java.io.{OutputStreamWriter, PrintWriter}
 
 import com.holdenkarau.spark.testing.{DataFrameSuiteBase, SharedSparkContext}
 import org.apache.spark
+import org.apache.spark.sql.SequilaSession
 import org.bdgenomics.utils.instrumentation.{Metrics, MetricsListener, RecordedMetrics}
 import org.biodatageeks.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
 import org.scalatest.{BeforeAndAfter, FunSuite}
@@ -11,7 +12,7 @@ import org.scalatest.{BeforeAndAfter, FunSuite}
 class MultisampleBAMTestSuite extends FunSuite with DataFrameSuiteBase with BeforeAndAfter with SharedSparkContext {
 
 
-  val bamPath = getClass.getResource("/multisample").getPath+"/NA1287*.bam"
+  val bamPath = getClass.getResource("/multisample").getPath+"/*.bam"
   val metricsListener = new MetricsListener(new RecordedMetrics())
   val writer = new PrintWriter(new OutputStreamWriter(System.out))
   val tableNameBAM = "reads"
@@ -31,39 +32,40 @@ class MultisampleBAMTestSuite extends FunSuite with DataFrameSuiteBase with Befo
 
   }
 
-//  test("Multisample BAM Table"){
-//    assert(spark
-//      .sql(s"SELECT * FROM ${tableNameBAM}")
-//      .count === 6344L)
-//  }
-//
-//  test("Sample name"){
-//    assert(spark
-//      .sql(s"SELECT sampleId FROM ${tableNameBAM}")
-//      .first.getString(0) === "NA12878")
-//  }
-//
-//  test("Feature counts with multiple samples"){
-//    val query ="""SELECT sampleId,count(*),targets.contigName,targets.start,targets.end
-//              FROM reads JOIN targets
-//        |ON (
-//        |  targets.contigName=reads.contigName
-//        |  AND
-//        |  reads.end >= targets.start
-//        |  AND
-//        |  reads.start <= targets.end
-//        |)
-//        |GROUP BY sampleId,targets.contigName,targets.start,targets.end
-//        |having contigName='chr1' AND  start=20138 AND  end=20294 and sampleId='NA12878'""".stripMargin
-//    val targets = spark
-//      .sqlContext
-//      .createDataFrame(Array(Region("chr1", 20138, 20294)))
-//    targets
-//      .createOrReplaceTempView("targets")
-//    assert(spark.sql(query).first().getLong(1) === 1484L)
-//  }
+  test("Multisample BAM Table"){
+    assert(spark
+      .sql(s"SELECT * FROM ${tableNameBAM}")
+      .count === 9516L)
+  }
+
+  test("Sample name"){
+    assert(spark
+      .sql(s"SELECT sampleId FROM ${tableNameBAM}")
+      .first.getString(0) === "NA12877")
+  }
+
+  test("Feature counts with multiple samples"){
+    val query ="""SELECT sampleId,count(*),targets.contigName,targets.start,targets.end
+              FROM reads JOIN targets
+        |ON (
+        |  targets.contigName=reads.contigName
+        |  AND
+        |  reads.end >= targets.start
+        |  AND
+        |  reads.start <= targets.end
+        |)
+        |GROUP BY sampleId,targets.contigName,targets.start,targets.end
+        |having contigName='chr1' AND  start=20138 AND  end=20294 and sampleId='NA12878'""".stripMargin
+    val targets = spark
+      .sqlContext
+      .createDataFrame(Array(Region("chr1", 20138, 20294)))
+    targets
+      .createOrReplaceTempView("targets")
+    assert(spark.sql(query).first().getLong(1) === 1484L)
+  }
 
   test("Multisample groupby - cast issue") {
+    val ss = new SequilaSession(spark)
     val query =
       """
         |SELECT targets.GeneId as GeneId, targets.contigName as Chr,
@@ -74,15 +76,43 @@ class MultisampleBAMTestSuite extends FunSuite with DataFrameSuiteBase with Befo
         |GROUP BY targets.GeneId, targets.contigName, targets.Start, targets.End, targets.Strand
       """.stripMargin
 
-    val targets = spark
+    val targets = ss
       .sqlContext
       .createDataFrame(Array(Gene("chr1",20138,20294,"TestGene","+")))
     targets
       .createOrReplaceTempView("targets")
 
-    spark.sql(query).explain(true)
-    spark.sql(query).count
-    //assert(spark.sql(query).first().getLong(1) === 1484L)
+    ss.sql(query).explain(true)
+    ss.sql(query).count
+    assert(spark.sql(query).first().getLong(5) === 4452L)
   }
+
+  test("Multisample - partition pruning one sample test"){
+
+    val query =
+      """
+        |SELECT sampleId,start,cigar FROM reads where sampleId='NA12879' AND contigName='chr1' LIMIT 5
+      """.stripMargin
+
+    println(query)
+    assert(spark.sql(query).first().getString(0) === "NA12879")
+  }
+
+  test("Multisample - partition pruning many samples test"){
+
+    val query =
+      """
+        |SELECT sampleId,count(*) FROM reads where sampleId IN('NA12878','NA12879')
+        |GROUP BY sampleId order by sampleId
+      """.stripMargin
+
+    //spark.sql(query).explain(true)
+    println(query)
+    val res = spark.sql(query).take(2)
+    assert(res(0).getString(0) === "NA12878" && res(0).getLong(1) === 3172L)
+    assert(res(1).getString(0) === "NA12879" && res(1).getLong(1) === 3172L)
+
+  }
+
 
 }

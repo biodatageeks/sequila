@@ -1,17 +1,20 @@
+import org.apache.spark.sql.SequilaSession
 import org.biodatageeks.utils.{SequilaRegister, UDFRegister}
 
 /*set params*/
 
-spark.sqlContext.setConf("spark.biodatageeks.rangejoin.useJoinOrder","false")
-spark.sqlContext.setConf("spark.biodatageeks.rangejoin.maxBroadcastSize", (128*1024*1024).toString)
+val ss = SequilaSession(spark)
 
-spark.sqlContext.setConf("spark.biodatageeks.rangejoin.minOverlap","1")
-spark.sqlContext.setConf("spark.biodatageeks.rangejoin.maxGap","0")
+ss.sqlContext.setConf("spark.biodatageeks.rangejoin.useJoinOrder","false")
+ss.sqlContext.setConf("spark.biodatageeks.rangejoin.maxBroadcastSize", (128*1024*1024).toString)
+
+ss.sqlContext.setConf("spark.biodatageeks.rangejoin.minOverlap","1")
+ss.sqlContext.setConf("spark.biodatageeks.rangejoin.maxGap","0")
 
 /*register UDFs*/
 
-UDFRegister.register(spark)
+UDFRegister.register(ss)
 
 /*inject bdg-granges strategy*/
-SequilaRegister.register(spark)
+SequilaRegister.register(ss)
 

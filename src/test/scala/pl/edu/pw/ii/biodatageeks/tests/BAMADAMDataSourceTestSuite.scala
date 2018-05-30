@@ -78,6 +78,12 @@ class BAMADAMDataSourceTestSuite extends FunSuite with DataFrameSuiteBase with B
 
   }
 
+  test("BAM - coverage BAMDataSource"){
+    assert(spark
+      .sql(s"SELECT * FROM ${tableNameBAM}")
+      .count === 3172L)
+  }
+
   after{
     spark.sql(s"DROP TABLE IF EXISTS  ${tableNameBAM}")
     writer.flush()

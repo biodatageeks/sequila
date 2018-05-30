@@ -34,7 +34,7 @@ do
   #diffTs=`echo "$(date +%s) - $(git log -n 1 --pretty=format:%at ${dir})" | bc`
   #if [ $diffTs -lt $MAX_COMMIT_TS_DIFF ]; then
     cd $dir
-    docker build  -t $image:$version .
+    docker build --no-cache  -t $image:$version .
     docker build  -t $image:latest .
     if [[ ${BUILD_MODE} != "local" ]]; then
       docker push docker.io/$image:latest

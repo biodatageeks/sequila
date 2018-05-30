@@ -15,6 +15,13 @@ ENV BGD_VERSION={{COMPONENT_VERSION}}
 
 
 
+RUN apt-get update && apt-get install --yes git sudo curl libssl-dev libxml2-dev
+
+
+
+
+
+
 RUN mkdir /tmp/bdg-toolset
 
 ###once the repo is public we can use git instead
@@ -31,7 +38,7 @@ COPY bin/bdg-sequilaR.sh /tmp/bdg-toolset/bdg-sequilaR
 
 #featureCounts scripts
 COPY bin/featureCounts.sh /tmp/bdg-toolset/featureCounts
-RUN bash -c " if [[ $BDG_VERSION =~ *SNAPSHOT ]]; then \
+RUN bash -c " if [[ $BDG_VERSION =~ SNAPSHOT ]]; then \
     wget https://zsibio.ii.pw.edu.pl/nexus/repository/maven-snapshots/org/biodatageeks/bdg-sequila_2.11/${BGD_VERSION}/bdg-sequila_2.11-${BGD_VERSION}-assembly.jar -O /tmp/bdg-toolset/bdg-sequila-assembly-${BGD_VERSION}.jar ; \
     else wget https://zsibio.ii.pw.edu.pl/nexus/repository/maven-releases/org/biodatageeks/bdg-sequila_2.11/${BGD_VERSION}/bdg-sequila_2.11-${BGD_VERSION}-assembly.jar -O /tmp/bdg-toolset/bdg-sequila-assembly-${BGD_VERSION}.jar ; \
     fi"
@@ -105,11 +112,21 @@ RUN apt-get update \
 RUN Rscript -e 'source("http://bioconductor.org/biocLite.R")' -e 'biocLite("edgeR")'
 RUN Rscript -e 'source("http://bioconductor.org/biocLite.R")' -e 'biocLite("DESeq2")'
 
+#install devtools
+RUN Rscript -e "install.packages('devtools')"
+#install sequila
+RUN Rscript -e "devtools::install_github('ZSI-Bio/bdg-sparklyr-sequila')"
+
 USER tempuser
 
 WORKDIR /home/tempuser
 ##just to download all depencies and speedup start
 RUN bdg-shell -i /tmp/bdg-toolset/warmcache.scala build
+
+
+
+#install spark (installed by .onLoad when package loaded)
+RUN Rscript -e "library(sequila)"
 
 USER root
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

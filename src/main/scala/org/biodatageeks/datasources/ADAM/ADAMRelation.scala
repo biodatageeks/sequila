@@ -10,7 +10,6 @@ class ADAMRelation (path:String)(@transient val sqlContext: SQLContext)
 
   val spark = sqlContext
     .sparkSession
-  spark.experimental.extraStrategies = new IntervalTreeJoinStrategyOptim(spark) :: Nil
 
   private def parguet = spark.read.parquet(path)
 

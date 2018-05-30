@@ -2,7 +2,7 @@ import scala.util.Properties
 
 name := """bdg-sequila"""
 
-version := "0.3"
+version := "0.4-SNAPSHOT"
 
 organization := "org.biodatageeks"
 
@@ -42,13 +42,17 @@ libraryDependencies += "com.github.potix2" %% "spark-google-spreadsheets" % "0.5
 
 libraryDependencies += "ch.cern.sparkmeasure" %% "spark-measure" % "0.11"
 
-//fork := true
+//libraryDependencies += "pl.edu.pw.ii.zsibio" % "common-routines_2.11" % "0.1-SNAPSHOT"
+
+fork := false
 fork in Test := true
-parallelExecution in Test := false
+//parallelExecution in Test := false
 javaOptions in test += "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=9999"
-javaOptions in run ++= Seq(
-  "-Dlog4j.debug=true",
-  "-Dlog4j.configuration=log4j.properties")
+javaOptions in run += "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=9999"
+
+//javaOptions in run ++= Seq(
+//  "-Dlog4j.debug=true",
+//  "-Dlog4j.configuration=log4j.properties")
 
 javaOptions ++= Seq("-Xms512M", "-Xmx8192M", "-XX:+CMSClassUnloadingEnabled")
 
@@ -93,11 +97,11 @@ assemblyMergeStrategy in assembly := {
 }
 
 /* only for releasing assemblies*/
-artifact in (Compile, assembly) := {
-  val art = (artifact in (Compile, assembly)).value
-  art.withClassifier(Some("assembly"))
-}
-addArtifact(artifact in (Compile, assembly), assembly)
+//artifact in (Compile, assembly) := {
+//  val art = (artifact in (Compile, assembly)).value
+//  art.withClassifier(Some("assembly"))
+//}
+//addArtifact(artifact in (Compile, assembly), assembly)
 
 publishConfiguration := publishConfiguration.value.withOverwrite(true)
 

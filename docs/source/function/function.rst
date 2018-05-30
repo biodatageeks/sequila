@@ -76,6 +76,55 @@ process and query them using a SQL interface:
          |
       """.stripMargin)
     spark.sql("SELECT sampleId,contigName,start,end,cigar FROM reads").show(5)
+
+Implicit partition pruning for BAM data source
+##############################################
+
+BAM data source supports implicit `partition pruning <https://docs.oracle.com/database/121/VLDBG/GUID-E677C85E-C5E3-4927-B3DF-684007A7B05D.htm#VLDBG00401>`_
+mechanism to speed up queries that are restricted to only subset of samples from a table. Consider a following example:
+
+.. code-block:: bash
+
+    MacBook-Pro:multisample marek$ ls -ltr
+    total 2136
+    -rw-r--r--  1 marek  staff  364043 May 15 18:53 NA12877.slice.bam
+    -rw-r--r--  1 marek  staff  364043 May 15 18:53 NA12878.slice.bam
+    -rw-r--r--  1 marek  staff  364043 May 15 18:53 NA12879.slice.bam
+
+    MacBook-Pro:multisample marek$ pwd
+    /Users/marek/data/multisample
+
+
+.. code-block:: scala
+
+    import org.apache.spark.sql.{SequilaSession, SparkSession}
+    val bamPath ="/Users/marek/data/multisample/*.bam"
+    val tableNameBAM = "reads"
+    val ss: SparkSession = SequilaSession(spark)
+     ss.sql(
+      s"""
+         |CREATE TABLE ${tableNameBAM}
+         |USING org.biodatageeks.datasources.BAM.BAMDataSource
+         |OPTIONS(path "${bamPath}")
+         |
+      """.stripMargin)
+
+    val query =
+      """
+        |SELECT sampleId,count(*) FROM reads where sampleId IN('NA12878','NA12879')
+        |GROUP BY sampleId order by sampleId
+      """.stripMargin
+     ss.sql(query)
+
+
+If you run the above query you should get the information that SeQuiLa optimized the physical plan  and will only read 2 BAM files
+instead of 3 to answer your query:
+
+.. code-block:: bash
+
+    WARN BAMRelation: Partition pruning detected,reading only files for samples: NA12878,NA12879
+
+
 Using UDFs
 ##########
 
@@ -256,5 +305,65 @@ Parameter is set via coniguration:
 ::
 
    spark.sqlContext.setConf("spark.biodatageeks.rangejoin.useJoinOrder", "true")
+
+
+Coverage
+##########
+
+In order to compute coverage for your sample you can run a set of queries as follows:
+
+.. code-block:: scala
+
+    val tableNameBAM = "reads"
+    val bamPath = "/data/samples/*.bam"
+    ss.sql("CREATE DATABASE dna")
+    ss.sql("USE dna")
+    ss.sql(
+            s"""
+               |CREATE TABLE ${tableNameBAM}
+               |USING org.biodatageeks.datasources.BAM.BAMDataSource
+               |OPTIONS(path "${bamPath}")
+               |
+          """.stripMargin)
+    ss.sql(s"SELECT * FROM coverage('${tableNameBAM}')").show(5)
+
+    +--------+----------+--------+--------+
+    |sampleId|contigName|position|coverage|
+    +--------+----------+--------+--------+
+    | NA12878|      chr1|     137|       1|
+    | NA12878|      chr1|     138|       1|
+    | NA12878|      chr1|     139|       1|
+    | NA12878|      chr1|     140|       1|
+    | NA12878|      chr1|     141|       1|
+    +--------+----------+--------+--------+
+
+If you would like to do additional short reads prefiltering, you can create a temporary table and use it as an input to the coverage function, e.g.:
+
+.. code-block:: scala
+
+    ss.sql(s"CREATE TABLE filtered_reads AS SELECT * FROM ${tableNameBAM} WHERE mapq > 10 AND start> 200")
+    ss.sql(s"SELECT * FROM coverage('filtered_reads')").show(5)
+
+    +--------+----------+--------+--------+
+    |sampleId|contigName|position|coverage|
+    +--------+----------+--------+--------+
+    | NA12878|      chr1|     361|       1|
+    | NA12878|      chr1|     362|       1|
+    | NA12878|      chr1|     363|       1|
+    | NA12878|      chr1|     364|       1|
+    | NA12878|      chr1|     365|       1|
+    +--------+----------+--------+--------+
+
+(Experimental WIP) If you are interested in coverage histograms using e.g. mapping quality you can use the following table valued function:
+
+.. code-block:: scala
+
+    ss.sql(s"SELECT * FROM coverage_hist('${tableNameBAM}') WHERE position=20204").show()
+
+    +--------+----------+--------+------------------+-------------+
+    |sampleId|contigName|position|          coverage|coverageTotal|
+    +--------+----------+--------+------------------+-------------+
+    | NA12878|      chr1|   20204|[1017, 0, 2, 0, 0]|         1019|
+    +--------+----------+--------+------------------+-------------+
 
 

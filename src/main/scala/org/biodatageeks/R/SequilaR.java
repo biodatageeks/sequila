@@ -1,7 +1,10 @@
 package org.biodatageeks.R;
 
+import org.apache.spark.SparkContext;
+import org.apache.spark.sql.SequilaSession;
 import org.apache.spark.sql.SparkSession;
 import org.biodatageeks.utils.SequilaRegister;
+import org.biodatageeks.utils.UDFRegister;
 
 public class SequilaR {
     private static SequilaR ourInstance = new SequilaR();
@@ -13,9 +16,18 @@ public class SequilaR {
     private SequilaR() {
     }
 
-    public static void init(SparkSession spark) {
+    public static SequilaSession init(){
 
-        SequilaRegister.register(spark);
+        SparkSession spark = SparkSession.builder().getOrCreate();
+        SequilaSession ss = new SequilaSession(spark);
+        UDFRegister.register(ss);
+        SequilaRegister.register(ss);
+        return ss;
+
+    }
+
+    public static Boolean dropTempView(SequilaSession ss,String tableName ){
+       return  ss.catalog().dropTempView(tableName);
 
     }
 }
