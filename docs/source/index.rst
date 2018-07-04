@@ -6,15 +6,17 @@
 SeQuiLa documentation
 ======================
 
+SeQuiLa description and highlishts to be added.
+
 .. toctree::
    :numbered:
    :maxdepth: 2
    
-   quickstart/quickstart
-   overview/overview
-   usage/usage
+   architecture/architecture
    function/function
+   quickstart/quickstart
    usecases/usecases
+   benchmarking/benchmarking
 ..   citation/citation
 
 
