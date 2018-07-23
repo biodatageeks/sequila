@@ -45,6 +45,18 @@ class BAMADAMDataSourceTestSuite extends FunSuite with DataFrameSuiteBase with B
       .count === 3172L)
   }
 
+  test("BAM - select limit" ){
+
+    spark
+      .sql(s"SELECT contigName,start,end FROM ${tableNameBAM} limit 1").show()
+  }
+
+  test("BAM - Row count ADAMDataSource2"){
+    spark
+      .sql(s"SELECT contigName,start,end FROM ${tableNameADAM}").show(1)
+      //.count === 3172L)
+  }
+
 
   test("ADAM - Row count BAMDataSource"){
     assert(spark

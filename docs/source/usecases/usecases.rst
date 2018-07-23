@@ -1,13 +1,307 @@
 
 
-Usecases
+Use cases
 =========
-
 
 ---------------------------------------------------
 
 DNA-seq analysis
 ##########################################
+Analysis of Whole Exome Sequencing data to detect Copy Number Variants using SeQuiLa and CODEX (https://www.bioconductor.org/packages/devel/bioc/html/CODEX.html).
+Dataset (20 samples) was downloaded from 1000 genomes project (ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase3/data/).
+
+
+.. figure:: SeQuiLa_codex.*
+   :scale: 70%
+   :align: center
+
+   
+--------------------------------------
+
+Run bdg-sequilaR docker 
+***************************
+
+.. code-block:: bash
+
+    docker pull biodatageeks/|project_name|:|version|
+    docker run -e USERID=$UID -e GROUPID=$(id -g) -it -v /data/samples/1000genomes/:/data \
+    -p 4041:4040 biodatageeks/|project_name|:|version| bdg-sequilaR
+
+
+Download input data, install and load R libraries
+*************************************************
+
+.. code-block:: R
+
+    dataDir <- "/data/"
+
+    # Install missing packages from CRAN
+    list.of.packages <- c("parallel", "data.table", "reshape", "dplyr")
+    new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+    if(length(new.packages)) install.packages(new.packages)
+
+    # Install missing packages from Bioconductor
+    biocLitePackages <- c("CODEX") 
+    new.biocLitePackage <- biocLitePackages[!(biocLitePackages %in% installed.packages()[,"Package"])]
+    if(length(new.biocLitePackage)) { source("http://bioconductor.org/biocLite.R"); biocLite(new.biocLitePackage)}
+
+    # Load packages
+    library(sequila); library(parallel); library(data.table); library(reshape); library(dplyr); library(CODEX)
+
+    # Download data
+    mc.cores=20
+    sampleNames <- paste0("HG0",c(1840:1853,1855,1857:1861))
+    mclapply(sampleNames, function(sampleName){
+    if (sampleName %in% c("HG01860", "HG01861")){
+    download.file(paste0("ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase3/data/",
+                        sampleName,"/exome_alignment/",
+                        sampleName,".chrom20.ILLUMINA.bwa.KHV.exome.20121211.bam"), 
+                        paste0(dataDir,sampleName, ".bam"))}
+    else{ download.file(paste0("ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase3/data/",
+                        sampleName,"/exome_alignment/",
+                        sampleName,".chrom20.ILLUMINA.bwa.KHV.exome.20120522.bam"), 
+                        paste0(dataDir,sampleName, ".bam"))}
+    
+    }, mc.cores=mc.cores)
+    
+    # Download exome capture targets
+    download.file("ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/exome_pull_down_targets/20130108.exome.targets.bed", 
+                    paste0(dataDir,"20130108.exome.targets.bed" ) )
+    
+    system("sed   's/^chr//' /data/20130108.exome.targets.bed > /data/cleaned_targets.bed")
+    
+    # Download RefSeq genes track from UCSC
+    download.file("http://hgdownload.soe.ucsc.edu/goldenPath/hg19/database/refFlat.txt.gz", 
+                    paste0(dataDir, "refFlat.txt.gz"))
+    system( paste0("gunzip ",dataDir, "refFlat.txt.gz"))
+
+
+Load input data to SeQuiLa
+***************************
+
+.. code-block:: R     
+     
+    #Set Spark parameters and connect
+    driver_mem <- "40g"
+    master <- "local[20]"
+    ss<-sequila_connect(master,driver_memory<-driver_mem)
+
+    #create db
+    sequila_sql(ss,query="CREATE DATABASE sequila")
+    sequila_sql(ss,query="USE sequila")
+
+    #create a BAM data source with reads
+    sequila_sql(ss,'reads','CREATE TABLE reads USING org.biodatageeks.datasources.BAM.BAMDataSource OPTIONS(path "/data/*bam")')
+
+    # Check out the reads
+    sequila_sql(ss, query= "select * from reads limit 10")
+
+.. code-block:: bash
+
+    # Source:   table<test> [?? x 10]
+    # Database: spark_connection
+    sampleId contigName start   end cigar  mapq baseq reference flags materefind
+    <chr>    <chr>      <int> <int> <chr> <int> <chr> <chr>     <int>      <int>
+    1 HG01840  20         60123 60212 90M      60 9BEB~ 20           99         19
+    2 HG01840  20         60206 60273 68M2~    60 989E~ 20           99         19
+    3 HG01840  20         60260 60349 90M      60 B>C=~ 20          147         19
+    4 HG01840  20         60297 60386 90M      60 ;C?>~ 20          147         19
+    5 HG01840  20         60687 60776 90M      60 :E=G~ 20           99         19
+    6 HG01840  20         60780 60869 90M      60 9@C?~ 20          163         19
+    7 HG01840  20         60841 60930 90M      29 9=>E~ 20          163         19
+    8 HG01840  20         60843 60932 90M      60 9C8D~ 20           99         19
+    9 HG01840  20         60882 60971 90M      60 9B@@~ 20           99         19
+    10 HG01840  20         60889 60959 19S7~    29 8<A6~ 20           99         19
+    # ... with more rows
+
+.. code-block:: R
+
+    #create a table with target data 
+    sequila_sql(ss,'targets','CREATE TABLE targets (Chr string, Start integer,End integer, v1 string)
+    USING csv
+    OPTIONS (path "/data/cleaned_targets.bed", header "false", inferSchema "false", delimiter "\t")')
+    
+    
+    #inspect content of targets table
+    sequila_sql(ss, query= "select * from targets limit 10")
+
+.. code-block:: bash
+
+    # Source:   table<test> [?? x 4]
+    # Database: spark_connection
+    Chr    Start    End v1   
+    <chr>  <int>  <int> <chr>
+    1 1      14642  14882 NA   
+    2 1      14943  15063 NA   
+    3 1      15751  15990 NA   
+    4 1      16599  16719 NA   
+    5 1      16834  17074 NA   
+    6 1      17211  17331 NA   
+    7 1      30275  30431 NA   
+    8 1      69069  70029 NA   
+    9 1     129133 129253 NA   
+    10 1     228233 228354 NA   
+    # ... with more rows
+
+
+Count the number of reads per target using SeQuiLa
+**************************************************
+
+.. code-block:: R
+
+    query <- "SELECT SampleId, Chr ,targets.Start ,targets.End ,CAST(targets.End AS INTEGER)-
+                               CAST(targets.Start AS INTEGER) + 1 AS Length, count(*) AS Counts 
+                FROM reads 
+                JOIN targets ON (Chr=reads.contigName AND reads.end >= CAST(targets.Start AS INTEGER)
+                                                      AND reads.start <= CAST(targets.End AS INTEGER)) 
+                GROUP BY  SampleId, Chr, targets.Start, targets.End"
+
+::
+
+     Note that you can easily modify a query to filter out low quality reads (e.g., add 'mapq > 20' to WHERE clause).
+     
+.. code-block:: R
+
+    # Collect results
+    res <- sequila_sql(ss,'results',query)
+    readCountPerTarget <-  collect(res)
+    head(readCountPerTarget)
+
+.. code-block:: bash
+
+    SampleId Chr  Start    End Length Counts
+    1:  HG01840   1  14642  14882    241      3
+    2:  HG01840   1 741165 741285    121    395
+    3:  HG01840   1 881703 881973    271    183
+    4:  HG01840   1 897196 897436    241     67
+    5:  HG01840   1 898040 898310    271     32
+    6:  HG01840   1 901892 902012    121     55
+
+
+
+Run CODEX
+***************************
+
+.. code-block:: R
+
+    # Transform read count data to matrix
+    chr <- "20"
+    readCountPerTarget$key <- paste0(readCountPerTarget$Chr, ":", readCountPerTarget$Start, "_", readCountPerTarget$End)
+    Y <- dcast(data.table(readCountPerTarget), key ~ SampleId, value.var="Counts")
+    Y[is.na(Y)] <- 1 
+    rownames(Y) <- 1:nrow(Y)
+    keys <- Y$key 
+    Y <- Y[,-1,with=F] # remove first column (key)
+    targets <- data.frame(do.call(rbind, strsplit(keys,"[:_]")), stringsAsFactors=F)
+    colnames(targets) <- c("Chr", "Start", "Stop")
+    
+    #Sort targets and Y matrix
+    ord <- order(targets$Chr, as.numeric(targets$Start), as.numeric(targets$Stop))
+    targets <- targets[ord, ];  Y <- Y [ord, ]
+    idx <- which(targets$Chr == chr)
+    Y <- as.matrix(Y[idx,])
+    targetsChr <- targets[idx,]
+    ref <- IRanges(start = as.numeric(targetsChr$Start), end = as.numeric(targetsChr$Stop))
+
+    #Perform Qualty Control
+    gc <- getgc(chr, ref)
+    mapp <- getmapp(chr, ref)
+    mapp_thresh <- 0.9 # remove exons with mapability < 0.9
+    cov_thresh_from <- 20 # remove exons covered by less than 20 reads
+    cov_thresh_to <- 4000 #  remove exons covered by more than 4000 reads
+    length_thresh_from <- 20 # remove exons of size < 20
+    length_thresh_to <- 2000 # remove exons of size > 2000
+    gc_thresh_from <- 20 # remove exons with GC < 20
+    gc_thresh_to <- 80 # or GC > 80
+    sampname <- colnames(Y)
+    qcObj <- qc(Y, sampname, chr, ref, mapp, gc, 
+                cov_thresh = c(cov_thresh_from, cov_thresh_to), 
+                length_thresh = c(length_thresh_from, length_thresh_to), 
+                mapp_thresh = mapp_thresh, 
+                gc_thresh = c(gc_thresh_from, gc_thresh_to))
+    Y_qc <- qcObj$Y_qc; sampname_qc <- qcObj$sampname_qc; gc_qc <- qcObj$gc_qc
+    mapp_qc <- qcObj$mapp_qc; ref_qc <- qcObj$ref_qc; qcmat <- qcObj$qcmat
+
+    # Normalization           
+    normObj <- normalize(Y_qc, gc_qc, K = 1:9)
+    Yhat <- normObj$Yhat; AIC <- normObj$AIC; BIC <- normObj$BIC
+    RSS <- normObj$RSS; K <- normObj$K
+    optK=which.max(BIC)
+
+    # Segmentation
+    finalcall <- CODEX::segment(Y_qc, Yhat, optK = optK, K = K, sampname_qc,   ref_qc, chr, lmax = 200, mode = "integer")
+    finalcall <- data.frame(finalcall, stringsAsFactors=F)
+    finalcall$targetCount <- as.numeric(finalcall$ed_exon) - as.numeric(finalcall$st_exon)
+    finalcall$chr <- paste0("chr", finalcall$chr)
+
+    # Save results to csv file
+    write.csv(finalcall, file="/data/cnv_results.csv", row.names=F, quote=F)
+    
+    
+    # Plot detected CNVs encompassing more than 3 targets (only one duplication found). 
+    plotCall <- function(calls,i , Y_qc, Yhat_opt){
+    startIdx <- as.numeric(calls$st_exon[i])
+    stopIdx <- as.numeric(calls$ed_exon[i])
+    sampleName <- calls$sample_name[i]
+    wd <- 20
+    startPos <- max(1,(startIdx-wd))
+    stopPos <- min((stopIdx+wd), nrow(Y_qc))
+    selQC <- Y_qc[startPos:stopPos,]
+    selQC[selQC ==0] <- 0.00001
+    selYhat <- Yhat_opt[startPos:stopPos,]
+    matplot(matrix(rep(startPos:stopPos, ncol(selQC)), ncol=ncol(selQC)), log(selQC/selYhat,2), type="l",lty=1, col="dimgrey",  lwd=1, xlab="exon nr", ylab="logratio(Y/Yhat)")
+    lines(startPos:stopPos,log( selQC[,sampleName]/ selYhat[,sampleName],2), lwd=3, col="red")
+    }
+
+    
+    plotCall (finalcall, which(finalcall$targetCount > 3), Y_qc, Yhat[[optK]])
+    
+    
+.. figure:: PipelineCNVSeqWithSequila.*
+   :scale: 40%
+   :align: center
+
+Annotate detected CNVs with overlapping genes using SeQuiLa
+***********************************************************
+
+.. code-block:: R
+    
+    # Load detected CNVs into the database
+    sequila_sql(ss,'cnv_results','CREATE TABLE cnv_results 
+                                    USING csv
+                                    OPTIONS (path "/data/cnv_results.csv", header "true", inferSchema "true", delimiter ",")')
+
+                                    
+    
+    # Load gene coordinates (from refFlat file)
+    sequila_sql(ss,'ref_flat','CREATE TABLE ref_flat  (symbol string, id string,chr string, strand string, txstart integer, txend integer, 
+                                                        cdsstart integer, cdsend integer, exonnum integer, exonstarts string, exonends string )
+                                USING csv
+                                OPTIONS (path "/data/refFlat.txt", header "false", inferSchema "false", delimiter "\t")')
+
+                                
+
+    # Find genes overlapping each CNV
+    query1 <- "SELECT sample_name,cnv_results.chr, cnv,st_bp, ed_bp, length_kb, st_exon, ed_exon, raw_cov, norm_cov, copy_no, lratio, mBIC, targetCount, collect_set(symbol) as Genes
+            FROM cnv_results JOIN ref_flat
+                                ON (cnv_results.chr=ref_flat.chr AND ref_flat.txend >= cnv_results.st_bp
+                                AND ref_flat.txstart  <= cnv_results.ed_bp) 
+            GROUP BY sample_name, cnv_results.chr, cnv,st_bp, ed_bp, length_kb, st_exon, ed_exon, raw_cov, norm_cov, copy_no, lratio, mBIC, targetCount"
+
+    annotatedCalls <- data.frame(collect(sequila_sql(ss,'annotatedCalls',query1)))
+    head(annotatedCalls)
+    
+.. code-block:: bash
+
+    sample_name   chr cnv    st_bp    ed_bp length_kb st_exon ed_exon raw_cov norm_cov copy_no  lratio    mBIC targetCount                      Genes
+    1     HG01846 chr20 del  1895652  1902379     6.728     118     119    1663     2553       1 123.879 104.897           1                      SIRPA
+    2     HG01844 chr20 dup  1638233  1896162   257.930     117     118    3328     2304       3 197.332 359.543           1 SIRPA, SIRPG, LOC100289473
+    3     HG01861 chr20 del  1895652  1902379     6.728     118     119    1506     2127       1  19.696  85.584           1                      SIRPA
+    4     HG01858 chr20 del 26061800 26063616     1.817    1229    1230     445      704       1  43.572  23.580           1                    FAM182A
+    5     HG01851 chr20 del  1895652  1902379     6.728     118     119    1344     1913       1  24.977   5.995           1                      SIRPA
+    6     HG01848 chr20 dup  1584562  1592181     7.620     110     111      89       39       5  23.047 942.548           1                     SIRPB1
+
+
 
 RNA-seq analysis
 ##########################################
@@ -20,29 +314,46 @@ Dataset (GSE22260) comes from NCBI - SRA repository and includes RNA-seq data of
    :scale: 40%
    :align: center
 
---------------------------------------
+    --------------------------------------
 
+Run bdg-sequilaR docker
+***************************
 
 .. code-block:: bash
 
 
-      docker pull biodatageeks/|project_name|:|version|
-      docker run -p 4041:4040  -e USERID=$UID -e GROUPID=$(id -g) \
-      -it  -v /Users/ales/data/sequila:/data/input biodatageeks/|project_name|:|version| bdg-sequilaR
+    docker pull biodatageeks/|project_name|:|version|
 
+    docker run -p 4041:4040  -e USERID=$UID -e GROUPID=$(id -g) \
+    -it  -v /Users/ales/data/sequila:/data/input biodatageeks/|project_name|:|version| bdg-sequilaR
+
+
+Load input data to SeQuila
+*************************************************
 .. code-block:: R
 
-      #register SeQuilaR extensions
-      sparkR.callJStatic("org.biodatageeks.R.SequilaR","init",spark)
+    install.packages('devtools')
+    devtools::install_github('ZSI-Bio/bdg-sparklyr-sequila')
 
-      #create db
-      sql("CREATE DATABASE dbRNAseq")
-      sql("USE dbRNAseq")
+    library(sparklyr)
+    library(sequila)
+    library(dplyr)
+    library(reshape2)
 
-      #create data source with reads
-      sql('CREATE TABLE reads USING org.biodatageeks.datasources.BAM.BAMDataSource OPTIONS(path "/data/input/*.bam")')
+    #Set Spark parameters and connect
+    driver_mem <- "40g"
+    master <- "local[20]"
+    ss<-sequila_connect(master,driver_memory<-driver_mem)
 
-      head(sql('select count(distinct sampleId) from reads'))
+    #create db
+    sequila_sql(ss,query="CREATE DATABASE sequila")
+    sequila_sql(ss,query="USE sequila")
+
+    #create a BAM data source with reads
+    sequila_sql(ss,'reads','CREATE TABLE reads USING org.biodatageeks.datasources.BAM.BAMDataSource OPTIONS(path "/data/*bam")')
+
+    # Check out the reads
+	sequila_sql(ss, query="select count(distinct sampleId) from reads"))
 
 .. code-block:: bash
 
@@ -54,28 +365,17 @@ Dataset (GSE22260) comes from NCBI - SRA repository and includes RNA-seq data of
 
 .. code-block:: R
 
-     #GTF with target regions
-     sql('CREATE TABLE targets_temp(Chr string, TypeDB string, Feature string, Start integer, End integer,
-                                    t1 varchar(1), Strand varchar(1), t2 varchar(1),
-                                    Gene_id_temp varchar(30),Gene_id varchar(20))
-          USING csv
-          OPTIONS (path "/data/input/Homo_sapiens.gtf", header "false", inferSchema "false", delimiter "\t")')
+    #GTF with target regions
+    system(" awk -v OFS='\t' '{if ($3~/gene/); print  $1, $4, $5, $7,substr($10,2,15)}' /Users/ales/data/sequila/Homo_sapiens.gtf > /Users/ales/data/sequila/Homo_sapiens_genes.gtf ")
 
-::
+    sequila_sql(ss,'targets','CREATE TABLE targets(Chr string, Start integer, End integer, Strand string, Gene_id string)
+            USING csv
+            OPTIONS (path "/Users/ales/data/sequila/Homo_sapiens_genes.gtf", header "false", inferSchema "false", delimiter "\t")')
 
-     Depends on needs, build the target table with genes or any features based on gtf source.
-     This analysis is based on genes, the targets table contains genes coordinates.
-
-.. code-block:: R
-
-     sql('CREATE TABLE targets as
-          SELECT Chr, Start, End, Strand, substr(Gene_id_temp, instr(Gene_id_temp,"E"),15) as Gene_id
-          FROM targets_temp
-          WHERE Feature="gene" ')
+    sequila_sql(ss, query= "select * from targets limit 10")
 
 .. 	code-block:: bash
 
-    head(sql('select * from targets'))
     +------+-------+---------+-------+-----------------+
     |   Chr|  Start|      End| Strand|         Gene_id |
     +------+-------+---------+-------+----------------+
@@ -87,51 +387,27 @@ Dataset (GSE22260) comes from NCBI - SRA repository and includes RNA-seq data of
     |6  17 62122320| 62122421|    +  |ENSG00000207123  |
     +------+-------+---------+-------+-----------------+
 
-::
 
-  If you need different features (exon or transcript), you can build sql query accordingly.
-
-.. code-block:: R
-
-		 sql('CREATE TABLE targets as
-		      SELECT Chr, Start, End, Strand, substr(Gene_id_temp, instr(Gene_id_temp,"E"),15) as Gene_id,
-		      CASE WHEN instr(Gene_id_temp,"ENSE") > 0
-		           THEN substr(Gene_id_temp, instr(Gene_id_temp,"ENSE"),15)
-		           ELSE null END as Exon_id
-		      FROM targets_temp
-		      WHERE Feature="gene" OR Feature="exon" ')
-
-.. code-block:: bash
-
-    head(sql('select * from targets'))
-    +-------+----------+----------+-------+----------------+----------------+
-    |   Chr |   Start  |     End  |Strand |        Gene_id |         Exon_id|
-    +-------+----------+----------+-------+----------------+----------------+
-    |1   2  | 101050401| 101050641|      -| ENSG00000204634| ENSE00001710012|
-    |2   2  | 101040178| 101040385|      -| ENSG00000204634| ENSE00001471890|
-    |3   2  | 101038461| 101038655|      -| ENSG00000204634| ENSE00001471887|
-    |4   2  | 101037532| 101037708|      -| ENSG00000204634| ENSE00001471883|
-    |5   2  | 101036018| 101036168|      -| ENSG00000204634| ENSE00001471881|
-    |6   2  | 101033544| 101033758|      -| ENSG00000204634| ENSE00001471879|
-    +-------+----------+----------+-------+----------------+----------------+
-
-
-Feature Counts with SeQuiLa
-***************************
+Count the number of reads per target using SeQuiLa
+**************************************************
 
 .. code-block:: R
 
   #query for count reads
-  FC <- sql('SELECT sampleId, Gene_id, Chr ,targets.Start ,targets.End ,Strand, count(*) AS Counts
-		        FROM reads JOIN targets
-		          ON (Chr=reads.contigName
-		          AND reads.end >= CAST(targets.Start AS INTEGER)
-		          AND reads.start <= CAST(targets.End AS INTEGER))
-		        GROUP BY SampleId, Gene_id, Chr ,targets.Start ,targets.End ,Strand ')
+  query <- 'SELECT sampleId, Gene_id, Chr ,targets.Start ,targets.End ,Strand, count(*) AS Counts
+  FROM reads JOIN targets
+  ON (Chr=reads.contigName
+  AND reads.end >= CAST(targets.Start AS INTEGER)
+  AND reads.start <= CAST(targets.End AS INTEGER))
+  GROUP BY SampleId, Gene_id, Chr ,targets.Start ,targets.End ,Strand '
 
+  res <- sequila_sql(ss,'results',query)
+  readCountPerGene <-  collect(res)
+  head(readCountPerGene)
 
   #preparation data to proper format for further analysis
-  tabC <- sum(pivot(groupBy(FC,"Gene_id"),"SampleId"),"Counts")
+  tabC <- dcast(readCountPerGene, Gene_id ~ sampleId, value.var="Counts", fun.aggregate=sum)
+
   head(tabC)
 
 .. code-block:: bash
@@ -141,7 +417,7 @@ Feature Counts with SeQuiLa
   |       Gene_id | Sub_SRR057629|Sub_SRR057630|Sub_SRR057631|Sub_SRR057632|Sub_SRR057633|Sub_SRR057634|
   +---------------+--------------+-------------+-------------+-------------+-------------+-------------+
   |ENSG00000130054|            31|           30|          147|           39|          230|           16|
-  |ENSG00000262692|            NA|           NA|            5|           NA|            7|            1|
+  |ENSG00000262692|            10|           10|            5|           17|            7|            1|
   |ENSG00000268673|            12|            4|           18|            5|            4|           14|
   |ENSG00000239881|             6|            3|           19|            9|           17|            9|
   |ENSG00000198015|           143|          135|          304|          213|          371|          133|
@@ -160,9 +436,6 @@ DEG analysis with edgeR
 
     library(edgeR)
 
-    #transform SparkR DataFrame to R data.frame
-    tabC <- collect(tabC)
-
     #input data preparation
     tab1<- as.matrix(apply(tabC,2,as.numeric))
     row.names(tab1) <- tabC$Gene_id
@@ -172,6 +445,8 @@ DEG analysis with edgeR
     #filtering out lowly expressed genes
     isexpr <- rowSums(cpm(tab1) > 5) >= 2
     dane1 <- tab1[isexpr,]
+
+    L1 <- as.factor(c("C","C","C","C","C","C","C","C","C","C","C","C","C","C","C","C","C","C","C","C","N","N","N","N","N","N","N","N","N","N"))
 
     #grouping factor about samples
     group <- L1
@@ -239,7 +514,7 @@ DEG analysis with DESeq2
 
 
 .. figure:: plotMA.*
-   :align: center
+:align: center
 
 .. code-block:: R
 
@@ -247,7 +522,7 @@ DEG analysis with DESeq2
 
 
 .. figure:: plotDispEsts.*
-   :align: center
+:align: center
 
 
 .. code-block:: R
@@ -257,7 +532,7 @@ DEG analysis with DESeq2
 
 
 .. figure:: RplotHist.*
-   :align: center
+:align: center
 
 .. code-block:: R
 

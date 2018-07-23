@@ -66,9 +66,6 @@ object UTVFRegister {
     val session: SparkSession = SequilaSession(spark)
     session.sparkContext.setLogLevel("INFO")
     session.experimental.extraStrategies = new CoverageStrategy(session) :: Nil
-    session.sql("select * from coverage('test')").explain(true)
-    session.sql("select * from coverage('test')").explain(true)
-    session.sql("select * from coverage('test')").explain(true)
   }
 
 }

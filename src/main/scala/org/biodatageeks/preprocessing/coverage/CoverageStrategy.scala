@@ -1,5 +1,6 @@
 package org.biodatageeks.preprocessing.coverage
 
+import org.apache.hadoop.io.LongWritable
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions.codegen.{GenerateUnsafeProjection, GenerateUnsafeRowJoiner}
@@ -12,6 +13,7 @@ import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder
 import org.apache.spark.unsafe.types.UTF8String
 import org.biodatageeks.datasources.BAM.BAMRecord
 import org.biodatageeks.preprocessing.coverage.CoverageReadFunctions._
+import org.seqdoop.hadoop_bam.{BAMInputFormat, SAMRecordWritable}
 
 import scala.collection.mutable
 
@@ -21,6 +23,7 @@ class CoverageStrategy(spark: SparkSession) extends Strategy with Serializable  
 
     case Coverage(tableName,output) => CoveragePlan(plan,spark,tableName,output) :: Nil
     case CoverageHist(tableName,output) => CoverageHistPlan(plan,spark,tableName,output) :: Nil
+    case BDGCoverage(tableName,sampleId,output) => BDGCoveragePlan(plan,spark,tableName,sampleId,output) :: Nil
     case _ => Nil
   }
 
@@ -73,5 +76,47 @@ case class CoverageHistPlan(plan: LogicalPlan, spark: SparkSession, table:String
       })
     //spark.sparkContext.emptyRDD[InternalRow]
   }
+  def children: Seq[SparkPlan] = Nil
+}
+
+
+
+case class BDGCoveragePlan(plan: LogicalPlan, spark: SparkSession, table:String,sampleId:String, output: Seq[Attribute]) extends SparkPlan with Serializable {
+  def doExecute(): org.apache.spark.rdd.RDD[InternalRow] = {
+    import spark.implicits._
+    val ds = spark.sql(s"select * FROM ${table} where sampleId='${sampleId}' ")
+      .as[BAMRecord]
+      .filter(r=>r.contigName != null)
+    val schema = plan.schema
+    val catalog = spark.sessionState.catalog
+    val tId = spark.sessionState.sqlParser.parseTableIdentifier(table)
+    val sampleTable = catalog.getTableMetadata(tId)
+    val samplePath = (sampleTable
+      .location
+      .getPath
+      .split('/')
+      .dropRight(1) ++ Array(s"${sampleId}*.bam"))
+      .mkString("/")
+    println(samplePath)
+    spark
+      .sparkContext
+      .hadoopConfiguration
+      .setInt("mapred.min.split.size", (134217728).toInt)
+
+    lazy val alignments = spark.sparkContext
+      .newAPIHadoopFile[LongWritable, SAMRecordWritable, BAMInputFormat](samplePath)
+    //val cov = ds.rdd.baseCoverage(None,Some(4),sorted=false)
+
+    lazy val events = CoverageMethodsMos.readsToEventsArray(alignments.map(r=>r._2))
+    lazy val cov = CoverageMethodsMos.eventsToCoverage(sampleId,events)
+    cov
+      .mapPartitions(p=>{
+        val proj =  UnsafeProjection.create(schema)
+        p.map(r=>   proj.apply(InternalRow.fromSeq(Seq(/*UTF8String.fromString(sampleId),*/
+          UTF8String.fromString(r.contigName),r.start,r.end,r.cov))))
+      })
+  }
+
+
   def children: Seq[SparkPlan] = Nil
 }

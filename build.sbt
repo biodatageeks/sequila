@@ -2,7 +2,7 @@ import scala.util.Properties
 
 name := """bdg-sequila"""
 
-version := "0.4-SNAPSHOT"
+version := "0.4"
 
 organization := "org.biodatageeks"
 
@@ -20,6 +20,7 @@ libraryDependencies +=  "org.apache.spark" % "spark-core_2.11" % sparkVersion % 
 
 libraryDependencies +=  "org.apache.spark" % "spark-sql_2.11" % sparkVersion
 libraryDependencies +=  "org.apache.spark" %% "spark-hive" % sparkVersion
+libraryDependencies +=  "org.apache.spark" %% "spark-hive-thriftserver" % sparkVersion
 
 libraryDependencies += "com.holdenkarau" % "spark-testing-base_2.11" % "2.2.0_0.7.4" % "test" excludeAll ExclusionRule(organization = "javax.servlet") excludeAll (ExclusionRule("org.apache.hadoop"))
 
@@ -43,12 +44,16 @@ libraryDependencies += "com.github.potix2" %% "spark-google-spreadsheets" % "0.5
 libraryDependencies += "ch.cern.sparkmeasure" %% "spark-measure" % "0.11"
 
 //libraryDependencies += "pl.edu.pw.ii.zsibio" % "common-routines_2.11" % "0.1-SNAPSHOT"
+libraryDependencies += "org.broadinstitute" % "gatk-native-bindings" % "1.0.0"
+libraryDependencies += "org.apache.logging.log4j" % "log4j-core" % "2.11.0"
+libraryDependencies += "org.apache.logging.log4j" % "log4j-api" % "2.11.0"
 
-fork := false
+
+fork := true
 fork in Test := true
 //parallelExecution in Test := false
 javaOptions in test += "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=9999"
-javaOptions in run += "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=9999"
+//javaOptions in run += "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=9999"
 
 //javaOptions in run ++= Seq(
 //  "-Dlog4j.debug=true",
@@ -97,11 +102,11 @@ assemblyMergeStrategy in assembly := {
 }
 
 /* only for releasing assemblies*/
-//artifact in (Compile, assembly) := {
-//  val art = (artifact in (Compile, assembly)).value
-//  art.withClassifier(Some("assembly"))
-//}
-//addArtifact(artifact in (Compile, assembly), assembly)
+artifact in (Compile, assembly) := {
+  val art = (artifact in (Compile, assembly)).value
+  art.withClassifier(Some("assembly"))
+}
+addArtifact(artifact in (Compile, assembly), assembly)
 
 publishConfiguration := publishConfiguration.value.withOverwrite(true)
 

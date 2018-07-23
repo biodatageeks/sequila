@@ -11,7 +11,7 @@ RUN useradd -m tempuser
 ARG BDG_VERSION={{COMPONENT_VERSION}}
 
 ####set variable used in all shell scritps for downloading jars
-ENV BGD_VERSION={{COMPONENT_VERSION}}
+ENV BDG_VERSION={{COMPONENT_VERSION}}
 
 
 
@@ -39,8 +39,8 @@ COPY bin/bdg-sequilaR.sh /tmp/bdg-toolset/bdg-sequilaR
 #featureCounts scripts
 COPY bin/featureCounts.sh /tmp/bdg-toolset/featureCounts
 RUN bash -c " if [[ $BDG_VERSION =~ SNAPSHOT ]]; then \
-    wget https://zsibio.ii.pw.edu.pl/nexus/repository/maven-snapshots/org/biodatageeks/bdg-sequila_2.11/${BGD_VERSION}/bdg-sequila_2.11-${BGD_VERSION}-assembly.jar -O /tmp/bdg-toolset/bdg-sequila-assembly-${BGD_VERSION}.jar ; \
-    else wget https://zsibio.ii.pw.edu.pl/nexus/repository/maven-releases/org/biodatageeks/bdg-sequila_2.11/${BGD_VERSION}/bdg-sequila_2.11-${BGD_VERSION}-assembly.jar -O /tmp/bdg-toolset/bdg-sequila-assembly-${BGD_VERSION}.jar ; \
+    wget https://zsibio.ii.pw.edu.pl/nexus/repository/maven-snapshots/org/biodatageeks/bdg-sequila_2.11/${BDG_VERSION}/bdg-sequila_2.11-${BDG_VERSION}-assembly.jar -O /tmp/bdg-toolset/bdg-sequila-assembly-${BDG_VERSION}.jar ; \
+    else wget https://zsibio.ii.pw.edu.pl/nexus/repository/maven-releases/org/biodatageeks/bdg-sequila_2.11/${BDG_VERSION}/bdg-sequila_2.11-${BDG_VERSION}-assembly.jar -O /tmp/bdg-toolset/bdg-sequila-assembly-${BDG_VERSION}.jar ; \
     fi"
 
 #copy test data
@@ -109,8 +109,8 @@ RUN apt-get update \
 	&& rm -rf /var/lib/apt/lists/*
 
 #rna-seq stuff
-RUN Rscript -e 'source("http://bioconductor.org/biocLite.R")' -e 'biocLite("edgeR")'
-RUN Rscript -e 'source("http://bioconductor.org/biocLite.R")' -e 'biocLite("DESeq2")'
+#RUN Rscript -e 'source("http://bioconductor.org/biocLite.R")' -e 'biocLite("edgeR")'
+#RUN Rscript -e 'source("http://bioconductor.org/biocLite.R")' -e 'biocLite("DESeq2")'
 
 #install devtools
 RUN Rscript -e "install.packages('devtools')"
@@ -129,4 +129,5 @@ RUN bdg-shell -i /tmp/bdg-toolset/warmcache.scala build
 RUN Rscript -e "library(sequila)"
 
 USER root
+EXPOSE 4040 10000
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

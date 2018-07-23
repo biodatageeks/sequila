@@ -12,7 +12,7 @@ echo '
  ___/ /  __/ /_/ / /_/ / / /___/ /_/ / _, _/
 /____/\___/\___\_\__,_/_/_____/\__,_/_/ |_|
                                              '
-echo $BGD_VERSION
+echo $BDG_VERSION
 echo -e "\n"
 
 rm -rf ~/metastore_db

@@ -93,6 +93,12 @@ object ResolveTableValuedFunctionsSeq extends Rule[LogicalPlan] {
       tvf("table" -> StringType) { case Seq(table: Any) =>
         CoverageHist(table.toString)
       }),
+    "bdg_coverage" -> Map(
+      /* coverage(tableName) */
+      tvf("table" -> StringType, "sampleId" -> StringType) { case Seq(table: Any,sampleId:Any) =>
+        BDGCoverage(table.toString,sampleId.toString)
+      }),
+
     "range" -> Map(
       /* range(end) */
       tvf("end" -> LongType) { case Seq(end: Long) =>
@@ -220,5 +226,48 @@ case class CoverageHist(tableName:String,
 
   override def simpleString: String = {
     s"Coverage_hist ('$tableName')"
+  }
+}
+
+
+
+
+
+object BDGCoverage {
+  def apply(tableName:String, sampleId:String): BDGCoverage = {
+    val output = StructType(Seq(
+      //StructField("sampleId", StringType, nullable = false),
+      StructField("contigName",StringType,nullable = true),
+      StructField("start",IntegerType,nullable = false),
+      StructField("end",IntegerType,nullable = false),
+      StructField("coverage",ShortType,nullable = false)
+    )
+    ).toAttributes
+    new BDGCoverage(tableName:String,sampleId.toString,output)
+  }
+
+}
+
+case class BDGCoverage(tableName:String, sampleId:String,
+                    output: Seq[Attribute])
+  extends LeafNode with MultiInstanceRelation {
+
+
+  val numElements: BigInt = 1
+
+  def toSQL(): String = {
+
+    s"SELECT contigName,start,end,coverage AS `${output.head.name}` FROM bdg_coverage('$tableName')"
+  }
+
+  override def newInstance(): BDGCoverage = copy(output = output.map(_.newInstance()))
+
+  override def computeStats(conf: SQLConf): Statistics = {
+    val sizeInBytes = LongType.defaultSize * numElements
+    Statistics( sizeInBytes = sizeInBytes )
+  }
+
+  override def simpleString: String = {
+    s"BDGCoverage ('$tableName')"
   }
 }

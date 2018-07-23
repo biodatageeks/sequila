@@ -35,9 +35,9 @@ echo '
  ___/ /  __/ /_/ / /_/ / / /___/ /_/ /_____/ __/ / /___
 /____/\___/\___\_\__,_/_/_____/\__,_/     /_/    \____/
                                                           '
-echo $BGD_VERSION
+echo $BDG_VERSION
 echo -e "\n"
 echo "Running with the following arguments: $appParams"
 echo "Arguments passed to Apache Spark: $sparkParams"
 echo -e "\n"
-spark-submit ${sparkParams} --class org.biodatageeks.apps.FeatureCounts /tmp/bdg-toolset/bdg-sequila-assembly-${BGD_VERSION}.jar  $appParams
+spark-submit ${sparkParams} --class org.biodatageeks.apps.FeatureCounts /tmp/bdg-toolset/bdg-sequila-assembly-${BDG_VERSION}.jar  $appParams

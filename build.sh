@@ -34,7 +34,11 @@ do
   #diffTs=`echo "$(date +%s) - $(git log -n 1 --pretty=format:%at ${dir})" | bc`
   #if [ $diffTs -lt $MAX_COMMIT_TS_DIFF ]; then
     cd $dir
-    docker build --no-cache  -t $image:$version .
+     if [[ ${BUILD_MODE} != "local" ]]; then
+         docker build --no-cache -t $image:$version .
+     else
+         docker build --no-cache  -t $image:$version .
+     fi
     docker build  -t $image:latest .
     if [[ ${BUILD_MODE} != "local" ]]; then
       docker push docker.io/$image:latest
@@ -47,7 +51,7 @@ do
       if [ -e version ]; then ver=$version; sed -i  "s/${ver}/{{COMPONENT_VERSION}}/g" Dockerfile ; fi
     fi
     #keep only last 3 versions of an image locally (2+3 in tail part)
-    docker images $image | tail -n +5 | sed 's/ \{1,\}/:/g' | cut -f1,2 -d':' | xargs -i docker rmi {}
+    docker images $image | tail -n +5 | sed 's/ \{1,\}/:/g' | cut -f1,2 -d':' | grep -v "<none>"| xargs -i docker rmi {}
 
     cd ../..
   #fi

@@ -7,6 +7,7 @@ import org.apache.spark.sql.{SequilaSession, SparkSession}
 import org.bdgenomics.utils.instrumentation.{Metrics, MetricsListener, RecordedMetrics}
 import org.biodatageeks.datasources.BAM.BAMRecord
 import org.biodatageeks.preprocessing.coverage.CoverageStrategy
+import org.biodatageeks.utils.SequilaRegister
 import org.scalatest.{BeforeAndAfter, FunSuite}
 
 class CoverageTestSuite extends FunSuite with DataFrameSuiteBase with BeforeAndAfter with SharedSparkContext{
@@ -48,6 +49,20 @@ class CoverageTestSuite extends FunSuite with DataFrameSuiteBase with BeforeAndA
     //session.sparkContext.setLogLevel("INFO")
     assert(session.sql(s"SELECT * FROM coverage('${tableNameBAM}') WHERE position=20204").first().getInt(3)===1019)
     session.sql(s"SELECT * FROM coverage_hist('${tableNameBAM}') WHERE position=20204").show()
+
+  }
+
+  test("BAM - bdg_coverage"){
+    val session: SparkSession = SequilaSession(spark)
+    session.experimental.extraStrategies = new CoverageStrategy(session) :: Nil
+    assert(session.sql(s"SELECT * FROM bdg_coverage('${tableNameBAM}','NA12878') WHERE start >=20204 AND `end`<= 20204 ").first().getShort(3)===1019.toShort)
+
+  }
+
+  test("BAM - bdg_coverage - show"){
+    val session: SparkSession = SequilaSession(spark)
+    SequilaRegister.register(session)
+    session.sql(s"SELECT * FROM bdg_coverage('${tableNameBAM}','NA12878')").show(5)
 
 
   }
