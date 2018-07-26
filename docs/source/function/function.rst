@@ -370,4 +370,123 @@ instead of 3 to answer your query:
     WARN BAMRelation: Partition pruning detected,reading only files for samples: NA12878,NA12879
 
 
+Speeding up interval queries in BAM data source using an index (BAI)
+********************************************************************
+
+SeQuiLa can take advantage of the existing BAI index to speed up interval queries using: `contigName`, `start`, end `fields`.
+
+First of all, make sure that you have both BAM and BAI files in the same folder (you can have more than one pair BAM/BAI) :
+
+.. code-block:: bash
+
+    MacBook-Pro:bdg-sequila marek$ ls -ltr /data/NA12878.ga2.*bam*
+    -rw-r--r--@ 1 marek  staff  17924580574 Mar 14 20:21 NA12878.ga2.exome.maq.recal.bam
+    -rw-r--r--  1 marek  staff      4022144 Jul  8 16:47 NA12878.ga2.exome.maq.recal.bam.bai
+
+Then you can create a new SeQuiLa table over this folder:
+
+.. code-block:: scala
+
+    import org.apache.spark.sql.SequilaSession
+    import org.biodatageeks.utils.{SequilaRegister, UDFRegister}
+
+    val ss = SequilaSession(spark)
+    /*inject bdg-granges strategy*/
+    SequilaRegister.register(ss)
+
+    ss.sql("""
+    CREATE TABLE reads_exome USING org.biodatageeks.datasources.BAM.BAMDataSource
+    OPTIONS(path '/data/NA12878.ga2.exome.*.bam')
+    """.stripMargin)
+
+First time we run the query without pushing genomic intervals predicates:
+
+.. code-block:: scala
+
+    spark.time{
+     ss.sqlContext.setConf("spark.biodatageeks.bam.predicatePushdown","false")
+      ss.sql("SELECT count(*) FROM reads_exome WHERE contigName='chr1' AND start=20138").show
+    }
+
+
+.. code-block:: bash
+
+    18/07/25 12:57:44 WARN BAMRelation: GRanges: chr1:20138-20138, false
+    +--------+
+    |count(1)|
+    +--------+
+    |      20|
+    +--------+
+
+    Time taken: 186045 ms
+
+
+Now we rerun the query with pushing the predicates:
+
+.. code-block:: scala
+
+    spark.time{
+      ss.sqlContext.setConf("spark.biodatageeks.bam.predicatePushdown","true")
+      ss.sql("SELECT count(*) FROM reads_exome WHERE contigName='chr1' AND start=20138").show
+    }
+
+.. code-block:: bash
+
+    18/07/25 13:01:40 WARN BAMRelation: GRanges: chr1:20138-20138, true
+    18/07/25 13:01:40 WARN BAMRelation: Interval query detected and predicate pushdown enabled, trying to do predicate pushdown using intervals chr1:20138-20138
+    +--------+
+    |count(1)|
+    +--------+
+    |      20|
+    +--------+
+
+    Time taken: 732 ms
+
+
+Genomic intervals are also supported:
+
+.. code-block:: scala
+
+     spark.time{
+     ss.sqlContext.setConf("spark.biodatageeks.bam.predicatePushdown","false")
+      ss.sql("""SELECT count(*) FROM reads_exome
+      WHERE contigName='chr1' AND start >= 1996 AND end <= 2071""".stripMargin).show
+    }
+
+.. code-block:: bash
+
+    18/07/25 17:52:05 WARN BAMRelation: GRanges: chr1:1996-2071, false
+    +--------+
+    |count(1)|
+    +--------+
+    |       3|
+    +--------+
+
+    Time taken: 147638 ms
+
+
+.. code-block:: scala
+
+    spark.time{
+     ss.sqlContext.setConf("spark.biodatageeks.bam.predicatePushdown","true")
+      ss.sql("""SELECT count(*) FROM reads_exome
+      WHERE contigName='chr1' AND start >= 1996 AND end <= 2071""".stripMargin).show
+    }
+
+.. code-block:: bash
+
+    18/07/25 17:55:05 WARN BAMRelation: GRanges: chr1:1996-2071, true
+    18/07/25 17:55:05 WARN BAMRelation: Interval query detected and predicate pushdown enabled, trying to do predicate pushdown using intervals chr1:1996-2071
+    +--------+
+    |count(1)|
+    +--------+
+    |       3|
+    +--------+
+
+    Time taken: 401 ms
+
+
+.. Speeding up BAM scans using Intel Genomics Kernel Library's Inflater
+********************************************************************
+
 

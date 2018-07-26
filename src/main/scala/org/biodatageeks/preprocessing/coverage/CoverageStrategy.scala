@@ -11,7 +11,7 @@ import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql._
 import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder
 import org.apache.spark.unsafe.types.UTF8String
-import org.biodatageeks.datasources.BAM.BAMRecord
+import org.biodatageeks.datasources.BAM.{BAMBDGFileReader, BAMRecord}
 import org.biodatageeks.preprocessing.coverage.CoverageReadFunctions._
 import org.seqdoop.hadoop_bam.{BAMInputFormat, SAMRecordWritable}
 
@@ -49,7 +49,8 @@ case class CoveragePlan(plan: LogicalPlan, spark: SparkSession, table:String, ou
   def children: Seq[SparkPlan] = Nil
 }
 
-case class CoverageHistPlan(plan: LogicalPlan, spark: SparkSession, table:String, output: Seq[Attribute]) extends SparkPlan with Serializable {
+case class CoverageHistPlan(plan: LogicalPlan, spark: SparkSession, table:String, output: Seq[Attribute])
+  extends SparkPlan with Serializable {
 
   def doExecute(): org.apache.spark.rdd.RDD[InternalRow] = {
     import spark.implicits._
@@ -81,12 +82,9 @@ case class CoverageHistPlan(plan: LogicalPlan, spark: SparkSession, table:String
 
 
 
-case class BDGCoveragePlan(plan: LogicalPlan, spark: SparkSession, table:String,sampleId:String, output: Seq[Attribute]) extends SparkPlan with Serializable {
+case class BDGCoveragePlan(plan: LogicalPlan, spark: SparkSession, table:String,sampleId:String, output: Seq[Attribute])
+  extends SparkPlan with Serializable  with BAMBDGFileReader {
   def doExecute(): org.apache.spark.rdd.RDD[InternalRow] = {
-    import spark.implicits._
-    val ds = spark.sql(s"select * FROM ${table} where sampleId='${sampleId}' ")
-      .as[BAMRecord]
-      .filter(r=>r.contigName != null)
     val schema = plan.schema
     val catalog = spark.sessionState.catalog
     val tId = spark.sessionState.sqlParser.parseTableIdentifier(table)
@@ -98,14 +96,9 @@ case class BDGCoveragePlan(plan: LogicalPlan, spark: SparkSession, table:String,
       .dropRight(1) ++ Array(s"${sampleId}*.bam"))
       .mkString("/")
     println(samplePath)
-    spark
-      .sparkContext
-      .hadoopConfiguration
-      .setInt("mapred.min.split.size", (134217728).toInt)
 
-    lazy val alignments = spark.sparkContext
-      .newAPIHadoopFile[LongWritable, SAMRecordWritable, BAMInputFormat](samplePath)
-    //val cov = ds.rdd.baseCoverage(None,Some(4),sorted=false)
+    setLocalConf(spark.sqlContext)
+    lazy val alignments = readBAMFile(spark.sqlContext,samplePath)
 
     lazy val events = CoverageMethodsMos.readsToEventsArray(alignments.map(r=>r._2))
     lazy val cov = CoverageMethodsMos.eventsToCoverage(sampleId,events)
