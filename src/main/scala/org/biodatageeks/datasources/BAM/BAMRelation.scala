@@ -84,6 +84,9 @@ trait BAMBDGFileReader{
       .sparkContext
       .hadoopConfiguration
       .setInt("mapred.min.split.size", (134217728).toInt)
+    spark
+      .sparkContext
+      .hadoopConfiguration.set(SAMHeaderReader.VALIDATION_STRINGENCY_PROPERTY, ValidationStringency.SILENT.toString)
   }
 
   def readBAMFile(@transient sqlContext: SQLContext, path: String) = {

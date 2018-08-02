@@ -11,6 +11,7 @@ import org.seqdoop.hadoop_bam.util.SAMHeaderReader
 
 import scala.collection.mutable
 import htsjdk.samtools._
+import org.apache.spark.broadcast.Broadcast
 //import com.intel.gkl.compression._
 
 import htsjdk.samtools.util.zip.InflaterFactory
@@ -53,6 +54,7 @@ object CoverageMethodsMos {
         val contigLengthMap = new mutable.HashMap[String, Int]()
         val contigEventsMap = new mutable.HashMap[String, (Array[Short],Int,Int,Int)]()
         val contigStartStopPartMap = new mutable.HashMap[(String),Int]()
+        val cigarMap = new mutable.HashMap[String, Int]()
         //var lastContig: String = null
         //var lastPosition = 0
         while(p.hasNext){
@@ -66,13 +68,16 @@ object CoverageMethodsMos {
               contigLengthMap += contig -> contigLength
               contigEventsMap += contig -> (new Array[Short](contigLength-read.getStart+10), read.getStart,contigLength-1, contigLength)
               contigStartStopPartMap += s"${contig}_start" -> read.getStart
+              cigarMap += contig -> 0
             }
             val cigarIterator = read.getCigar.iterator()
             var position = read.getStart
             //val contigLength = contigLengthMap(contig)
+            var currCigarLength = 0
             while(cigarIterator.hasNext){
               val cigarElement = cigarIterator.next()
               val cigarOpLength = cigarElement.getLength
+              currCigarLength += cigarOpLength
               val cigarOp = cigarElement.getOperator
               if (cigarOp == CigarOperator.M || cigarOp == CigarOperator.X || cigarOp == CigarOperator.EQ) {
                 eventOp(position,contigStartStopPartMap(s"${contig}_start"),contig,contigEventsMap,true) //Fixme: use variable insteaad of lookup to a map
@@ -81,23 +86,30 @@ object CoverageMethodsMos {
               }
               else  if (cigarOp == CigarOperator.N || cigarOp == CigarOperator.D) position += cigarOpLength
             }
+            if(currCigarLength > cigarMap(contig)) cigarMap(contig) = currCigarLength
+
 
           }
         }
-        contigEventsMap
-          .mapValues(r=>
+        lazy val output = contigEventsMap
+          .map(r=>
           {
             var maxIndex = 0
             var i = 0
-            while(i < r._1.length ){
-              if(r._1(i) != 0) maxIndex = i
+            while(i < r._2._1.length ){
+              if(r._2._1(i) != 0) maxIndex = i
               i +=1
             }
-            (r._1.slice(0,maxIndex+1),r._2,r._2+maxIndex,r._4)
+            (r._1,(r._2._1.slice(0,maxIndex+1),r._2._2,r._2._2+maxIndex,r._2._4,cigarMap(r._1)) )// add max cigarLength
           }
-          ).iterator
-    }.reduceByKey((a,b)=> mergeArrays(a,b))
+          )
+        output.iterator
+    }
 
+  }
+
+  def reduceEventsArray(covEvents: RDD[(String,(Array[Short],Int,Int,Int))]) =  {
+    covEvents.reduceByKey((a,b)=> mergeArrays(a,b))
   }
 
   def eventsToCoverage(sampleId:String,events: RDD[(String,(Array[Short],Int,Int,Int))]) = {
@@ -130,6 +142,49 @@ object CoverageMethodsMos {
       })
     }.flatMap(r=>r)
   }
+
+  //contigName,covArray,minPos,maxPos,contigLenth,maxCigarLength
+  def upateContigRange(b:Broadcast[UpdateStruct],covEvents: RDD[(String,(Array[Short],Int,Int,Int,Int))]) = {
+   covEvents.map{
+     c => {
+       val upd = b.value.upd
+       val shrink = b.value.shrink
+
+       val updArray = upd.get( (c._1,c._2._2) ) match {
+         case Some(a) => {
+           a._1 match {
+             case Some(b) => {
+               var i = 0
+               while (i < b.length) {
+                 c._2._1(i) = (c._2._1(i) + b(i)).toShort
+                 if (i == 0) c._2._1(0) = (c._2._1(0) + a._2).toShort
+                 i += 1
+               }
+               c._2._1
+             }
+             case None => {
+               c._2._1(0) = (c._2._1(0) + a._2).toShort
+               c._2._1
+             }
+           }
+         }
+           case None =>{
+             c._2._1
+           }
+       }
+       val shrinkArray = shrink.get( (c._1, c._2._2) ) match {
+         case Some(len) => {
+            updArray.take(len)
+         }
+         case None => updArray
+       }
+
+       (c._1, (shrinkArray,c._2._2,c._2._3,c._2._4) )
+     }
+
+   }
+  }
+
 
 
 

@@ -55,14 +55,14 @@ class CoverageTestSuite extends FunSuite with DataFrameSuiteBase with BeforeAndA
   test("BAM - bdg_coverage"){
     val session: SparkSession = SequilaSession(spark)
     session.experimental.extraStrategies = new CoverageStrategy(session) :: Nil
-    assert(session.sql(s"SELECT * FROM bdg_coverage('${tableNameBAM}','NA12878') WHERE start >=20204 AND `end`<= 20204 ").first().getShort(3)===1019.toShort)
+    assert(session.sql(s"SELECT * FROM bdg_coverage('${tableNameBAM}','NA12878','mosdepth') WHERE start >=20204 AND `end`<= 20204 ").first().getShort(3)===1019.toShort)
 
   }
 
   test("BAM - bdg_coverage - show"){
     val session: SparkSession = SequilaSession(spark)
     SequilaRegister.register(session)
-    session.sql(s"SELECT * FROM bdg_coverage('${tableNameBAM}','NA12878')").show(5)
+    session.sql(s"SELECT * FROM bdg_coverage('${tableNameBAM}','NA12878','bdg')").show(5)
 
 
   }
