@@ -196,7 +196,7 @@ public class BAMBDGRecordReader
             resource.index(inIndex);
         }
         if(conf.get(INFLATE_FACTORY) != null && conf.get(INFLATE_FACTORY).equalsIgnoreCase("intel_gkl")){
-            //System.out.println("Using Intel GKL Inflater");
+            System.out.println("Using Intel GKL Inflater");
             IntelInflaterFactory intelDeflaterFactory =  new IntelInflaterFactory();
             readerFactory.inflaterFactory(intelDeflaterFactory);
         }

@@ -63,6 +63,11 @@ trait BAMBDGFileReader{
         .sparkContext
         .hadoopConfiguration
         .set("hadoopbam.bam.inflate","intel_gkl")
+    else
+      spark
+        .sparkContext
+        .hadoopConfiguration
+        .unset("hadoopbam.bam.inflate")
 
     confMap.get("spark.biodatageeks.bam.intervals") match {
       case Some(s) => {

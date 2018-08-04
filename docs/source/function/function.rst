@@ -235,6 +235,21 @@ In order to compute coverage for a sample one can run a set of queries as follow
 Functional parameteres
 ######################
 
+ss is a SequilaSession object created as follows:
+
+.. code-block:: scala
+
+    import org.biodatageeks.utils.{SequilaRegister, UDFRegister}
+    import org.apache.spark.sql.SequilaSession
+    import org.apache.spark.sql.SparkSession
+
+    val spark = SparkSession.builder()
+        .getOrCreate()
+    val ss = new SequilaSession(spark)
+    SequilaRegister.register(ss)
+    UDFRegister.register(ss)
+
+
 
 
 minOverlap
@@ -245,7 +260,7 @@ The default value is set to 1, meaning that two intervals are considered as over
 Parameter can be set in the following way:
 ::
    
-   spark.sqlContext.setConf("minOverlap","5")
+   ss.sqlContext.setConf("minOverlap","5")
 
 
 
@@ -257,7 +272,7 @@ This parameter defines possible separation of intervals of maxGap or less and st
 Parameter can be set in the following way:
 ::
 
-   spark.sqlContext.setConf("maxGap","10")
+   ss.sqlContext.setConf("maxGap","10")
 
 
 
@@ -275,7 +290,7 @@ By default the parameter is set to 10240 kB
 Parameter can be set in the following way:
 ::
 
-   spark.sqlContext.setConf("spark.biodatageeks.rangejoin.maxBroadcastSize", (10*(1024*1024)).toString)
+   ss.sqlContext.setConf("spark.biodatageeks.rangejoin.maxBroadcastSize", (10*(1024*1024)).toString)
 
 
 useJoinOrder
@@ -309,16 +324,16 @@ process and query them using a SQL interface:
 .. code-block:: scala
 
     val tableNameBAM = "reads"
-    spark.sql("CREATE DATABASE BDGEEK")
-    spark.sql("USE BDGEEK")
-    spark.sql(
+    ss.sql("CREATE DATABASE BDGEEK")
+    ss.sql("USE BDGEEK")
+    ss.sql(
       s"""
          |CREATE TABLE ${tableNameBAM}
          |USING org.biodatageeks.datasources.BAM.BAMDataSource
          |OPTIONS(path "/data/input/multisample/*.bam")
          |
       """.stripMargin)
-    spark.sql("SELECT sampleId,contigName,start,end,cigar FROM reads").show(5)
+    ss.sql("SELECT sampleId,contigName,start,end,cigar FROM reads").show(5)
 
 ADAM data source can be defined in the analogues way (just requires using org.biodatageeks.datasources.ADAM.ADAMDataSource).
 
@@ -486,7 +501,19 @@ Genomic intervals are also supported:
     Time taken: 401 ms
 
 
-.. Speeding up BAM scans using Intel Genomics Kernel Library's Inflater
+Speeding up BAM scans using Intel Genomics Kernel Library's Inflater
 ********************************************************************
 
+SeQuiLa starting from version 0.4.1 supports `Genomics Kernel Library (GKL)
+<https://github.com/Intel-HLS/GKL>`_ on Mac OS X and Linux platforms for speeding up BAM blocks decompression.
+In order to start using optimized Intel inflater library you need simply to set the following parameter:
+
+.. code-block:: scala
+
+    import org.apache.spark.sql.{SequilaSession, SparkSession}
+    import org.biodatageeks.utils.SequilaRegister
+    val ss = new SequilaSession(spark)
+    SequilaRegister.register(ss)
+    ss.sqlContext.setConf("spark.biodatageeks.bam.useGKLInflate","true")
+    ss.sql(...)
 

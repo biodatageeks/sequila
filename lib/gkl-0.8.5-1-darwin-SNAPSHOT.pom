@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.intel.gkl</groupId>
+  <artifactId>gkl</artifactId>
+  <version>0.8.5-1-darwin-SNAPSHOT</version>
+  <name>Intel Genomics Kernel Library (GKL)</name>
+  <description>Genomics compute kernels optimized for Intel Architecture</description>
+  <url>https://github.com/Intel-HLS/GKL</url>
+  <licenses>
+    <license>
+      <name>MIT License</name>
+      <url>https://opensource.org/licenses/MIT</url>
+      <distribution>repo</distribution>
+    </license>
+    <license>
+      <name>BSD 3-Clause</name>
+      <url>https://opensource.org/licenses/BSD-3-Clause</url>
+      <distribution>repo</distribution>
+    </license>
+    <license>
+      <name>Zlib License</name>
+      <url>https://opensource.org/licenses/Zlib</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  <developers>
+    <developer>
+      <name>George Powley</name>
+      <email>george.s.powley@intel.com</email>
+    </developer>
+    <developer>
+      <name>Priya Vaidya</name>
+      <email>priya.n.vaidya@intel.com</email>
+    </developer>
+    <developer>
+      <name>Ernesto Brau</name>
+      <email>ernesto.brau@intel.com</email>
+    </developer>
+  </developers>
+  <scm>
+    <connection>scm:git@github.com:Intel-HLS/GKL.git</connection>
+    <developerConnection>scm:git@github.com:Intel-HLS/GKL.git</developerConnection>
+    <url>scm:git@github.com:Intel-HLS/GKL.git</url>
+  </scm>
+  <dependencies>
+    <dependency>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+      <version>2.4</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.broadinstitute</groupId>
+      <artifactId>gatk-native-bindings</artifactId>
+      <version>0.1.0-rc-1</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-api</artifactId>
+      <version>2.5</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-core</artifactId>
+      <version>2.5</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.github.samtools</groupId>
+      <artifactId>htsjdk</artifactId>
+      <version>2.9.0</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testng</groupId>
+      <artifactId>testng</artifactId>
+      <version>6.9.9</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+</project>

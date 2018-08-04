@@ -86,8 +86,10 @@ Example.scala
 
 0.4.1
 
+ - a new highly-optimized  `mosdepth <https://github.com/brentp/mosdepth>`_ distributed implementation for depth of coverage calculations
  - BAI indexes support for BAM data source
- - experimental Intel Genomics Kernel Library support
+ - experimental `Intel Genomics Kernel Library (GKL) <https://github.com/Intel-HLS/GKL>`_ support
+ - experimental `spark-bam <https://github.com/hammerlab/spark-bam>`_ support
 
 0.4
 
