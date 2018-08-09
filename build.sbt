@@ -8,7 +8,7 @@ organization := "org.biodatageeks"
 
 scalaVersion := "2.11.8"
 
-val DEFAULT_SPARK_2_VERSION = "2.2.1"
+val DEFAULT_SPARK_2_VERSION = "2.2.2"
 val DEFAULT_HADOOP_VERSION = "2.6.5"
 
 
@@ -43,13 +43,15 @@ libraryDependencies += "com.github.potix2" %% "spark-google-spreadsheets" % "0.5
 
 libraryDependencies += "ch.cern.sparkmeasure" %% "spark-measure" % "0.11"
 
-//libraryDependencies += "pl.edu.pw.ii.zsibio" % "common-routines_2.11" % "0.1-SNAPSHOT"
 libraryDependencies += "org.broadinstitute" % "gatk-native-bindings" % "1.0.0"
 libraryDependencies += "org.apache.logging.log4j" % "log4j-core" % "2.11.0"
 libraryDependencies += "org.apache.logging.log4j" % "log4j-api" % "2.11.0"
 
 libraryDependencies += "com.intel.gkl" % "gkl" % "0.8.5-1-darwin-SNAPSHOT"
 libraryDependencies += "com.intel.gkl" % "gkl" % "0.8.5-1-linux-SNAPSHOT"
+
+libraryDependencies += "org.hammerlab.bam" %% "load" % "1.2.0-M1"
+
 
 
 

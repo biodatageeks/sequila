@@ -41,6 +41,7 @@ import java.util.Map;
 import java.util.Set;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
+import org.biodatageeks.inputformats.BDGAlignInputFormat;
 import org.seqdoop.hadoop_bam.*;
 import org.seqdoop.hadoop_bam.util.NIOFileUtil;
 import org.seqdoop.hadoop_bam.util.SAMHeaderReader;
@@ -72,7 +73,7 @@ import com.intel.gkl.compression.*;
  * the key.
  */
 public class BAMBDGInputFormat
-        extends FileInputFormat<LongWritable,SAMRecordWritable>
+        extends BDGAlignInputFormat
 {
     // set this to true for debug output
     public final static boolean DEBUG_BAM_SPLITTER = false;

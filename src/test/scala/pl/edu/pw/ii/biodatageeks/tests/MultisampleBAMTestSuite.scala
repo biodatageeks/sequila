@@ -40,7 +40,7 @@ class MultisampleBAMTestSuite extends FunSuite with DataFrameSuiteBase with Befo
 
   test("Sample name"){
     assert(spark
-      .sql(s"SELECT sampleId FROM ${tableNameBAM}")
+      .sql(s"SELECT sampleId FROM ${tableNameBAM} order by sampleId")
       .first.getString(0) === "NA12877")
   }
 

@@ -17,6 +17,9 @@ ss.sqlContext.setConf("spark.biodatageeks.bam.predicatePushdown","false")
 /*GKL Inflate disabled by default - better for large seq scans than index lookups*/
 ss.sqlContext.setConf("spark.biodatageeks.bam.useGKLInflate","false")
 
+/*spark-bam disabled by default*/
+ss.sqlContext.setConf("spark.biodatageeks.bam.useSparkBAM","false")
+
 /*register UDFs*/
 
 UDFRegister.register(ss)

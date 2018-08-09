@@ -14,7 +14,7 @@ SeQuiLa is an ANSI-SQL compliant solution for efficient genomic intervals queryi
 
    - genome-wide analyses in several minutes
    - 22x+ speedup over Spark default join operation
-   - 100x+ speedup for interval queries for BAM datasource using BAI indexes (>= 0.4.1)
+   - up to 100x+ speedup for interval queries for BAM datasource using indexes (>= 0.4.1)
    - 100% accuracy in functional tests against GRanges
 
 * SeQuiLa is elastic:
@@ -88,7 +88,8 @@ Example.scala
 
  - a new highly-optimized  `mosdepth <https://github.com/brentp/mosdepth>`_ distributed implementation for depth of coverage calculations
  - BAI indexes support for BAM data source
- - experimental `Intel Genomics Kernel Library (GKL) <https://github.com/Intel-HLS/GKL>`_ support
+ - CRAM file format support
+ - `Intel Genomics Kernel Library (GKL) <https://github.com/Intel-HLS/GKL>`_ support
  - experimental `spark-bam <https://github.com/hammerlab/spark-bam>`_ support
 
 0.4
@@ -108,6 +109,7 @@ Example.scala
    architecture/architecture
    integrations/integrations
    function/function
+   fileformats/fileformats
    quickstart/quickstart
    usecases/usecases
    benchmarking/benchmarking

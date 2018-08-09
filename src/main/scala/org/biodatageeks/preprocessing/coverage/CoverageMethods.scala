@@ -3,8 +3,9 @@ package org.biodatageeks.preprocessing.coverage
 import htsjdk.samtools.{Cigar, CigarOperator, SAMUtils, TextCigarCodec}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.storage.StorageLevel
-import org.biodatageeks.datasources.BAM.BAMRecord
+import org.biodatageeks.datasources.BAM.{BDGSAMRecord}
 import org.biodatageeks.preprocessing.coverage.CoverageHistType.CoverageHistType
+
 import scala.util.control.Breaks._
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -40,7 +41,7 @@ case class CoverageHistParam(
                               buckets: Array[Double]
                             )
 
-class CoverageReadFunctions(covReadRDD:RDD[BAMRecord]) extends Serializable {
+class CoverageReadFunctions(covReadRDD:RDD[BDGSAMRecord]) extends Serializable {
 
   def baseCoverage(minMapq: Option[Int], numTasks: Option[Int] = None, sorted: Boolean):RDD[CoverageRecord] ={
     val sampleId = covReadRDD
@@ -276,7 +277,7 @@ class CoverageReadFunctions(covReadRDD:RDD[BAMRecord]) extends Serializable {
 
 object CoverageReadFunctions {
 
-  implicit def addCoverageReadFunctions(rdd: RDD[BAMRecord]) = {
+  implicit def addCoverageReadFunctions(rdd: RDD[BDGSAMRecord]) = {
     new CoverageReadFunctions(rdd)
 
   }

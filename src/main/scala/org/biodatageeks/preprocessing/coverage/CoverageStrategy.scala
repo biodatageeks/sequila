@@ -13,20 +13,39 @@ import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.unsafe.types.UTF8String
 import org.apache.spark.util.AccumulatorV2
-import org.biodatageeks.datasources.BAM.{BAMBDGFileReader, BAMRecord}
+import org.biodatageeks.datasources.BAM.{BDGAlignFileReader, BDGSAMRecord}
+import org.biodatageeks.inputformats.BDGAlignInputFormat
 import org.biodatageeks.preprocessing.coverage.CoverageReadFunctions._
-import org.seqdoop.hadoop_bam.{BAMInputFormat, SAMRecordWritable}
+import org.seqdoop.hadoop_bam.{BAMBDGInputFormat, BAMInputFormat, CRAMBDGInputFormat, SAMRecordWritable}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
+import scala.reflect.ClassTag
 
 
 class CoverageStrategy(spark: SparkSession) extends Strategy with Serializable  {
+
   def apply(plan: LogicalPlan): Seq[SparkPlan] = plan match {
 
     case Coverage(tableName,output) => CoveragePlan(plan,spark,tableName,output) :: Nil
     case CoverageHist(tableName,output) => CoverageHistPlan(plan,spark,tableName,output) :: Nil
-    case BDGCoverage(tableName,sampleId,method,output) => BDGCoveragePlan(plan,spark,tableName,sampleId,method,output) :: Nil
+    //add support for CRAM
+
+    case BDGCoverage(tableName,sampleId,method,output) => {
+      val inputFormat = BDGTableFuncs
+        .getTableMetadata(spark, tableName)
+        .provider
+      inputFormat match {
+        case Some(f) => {
+          if (f == "org.biodatageeks.datasources.BAM.BAMDataSource")
+            BDGCoveragePlan[BAMBDGInputFormat](plan, spark, tableName, sampleId, method, output) :: Nil
+          else if (f == "org.biodatageeks.datasources.BAM.CRAMDataSource")
+            BDGCoveragePlan[CRAMBDGInputFormat](plan, spark, tableName, sampleId, method, output) :: Nil
+          else Nil
+        }
+        case None => throw new Exception("Only BAM and CRAM file formats are supported in bdg_coverage.")
+      }
+    }
     case _ => Nil
   }
 
@@ -36,7 +55,7 @@ case class CoveragePlan(plan: LogicalPlan, spark: SparkSession, table:String, ou
   def doExecute(): org.apache.spark.rdd.RDD[InternalRow] = {
     import spark.implicits._
     val ds = spark.sql(s"select * FROM ${table}")
-      .as[BAMRecord]
+      .as[BDGSAMRecord]
       .filter(r=>r.contigName != null)
     val schema = plan.schema
     val cov = ds.rdd.baseCoverage(None,Some(4),sorted=false)
@@ -58,7 +77,7 @@ case class CoverageHistPlan(plan: LogicalPlan, spark: SparkSession, table:String
   def doExecute(): org.apache.spark.rdd.RDD[InternalRow] = {
     import spark.implicits._
     val ds = spark.sql(s"select * FROM ${table}")
-      .as[BAMRecord]
+      .as[BDGSAMRecord]
       .filter(r=>r.contigName != null)
     val schema = plan.schema
     val params = CoverageHistParam(CoverageHistType.MAPQ,Array(0,1,2,3,50))
@@ -87,8 +106,18 @@ case class CoverageHistPlan(plan: LogicalPlan, spark: SparkSession, table:String
 
 case class UpdateStruct(upd:mutable.HashMap[(String,Int),(Option[Array[Short]],Short)], shrink:mutable.HashMap[(String,Int),(Int)])
 
-case class BDGCoveragePlan(plan: LogicalPlan, spark: SparkSession, table:String,sampleId:String, method: String, output: Seq[Attribute])
-  extends SparkPlan with Serializable  with BAMBDGFileReader {
+object BDGTableFuncs{
+
+  def getTableMetadata(spark:SparkSession, tableName:String) = {
+    val catalog = spark.sessionState.catalog
+    val tId = spark.sessionState.sqlParser.parseTableIdentifier(tableName)
+    catalog.getTableMetadata(tId)
+  }
+}
+
+case class BDGCoveragePlan [T<:BDGAlignInputFormat](plan: LogicalPlan, spark: SparkSession,
+                                                    table:String, sampleId:String, method: String, output: Seq[Attribute])(implicit c: ClassTag[T])
+  extends SparkPlan with Serializable  with BDGAlignFileReader [T]{
   def doExecute(): org.apache.spark.rdd.RDD[InternalRow] = {
 
     spark
@@ -96,19 +125,25 @@ case class BDGCoveragePlan(plan: LogicalPlan, spark: SparkSession, table:String,
       .getPersistentRDDs
         .foreach(_._2.unpersist()) //FIXME: add filtering not all RDDs
     val schema = plan.schema
-    val catalog = spark.sessionState.catalog
-    val tId = spark.sessionState.sqlParser.parseTableIdentifier(table)
-    val sampleTable = catalog.getTableMetadata(tId)
+    val sampleTable = BDGTableFuncs.getTableMetadata(spark,table)
+    val fileExtension = sampleTable.provider match{
+      case Some(f) => {
+        if (f == "org.biodatageeks.datasources.BAM.BAMDataSource") "bam"
+        else if (f == "org.biodatageeks.datasources.BAM.CRAMDataSource") "cram"
+        else throw new Exception("Only BAM and CRAM file formats are supported in bdg_coverage.")
+      }
+      case None => throw new Exception("Wrong file extension - only BAM and CRAM file formats are supported in bdg_coverage.")
+    }
     val samplePath = (sampleTable
       .location.toString
       .split('/')
-      .dropRight(1) ++ Array(s"${sampleId}*.bam"))
+      .dropRight(1) ++ Array(s"${sampleId}*.${fileExtension}"))
       .mkString("/")
 
     setLocalConf(spark.sqlContext)
     lazy val alignments = readBAMFile(spark.sqlContext,samplePath)
 
-    lazy val events = CoverageMethodsMos.readsToEventsArray(alignments.map(r=>r._2))
+    lazy val events = CoverageMethodsMos.readsToEventsArray(alignments)
     lazy val reducedEvents = method.toLowerCase match {
       case "mosdepth" => CoverageMethodsMos.reduceEventsArray(events.mapValues(r => (r._1, r._2, r._3, r._4)))
       case "bdg" => {

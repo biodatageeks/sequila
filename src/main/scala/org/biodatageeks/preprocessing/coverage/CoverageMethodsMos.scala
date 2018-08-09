@@ -48,7 +48,7 @@ object CoverageMethodsMos {
       contigEventsMap(contig)._1(position) = (contigEventsMap(contig)._1(position) - 1).toShort
   }
 
-  def readsToEventsArray(reads:RDD[SAMRecordWritable])   = {
+  def readsToEventsArray(reads:RDD[SAMRecord])   = {
     reads.mapPartitions{
       p =>
         val contigLengthMap = new mutable.HashMap[String, Int]()
@@ -59,7 +59,7 @@ object CoverageMethodsMos {
         //var lastPosition = 0
         while(p.hasNext){
           val r = p.next()
-          val read = r.get()
+          val read = r
           val contig = read.getContig
           if(contig != null && read.getFlags!= 1796) {
             if (!contigLengthMap.contains(contig)) { //FIXME: preallocate basing on header, n

@@ -11,10 +11,13 @@ class BAMADAMDataSourceTestSuite extends FunSuite with DataFrameSuiteBase with B
 
   val bamPath = getClass.getResource("/NA12878.slice.bam").getPath
   val adamPath = getClass.getResource("/NA12878.slice.adam").getPath
+  val cramPath = getClass.getResource("/test.cram").getPath
+  val refPath = getClass.getResource("/phix-illumina.fa").getPath
   val metricsListener = new MetricsListener(new RecordedMetrics())
   val writer = new PrintWriter(new OutputStreamWriter(System.out))
   val tableNameBAM = "reads"
   val tableNameADAM = "readsADAM"
+  val tableNameCRAM = "readsCRAM"
   before{
 
     Metrics.initialize(sc)
@@ -25,6 +28,15 @@ class BAMADAMDataSourceTestSuite extends FunSuite with DataFrameSuiteBase with B
          |CREATE TABLE ${tableNameBAM}
          |USING org.biodatageeks.datasources.BAM.BAMDataSource
          |OPTIONS(path "${bamPath}")
+         |
+      """.stripMargin)
+
+    spark.sql(s"DROP TABLE IF EXISTS ${tableNameCRAM}")
+    spark.sql(
+      s"""
+         |CREATE TABLE ${tableNameCRAM}
+         |USING org.biodatageeks.datasources.BAM.CRAMDataSource
+         |OPTIONS(path "${cramPath}", refPath "${refPath}")
          |
       """.stripMargin)
 
@@ -55,6 +67,18 @@ class BAMADAMDataSourceTestSuite extends FunSuite with DataFrameSuiteBase with B
     spark
       .sql(s"SELECT contigName,start,end FROM ${tableNameADAM}").show(1)
       //.count === 3172L)
+  }
+
+  test("CRAM - select limit" ){
+
+    spark
+      .sql(s"SELECT contigName,start,end,cigar FROM ${tableNameCRAM}").show(10)
+  }
+
+  test("CRAM - select count" ){
+
+    assert(spark
+      .sql(s"SELECT * FROM ${tableNameCRAM}").count() == 2860L )
   }
 
 
@@ -94,6 +118,12 @@ class BAMADAMDataSourceTestSuite extends FunSuite with DataFrameSuiteBase with B
     assert(spark
       .sql(s"SELECT * FROM ${tableNameBAM}")
       .count === 3172L)
+  }
+
+  test("BAM - select only sampleId"){
+    assert(spark
+      .sql(s"SELECT distinct sampleId FROM ${tableNameBAM} order by sampleId")
+      .first().getString(0) == "NA12878")
   }
 
   after{

@@ -162,7 +162,7 @@ public class BAMBDGRecordReader
                 ((SamReader.PrimitiveSamReaderToSamReaderAdapter) samReader).underlyingReader();
         BAMFileReader bamFileReader = (BAMFileReader) primitiveSamReader;
 
-        if(BAMInputFormat.DEBUG_BAM_SPLITTER) {
+        if(org.seqdoop.hadoop_bam.BAMBDGInputFormat.DEBUG_BAM_SPLITTER) {
             final long recordStart = virtualStart & 0xffff;
             System.err.println("XXX inizialized BAMRecordReader byte offset: " +
                     fileStart + " record offset: " + recordStart);
