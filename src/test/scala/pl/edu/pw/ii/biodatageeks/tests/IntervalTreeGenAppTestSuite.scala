@@ -179,6 +179,7 @@ class IntervalTreeGenAppTestSuite extends FunSuite with DataFrameSuiteBase with 
 
     Metrics.print(writer, Some(metricsListener.metrics.sparkMetrics.stageTimes))
     writer.flush()
+    Metrics.stopRecording()
     //writer.
 
   }

@@ -1,14 +1,15 @@
 package org.apache.spark.sql
 
 
+import org.apache.spark.sql.SparkSession.Builder
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.sql.catalyst.analysis.{AliasViewChild, Analyzer, CleanupAliases, EliminateUnions, ResolveCreateNamedStruct, ResolveHints, ResolveInlineTables, ResolveTableValuedFunctions, ResolveTimeZone, SeQuiLaAnalyzer, SubstituteUnresolvedOrdinals, TimeWindowing, TypeCoercion, UpdateOuterReferences}
 import org.apache.spark.sql.catalyst.catalog.SessionCatalog
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.catalyst.rules.Rule
 import org.apache.spark.sql.execution.QueryExecution
+import org.apache.spark.sql.execution.command.{BAMCTASOptimizationRule, BAMIASOptimizationRule}
 import org.apache.spark.sql.internal.SQLConf
-import org.apache.spark.sql.{SparkSession, SparkSessionExtensions}
 import org.apache.spark.sql.internal.{SQLConf, SessionState}
 import org.biodatageeks.preprocessing.coverage.CoverageStrategy
 
@@ -20,9 +21,17 @@ import scala.util.Random
 
 
 case class SequilaSession(sparkSession: SparkSession) extends SparkSession(sparkSession.sparkContext) {
-  @transient val myAnalyzer = new SeQuiLaAnalyzer(sparkSession.sessionState.catalog,sparkSession.sessionState.conf)
-  def executePlan(plan:LogicalPlan) =  new QueryExecution(sparkSession,myAnalyzer.execute(plan))
-  @transient override lazy val sessionState = SequilaSessionState(sparkSession,myAnalyzer,executePlan)
+  @transient val sequilaAnalyzer = new SeQuiLaAnalyzer(sparkSession.sessionState.catalog,sparkSession.sessionState.conf)
+  def executePlan(plan:LogicalPlan) =  new QueryExecution(sparkSession,sequilaAnalyzer.execute(plan))
+  @transient override lazy val sessionState = SequilaSessionState(sparkSession,sequilaAnalyzer,executePlan)
+
+  //new rules
+  sequilaAnalyzer.sequilaOptmazationRules = Seq(
+    new BAMCTASOptimizationRule(sparkSession),
+    new BAMIASOptimizationRule(sparkSession)
+  )
+
+
 }
 
 case class SequilaSessionState(sparkSession: SparkSession, customAnalyzer: Analyzer, executePlan: LogicalPlan => QueryExecution)

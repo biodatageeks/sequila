@@ -104,7 +104,10 @@ class IntervalTreeCBOTestSuite extends FunSuite with DataFrameSuiteBase with Bef
         |SHOW TABLES
       """.stripMargin)
       .show()
-
+    Metrics.print(writer, Some(metricsListener.metrics.sparkMetrics.stageTimes))
+    writer.flush()
+    Metrics.stopRecording()
   }
+
 
 }

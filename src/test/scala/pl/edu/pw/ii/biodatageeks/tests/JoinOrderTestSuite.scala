@@ -1,16 +1,19 @@
 package pl.edu.pw.ii.biodatageeks.tests
 
+import java.io.{OutputStreamWriter, PrintWriter}
+
 import com.holdenkarau.spark.testing.{DataFrameSuiteBase, SharedSparkContext}
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
-import org.bdgenomics.utils.instrumentation.Metrics
+import org.bdgenomics.utils.instrumentation.{Metrics, MetricsListener, RecordedMetrics}
 import org.biodatageeks.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
 import org.scalatest.{BeforeAndAfter, FunSuite}
 
 class JoinOrderTestSuite extends FunSuite with DataFrameSuiteBase with BeforeAndAfter with SharedSparkContext{
 
   val schema = StructType(Seq(StructField("chr",StringType ),StructField("start",IntegerType ), StructField("end", IntegerType)))
-
+  val metricsListener = new MetricsListener(new RecordedMetrics())
+  val writer = new PrintWriter(new OutputStreamWriter(System.out))
   before {
     System.setSecurityManager(null)
     spark.experimental.extraStrategies = new IntervalTreeJoinStrategyOptim(spark) :: Nil
@@ -74,6 +77,14 @@ class JoinOrderTestSuite extends FunSuite with DataFrameSuiteBase with BeforeAnd
        """.stripMargin
 
     assert(spark.sql(query).count === 616404L)
+
+  }
+  after{
+
+    Metrics.print(writer, Some(metricsListener.metrics.sparkMetrics.stageTimes))
+    writer.flush()
+    Metrics.stopRecording()
+    //writer.
 
   }
 }

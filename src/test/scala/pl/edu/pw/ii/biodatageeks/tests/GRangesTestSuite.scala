@@ -1,9 +1,11 @@
 package pl.edu.pw.ii.biodatageeks.tests
 
+import java.io.{OutputStreamWriter, PrintWriter}
+
 import com.holdenkarau.spark.testing.{DataFrameSuiteBase, SharedSparkContext}
 import org.apache.spark.sql.{Row, SequilaSession}
 import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
-import org.bdgenomics.utils.instrumentation.Metrics
+import org.bdgenomics.utils.instrumentation.{Metrics, MetricsListener, RecordedMetrics}
 import org.biodatageeks.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
 import org.biodatageeks.rangejoins.methods.transformations.RangeMethods
 import org.biodatageeks.utils.{SequilaRegister, UDFRegister}
@@ -15,7 +17,8 @@ class GRangesTestSuite extends FunSuite with DataFrameSuiteBase with BeforeAndAf
 
   val schema = StructType(Seq(StructField("chr",StringType ),StructField("start",IntegerType ), StructField("end", IntegerType)))
   var ss: SequilaSession = _
-
+  val metricsListener = new MetricsListener(new RecordedMetrics())
+  val writer = new PrintWriter(new OutputStreamWriter(System.out))
   before{
     ss= new SequilaSession(spark)
     SequilaRegister.register(ss)
@@ -23,6 +26,7 @@ class GRangesTestSuite extends FunSuite with DataFrameSuiteBase with BeforeAndAf
     System.setSecurityManager(null)
     //spark.experimental.extraStrategies = new IntervalTreeJoinStrategyOptim(spark) :: Nil
     Metrics.initialize(sc)
+    sc.addSparkListener(metricsListener)
     val rdd1 = ss.sparkContext
       .textFile(getClass.getResource("/refFlat.txt.bz2").getPath)
       .map(r=>r.split('\t'))
@@ -332,5 +336,13 @@ class GRangesTestSuite extends FunSuite with DataFrameSuiteBase with BeforeAndAf
       """.stripMargin
 
     assert(ss.sql(query).select("start_2").first().get(0) === 11591 && ss.sql(query).select("end_2").first().get(0) === 14127 )
+  }
+
+  after{
+
+    Metrics.print(writer, Some(metricsListener.metrics.sparkMetrics.stageTimes))
+    writer.flush()
+    Metrics.stopRecording()
+
   }
 }

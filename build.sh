@@ -1,6 +1,7 @@
 #!/bin/bash -x
 
 BUILD_MODE=$1
+IMAGE_TO_BUILD=$2
 #only build images modified in the last 10h (10*3600s)
 MAX_COMMIT_TS_DIFF=36000
 version=`grep version build.sbt | cut -f2 -d'=' | sed 's/ //g' | sed 's/"//g'`
@@ -17,7 +18,8 @@ bump_version () {
 }
 
 
-find Docker  -name "Dockerfile"  | sed 's/\/Dockerfile//' | while read dir;
+
+find Docker  -name "Dockerfile"  | sed 's/\/Dockerfile//' |grep "$IMAGE_TO_BUILD"| while read dir;
 do
 
   image=`echo $dir| sed 's/^Docker/biodatageeks/'`

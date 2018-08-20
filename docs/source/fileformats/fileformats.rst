@@ -45,6 +45,88 @@ files should stored together in the same folder, e.g.:
     ss.sql("SELECT sampleId,contigName,start,end,cigar FROM reads_cram").show(5)
 
 
+
+CTaS/IaS for BAM file format
+========================================================
+
+Create table as select
+----------------------
+
+.. code-block:: scala
+
+    val  ss = SequilaSession(spark)
+    SequilaRegister.register(ss)
+    ss
+      .sql(
+        s"""
+          |CREATE TABLE IF NOT EXISTS bam_ctas USING org.biodatageeks.datasources.BAM.BAMDataSource
+          |OPTIONS(path "/data/ctas/*.bam")
+          |AS SELECT * FROM reads WHERE sampleId='NA12878'
+        """.stripMargin)
+          .explain
+
+Explain plan:
+
+.. code-block:: bash
+
+    == Physical Plan ==
+    ExecutedCommand
+   +- CreateBAMDataSourceTableAsSelectCommand `bam_ctas`, Ignore
+         +- 'Project [*]
+            +- 'Filter ('sampleId = NA12878)
+               +- SubqueryAlias reads
+                  +- Relation[sampleId#2,contigName#3,start#4,end#5,cigar#6,mapq#7,baseq#8,reference#9,flags#10,materefind#11,SAMRecord#12] org.biodatageeks.datasources.BAM.BDGAlignmentRelation@14b3ba01
+
+
+Insert table as select
+----------------------
+
+.. code-block:: scala
+
+    val  ss = SequilaSession(spark)
+    SequilaRegister.register(ss)
+    ss
+      .sql(s"INSERT INTO bam_ias SELECT * FROM reads WHERE sampleId='NA12878'")
+      .explain
+
+Explain plan:
+
+.. code-block:: bash
+
+   == Physical Plan ==
+    ExecutedCommand
+   +- InsertIntoBAMDataSourceCommand Relation[sampleId#121,contigName#122,start#123,end#124,cigar#125,mapq#126,baseq#127,reference#128,flags#129,materefind#130,SAMRecord#131] org.biodatageeks.datasources.BAM.BDGAlignmentRelation@60fd33fe, false, reads
+         +- 'Project [*]
+            +- 'Filter ('sampleId = NA12878)
+             +- SubqueryAlias reads
+               +- Relation[sampleId#110,contigName#111,start#112,end#113,cigar#114,mapq#115,baseq#116,reference#117,flags#118,materefind#119,SAMRecord#120] org.biodatageeks.datasources.BAM.BDGAlignmentRelation@765fc5be18
+
+Insert overwrite table as select
+--------------------------------
+This operation overwrites not the whole table but only records for a specified sample (e.g. NA12878).
+
+.. code-block:: scala
+
+    val  ss = SequilaSession(spark)
+    SequilaRegister.register(ss)
+    ss
+      .sql(s"INSERT OVERWRITE TABLE bam_ias SELECT * FROM reads sampleId='NA12878' limit 10")
+      .explain
+
+Explain plan:
+
+.. code-block:: bash
+
+  == Physical Plan ==
+    ExecutedCommand
+   +- InsertIntoBAMDataSourceCommand Relation[sampleId#228,contigName#229,start#230,end#231,cigar#232,mapq#233,baseq#234,reference#235,flags#236,materefind#237,SAMRecord#238] org.biodatageeks.datasources.BAM.BDGAlignmentRelation@2afa03c8, true, reads
+         +- 'GlobalLimit 10
+            +- 'LocalLimit 10
+               +- 'Project [*]
+                  +- SubqueryAlias reads
+                   +- 'Filter ('sampleId = NA12878)
+                     +- Relation[sampleId#217,contigName#218,start#219,end#220,cigar#221,mapq#222,baseq#223,reference#224,flags#225,materefind#226,SAMRecord#227] org.biodatageeks.datasources.BAM.BDGAlignmentRelation@140ae9941
+
 Implicit partition pruning for BAM data source
 ========================================================
 

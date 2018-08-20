@@ -16,7 +16,7 @@ lazy val sparkVersion = Properties.envOrElse("SPARK_VERSION", DEFAULT_SPARK_2_VE
 lazy val hadoopVersion = Properties.envOrElse("SPARK_HADOOP_VERSION", DEFAULT_HADOOP_VERSION)
 
 
-libraryDependencies +=  "org.apache.spark" % "spark-core_2.11" % sparkVersion % "provided"
+libraryDependencies +=  "org.apache.spark" % "spark-core_2.11" % sparkVersion
 
 libraryDependencies +=  "org.apache.spark" % "spark-sql_2.11" % sparkVersion
 libraryDependencies +=  "org.apache.spark" %% "spark-hive" % sparkVersion
@@ -52,6 +52,11 @@ libraryDependencies += "com.intel.gkl" % "gkl" % "0.8.5-1-linux-SNAPSHOT"
 
 libraryDependencies += "org.hammerlab.bam" %% "load" % "1.2.0-M1"
 
+libraryDependencies += "de.ruedigermoeller" % "fst" % "2.57"
+libraryDependencies += "org.apache.commons" % "commons-lang3" % "3.7"
+libraryDependencies += "org.eclipse.jetty" % "jetty-servlet" % "9.3.24.v20180605"
+libraryDependencies += "org.apache.derby" % "derbyclient" % "10.14.2.0"
+
 
 
 
@@ -60,6 +65,8 @@ fork in Test := true
 //parallelExecution in Test := false
 //javaOptions in Test += "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=9999"
 //javaOptions in run += "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=9999"
+
+//javaOptions in run += "-Dseq.metastore.dir=/Users/marek/data/output/metastore"
 
 javaOptions in Test ++= Seq(
   "-Dlog4j.debug=false",
@@ -108,11 +115,11 @@ assemblyMergeStrategy in assembly := {
 }
 
 /* only for releasing assemblies*/
-//artifact in (Compile, assembly) := {
-//  val art = (artifact in (Compile, assembly)).value
-//  art.withClassifier(Some("assembly"))
-//}
-//addArtifact(artifact in (Compile, assembly), assembly)
+artifact in (Compile, assembly) := {
+  val art = (artifact in (Compile, assembly)).value
+  art.withClassifier(Some("assembly"))
+}
+addArtifact(artifact in (Compile, assembly), assembly)
 
 publishConfiguration := publishConfiguration.value.withOverwrite(true)
 

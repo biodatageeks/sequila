@@ -1,0 +1,23 @@
+
+#bdg-sequila
+docker run --rm -e USERID=$UID -e GROUPID=$(id -g) -d \
+-p 10000:10000 -p 4040:4040 -h bdg-sequila -v /Users/marek/data/bams/:/data/input/bams \
+-v /Users/marek/data/output:/data/output \
+--name bdg-sequila biodatageeks/bdg-sequila-lite bdg-start-thriftserver --master=local[4] --driver-memory=6g
+
+#superset
+docker run --detach -h superset -p 8088:8088 --name bdg-superset --link=bdg-sequila amancevice/superset
+docker exec -it bdg-superset superset-init
+
+
+#conn string
+hive://bdg-sequila:10000/default
+
+#sample query
+SELECT * from bdg_grange('chr2',1,1);
+
+#create a table
+CREATE TABLE reads
+USING org.biodatageeks.datasources.BAM.BAMDataSource
+OPTIONS(path "/data/input/bams/*.bam");
+

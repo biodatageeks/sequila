@@ -119,6 +119,7 @@ class ADAMBenchmarkTestSuite extends FunSuite with DataFrameSuiteBase with Befor
 
     //Metrics.print(writer, Some(metricsListener.metrics.sparkMetrics.stageTimes))
     writer.flush()
+    Metrics.stopRecording()
 
   }
 }

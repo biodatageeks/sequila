@@ -61,6 +61,7 @@ class SubsetColumnJoinTestSuite extends FunSuite with DataFrameSuiteBase with Be
 
     Metrics.print(writer, Some(metricsListener.metrics.sparkMetrics.stageTimes))
     writer.flush()
+    Metrics.stopRecording()
 
   }
 

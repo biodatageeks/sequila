@@ -182,6 +182,7 @@ class NCListsTestSuite extends FunSuite with DataFrameSuiteBase with BeforeAndAf
 
     Metrics.print(writer, Some(metricsListener.metrics.sparkMetrics.stageTimes))
     writer.flush()
+    Metrics.stopRecording()
 
 
   }

@@ -1,0 +1,5 @@
+<ivysettings>
+ <property name="ivy.log.module.when.found" value="false" />
+ <property name="ivy.log.modules.in.use" value="false"/>
+ <property name="ivy.log.resolved.revision" value="false" />
+</ivysettings>

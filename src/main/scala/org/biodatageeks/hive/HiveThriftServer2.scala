@@ -34,7 +34,7 @@ import org.apache.spark.scheduler.{SparkListener, SparkListenerApplicationEnd, S
 import org.apache.spark.sql.{SQLContext, SequilaSession}
 import org.apache.spark.sql.hive.HiveUtils
 import org.apache.spark.sql.hive.thriftserver.ReflectionUtils._
-import org.apache.spark.sql.hive.thriftserver.ui.ThriftServerTab
+import org.apache.spark.sql.hive.thriftserver.ui.{ThriftServerTab, ThriftServerTabSeq}
 import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.util.{ShutdownHookManager, Utils}
 import org.biodatageeks.utils.{SequilaRegister, UDFRegister}
@@ -44,7 +44,7 @@ import org.biodatageeks.utils.{SequilaRegister, UDFRegister}
   * `HiveThriftServer2` thrift server.
   */
 object HiveThriftServer2Seq extends Logging {
-  var uiTab: Option[ThriftServerTab] = None
+  var uiTab: Option[ThriftServerTabSeq] = None
   var listener: HiveThriftServer2ListenerSeq = _
 
   /**
@@ -64,7 +64,7 @@ object HiveThriftServer2Seq extends Logging {
     listener = new HiveThriftServer2ListenerSeq(server, ss.sqlContext.conf)
     ss.sqlContext.sparkContext.addSparkListener(listener)
     uiTab = if (ss.sqlContext.sparkContext.getConf.getBoolean("spark.ui.enabled", true)) {
-      Some(new ThriftServerTab(ss.sqlContext.sparkContext))
+      Some(new ThriftServerTabSeq(ss.sqlContext.sparkContext, listener))
     } else {
       None
     }
@@ -99,7 +99,7 @@ object HiveThriftServer2Seq extends Logging {
       listener = new HiveThriftServer2ListenerSeq(server, SparkSQLEnv.sqlContext.conf)
       SparkSQLEnv.sparkContext.addSparkListener(listener)
       uiTab = if (SparkSQLEnv.sparkContext.getConf.getBoolean("spark.ui.enabled", true)) {
-        Some(new ThriftServerTab(SparkSQLEnv.sparkContext))
+        Some(new ThriftServerTabSeq(SparkSQLEnv.sparkContext,listener))
       } else {
         None
       }

@@ -86,5 +86,13 @@ class CoverageTestSuite extends FunSuite with DataFrameSuiteBase with BeforeAndA
     session.sql(s"SELECT * FROM bdg_coverage('${tableNameCRAM}','test','bdg')").show(5)
 
   }
+  after{
+
+    Metrics.print(writer, Some(metricsListener.metrics.sparkMetrics.stageTimes))
+    writer.flush()
+    Metrics.stopRecording()
+    //writer.
+
+  }
 
 }

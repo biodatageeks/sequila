@@ -113,6 +113,7 @@ class TSVBenchmarkTestSuite extends FunSuite with DataFrameSuiteBase with Before
 
     //Metrics.print(writer, Some(metricsListener.metrics.sparkMetrics.stageTimes))
     writer.flush()
+    Metrics.stopRecording()
 
   }
 }

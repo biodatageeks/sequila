@@ -103,7 +103,13 @@ object ResolveTableValuedFunctionsSeq extends Rule[LogicalPlan] {
       /* range(end) */
       tvf("end" -> LongType) { case Seq(end: Long) =>
         Range(0, end, 1, None)
-      })
+      }),
+
+     "bdg_grange"-> Map(
+       /* range(end) */
+       tvf("contigName" -> StringType, "start" -> IntegerType, "end" -> IntegerType) { case Seq(contigName: Any, start: Int, end: Int) =>
+         GenomicInterval(contigName.toString,start,end)
+       })
   )
 
   override def apply(plan: LogicalPlan): LogicalPlan = plan transformUp {
