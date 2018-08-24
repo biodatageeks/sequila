@@ -103,18 +103,7 @@ class BAMCTASTestSuite  extends FunSuite with DataFrameSuiteBase with BeforeAndA
     assert(dfDst.count() === 10)
   }
 
-  test("BAM - bdg_coverage - base - show"){
-    val session = SequilaSession(spark)
-    SequilaRegister.register(session)
-
-    session.experimental.extraStrategies = new CoverageStrategy(session) :: Nil
-
-    println(session.sql(s"SELECT * FROM bdg_coverage('${tableNameBAM}','NA12878','bdg') order by start").count)
-    //session.sql(s”SELECT * FROM bdg_coverage(’${tableNameBAM}’,’NA12878',‘bdg’, ‘bases’) order by start”).count
-
-  }
 
   after{
-
   }
 }

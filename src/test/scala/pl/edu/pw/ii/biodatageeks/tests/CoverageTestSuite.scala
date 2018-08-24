@@ -6,7 +6,7 @@ import com.holdenkarau.spark.testing.{DataFrameSuiteBase, SharedSparkContext}
 import org.apache.spark.sql.{SequilaSession, SparkSession}
 import org.bdgenomics.utils.instrumentation.{Metrics, MetricsListener, RecordedMetrics}
 import org.biodatageeks.preprocessing.coverage.CoverageStrategy
-import org.biodatageeks.utils.SequilaRegister
+import org.biodatageeks.utils.{BDGInternalParams, SequilaRegister}
 import org.scalatest.{BeforeAndAfter, FunSuite}
 
 class CoverageTestSuite extends FunSuite with DataFrameSuiteBase with BeforeAndAfter with SharedSparkContext{
@@ -58,32 +58,95 @@ class CoverageTestSuite extends FunSuite with DataFrameSuiteBase with BeforeAndA
 
     session.experimental.extraStrategies = new CoverageStrategy(session) :: Nil
     //session.sparkContext.setLogLevel("INFO")
+    session.sql(s"SELECT * FROM coverage('${tableNameBAM}') WHERE position=20204").count()
     assert(session.sql(s"SELECT * FROM coverage('${tableNameBAM}') WHERE position=20204").first().getInt(3)===1019)
-    session.sql(s"SELECT * FROM coverage_hist('${tableNameBAM}') WHERE position=20204").show()
+    //session.sql(s"SELECT * FROM coverage_hist('${tableNameBAM}') WHERE position=20204").show()
 
   }
 
-  test("BAM - bdg_coverage"){
-    val session: SparkSession = SequilaSession(spark)
-    session.sql(s"DESC FORMATTED ${tableNameBAM}").show(1000,false)
-    session.experimental.extraStrategies = new CoverageStrategy(session) :: Nil
-    assert(session.sql(s"SELECT * FROM bdg_coverage('${tableNameBAM}','NA12878','mosdepth') WHERE start >=20204 AND `end`<= 20204 ").first().getShort(3)===1019.toShort)
 
-  }
+  //IDEA - I suggest we get rid of "mosdepth". Point to discuss
 
-  test("BAM - bdg_coverage - show"){
+//  test("BAM - bdg_coverage"){
+//    val session: SparkSession = SequilaSession(spark)
+//    session.sql(s"DESC FORMATTED ${tableNameBAM}").show(1000,false)
+//    session.experimental.extraStrategies = new CoverageStrategy(session) :: Nil
+//    assert(session.sql(s"SELECT * FROM bdg_coverage('${tableNameBAM}','NA12878','mosdepth', 'blocks') WHERE start >=20204 AND `end`<= 20204 ").first().getShort(3)===1019.toShort)
+//
+//  }
+//
+  test("BAM - bdg_coverage - block - allPositions"){
     val session: SparkSession = SequilaSession(spark)
     SequilaRegister.register(session)
+    //session.sparkContext.setLogLevel("DEBUG")
     session.experimental.extraStrategies = new CoverageStrategy(session) :: Nil
-    session.sql(s"SELECT * FROM bdg_coverage('${tableNameBAM}','NA12878','bdg')").show(5)
+
+
+    session.sqlContext.setConf(BDGInternalParams.ShowAllPositions,"true")
+    val bdg = session.sql(s"SELECT * FROM bdg_coverage('${tableNameBAM}','NA12878','bdg', 'blocks')")
+    bdg.show()
+    assert(bdg.first().get(1)==1) // first position should be one
+
+  }
+
+  test("BAM - bdg_coverage - block "){
+    val session: SparkSession = SequilaSession(spark)
+    SequilaRegister.register(session)
+    //session.sparkContext.setLogLevel("DEBUG")
+
+    session.sqlContext.setConf(BDGInternalParams.ShowAllPositions,"false")
+    val bdg = session.sql(s"SELECT * FROM bdg_coverage('${tableNameBAM}','NA12878','bdg', 'blocks')")
+    bdg.show()
+    assert(bdg.first().get(1)!=1) // first position should not be one
+
+  }
+
+  test("BAM - bdg_coverage - base - show"){
+    val session: SparkSession = SequilaSession(spark)
+    SequilaRegister.register(session)
+
+    session.sqlContext.setConf(BDGInternalParams.ShowAllPositions,"false")
+    val bdg = session.sql(s"SELECT contigName, start, coverage FROM bdg_coverage('${tableNameBAM}','NA12878','bdg', 'bases')")
+    bdg.show()
+    assert(bdg.first().get(1)!=1) // first position should not be one
+  }
+
+  test("BAM - bdg_coverage - block - no configuration"){
+    val session: SparkSession = SequilaSession(spark)
+    SequilaRegister.register(session)
+
+    val bdg = session.sql(s"SELECT * FROM bdg_coverage('${tableNameBAM}','NA12878','bdg', 'blocks')")
+    assert(bdg.first().get(1)!=1) // first position should not be one
+
+  }
+
+  test("BAM - bdg_coverage - base - count"){
+    val session: SparkSession = SequilaSession(spark)
+    SequilaRegister.register(session)
+
+    spark.time {session.sql(s"SELECT contigName, start, coverage FROM bdg_coverage('${tableNameBAM}','NA12878','bdg', 'bases')").count}
+
+  }
+
+  test("BAM - bdg_coverage - blocks - count"){
+    val session: SparkSession = SequilaSession(spark)
+    SequilaRegister.register(session)
+
+    spark.time {session.sql(s"SELECT contigName, start, coverage FROM bdg_coverage('${tableNameBAM}','NA12878','bdg', 'blocks')").count}
+  }
+
+  test("BAM - bdg_coverage - wrong param") {
+    val session: SparkSession = SequilaSession(spark)
+    SequilaRegister.register(session)
+    assertThrows[Exception](
+      session.sql(s"SELECT * FROM bdg_coverage('${tableNameBAM}','NA12878','bdg', 'blaaaaaah')").show(10))
 
   }
 
   test("CRAM - bdg_coverage - show"){
     val session: SparkSession = SequilaSession(spark)
     SequilaRegister.register(session)
-    session.experimental.extraStrategies = new CoverageStrategy(session) :: Nil
-    session.sql(s"SELECT * FROM bdg_coverage('${tableNameCRAM}','test','bdg')").show(5)
+    session.sql(s"SELECT * FROM bdg_coverage('${tableNameCRAM}','test','bdg', 'blocks') ").show(5)
 
   }
   after{

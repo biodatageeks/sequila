@@ -1,26 +1,26 @@
 package org.biodatageeks.preprocessing.coverage
 
-import java.io.File
+
 
 import htsjdk.samtools.{BAMFileReader, CigarOperator, SamReaderFactory, ValidationStringency}
-import org.apache.hadoop.io.LongWritable
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.SparkSession
-import org.seqdoop.hadoop_bam.{AnySAMInputFormat, BAMBDGInputFormat, BAMInputFormat, SAMRecordWritable}
-import org.seqdoop.hadoop_bam.util.SAMHeaderReader
-
 import scala.collection.mutable
 import htsjdk.samtools._
 import org.apache.spark.broadcast.Broadcast
-//import com.intel.gkl.compression._
-
-import htsjdk.samtools.util.zip.InflaterFactory
-import java.util.zip.Inflater
+import org.apache.log4j.Logger
 
 
-case class CovRecord(contigName:String,start:Int,end:Int, cov:Short)
+
+
+case class CovRecord(contigName:String, start:Int, end:Int, cov:Short) extends Ordered[CovRecord] {
+
+  override def compare(that: CovRecord): Int = this.start compare that.start
+}
+
 
 object CoverageMethodsMos {
+  val logger = Logger.getLogger(this.getClass.getCanonicalName)
+
 
   def mergeArrays(a:(Array[Short],Int,Int,Int),b:(Array[Short],Int,Int,Int)) = {
     //val c = new Array[Short](a._4)
@@ -48,6 +48,7 @@ object CoverageMethodsMos {
       contigEventsMap(contig)._1(position) = (contigEventsMap(contig)._1(position) - 1).toShort
   }
 
+
   def readsToEventsArray(reads:RDD[SAMRecord])   = {
     reads.mapPartitions{
       p =>
@@ -55,24 +56,32 @@ object CoverageMethodsMos {
         val contigEventsMap = new mutable.HashMap[String, (Array[Short],Int,Int,Int)]()
         val contigStartStopPartMap = new mutable.HashMap[(String),Int]()
         val cigarMap = new mutable.HashMap[String, Int]()
-        //var lastContig: String = null
-        //var lastPosition = 0
         while(p.hasNext){
           val r = p.next()
           val read = r
           val contig = read.getContig
-          if(contig != null && read.getFlags!= 1796) {
+          val FILTERFLAG = 1796
+
+          // 1796:
+          // * read unmapped (0x4)
+          // * not primary alignment (0x100)
+          // * read fails platform/vendor quality checks (0x200)
+          // * read is PCR or optical duplicate (0x400)
+
+          // filter out reads with flags that have any of the bits from FILTERFLAG  set
+          if(contig != null && (read.getFlags & FILTERFLAG) == 0) {
             if (!contigLengthMap.contains(contig)) { //FIXME: preallocate basing on header, n
               val contigLength = read.getHeader.getSequence(contig).getSequenceLength
-              //println(s"${contig}:${contigLength}:${read.getStart}")
               contigLengthMap += contig -> contigLength
-              contigEventsMap += contig -> (new Array[Short](contigLength-read.getStart+10), read.getStart,contigLength-1, contigLength)
+              //contigEventsMap += contig -> (new Array[Short](contigLength-read.getStart+10), read.getStart,contigLength-1, contigLength)
+              contigEventsMap += contig -> (new Array[Short](contigLength+10), read.getStart,contigLength-1, contigLength)
               contigStartStopPartMap += s"${contig}_start" -> read.getStart
               cigarMap += contig -> 0
             }
+
             val cigarIterator = read.getCigar.iterator()
             var position = read.getStart
-            //val contigLength = contigLengthMap(contig)
+
             var currCigarLength = 0
             while(cigarIterator.hasNext){
               val cigarElement = cigarIterator.next()
@@ -88,7 +97,6 @@ object CoverageMethodsMos {
             }
             if(currCigarLength > cigarMap(contig)) cigarMap(contig) = currCigarLength
 
-
           }
         }
         lazy val output = contigEventsMap
@@ -97,22 +105,61 @@ object CoverageMethodsMos {
             var maxIndex = 0
             var i = 0
             while(i < r._2._1.length ){
+
               if(r._2._1(i) != 0) maxIndex = i
               i +=1
             }
-            (r._1,(r._2._1.slice(0,maxIndex+1),r._2._2,r._2._2+maxIndex,r._2._4,cigarMap(r._1)) )// add max cigarLength
+            (r._1,(r._2._1.slice(0,maxIndex+1),r._2._2,r._2._2+maxIndex,r._2._4,cigarMap(r._1)) )// add max cigarLength // add first read index
           }
           )
         output.iterator
     }
-
   }
+
+
 
   def reduceEventsArray(covEvents: RDD[(String,(Array[Short],Int,Int,Int))]) =  {
     covEvents.reduceByKey((a,b)=> mergeArrays(a,b))
   }
 
-  def eventsToCoverage(sampleId:String,events: RDD[(String,(Array[Short],Int,Int,Int))]) = {
+
+  @inline def addFirstBlock (contig:String, contigMin: Int, posShift: Int, blocksResult:Boolean, allPos:Boolean, ind: Int,result: Array[CovRecord]) = {
+    var indexShift = ind
+
+    if (allPos && posShift == contigMin) {
+      logger.info(s"Adding first block for index: ${indexShift}, start: 1 end: ${posShift - 1}, cov: 0")
+      if (blocksResult) {
+        result(indexShift) = CovRecord(contig, 1, posShift - 1, 0) // add first block, from 1 to posShift-1
+        indexShift += 1
+      } else {
+        for (cnt <- 1 to posShift-1) {
+          result(indexShift) = CovRecord(contig, cnt, cnt, 0) // add first block, from 1 to posShift-1
+          indexShift += 1
+        }
+      }
+    }
+    indexShift
+  }
+
+  @inline def addLastBlock(contig: String, contigMax: Int, contigLength: Int, maxPosition: Int, blocksResult: Boolean,  allPos:Boolean, ind: Int, result: Array[CovRecord]) = {
+    var indexShift = ind
+    if (allPos && maxPosition == contigMax) {
+      logger.debug(s"Adding last block for index: ${indexShift}, start: ${maxPosition} end: ${contigLength}, cov: 0")
+      if (blocksResult) {
+        result(indexShift) = CovRecord(contig, maxPosition, contigLength, 0)
+        indexShift += 1
+      } else {
+        for (cnt <- maxPosition  to contigLength) {
+          result(indexShift) = CovRecord(contig, cnt, cnt, 0) // add first block, from 1 to posShift-1
+          indexShift += 1
+        }
+      }
+    }
+    indexShift
+  }
+
+
+  def eventsToCoverage(sampleId:String, events: RDD[(String,(Array[Short],Int,Int,Int))], contigMinMap: mutable.HashMap [String,(Int,Int)], blocksResult:Boolean, allPos: Boolean) = {
     events
       .mapPartitions{ p => p.map(r=>{
         val contig = r._1
@@ -120,27 +167,53 @@ object CoverageMethodsMos {
         var cov = 0
         var ind = 0
         val posShift = r._2._2
+        val maxPosition = r._2._3
 
-        val result = new Array[CovRecord](covArrayLength)
+
+        val firstBlockMaxLength = posShift-1
+        val lastBlockMaxLength = r._2._4 - maxPosition //TODO: double check meaning of maxCigar
+
+        // preallocate maximum size of result, assuming first and last blocks are added in perbase manner
+        //IDEA: consider counting size within if-else statements
+
+        val result = new Array[CovRecord](firstBlockMaxLength + covArrayLength + lastBlockMaxLength)
+
+        logger.info (s"size: ${firstBlockMaxLength + covArrayLength + lastBlockMaxLength}")
+
         var i = 0
         var prevCov = 0
         var blockLength = 0
+
+        // add first block if necessary (if current positionshift is equal to the earliest read in the contig)
+        ind = addFirstBlock(contig, contigMinMap(contig)._1, posShift, blocksResult, allPos, ind, result)
+
+
         while(i < covArrayLength){
           cov += r._2._1(i)
-          if(cov >0) {
-            if(prevCov>0 && prevCov != cov) {
-              result(ind) = CovRecord(contig,i+posShift - blockLength, i + posShift-1, prevCov.toShort)
+
+          if (!blocksResult ) {
+            if (i!= covArrayLength - 1) { //HACK. otherwise we get doubled CovRecords for partition boundary index
+              result(ind) = CovRecord(contig, i + posShift, i + posShift, cov.toShort)
+              ind += 1
+            }
+          }
+          else {
+            if (prevCov >= 0 && prevCov != cov && i > 0) { // for the first element we do not write block
+              result(ind) = CovRecord(contig, i + posShift - blockLength, i + posShift - 1, prevCov.toShort)
               blockLength = 0
               ind += 1
             }
-            blockLength +=1
+            blockLength += 1
             prevCov = cov
           }
           i+= 1
         }
+
+        ind = addLastBlock (contig, contigMinMap(contig)._2, r._2._4, maxPosition, blocksResult, allPos, ind, result)
+
         result.take(ind).iterator
       })
-    }.flatMap(r=>r)
+      }.flatMap(r=>r)
   }
 
   //contigName,covArray,minPos,maxPos,contigLenth,maxCigarLength
@@ -178,16 +251,8 @@ object CoverageMethodsMos {
          }
          case None => updArray
        }
-
        (c._1, (shrinkArray,c._2._2,c._2._3,c._2._4) )
      }
-
    }
   }
-
-
-
-
-
-
 }

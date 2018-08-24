@@ -12,4 +12,7 @@ object BDGInternalParams {
 
   /*refenenced column*/
   final val SAMPLE_COLUMN_NAME = "sampleId"
+
+  /* parameter determining whether all positions in contig are included in output */
+  final val ShowAllPositions = "spark.biodatageeks.coverage.allPositions"
 }

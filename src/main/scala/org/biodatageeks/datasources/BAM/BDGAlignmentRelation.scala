@@ -120,6 +120,7 @@ trait BDGAlignFileReaderWriter [T <: BDGAlignInputFormat]{
     val spark = sqlContext
       .sparkSession
     val resolvedPath = BDGTableFuncs.getExactSamplePath(spark,path)
+
     if(!spark.sqlContext.getConf("spark.biodatageeks.bam.useSparkBAM","false").toBoolean)
       spark.sparkContext
         .newAPIHadoopFile[LongWritable, SAMRecordWritable, T](path)

@@ -95,8 +95,8 @@ object ResolveTableValuedFunctionsSeq extends Rule[LogicalPlan] {
       }),
     "bdg_coverage" -> Map(
       /* coverage(tableName) */
-      tvf("table" -> StringType, "sampleId" -> StringType, "method" -> StringType) { case Seq(table: Any,sampleId:Any, method:Any) =>
-        BDGCoverage(table.toString,sampleId.toString, method.toString)
+      tvf("table" -> StringType, "sampleId" -> StringType, "method" -> StringType, "result" -> StringType) { case Seq(table: Any,sampleId:Any, method:Any, result:Any) =>
+        BDGCoverage(table.toString,sampleId.toString, method.toString, result.toString)
       }),
 
     "range" -> Map(
@@ -236,11 +236,8 @@ case class CoverageHist(tableName:String,
 }
 
 
-
-
-
 object BDGCoverage {
-  def apply(tableName:String, sampleId:String, method: String): BDGCoverage = {
+  def apply(tableName:String, sampleId:String, method: String,result: String): BDGCoverage = {
     val output = StructType(Seq(
       //StructField("sampleId", StringType, nullable = false),
       StructField("contigName",StringType,nullable = true),
@@ -249,12 +246,12 @@ object BDGCoverage {
       StructField("coverage",ShortType,nullable = false)
     )
     ).toAttributes
-    new BDGCoverage(tableName:String,sampleId.toString, method, output)
+    new BDGCoverage(tableName:String,sampleId.toString, method, result, output)
   }
 
 }
 
-case class BDGCoverage(tableName:String, sampleId:String, method:String,
+case class BDGCoverage(tableName:String, sampleId:String, method:String, result: String,
                        output: Seq[Attribute])
   extends LeafNode with MultiInstanceRelation {
 
