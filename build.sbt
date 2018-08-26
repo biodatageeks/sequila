@@ -41,7 +41,7 @@ libraryDependencies += "com.github.samtools" % "htsjdk" % "2.14.1"
 
 libraryDependencies += "com.github.potix2" %% "spark-google-spreadsheets" % "0.5.0"
 
-libraryDependencies += "ch.cern.sparkmeasure" %% "spark-measure" % "0.11"
+libraryDependencies += "ch.cern.sparkmeasure" %% "spark-measure" % "0.13"
 
 libraryDependencies += "org.broadinstitute" % "gatk-native-bindings" % "1.0.0"
 libraryDependencies += "org.apache.logging.log4j" % "log4j-core" % "2.11.0"
@@ -56,6 +56,9 @@ libraryDependencies += "de.ruedigermoeller" % "fst" % "2.57"
 libraryDependencies += "org.apache.commons" % "commons-lang3" % "3.7"
 libraryDependencies += "org.eclipse.jetty" % "jetty-servlet" % "9.3.24.v20180605"
 libraryDependencies += "org.apache.derby" % "derbyclient" % "10.14.2.0"
+
+
+libraryDependencies += "org.biodatageeks" % "bdg-performance_2.11" % "0.1-SNAPSHOT"
 
 
 

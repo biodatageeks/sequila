@@ -1,0 +1,45 @@
+---
+title: "SeQuiLa performance report"
+author: "biodatageeks.org"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(RPostgres)
+```
+
+```{r echo=FALSE}
+bdg_test_id <- Sys.getenv("BRANCH_NAME")
+print(stringr::str_interp("Testing for ${bdg_test_id}"))
+```
+
+## SeQuiLa functions
+
+```{r echo=FALSE}
+dbString <- Sys.getenv("BDG_PERF_DB")
+bdg_db<-strsplit(dbString,"/")[[1]][4]
+bdg_host<-strsplit(strsplit(dbString,"/")[[1]][3],":")[[1]][1]
+bdg_port<-strsplit(strsplit(dbString,"/")[[1]][3],":")[[1]][2]
+bdg_user <- Sys.getenv("BDG_PERF_USER")
+bdg_pass <- Sys.getenv("BDG_PERF_PASS")
+bdg_table <- Sys.getenv("BDG_PERF_TABLE")
+bdg_test_id <- Sys.getenv("BRANCH_NAME")
+#bdg_test_id<-"PR-118"
+con <- dbConnect(Postgres(), dbname = bdg_db, host=bdg_host, port=bdg_port, user=bdg_user, password=bdg_pass)  
+dbListTables(con)
+
+q_dist_tests = stringr::str_interp("SELECT distinct query_id FROM ${bdg_table} WHERE test_id='${bdg_test_id}'")
+res <- dbSendQuery(con, q_dist_tests)
+all_test_df<-dbFetch(res)
+dbClearResult(res)
+for(t in all_test_df$query_id){
+  query <- stringr::str_interp("SELECT cast(elapsed_time as integer) as elapsed_time,time_stamp  FROM ${bdg_table} WHERE query_id='${t}' ORDER BY time_stamp desc LIMIT 10")
+  res <- dbSendQuery(con, query)
+  df<-dbFetch(res)
+  barplot(df$elapsed_time,main=t,horiz=TRUE,xlab="time[ms]",ylab="Runs",border="red",col="blue",density=10)
+  dbClearResult(res)
+}
+```
+
+
