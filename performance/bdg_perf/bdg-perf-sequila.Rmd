@@ -25,7 +25,7 @@ bdg_user <- Sys.getenv("BDG_PERF_USER")
 bdg_pass <- Sys.getenv("BDG_PERF_PASS")
 bdg_table <- Sys.getenv("BDG_PERF_TABLE")
 bdg_test_id <- Sys.getenv("BRANCH_NAME")
-#bdg_test_id<-"PR-118"
+#bdg_test_id<-"PR-119"
 con <- dbConnect(Postgres(), dbname = bdg_db, host=bdg_host, port=bdg_port, user=bdg_user, password=bdg_pass)  
 dbListTables(con)
 
@@ -34,10 +34,17 @@ res <- dbSendQuery(con, q_dist_tests)
 all_test_df<-dbFetch(res)
 dbClearResult(res)
 for(t in all_test_df$query_id){
-  query <- stringr::str_interp("SELECT cast(elapsed_time as integer) as elapsed_time,time_stamp  FROM ${bdg_table} WHERE query_id='${t}' ORDER BY time_stamp desc LIMIT 10")
+  query <- stringr::str_interp("SELECT test_id,cast(elapsed_time as integer) as elapsed_time  FROM ${bdg_table} WHERE query_id='${t}' AND test_id='${bdg_test_id}' ORDER BY time_stamp desc LIMIT 5")
   res <- dbSendQuery(con, query)
-  df<-dbFetch(res)
-  barplot(df$elapsed_time,main=t,horiz=TRUE,xlab="time[ms]",ylab="Runs",border="red",col="blue",density=10)
+  df_branch<-dbFetch(res)
+  dbClearResult(res)
+  query_master <- stringr::str_interp("SELECT 'baseline' as test_id,avg(elapsed_time) as elapsed_time FROM ${bdg_table} WHERE query_id='${t}' AND test_id='master' GROUP BY test_id")
+  res <- dbSendQuery(con, query_master)
+  df_master<-dbFetch(res)
+  #print(df_branch)
+  #print(df_master)
+  df<-rbind(df_master,df_branch)
+  barplot(df$elapsed_time,main=t,names.arg = df$test_id,horiz=TRUE,xlim=range(pretty(c(0, max(df$elapsed_time)))),cex.names=0.5,xlab="time[ms]",ylab="Runs",border="red",col=c("blue", "green")[(df$test_id=='baseline') + 1] ,density=10)
   dbClearResult(res)
 }
 ```
