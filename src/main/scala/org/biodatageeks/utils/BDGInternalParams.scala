@@ -15,4 +15,6 @@ object BDGInternalParams {
 
   /* parameter determining whether all positions in contig are included in output */
   final val ShowAllPositions = "spark.biodatageeks.coverage.allPositions"
+
+  final val filterReadsByFlag = "spark.biodatageeks.coverage.filterFlag"
 }

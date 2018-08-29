@@ -49,7 +49,7 @@ object CoverageMethodsMos {
   }
 
 
-  def readsToEventsArray(reads:RDD[SAMRecord])   = {
+  def readsToEventsArray(reads:RDD[SAMRecord], filterFlag:Int)   = {
     reads.mapPartitions{
       p =>
         val contigLengthMap = new mutable.HashMap[String, Int]()
@@ -60,21 +60,20 @@ object CoverageMethodsMos {
           val r = p.next()
           val read = r
           val contig = read.getContig
-          val FILTERFLAG = 1796
 
-          // 1796:
+          // default value of filterFlag 1796:
           // * read unmapped (0x4)
           // * not primary alignment (0x100)
           // * read fails platform/vendor quality checks (0x200)
           // * read is PCR or optical duplicate (0x400)
 
           // filter out reads with flags that have any of the bits from FILTERFLAG  set
-          if(contig != null && (read.getFlags & FILTERFLAG) == 0) {
+          if(contig != null && (read.getFlags & filterFlag) == 0) {
             if (!contigLengthMap.contains(contig)) { //FIXME: preallocate basing on header, n
               val contigLength = read.getHeader.getSequence(contig).getSequenceLength
               contigLengthMap += contig -> contigLength
-              //contigEventsMap += contig -> (new Array[Short](contigLength-read.getStart+10), read.getStart,contigLength-1, contigLength)
-              contigEventsMap += contig -> (new Array[Short](contigLength+10), read.getStart,contigLength-1, contigLength)
+              contigEventsMap += contig -> (new Array[Short](contigLength-read.getStart+10), read.getStart,contigLength-1, contigLength)
+              //contigEventsMap += contig -> (new Array[Short](contigLength+10), read.getStart,contigLength-1, contigLength)
               contigStartStopPartMap += s"${contig}_start" -> read.getStart
               cigarMap += contig -> 0
             }

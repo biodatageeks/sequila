@@ -49,9 +49,12 @@ class BAMCTASTestSuite  extends FunSuite with DataFrameSuiteBase with BeforeAndA
     .show(1000,false)
 
     val dfSrc = ss.sql(s"SELECT contigName,start,end FROM ${tableNameBAM} WHERE contigName='chr1' AND start>390 ORDER BY contigName, start")
-    println(dfSrc.count())
+    dfSrc.show(25)
+    //println(dfSrc.count())
     val dfDst = ss.sql(s"SELECT contigName,start,end FROM bam_ctas WHERE contigName='chr1' AND start>390 ORDER BY contigName, start")
-    println(dfDst.count())
+    //println(dfDst.count())
+    dfDst.show(25)
+    println(s"src ${dfSrc.count} dst ${dfDst.count}")
     assertDataFrameEquals(dfSrc,dfDst)
 
 

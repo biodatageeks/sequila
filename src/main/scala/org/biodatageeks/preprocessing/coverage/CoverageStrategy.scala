@@ -146,13 +146,18 @@ case class BDGCoveragePlan [T<:BDGAlignInputFormat](plan: LogicalPlan, spark: Sp
     setLocalConf(spark.sqlContext)
     lazy val alignments = readBAMFile(spark.sqlContext,samplePath)
 
-    lazy val events = CoverageMethodsMos.readsToEventsArray(alignments)
+    val filterFlag = spark.sqlContext.getConf(BDGInternalParams.filterReadsByFlag, "1796").toInt
+
+
+    lazy val events = CoverageMethodsMos.readsToEventsArray(alignments,filterFlag)
 
     val covUpdate = new CovUpdate(new ArrayBuffer[RightCovEdge](), new ArrayBuffer[ContigRange]())
     val acc = new CoverageAccumulatorV2(covUpdate)
+
     spark
       .sparkContext
       .register(acc, "CoverageAcc")
+
     events
       .persist(StorageLevel.MEMORY_AND_DISK)
       .foreach {
@@ -171,6 +176,7 @@ case class BDGCoveragePlan [T<:BDGAlignInputFormat](plan: LogicalPlan, spark: Sp
       }
 
     def prepareBroadcast(a: CovUpdate) = {
+
       val contigRanges = a.left
       val updateArray = a.right
       val updateMap = new mutable.HashMap[(String, Int), (Option[Array[Short]], Short)]()
@@ -207,6 +213,7 @@ case class BDGCoveragePlan [T<:BDGAlignInputFormat](plan: LogicalPlan, spark: Sp
             minmax(contig) = (minmax(contig)._1, c.maxPos)
       }
 
+
       UpdateStruct(updateMap, shrinkMap, minmax)
     }
 
@@ -225,6 +232,7 @@ case class BDGCoveragePlan [T<:BDGAlignInputFormat](plan: LogicalPlan, spark: Sp
       }
     }
     val allPos = spark.sqlContext.getConf(BDGInternalParams.ShowAllPositions, "false").toBoolean
+
 
     lazy val cov = CoverageMethodsMos.eventsToCoverage(sampleId, reducedEvents, covBroad.value.minmax, blocksResult, allPos)
 

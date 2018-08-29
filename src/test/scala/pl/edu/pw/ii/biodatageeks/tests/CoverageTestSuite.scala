@@ -12,12 +12,14 @@ import org.scalatest.{BeforeAndAfter, FunSuite}
 class CoverageTestSuite extends FunSuite with DataFrameSuiteBase with BeforeAndAfter with SharedSparkContext{
 
     val bamPath = getClass.getResource("/NA12878.slice.bam").getPath
+    val bamMultiPath = getClass.getResource("/multichrom/NA12878.multichrom.bam").getPath
     val adamPath = getClass.getResource("/NA12878.slice.adam").getPath
     val metricsListener = new MetricsListener(new RecordedMetrics())
     val writer = new PrintWriter(new OutputStreamWriter(System.out))
     val cramPath = getClass.getResource("/test.cram").getPath
     val refPath = getClass.getResource("/phix-illumina.fa").getPath
     val tableNameBAM = "reads"
+    val tableNameMultiBAM = "readsMulti"
     val tableNameADAM = "readsADAM"
     val tableNameCRAM = "readsCRAM"
     before{
@@ -31,6 +33,15 @@ class CoverageTestSuite extends FunSuite with DataFrameSuiteBase with BeforeAndA
            |CREATE TABLE ${tableNameBAM}
            |USING org.biodatageeks.datasources.BAM.BAMDataSource
            |OPTIONS(path "${bamPath}")
+           |
+      """.stripMargin)
+
+      spark.sql(s"DROP TABLE IF EXISTS ${tableNameMultiBAM}")
+      spark.sql(
+        s"""
+           |CREATE TABLE ${tableNameMultiBAM}
+           |USING org.biodatageeks.datasources.BAM.BAMDataSource
+           |OPTIONS(path "${bamMultiPath}")
            |
       """.stripMargin)
 
@@ -57,24 +68,12 @@ class CoverageTestSuite extends FunSuite with DataFrameSuiteBase with BeforeAndA
     val session: SparkSession = SequilaSession(spark)
 
     session.experimental.extraStrategies = new CoverageStrategy(session) :: Nil
-    //session.sparkContext.setLogLevel("INFO")
     session.sql(s"SELECT * FROM coverage('${tableNameBAM}') WHERE position=20204").count()
     assert(session.sql(s"SELECT * FROM coverage('${tableNameBAM}') WHERE position=20204").first().getInt(3)===1019)
     //session.sql(s"SELECT * FROM coverage_hist('${tableNameBAM}') WHERE position=20204").show()
 
   }
 
-
-  //IDEA - I suggest we get rid of "mosdepth". Point to discuss
-
-//  test("BAM - bdg_coverage"){
-//    val session: SparkSession = SequilaSession(spark)
-//    session.sql(s"DESC FORMATTED ${tableNameBAM}").show(1000,false)
-//    session.experimental.extraStrategies = new CoverageStrategy(session) :: Nil
-//    assert(session.sql(s"SELECT * FROM bdg_coverage('${tableNameBAM}','NA12878','mosdepth', 'blocks') WHERE start >=20204 AND `end`<= 20204 ").first().getShort(3)===1019.toShort)
-//
-//  }
-//
   test("BAM - bdg_coverage - block - allPositions"){
     val session: SparkSession = SequilaSession(spark)
     SequilaRegister.register(session)
@@ -83,7 +82,7 @@ class CoverageTestSuite extends FunSuite with DataFrameSuiteBase with BeforeAndA
 
 
     session.sqlContext.setConf(BDGInternalParams.ShowAllPositions,"true")
-    val bdg = session.sql(s"SELECT * FROM bdg_coverage('${tableNameBAM}','NA12878','bdg', 'blocks')")
+    val bdg = session.sql(s"SELECT * FROM bdg_coverage('${tableNameMultiBAM}','NA12878','bdg', 'blocks')")
     bdg.show()
     assert(bdg.first().get(1)==1) // first position should be one
 
@@ -95,8 +94,9 @@ class CoverageTestSuite extends FunSuite with DataFrameSuiteBase with BeforeAndA
     //session.sparkContext.setLogLevel("DEBUG")
 
     session.sqlContext.setConf(BDGInternalParams.ShowAllPositions,"false")
-    val bdg = session.sql(s"SELECT * FROM bdg_coverage('${tableNameBAM}','NA12878','bdg', 'blocks')")
+    val bdg = session.sql(s"SELECT *  FROM bdg_coverage('${tableNameMultiBAM}','NA12878','bdg', 'blocks')")
     bdg.show()
+
     assert(bdg.first().get(1)!=1) // first position should not be one
 
   }
@@ -106,7 +106,7 @@ class CoverageTestSuite extends FunSuite with DataFrameSuiteBase with BeforeAndA
     SequilaRegister.register(session)
 
     session.sqlContext.setConf(BDGInternalParams.ShowAllPositions,"false")
-    val bdg = session.sql(s"SELECT contigName, start, coverage FROM bdg_coverage('${tableNameBAM}','NA12878','bdg', 'bases')")
+    val bdg = session.sql(s"SELECT contigName, start, coverage FROM bdg_coverage('${tableNameMultiBAM}','NA12878','bdg', 'bases')")
     bdg.show()
     assert(bdg.first().get(1)!=1) // first position should not be one
   }
@@ -115,7 +115,7 @@ class CoverageTestSuite extends FunSuite with DataFrameSuiteBase with BeforeAndA
     val session: SparkSession = SequilaSession(spark)
     SequilaRegister.register(session)
 
-    val bdg = session.sql(s"SELECT * FROM bdg_coverage('${tableNameBAM}','NA12878','bdg', 'blocks')")
+    val bdg = session.sql(s"SELECT * FROM bdg_coverage('${tableNameMultiBAM}','NA12878','bdg', 'blocks')")
     assert(bdg.first().get(1)!=1) // first position should not be one
 
   }
@@ -124,7 +124,7 @@ class CoverageTestSuite extends FunSuite with DataFrameSuiteBase with BeforeAndA
     val session: SparkSession = SequilaSession(spark)
     SequilaRegister.register(session)
 
-    spark.time {session.sql(s"SELECT contigName, start, coverage FROM bdg_coverage('${tableNameBAM}','NA12878','bdg', 'bases')").count}
+    session.sql(s"SELECT contigName, start, coverage FROM bdg_coverage('${tableNameMultiBAM}','NA12878','bdg', 'bases')").count
 
   }
 
@@ -132,14 +132,14 @@ class CoverageTestSuite extends FunSuite with DataFrameSuiteBase with BeforeAndA
     val session: SparkSession = SequilaSession(spark)
     SequilaRegister.register(session)
 
-    spark.time {session.sql(s"SELECT contigName, start, coverage FROM bdg_coverage('${tableNameBAM}','NA12878','bdg', 'blocks')").count}
+    session.sql(s"SELECT contigName, start, coverage FROM bdg_coverage('${tableNameMultiBAM}','NA12878','bdg', 'blocks')").count
   }
 
   test("BAM - bdg_coverage - wrong param") {
     val session: SparkSession = SequilaSession(spark)
     SequilaRegister.register(session)
     assertThrows[Exception](
-      session.sql(s"SELECT * FROM bdg_coverage('${tableNameBAM}','NA12878','bdg', 'blaaaaaah')").show(10))
+      session.sql(s"SELECT * FROM bdg_coverage('${tableNameMultiBAM}','NA12878','bdg', 'blaaaaaah')").show(10))
 
   }
 

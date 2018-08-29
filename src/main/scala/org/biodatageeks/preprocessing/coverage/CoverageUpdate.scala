@@ -17,8 +17,8 @@ class CovUpdate(var right:ArrayBuffer[RightCovEdge],var left: ArrayBuffer[Contig
     left = new ArrayBuffer[ContigRange]()
   }
   def add(p:CovUpdate): CovUpdate = {
-    right.append(p.right.head)
-    left.append(p.left.head)
+    right = right ++ p.right
+    left = left ++ p.left
     return this
   }
 
