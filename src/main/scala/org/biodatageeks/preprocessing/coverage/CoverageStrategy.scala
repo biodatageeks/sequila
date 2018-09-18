@@ -2,21 +2,17 @@ package org.biodatageeks.preprocessing.coverage
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.catalyst.InternalRow
-import org.apache.spark.sql.catalyst.expressions.codegen.{GenerateUnsafeProjection, GenerateUnsafeRowJoiner}
-import org.apache.spark.sql.catalyst.expressions.{Attribute, UnsafeProjection, UnsafeRow}
+import org.apache.spark.sql.catalyst.expressions.{Attribute, UnsafeProjection}
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.execution.SparkPlan
 import org.apache.spark.sql._
-import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.unsafe.types.UTF8String
-import org.apache.spark.util.AccumulatorV2
-import org.biodatageeks.datasources.BAM.{BDGAlignFileReaderWriter, BDGSAMRecord}
+import org.biodatageeks.datasources.BAM.{BDGAlignFileReaderWriter}
 import org.biodatageeks.datasources.BDGInputDataType
 import org.biodatageeks.inputformats.BDGAlignInputFormat
-import org.biodatageeks.preprocessing.coverage.CoverageReadFunctions._
 import org.biodatageeks.utils.{BDGInternalParams, BDGTableFuncs}
-import org.seqdoop.hadoop_bam.{BAMBDGInputFormat, BAMInputFormat, CRAMBDGInputFormat, SAMRecordWritable}
+import org.seqdoop.hadoop_bam.{BAMBDGInputFormat, CRAMBDGInputFormat}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -27,12 +23,9 @@ class CoverageStrategy(spark: SparkSession) extends Strategy with Serializable  
 
   def apply(plan: LogicalPlan): Seq[SparkPlan] = plan match {
 
-    case Coverage(tableName,output) => CoveragePlan(plan,spark,tableName,output) :: Nil
-    case CoverageHist(tableName,output) => CoverageHistPlan(plan,spark,tableName,output) :: Nil
-
     //add support for CRAM
 
-    case BDGCoverage(tableName,sampleId,method,result,output) => {
+    case BDGCoverage(tableName,sampleId,result,target,output) => {
       val inputFormat = BDGTableFuncs
         .getTableMetadata(spark, tableName)
         .provider
@@ -40,9 +33,9 @@ class CoverageStrategy(spark: SparkSession) extends Strategy with Serializable  
         case Some(f) => {
 
           if (f == BDGInputDataType.BAMInputDataType)
-            BDGCoveragePlan[BAMBDGInputFormat](plan, spark, tableName, sampleId, method, result, output) :: Nil
+            BDGCoveragePlan[BAMBDGInputFormat](plan, spark, tableName, sampleId,result,target, output) :: Nil
           else if (f == BDGInputDataType.CRAMInputDataType)
-            BDGCoveragePlan[CRAMBDGInputFormat](plan, spark, tableName, sampleId, method, result, output) :: Nil
+            BDGCoveragePlan[CRAMBDGInputFormat](plan, spark, tableName, sampleId, result,target, output) :: Nil
           else Nil
         }
         case None => throw new Exception("Only BAM and CRAM file formats are supported in bdg_coverage.")
@@ -54,59 +47,6 @@ class CoverageStrategy(spark: SparkSession) extends Strategy with Serializable  
 
 }
 
-case class CoveragePlan(plan: LogicalPlan, spark: SparkSession, table:String, output: Seq[Attribute]) extends SparkPlan with Serializable {
-  def doExecute(): org.apache.spark.rdd.RDD[InternalRow] = {
-    import spark.implicits._
-    val ds = spark.sql(s"select * FROM ${table}")
-      .as[BDGSAMRecord]
-      .filter(r=>r.contigName != null)
-    val schema = plan.schema
-    val cov = ds.rdd.baseCoverage(None,Some(4),sorted=false)
-      cov
-      .mapPartitions(p=>{
-       val proj =  UnsafeProjection.create(schema)
-       p.map(r=>   proj.apply(InternalRow.fromSeq(Seq(UTF8String.fromString(r.sampleId),
-          UTF8String.fromString(r.chr),r.position,r.coverage))))
-      })
-  }
-
-
-  def children: Seq[SparkPlan] = Nil
-}
-
-case class CoverageHistPlan(plan: LogicalPlan, spark: SparkSession, table:String, output: Seq[Attribute])
-  extends SparkPlan with Serializable {
-
-  def doExecute(): org.apache.spark.rdd.RDD[InternalRow] = {
-    import spark.implicits._
-    val ds = spark.sql(s"select * FROM ${table}")
-      .as[BDGSAMRecord]
-      .filter(r=>r.contigName != null)
-    val schema = plan.schema
-    val params = CoverageHistParam(CoverageHistType.MAPQ,Array(0,1,2,3,50))
-    val cov = ds.rdd.baseCoverageHist(Some(0),None,params)
-//    val emptyIntArray =
-//      ExpressionEncoder[Array[Int]]().resolveAndBind().toRow(Array.emptyIntArray).getArray(0)
-    cov
-      .mapPartitions(p=>{
-        val proj =  UnsafeProjection.create(schema)
-        val exprEnc =  ExpressionEncoder[Array[Int]]().resolveAndBind()
-        p.map(r=>   proj.apply(InternalRow.fromSeq(
-          Seq(
-            UTF8String.fromString(r.sampleId),
-            UTF8String.fromString(r.chr),
-            r.position,
-           exprEnc.toRow(r.coverage).getArray(0),
-            //UTF8String.fromString(r.coverage.mkString(",") ),
-            r.coverageTotal) ) ) )
-      })
-    //spark.sparkContext.emptyRDD[InternalRow]
-  }
-  def children: Seq[SparkPlan] = Nil
-}
-
-
-
 case class UpdateStruct(
                          upd:mutable.HashMap[(String,Int),(Option[Array[Short]],Short)],
                          shrink:mutable.HashMap[(String,Int),(Int)],
@@ -116,7 +56,8 @@ case class UpdateStruct(
 
 
 case class BDGCoveragePlan [T<:BDGAlignInputFormat](plan: LogicalPlan, spark: SparkSession,
-                                                    table:String, sampleId:String, method: String, result:String, output: Seq[Attribute])(implicit c: ClassTag[T])
+                                                    table:String, sampleId:String, result:String, target:Option[String],
+                                                    output: Seq[Attribute])(implicit c: ClassTag[T])
   extends SparkPlan with Serializable  with BDGAlignFileReaderWriter [T]{
 
 
@@ -233,8 +174,35 @@ case class BDGCoveragePlan [T<:BDGAlignInputFormat](plan: LogicalPlan, spark: Sp
     }
     val allPos = spark.sqlContext.getConf(BDGInternalParams.ShowAllPositions, "false").toBoolean
 
+    //check if it's a window length or a table name
+    val maybeWindowLength =
+      try {
+              target match {
+                case Some(t) => Some(t.toInt)
+                case _ => None
+              }
+      } catch {
+        case e: Exception => None
+    }
 
-    lazy val cov = CoverageMethodsMos.eventsToCoverage(sampleId, reducedEvents, covBroad.value.minmax, blocksResult, allPos)
+
+    lazy val cov =
+      if(maybeWindowLength != None) //fixed-length window
+        CoverageMethodsMos.eventsToCoverage(sampleId, reducedEvents, covBroad.value.minmax, blocksResult, allPos,maybeWindowLength,None)
+          .keyBy(_.key)
+          .reduceByKey((a,b) =>
+            CovRecordWindow(a.contigName,
+              a.start,
+              a.end,
+              ((a.asInstanceOf[CovRecordWindow].overLap.get * a.cov + b.asInstanceOf[CovRecordWindow].overLap.get * b.cov )/
+                (a.asInstanceOf[CovRecordWindow].overLap.get + b.asInstanceOf[CovRecordWindow].overLap.get)).toShort,
+              Some(a.asInstanceOf[CovRecordWindow].overLap.get + b.asInstanceOf[CovRecordWindow].overLap.get)))
+          .map(_._2)
+       else
+        CoverageMethodsMos.eventsToCoverage(sampleId, reducedEvents, covBroad.value.minmax, blocksResult, allPos,None, None)
+
+
+
 
     cov.mapPartitions(p => {
       val proj = UnsafeProjection.create(schema)

@@ -36,7 +36,7 @@ ss.sqlContext.setConf("spark.biodatageeks.bam.predicatePushdown","true")
 val queries = Array(
   BDGQuery("bdg_seq_count_NA12878","SELECT COUNT(*) FROM reads WHERE sampleId='NA12878'"),
   BDGQuery("bdg_seq_filter_NA12878","SELECT COUNT(*) FROM reads WHERE sampleId='NA12878' and contigName='chr8' AND start>100000 AND end<110000"),
-  BDGQuery("bdg_cov_count_NA12878","SELECT COUNT(*) FROM bdg_coverage ('reads','NA12878','bdg', 'blocks')"),
+  BDGQuery("bdg_cov_count_NA12878","SELECT COUNT(*) FROM bdg_coverage ('reads','NA12878', 'blocks')"),
   BDGQuery("bdg_seq_int_join_NA12878",
     """
       |SELECT targets.contigName,targets.start,targets.end,count(*) FROM reads JOIN targets
