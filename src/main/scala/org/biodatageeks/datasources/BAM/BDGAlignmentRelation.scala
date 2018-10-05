@@ -101,10 +101,7 @@ trait BDGAlignFileReaderWriter [T <: BDGAlignInputFormat]{
       }
         case _ => None
       }
-    spark
-      .sparkContext
-      .hadoopConfiguration
-      .setInt("mapred.min.split.size", (134217728).toInt)
+
     spark
       .sparkContext
       .hadoopConfiguration.set(SAMHeaderReader.VALIDATION_STRINGENCY_PROPERTY, ValidationStringency.SILENT.toString)

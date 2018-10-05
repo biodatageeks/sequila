@@ -204,32 +204,72 @@ It returns range with start and end fields. A sample query using the reflect fun
 bdg_coverage
 ************
 
-In order to compute coverage for a sample one can run a set of queries as follows:
+bdg_coverage is a function that calculates depth of coverage for specified sample. It can return results in blocks (which is default, more efficient behaviour), with per base granularity or calculate avarage coverage in fixed length window 
+
 
 .. code-block:: scala
 
-    val tableNameBAM = "reads"
-    val bamPath = "/data/samples/*.bam"
-    ss.sql("CREATE DATABASE dna")
-    ss.sql("USE dna")
-    ss.sql(
-            s"""
-               |CREATE TABLE ${tableNameBAM}
-               |USING org.biodatageeks.datasources.BAM.BAMDataSource
-               |OPTIONS(path "${bamPath}")
-               |
-          """.stripMargin)
-    ss.sql(s"SELECT * FROM bdg_coverage('${tableNameBAM}','NA12878')").show(5)
+   val tableNameBAM = "reads"
+  val bamPath = "file:///Users/aga/workplace/data/NA12878.chr21.bam"
+  ss.sql("CREATE DATABASE dna")
+  ss.sql("USE dna")
 
-            +----------+-----+---+--------+
-            |contigName|start|end|coverage|
-            +----------+-----+---+--------+
-            |      chr1|   34| 34|       1|
-            |      chr1|   35| 35|       2|
-            |      chr1|   36| 37|       3|
-            |      chr1|   38| 40|       4|
-            |      chr1|   41| 49|       5|
-            +----------+-----+---+--------+
+   // CREATE TABLE USING DATASOURCE
+   ss.sql(
+      s"""
+         |CREATE TABLE ${tableNameBAM}
+         |USING org.biodatageeks.datasources.BAM.BAMDataSource
+         |OPTIONS(path "${bamPath}")
+         |
+    """.stripMargin)
+
+  //CALCULATE COVERAGE - BLOCKS RESULT
+  
+  ss.sql(s"SELECT * FROM bdg_coverage('${tableNameBAM}','NA12878.chr21', 'blocks')").show(5)
+  
+          +----------+-----+---+--------+
+          |contigName|start|end|coverage|
+          +----------+-----+---+--------+
+          |      chr1|   34| 34|       1|
+          |      chr1|   35| 35|       2|
+          |      chr1|   36| 37|       3|
+          |      chr1|   38| 40|       4|
+          |      chr1|   41| 49|       5|
+          +----------+-----+---+--------+
+  
+  
+  //CALCULATE COVERAGE - BASES RESULT
+  
+  ss.sql(s"SELECT contigName, start, coverage FROM bdg_coverage('${tableNameBAM}','NA12878.chr21', 'bases')").show(5)
+  
+          +----------+-----+--------+
+          |contigName|start|coverage|
+          +----------+-----+--------+
+          |      chr1|   34|       1|
+          |      chr1|   35|       2|
+          |      chr1|   36|       3|
+          |      chr1|   37|       3|
+          |      chr1|   38|       4|
+          +----------+-----+--------+
+  
+  //CALCULATE COVERAGE - FIXED LENGTH WINDOWS 
+  
+  ss.sql(s"SELECT * FROM bdg_coverage('${tableNameBAM}','NA12878.chr21', '', 100)").show(5)
+          +----------+-----+---+--------+
+          |contigName|start|end|coverage|
+          +----------+-----+---+--------+
+          |      chr1|    0| 99|6.030303|
+          |      chr1|  200|299|    1.68|
+          |      chr1|  500|599|    4.69|
+          |      chr1|  100|199|    1.61|
+          |      chr1|  400|499|    3.05|
+          |      chr1|  300|399|    1.82|
+          +----------+-----+---+--------+
+
+Parameters for bdg_coverage functions:
+resultType - blocks/bases
+target - fixed-length windows/regions from bed file
+ShowAllPositions - true/false. When set to true returns all positions in contig.
 
 
 Functional parameteres

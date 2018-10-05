@@ -17,6 +17,11 @@ object SequilaRegister {
         new GenomicIntervalStrategy(spark)
        // new BAMCTASStrategy(spark)
       )
+    /*Set params*/
+    spark
+      .sparkContext
+      .hadoopConfiguration
+      .setInt("mapred.max.split.size", spark.sqlContext.getConf(BDGInternalParams.InputSplitSize,"134217728").toInt)
   }
 
 }

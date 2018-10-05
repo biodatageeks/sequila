@@ -63,10 +63,13 @@ case class BDGCoveragePlan [T<:BDGAlignInputFormat](plan: LogicalPlan, spark: Sp
 
   def doExecute(): org.apache.spark.rdd.RDD[InternalRow] = {
 
+
     spark
       .sparkContext
       .getPersistentRDDs
-        .foreach(_._2.unpersist()) //FIXME: add filtering not all RDDs
+      .filter((t)=> t._2.name==BDGInternalParams.RDDEventsName)
+      .foreach(_._2.unpersist())
+
     val schema = plan.schema
     val sampleTable = BDGTableFuncs
       .getTableMetadata(spark,table)
@@ -85,10 +88,9 @@ case class BDGCoveragePlan [T<:BDGAlignInputFormat](plan: LogicalPlan, spark: Sp
       .mkString("/")
 
     setLocalConf(spark.sqlContext)
-    lazy val alignments = readBAMFile(spark.sqlContext,samplePath)
+    lazy val alignments = readBAMFile(spark.sqlContext, samplePath)
 
     val filterFlag = spark.sqlContext.getConf(BDGInternalParams.filterReadsByFlag, "1796").toInt
-
 
     lazy val events = CoverageMethodsMos.readsToEventsArray(alignments,filterFlag)
 
@@ -115,6 +117,7 @@ case class BDGCoveragePlan [T<:BDGAlignInputFormat](plan: LogicalPlan, spark: Sp
           acc.add(cu)
         }
       }
+    events.setName(BDGInternalParams.RDDEventsName)
 
     def prepareBroadcast(a: CovUpdate) = {
 
@@ -130,6 +133,7 @@ case class BDGCoveragePlan [T<:BDGAlignInputFormat](plan: LogicalPlan, spark: Sp
           if (!minmax.contains(contig))
             minmax += contig -> (Int.MaxValue, 0)
 
+
           val upd = updateArray
             .filter(f => (f.contigName == c.contigName && f.startPoint + f.cov.length > c.minPos) && f.minPos < c.minPos)
             .headOption //should be always 1 or 0 elements
@@ -139,6 +143,7 @@ case class BDGCoveragePlan [T<:BDGAlignInputFormat](plan: LogicalPlan, spark: Sp
           .sum
           upd match {
             case Some(u) => {
+
               val overlapLength = (u.startPoint + u.cov.length) - c.minPos + 1
               shrinkMap += (u.contigName, u.minPos) -> (c.minPos - u.minPos + 1)
               updateMap += (c.contigName, c.minPos) -> (Some(u.cov.takeRight(overlapLength)), (cumSum - u.cov.takeRight(overlapLength).sum).toShort)
@@ -186,29 +191,38 @@ case class BDGCoveragePlan [T<:BDGAlignInputFormat](plan: LogicalPlan, spark: Sp
     }
 
 
+
     lazy val cov =
       if(maybeWindowLength != None) //fixed-length window
         CoverageMethodsMos.eventsToCoverage(sampleId, reducedEvents, covBroad.value.minmax, blocksResult, allPos,maybeWindowLength,None)
+
           .keyBy(_.key)
           .reduceByKey((a,b) =>
             CovRecordWindow(a.contigName,
               a.start,
               a.end,
-              ((a.asInstanceOf[CovRecordWindow].overLap.get * a.cov + b.asInstanceOf[CovRecordWindow].overLap.get * b.cov )/
-                (a.asInstanceOf[CovRecordWindow].overLap.get + b.asInstanceOf[CovRecordWindow].overLap.get)).toShort,
-              Some(a.asInstanceOf[CovRecordWindow].overLap.get + b.asInstanceOf[CovRecordWindow].overLap.get)))
+              (a.asInstanceOf[CovRecordWindow].overLap.get * a.asInstanceOf[CovRecordWindow].cov + b.asInstanceOf[CovRecordWindow].overLap.get * b.asInstanceOf[CovRecordWindow].cov )/
+                (a.asInstanceOf[CovRecordWindow].overLap.get + b.asInstanceOf[CovRecordWindow].overLap.get),
+              Some(a.asInstanceOf[CovRecordWindow].overLap.get + b.asInstanceOf[CovRecordWindow].overLap.get) ) )
           .map(_._2)
+
        else
         CoverageMethodsMos.eventsToCoverage(sampleId, reducedEvents, covBroad.value.minmax, blocksResult, allPos,None, None)
 
+    if(maybeWindowLength != None) {   // windows
 
-
-
-    cov.mapPartitions(p => {
-      val proj = UnsafeProjection.create(schema)
-      p.map(r => proj.apply(InternalRow.fromSeq(Seq(/*UTF8String.fromString(sampleId),*/
-        UTF8String.fromString(r.contigName), r.start, r.end, r.cov))))
-    })
+      cov.mapPartitions(p => {
+        val proj = UnsafeProjection.create(schema)
+        p.map(r => proj.apply(InternalRow.fromSeq(Seq(
+          UTF8String.fromString(r.contigName), r.start, r.end, r.asInstanceOf[CovRecordWindow].cov))))
+      })
+    } else { // regular blocks
+      cov.mapPartitions(p => {
+        val proj = UnsafeProjection.create(schema)
+        p.map(r => proj.apply(InternalRow.fromSeq(Seq(/*UTF8String.fromString(sampleId),*/
+          UTF8String.fromString(r.contigName), r.start, r.end, r.asInstanceOf[CovRecord].cov))))
+      })
+    }
 
   }
 

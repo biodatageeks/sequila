@@ -47,7 +47,8 @@ val queries = Array(
       |     CAST(reads.start AS INTEGER)<=CAST(targets.end AS INTEGER)
       |     )
       |     GROUP BY targets.contigName,targets.start,targets.end
-    """.stripMargin)
+    """.stripMargin),
+  BDGQuery("bdg_cov_window_fix_length_100_count_NA12878","SELECT COUNT(*) FROM bdg_coverage ('reads','NA12878', 'bases','500')")
 )
 
 BDGPerfRunner.run(ss,queries)

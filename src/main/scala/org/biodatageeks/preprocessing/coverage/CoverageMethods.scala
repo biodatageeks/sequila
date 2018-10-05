@@ -11,33 +11,22 @@ import org.apache.log4j.Logger
 
 
 abstract class AbstractCovRecord {
-  val key = this.hashCode() ///FIXME: key should only hash of contigName,start,end
+  def key = (this.contigName+this.start.toString+this.end.toString).hashCode
   def contigName: String
   def start: Int
   def end: Int
-  def cov: Short
+  //def cov: T
 
-
-  override def equals(obj:Any) = {
-    if(obj.isInstanceOf[AbstractCovRecord]) {
-     val cov = obj.asInstanceOf[AbstractCovRecord]
-      if(cov.contigName == this.contigName && cov.start == this.start && cov.end == this.end) true else false
-    }
-    else false
-  }
 
 }
 
 
-case class CovRecord(val contigName:String, val start:Int,val end:Int, val cov:Short)
+case class CovRecord(contigName:String, start:Int,end:Int, cov:Short)
   extends AbstractCovRecord
-    with Ordered[CovRecord] {
 
-  override def compare(that: CovRecord): Int = this.start compare that.start
-}
 
 //for various coverage windows operations
-case class CovRecordWindow(val contigName:String, val start:Int,val end:Int, val cov:Short, val overLap:Option[Int] = None)
+case class CovRecordWindow(contigName:String, start:Int,end:Int, cov:Float, overLap:Option[Int] = None)
 extends AbstractCovRecord
 
 object CoverageMethodsMos {
@@ -45,7 +34,6 @@ object CoverageMethodsMos {
 
 
   def mergeArrays(a:(Array[Short],Int,Int,Int),b:(Array[Short],Int,Int,Int)) = {
-    //val c = new Array[Short](a._4)
     val c = new Array[Short](math.min(math.abs(a._2 - b._2) + math.max(a._1.length, b._1.length), a._4))
     val lowerBound = math.min(a._2, b._2)
 
@@ -54,10 +42,6 @@ object CoverageMethodsMos {
       c(i - lowerBound) = ((if (i >= a._2 && i < a._2 + a._1.length) a._1(i - a._2) else 0) + (if (i >= b._2 && i < b._2 + b._1.length) b._1(i - b._2) else 0)).toShort
       i += 1
     }
-    //    for(i<- lowerBound to c.length + lowerBound - 1 ){
-    //      c(i-lowerBound) = (( if(i >= a._2 && i < a._2+a._1.length) a._1(i-a._2) else 0)  + (if(i >= b._2 && i < b._2+b._1.length) b._1(i-b._2) else 0)).toShort
-    //    }
-
     (c, lowerBound, lowerBound + c.length, a._4)
   }
 
@@ -144,7 +128,7 @@ object CoverageMethodsMos {
   }
 
 
-  @inline def addFirstBlock (contig:String, contigMin: Int, posShift: Int, blocksResult:Boolean, allPos:Boolean, ind: Int,result: Array[CovRecord]) = {
+  @inline def addFirstBlock (contig:String, contigMin: Int, posShift: Int, blocksResult:Boolean, allPos:Boolean, ind: Int,result: Array[AbstractCovRecord]) = {
     var indexShift = ind
 
     if (allPos && posShift == contigMin) {
@@ -162,7 +146,7 @@ object CoverageMethodsMos {
     indexShift
   }
 
-  @inline def addLastBlock(contig: String, contigMax: Int, contigLength: Int, maxPosition: Int, blocksResult: Boolean,  allPos:Boolean, ind: Int, result: Array[CovRecord]) = {
+  @inline def addLastBlock(contig: String, contigMax: Int, contigLength: Int, maxPosition: Int, blocksResult: Boolean,  allPos:Boolean, ind: Int, result: Array[AbstractCovRecord]) = {
     var indexShift = ind
     if (allPos && maxPosition == contigMax) {
       logger.debug(s"Adding last block for index: ${indexShift}, start: ${maxPosition} end: ${contigLength}, cov: 0")
@@ -180,6 +164,23 @@ object CoverageMethodsMos {
   }
 
 
+  @inline def addLastWindow(contig: String, windowLength: Option[Int], posShift: Int, i: Int, covSum: Int, cov: Int, ind: Int, result: Array[AbstractCovRecord]) = {
+    var indexShift = ind
+    var sum = covSum
+    if (i%windowLength.get != 0) { // add last window
+      val winLen = windowLength.get
+      val windowStart =  ( (i+posShift) / winLen)  * windowLength.get
+      val windowEnd = windowStart + winLen - 1
+      //          val lastWindowLength = (i + posShift) % winLen  // (i + posShift -1) % winLen // -1 current
+      val lastWindowLength = (i + posShift) % winLen - 1 // HACK to fix last window (omit last element)
+      sum -= cov   // HACK to fix last window (substract last element)
+
+      result(ind) = CovRecordWindow(contig, windowStart, windowEnd, sum/lastWindowLength.toFloat, Some (lastWindowLength))
+      indexShift+=1
+    }
+    indexShift
+  }
+
   def eventsToCoverage(sampleId:String, events: RDD[(String,(Array[Short],Int,Int,Int))],
                        contigMinMap: mutable.HashMap [String,(Int,Int)],
                        blocksResult:Boolean, allPos: Boolean, windowLength: Option[Int], targetsTable:Option[String]) : RDD[AbstractCovRecord] = {
@@ -191,7 +192,7 @@ object CoverageMethodsMos {
         var ind = 0
         val posShift = r._2._2
         val maxPosition = r._2._3
-
+        var covSum = 0
 
         val firstBlockMaxLength = posShift-1
         val lastBlockMaxLength = r._2._4 - maxPosition //TODO: double check meaning of maxCigar
@@ -199,82 +200,111 @@ object CoverageMethodsMos {
         // preallocate maximum size of result, assuming first and last blocks are added in perbase manner
         //IDEA: consider counting size within if-else statements
 
-        val result = new Array[CovRecord](firstBlockMaxLength + covArrayLength + lastBlockMaxLength)
+        val result = new Array[AbstractCovRecord](firstBlockMaxLength + covArrayLength + lastBlockMaxLength)
 
-        logger.info (s"size: ${firstBlockMaxLength + covArrayLength + lastBlockMaxLength}")
+        logger.debug (s"$contig shift $posShift")
+        logger.debug (s"size: ${firstBlockMaxLength + covArrayLength + lastBlockMaxLength}")
 
         var i = 0
         var prevCov = 0
         var blockLength = 0
 
-        // add first block if necessary (if current positionshift is equal to the earliest read in the contig)
-        ind = addFirstBlock(contig, contigMinMap(contig)._1, posShift, blocksResult, allPos, ind, result)
 
+        if (windowLength.isEmpty) { // BLOCKS & BASES (NON-WINDOW) COVERAGE CALCULATIONS
+          ind = addFirstBlock(contig, contigMinMap(contig)._1, posShift, blocksResult, allPos, ind, result)  // add first block if necessary (if current positionshift is equal to the earliest read in the contig)
 
-        while(i < covArrayLength){
-          cov += r._2._1(i)
+          while (i < covArrayLength) {
+            cov += r._2._1(i)
 
-          if (!blocksResult && windowLength == None) {
-            if (i!= covArrayLength - 1) { //HACK. otherwise we get doubled CovRecords for partition boundary index
-              result(ind) = CovRecord(contig, i + posShift, i + posShift, cov.toShort)
-              ind += 1
+            if (!blocksResult) {                  // per-base output
+              if (i != covArrayLength - 1) { //HACK. otherwise we get doubled CovRecords for partition boundary index
+                result(ind) = CovRecord(contig, i + posShift, i + posShift, cov.toShort)
+                ind += 1
+              }
+            } else {                              // blocks output
+              if (prevCov >= 0 && prevCov != cov && i > 0) { // for the first element we do not write block
+                result(ind) = CovRecord(contig, i + posShift - blockLength, i + posShift - 1, prevCov.toShort)
+                blockLength = 0
+                ind += 1
+              }
+              blockLength += 1
+              prevCov = cov
             }
+            i += 1
           }
-          else if(windowLength == None) {
-            if (prevCov >= 0 && prevCov != cov && i > 0) { // for the first element we do not write block
-              result(ind) = CovRecord(contig, i + posShift - blockLength, i + posShift - 1, prevCov.toShort)
-              blockLength = 0
-              ind += 1
-            }
-            blockLength += 1
-            prevCov = cov
+
+          ind = addLastBlock (contig, contigMinMap(contig)._2, r._2._4, maxPosition, blocksResult, allPos, ind, result)
+
+          result.take(ind).iterator
+
+        } else {          // FIXED - WINDOW COVERAGE CALCULATIONS
+          while (i < covArrayLength) {
+            cov += r._2._1(i)
+
+            if ((i + posShift) % windowLength.get == 0 && (i + posShift) > 0) {
+                val length =
+                  if (i < windowLength.get) i
+                  else windowLength.get
+
+                val winLen = windowLength.get
+                val windowStart = (((i + posShift) / winLen) - 1) * winLen
+                val windowEnd = windowStart + winLen - 1
+                result(ind) = CovRecordWindow(contig, windowStart, windowEnd, covSum / length.toFloat, Some(length))
+                covSum = 0
+                ind += 1
+              }
+
+            covSum += cov
+            i += 1
+
           }
-          i+= 1
+          ind = addLastWindow(contig, windowLength, posShift, i, covSum, cov, ind, result)
+
+          result.take(ind).iterator
         }
 
-        ind = addLastBlock (contig, contigMinMap(contig)._2, r._2._4, maxPosition, blocksResult, allPos, ind, result)
-
-        result.take(ind).iterator
       })
       }.flatMap(r=>r)
   }
 
-  //contigName,covArray,minPos,maxPos,contigLenth,maxCigarLength
+
   def upateContigRange(b:Broadcast[UpdateStruct],covEvents: RDD[(String,(Array[Short],Int,Int,Int,Int))]) = {
    covEvents.map{
      c => {
        val upd = b.value.upd
        val shrink = b.value.shrink
+       val(contig,(eventsArray,minPos,maxPos,contigLength,maxCigarLength)) = c // to REFACTOR
 
-       val updArray = upd.get( (c._1,c._2._2) ) match {
-         case Some(a) => {
-           a._1 match {
-             case Some(b) => {
+       val updArray = upd.get( (contig,minPos) ) match { // check if there is a value for contigName and minPos in upd, returning array of coverage and cumSum to update current contigRange
+         case Some((arr,covSum)) => { // array of covs and cumSum
+           arr match {
+             case Some(overlapArray) => {
                var i = 0
-               while (i < b.length) {
-                 c._2._1(i) = (c._2._1(i) + b(i)).toShort
-                 if (i == 0) c._2._1(0) = (c._2._1(0) + a._2).toShort
+               eventsArray(i) = (eventsArray(i) + covSum).toShort // add cumSum to zeroth element
+
+               while (i < overlapArray.length) {
+                 eventsArray(i) = (eventsArray(i) + overlapArray(i)).toShort
                  i += 1
                }
-               c._2._1
+               eventsArray
              }
              case None => {
-               c._2._1(0) = (c._2._1(0) + a._2).toShort
-               c._2._1
+               eventsArray(0) = (eventsArray(0) + covSum).toShort
+               eventsArray
              }
            }
          }
            case None =>{
-             c._2._1
+             eventsArray
            }
        }
-       val shrinkArray = shrink.get( (c._1, c._2._2) ) match {
+       val shrinkArray = shrink.get( (contig, minPos) ) match {
          case Some(len) => {
             updArray.take(len)
          }
          case None => updArray
        }
-       (c._1, (shrinkArray,c._2._2,c._2._3,c._2._4) )
+       (contig, (shrinkArray, minPos, maxPos, contigLength) )
      }
    }
   }

@@ -154,14 +154,16 @@ object ResolveTableValuedFunctionsSeq extends Rule[LogicalPlan] {
 
 object BDGCoverage {
   def apply(tableName:String, sampleId:String, result: String, target: Option[String]): BDGCoverage = {
+
     val output = StructType(Seq(
-      //StructField("sampleId", StringType, nullable = false),
       StructField("contigName",StringType,nullable = true),
       StructField("start",IntegerType,nullable = false),
       StructField("end",IntegerType,nullable = false),
-      StructField("coverage",ShortType,nullable = false)
-    )
-    ).toAttributes
+      target match {
+        case Some(t) =>  StructField("coverage",FloatType,nullable = false)
+        case None =>     StructField("coverage",ShortType,nullable = false)
+   })).toAttributes
+
     new BDGCoverage(tableName:String,sampleId.toString, result, target, output)
   }
 
