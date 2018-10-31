@@ -138,7 +138,7 @@ node {
            stage('Building Docker images') {
 
                      echo 'Building Docker images....'
-                     //sh './build.sh'
+                     sh './build.sh'
 
                      }
 

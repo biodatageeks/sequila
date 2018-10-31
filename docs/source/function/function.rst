@@ -254,7 +254,7 @@ bdg_coverage is a function that calculates depth of coverage for specified sampl
   
   //CALCULATE COVERAGE - FIXED LENGTH WINDOWS 
   
-  ss.sql(s"SELECT * FROM bdg_coverage('${tableNameBAM}','NA12878.chr21', '', 100)").show(5)
+  ss.sql(s"SELECT * FROM bdg_coverage('${tableNameBAM}','NA12878.chr21', 'blocks', 100)").show(5)
           +----------+-----+---+--------+
           |contigName|start|end|coverage|
           +----------+-----+---+--------+
@@ -267,8 +267,8 @@ bdg_coverage is a function that calculates depth of coverage for specified sampl
           +----------+-----+---+--------+
 
 Parameters for bdg_coverage functions:
-resultType - blocks/bases
-target - fixed-length windows/regions from bed file
+resultType - blocks or bases (blocks by default)
+target - size of fixed-length windows
 ShowAllPositions - true/false. When set to true returns all positions in contig.
 
 

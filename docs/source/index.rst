@@ -6,16 +6,16 @@
 SeQuiLa User Guide 
 ====================
 
-SeQuiLa is an ANSI-SQL compliant solution for efficient genomic intervals querying and processing built on top of `Apache Spark`_. Range joins are bread and butter for NGS analysis but the high volume of data make them execute very slowly or even failing to compute.
+SeQuiLa is an ANSI-SQL compliant solution for efficient genomic intervals querying and processing built on top of `Apache Spark`_. Range joins and depth of coverage computations are bread and butter for NGS analysis but the high volume of data make them execute very slowly or even failing to compute.
 
 .. _Apache Spark: https://spark.apache.org/ 
 
 * SeQuiLa is fast:
 
-   - genome-wide analyses in several minutes
+   - genome-wide analyses in less than a minute (for depth of coverage calculations) and several minutes (for range joins)
    - 22x+ speedup over Spark default join operation
    - up to 100x+ speedup for interval queries for BAM datasource using indexes (>= 0.4.1)
-   - 100% accuracy in functional tests against GRanges
+   - 100% accuracy in functional tests against GRanges and samtools
 
 * SeQuiLa is elastic:
 
@@ -84,6 +84,11 @@ Example.scala
     ss.sql(...)
 
 .. rubric:: Release notes:
+
+0.5
+
+ - new result type (fixed lenght windows) for depth of coverage calculations
+
 
 0.4.1
 

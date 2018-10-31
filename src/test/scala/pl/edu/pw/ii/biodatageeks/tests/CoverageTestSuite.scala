@@ -86,7 +86,7 @@ class CoverageTestSuite extends FunSuite with DataFrameSuiteBase with BeforeAndA
     SequilaRegister.register(session)
 
     val windowLength = 100
-    val bdg = session.sql(s"SELECT * FROM bdg_coverage('${tableNameMultiBAM}','NA12878', '', '${windowLength}')")
+    val bdg = session.sql(s"SELECT * FROM bdg_coverage('${tableNameMultiBAM}','NA12878', 'blocks', '${windowLength}')")
     
     assert (bdg.count == 267)
     assert (bdg.first().getInt(1) % windowLength == 0) // check for fixed window start position

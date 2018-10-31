@@ -37,9 +37,9 @@ do
   #if [ $diffTs -lt $MAX_COMMIT_TS_DIFF ]; then
     cd $dir
      if [[ ${BUILD_MODE} != "local" ]]; then
-         docker build --no-cache -t $image:$version .
+         docker build --no-cache --build-arg BDG_VERSION=${version} -t $image:$version .
      else
-         docker build --no-cache  -t $image:$version .
+         docker build --no-cache --build-arg BDG_VERSION=${version} -t $image:$version .
      fi
     docker build  -t $image:latest .
     if [[ ${BUILD_MODE} != "local" ]]; then
