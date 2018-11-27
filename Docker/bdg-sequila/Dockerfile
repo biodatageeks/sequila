@@ -3,7 +3,8 @@ MAINTAINER biodatageeks <team@biodatageeks.ii.pw.edu.pl>
 
 RUN apt-get update && apt-get install --yes git sudo curl
 
-RUN useradd -m tempuser
+#fix bug/issue-129
+RUN useradd -u 99999 -m tempuser
 
 # Spark related variables.
 ##COMPONENT_VERSION variable will be replaced during the build process

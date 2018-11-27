@@ -2,7 +2,7 @@ import scala.util.Properties
 
 name := """bdg-sequila"""
 
-version := "0.5"
+version := "0.5.1"
 
 organization := "org.biodatageeks"
 

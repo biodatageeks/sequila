@@ -29,7 +29,7 @@ SequilaRegister.register(ss)
 
 ss.sql(
   """
-    |CREATE TABLE reads
+    |CREATE TABLE IF NOT EXISTS reads
     |USING org.biodatageeks.datasources.BAM.BAMDataSource
     |OPTIONS(path "/data/input/bams/*.bam")
   """.stripMargin)

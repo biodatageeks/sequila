@@ -8,10 +8,10 @@ RUN useradd -m tempuser
 # Spark related variables.
 ##COMPONENT_VERSION variable will be replaced during the build process
 
-ARG BDG_VERSION={{COMPONENT_VERSION}}
+ARG BDG_VERSION=0.5.1
 
 ####set variable used in all shell scritps for downloading jars
-ENV BDG_VERSION={{COMPONENT_VERSION}}
+ENV BDG_VERSION=0.5.1
 
 
 
@@ -71,7 +71,7 @@ RUN rm -rf /home/tempuser/spark-warehouse
 
 WORKDIR /tmp
 
-#COPY bdg-sequila-assembly-{{COMPONENT_VERSION}}.jar /tmp/bdg-sequila-assembly-${BDG_VERSION}.jar
+#COPY bdg-sequila-assembly-0.5.1.jar /tmp/bdg-sequila-assembly-${BDG_VERSION}.jar
 
 USER root
 EXPOSE 4040 10000
