@@ -8,6 +8,7 @@ SeQuiLa User Guide
 
 SeQuiLa is an ANSI-SQL compliant solution for efficient genomic intervals querying and processing built on top of `Apache Spark`_. Range joins and depth of coverage computations are bread and butter for NGS analysis but the high volume of data make them execute very slowly or even failing to compute.
 
+
 .. _Apache Spark: https://spark.apache.org/ 
 
 * SeQuiLa is fast:
@@ -19,7 +20,7 @@ SeQuiLa is an ANSI-SQL compliant solution for efficient genomic intervals queryi
 
 * SeQuiLa is elastic:
 
-   - growing catalogue of utility functions and operations including: `featureCounts`, `countOverlaps` and `coverage`
+   - growing catalogue of utility functions and operations including: `featureCounts`, `countOverlaps` and `bdg_coverage`
    - standard SQL DML/DDL like SPJG (select, predicate, join, group by), CTaS (create table as select), IaS (insert table as select) for easy BAM files manipulation
    - exposed parameters for further performance tuning
    - integration with third-party tools through SparkSQL Thrift JDBC driver
@@ -35,11 +36,11 @@ SeQuiLa is an ANSI-SQL compliant solution for efficient genomic intervals queryi
    - can be run on single computer (locally) or Hadoop cluster using YARN
 
 
-.. rubric:: Main components:
+.. .. rubric:: Main components:
 
 
-.. figure:: architecture/components.*
-    :scale: 100
+.. .. figure:: architecture/components.*
+..     :scale: 100
 
 .. rubric:: Availability:
 
@@ -112,15 +113,16 @@ Example.scala
 .. toctree::
    :numbered:
    :maxdepth: 2
-   
+
+   modules/modules
    architecture/architecture
-   integrations/integrations
-   function/function
+        integrations/integrations
+        function/function
    fileformats/fileformats
    quickstart/quickstart
    usecases/usecases
    benchmarking/benchmarking
-..   citation/citation
+   citation/citation
 
 
 

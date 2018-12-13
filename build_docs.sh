@@ -4,6 +4,7 @@
 version=`grep 'version :=' build.sbt | sed  's|version := \"||g' | sed 's|\"||g'`
 echo Version is $version
 
+#update deps
 
 cd docs && ./docs.sh html
 

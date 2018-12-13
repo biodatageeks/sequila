@@ -1,4 +1,4 @@
-Data input formats
+Data formats
 ############
 
 BAM/CRAM

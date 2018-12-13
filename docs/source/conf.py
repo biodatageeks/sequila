@@ -44,6 +44,8 @@ extensions = [
     'sphinx.ext.todo',
     'sphinxcontrib.github_ribbon',
 #    'sphinx.ext.ifconfig',
+    'sphinxcontrib.bibtex',
+    'sphinx.ext.autosectionlabel',
    'rst2pdf.pdfbuilder'
 ]
 

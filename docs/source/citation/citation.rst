@@ -3,7 +3,11 @@
 License and citation
 =====================
 
-SeQuiLa has been introduced in <TODO> To cite this paper please cite: <TODO>.
+To cite this paper please use: :cite:`wiewiorka2018sequila`.
 
-SeQuiLa is licenced under <TODO>.
+SeQuiLa is licensed under Apache License.
+
+.. bibliography:: ref.bib
+   :list: bullet
+   :all:
 
