@@ -3,7 +3,10 @@ services:
   bdg-hive-metastore:
     ports:
       - 9083:9083
-    image: timveil/docker-hadoop-hive-metastore:${D_METASTORE_VERSION}
+#    image: timveil/docker-hadoop-hive-metastore:${D_METASTORE_VERSION}
+    image: biodatageeks/bdg-hive-metastore:${D_METASTORE_VERSION}
+    entrypoint: /run.sh
+    command: --hiveconf hive.metastore.warehouse.dir=/data/output/warehouse
 
   bdg-sequila:
     links:
@@ -18,8 +21,9 @@ services:
       - bdg-hive-metastore
     image: biodatageeks/bdg-sequila:${D_SEQUILA_VERSION}
     volumes:
-      - /Users/marek/data/bams/:${D_DATA}
-    command: bdg-start-thriftserver --master=${D_SEQUILA_MASTER} --driver-memory=${D_SEQUILA_DRIVER_MEM} --conf spark.hadoop.hive.server2.authentication=NOSASL --conf  spark.hadoop.hive.metastore.uris=thrift://bdg-hive-metastore:9083 -v
+      - ${D_DATA}:/data/input/bams
+      - ${D_WAREHOUSE_DIR}:/data/output/warehouse
+    command: bdg-start-thriftserver --master=${D_SEQUILA_MASTER} --driver-memory=${D_SEQUILA_DRIVER_MEM} --conf spark.hadoop.hive.server2.authentication=NOSASL  --conf spark.hadoop.hive.exec.stagingdir=file:///data/output/staging --conf  spark.hadoop.hive.metastore.uris=thrift://bdg-hive-metastore:9083 -v
 
   bdg-superset:
     ports:
