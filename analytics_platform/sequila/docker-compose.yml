@@ -1,6 +1,7 @@
 version: '3'
 services:
   bdg-hive-metastore:
+    container_name: sequila_bdg-hive-metastore_1
     ports:
       - 9083:9083
 #    image: timveil/docker-hadoop-hive-metastore:${D_METASTORE_VERSION}
@@ -9,6 +10,7 @@ services:
     command: --hiveconf hive.metastore.warehouse.dir=/data/output/warehouse
 
   bdg-sequila:
+    container_name: sequila_bdg-sequila_1
     links:
       - bdg-hive-metastore
     environment:
@@ -21,11 +23,12 @@ services:
       - bdg-hive-metastore
     image: biodatageeks/bdg-sequila:${D_SEQUILA_VERSION}
     volumes:
-      - ${D_DATA}:/data/input/bams
+      - ${D_DATA}:/data/input/
       - ${D_WAREHOUSE_DIR}:/data/output/warehouse
     command: bdg-start-thriftserver --master=${D_SEQUILA_MASTER} --driver-memory=${D_SEQUILA_DRIVER_MEM} --conf spark.hadoop.hive.server2.authentication=NOSASL  --conf spark.hadoop.hive.exec.stagingdir=file:///data/output/staging --conf  spark.hadoop.hive.metastore.uris=thrift://bdg-hive-metastore:9083 -v
 
   bdg-superset:
+    container_name: sequila_bdg-superset_1
     ports:
       - 8088:8088
     links:
@@ -33,6 +36,7 @@ services:
     depends_on:
       - bdg-sequila
     image: amancevice/superset:${D_SUPERSET_VERSION}
+
 
 
 
