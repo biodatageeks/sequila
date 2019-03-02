@@ -183,7 +183,7 @@ case class BDGCoverage(tableName:String, sampleId:String, result: String, target
 
   override def newInstance(): BDGCoverage = copy(output = output.map(_.newInstance()))
 
-  override def computeStats(conf: SQLConf): Statistics = {
+  def computeStats(conf: SQLConf): Statistics = {
     val sizeInBytes = LongType.defaultSize * numElements
     Statistics( sizeInBytes = sizeInBytes )
   }

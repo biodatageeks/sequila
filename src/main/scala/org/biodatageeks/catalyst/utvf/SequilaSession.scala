@@ -8,7 +8,7 @@ import org.apache.spark.sql.catalyst.catalog.SessionCatalog
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.catalyst.rules.Rule
 import org.apache.spark.sql.execution.QueryExecution
-import org.apache.spark.sql.execution.command.{BAMCTASOptimizationRule, BAMIASOptimizationRule}
+//import org.apache.spark.sql.execution.command.{BAMCTASOptimizationRule, BAMIASOptimizationRule}
 import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.internal.{SQLConf, SessionState}
 import org.biodatageeks.preprocessing.coverage.CoverageStrategy
@@ -26,10 +26,10 @@ case class SequilaSession(sparkSession: SparkSession) extends SparkSession(spark
   @transient override lazy val sessionState = SequilaSessionState(sparkSession,sequilaAnalyzer,executePlan)
 
   //new rules
-  sequilaAnalyzer.sequilaOptmazationRules = Seq(
-    new BAMCTASOptimizationRule(sparkSession),
-    new BAMIASOptimizationRule(sparkSession)
-  )
+//  sequilaAnalyzer.sequilaOptmazationRules = Seq(
+//    new BAMCTASOptimizationRule(sparkSession),
+//    new BAMIASOptimizationRule(sparkSession)
+//  )
 
 
 }
@@ -40,14 +40,14 @@ case class SequilaSessionState(sparkSession: SparkSession, customAnalyzer: Analy
     sparkSession.sessionState.experimentalMethods,
     sparkSession.sessionState.functionRegistry,
     sparkSession.sessionState.udfRegistration,
-    sparkSession.sessionState.catalog,
+    () => sparkSession.sessionState.catalog,
     sparkSession.sessionState.sqlParser,
-    customAnalyzer,
-    sparkSession.sessionState.optimizer,
+    () =>customAnalyzer,
+    () =>sparkSession.sessionState.optimizer,
     sparkSession.sessionState.planner,
     sparkSession.sessionState.streamingQueryManager,
     sparkSession.sessionState.listenerManager,
-    sparkSession.sessionState.resourceLoader,
+    () =>sparkSession.sessionState.resourceLoader,
     executePlan,
     (sparkSession:SparkSession,sessionState: SessionState) => sessionState.clone(sparkSession)){
 }

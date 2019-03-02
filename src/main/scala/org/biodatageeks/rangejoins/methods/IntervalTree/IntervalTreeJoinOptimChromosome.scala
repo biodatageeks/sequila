@@ -111,7 +111,7 @@ case class IntervalTreeJoinOptimChromosome(left: SparkPlan,
 
   private def ifStatsAvailable(logicalPlan: LogicalPlan, conf :SQLConf) = {
     (logicalPlan
-      .stats(conf)
+      .stats
       .sizeInBytes != Long.MaxValue)
   }
 }

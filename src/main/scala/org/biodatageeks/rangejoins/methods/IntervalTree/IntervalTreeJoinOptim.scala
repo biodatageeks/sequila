@@ -64,14 +64,14 @@ case class IntervalTreeJoinOptim(left: SparkPlan,
     val conf = new SQLConf()
     val v1Size =
       if(leftLogicalPlan
-      .stats(conf)
-      .sizeInBytes >0) leftLogicalPlan.stats(conf).sizeInBytes.toLong
+      .stats
+      .sizeInBytes >0) leftLogicalPlan.stats.sizeInBytes.toLong
       else
         v1.count
 
     val v2Size = if(righLogicalPlan
-      .stats(conf)
-      .sizeInBytes >0) righLogicalPlan.stats(conf).sizeInBytes.toLong
+      .stats
+      .sizeInBytes >0) righLogicalPlan.stats.sizeInBytes.toLong
     else
       v2.count
     if ( v1Size <= v2Size ) {

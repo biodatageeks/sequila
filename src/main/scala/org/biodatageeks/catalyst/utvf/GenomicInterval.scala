@@ -15,7 +15,7 @@ case class GenomicInterval(
 
   override def newInstance(): GenomicInterval = copy(output = output.map(_.newInstance()))
 
-  override def computeStats(conf: SQLConf): Statistics = {
+  def computeStats(conf: SQLConf): Statistics = {
     val sizeInBytes = IntegerType.defaultSize * 2 //FIXME: Add contigName size
     Statistics( sizeInBytes = sizeInBytes )
   }

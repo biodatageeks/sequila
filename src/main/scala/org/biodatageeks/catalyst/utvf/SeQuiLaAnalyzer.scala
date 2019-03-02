@@ -33,34 +33,36 @@ class SeQuiLaAnalyzer(catalog: SessionCatalog, conf: SQLConf) extends Analyzer(c
       EliminateUnions,
       new SubstituteUnresolvedOrdinals(conf)),
     Batch("Resolution", fixedPoint,
-      ResolveTableValuedFunctionsSeq,
-        ResolveRelations,
-        ResolveReferences,
-        ResolveCreateNamedStruct,
-        ResolveDeserializer,
-        ResolveNewInstance,
-        ResolveUpCast ,
-        ResolveGroupingAnalytics,
-        ResolvePivot,
-        ResolveOrdinalInOrderByAndGroupBy,
-        ResolveAggAliasInGroupBy,
-        ResolveMissingReferences,
-        ExtractGenerator,
-        ResolveGenerate,
-        ResolveFunctions,
-        ResolveAliases,
-        ResolveSubquery,
-        //ResolveSubqueryColumnAliases ::
-        ResolveWindowOrder,
-        ResolveWindowFrame,
-        ResolveNaturalAndUsingJoin,
-        ExtractWindowExpressions,
-        GlobalAggregates,
-        ResolveAggregateFunctions,
-        TimeWindowing,
-        ResolveInlineTables(conf),
-        ResolveTimeZone(conf),
-        TypeCoercion.typeCoercionRules(1)),
+      ResolveTableValuedFunctionsSeq ::
+      ResolveRelations ::
+        ResolveReferences ::
+        ResolveCreateNamedStruct ::
+        ResolveDeserializer ::
+        ResolveNewInstance ::
+        ResolveUpCast ::
+        ResolveGroupingAnalytics ::
+        ResolvePivot ::
+        ResolveOrdinalInOrderByAndGroupBy ::
+        ResolveAggAliasInGroupBy ::
+        ResolveMissingReferences ::
+        ExtractGenerator ::
+        ResolveGenerate ::
+        ResolveFunctions ::
+        ResolveAliases ::
+        ResolveSubquery ::
+        ResolveSubqueryColumnAliases ::
+        ResolveWindowOrder ::
+        ResolveWindowFrame ::
+        ResolveNaturalAndUsingJoin ::
+
+        ExtractWindowExpressions ::
+        GlobalAggregates ::
+        ResolveAggregateFunctions ::
+        TimeWindowing ::
+        ResolveInlineTables(conf) ::
+        ResolveTimeZone(conf) ::
+        TypeCoercion.typeCoercionRules(conf) ++
+          extendedResolutionRules : _*),
     Batch("Post-Hoc Resolution", Once, postHocResolutionRules: _*),
     Batch("SeQuiLa", Once,sequilaOptmazationRules: _*), //SeQuilaOptimization rules
     Batch("View", Once,

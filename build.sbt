@@ -2,13 +2,13 @@ import scala.util.Properties
 
 name := """bdg-sequila"""
 
-version := "0.5.2"
+version := "0.5.3-spark-2.4.0-SNAPSHOT"
 
 organization := "org.biodatageeks"
 
 scalaVersion := "2.11.8"
 
-val DEFAULT_SPARK_2_VERSION = "2.2.2"
+val DEFAULT_SPARK_2_VERSION = "2.4.0"
 val DEFAULT_HADOOP_VERSION = "2.6.5"
 
 
@@ -16,34 +16,35 @@ lazy val sparkVersion = Properties.envOrElse("SPARK_VERSION", DEFAULT_SPARK_2_VE
 lazy val hadoopVersion = Properties.envOrElse("SPARK_HADOOP_VERSION", DEFAULT_HADOOP_VERSION)
 
 
+
+
+dependencyOverrides += "com.google.guava" % "guava" % "15.0"
+libraryDependencies += "org.apache.hadoop" % "hadoop-client" % hadoopVersion
 libraryDependencies +=  "org.apache.spark" % "spark-core_2.11" % sparkVersion
 
 libraryDependencies +=  "org.apache.spark" % "spark-sql_2.11" % sparkVersion
 libraryDependencies +=  "org.apache.spark" %% "spark-hive" % sparkVersion
-libraryDependencies +=  "org.apache.spark" %% "spark-hive-thriftserver" % sparkVersion
+libraryDependencies +=  "org.apache.spark" %% "spark-hive-thriftserver" % "2.4.0"
 
-libraryDependencies += "com.holdenkarau" % "spark-testing-base_2.11" % "2.2.0_0.7.4" % "test" excludeAll ExclusionRule(organization = "javax.servlet") excludeAll (ExclusionRule("org.apache.hadoop"))
+libraryDependencies += "com.holdenkarau" % "spark-testing-base_2.11" % "2.4.0_0.11.0" % "test" excludeAll ExclusionRule(organization = "javax.servlet") excludeAll (ExclusionRule("org.apache.hadoop"))
 
-libraryDependencies += "org.apache.spark" %% "spark-hive"       % "2.0.0" % "test"
+//libraryDependencies += "org.apache.spark" %% "spark-hive"       % "2.0.0" % "test"
 
-libraryDependencies += "org.bdgenomics.adam" %% "adam-core-spark2" % "0.22.0"
-libraryDependencies += "org.bdgenomics.adam" %% "adam-apis-spark2" % "0.22.0"
-libraryDependencies += "org.bdgenomics.adam" %% "adam-cli-spark2" % "0.22.0"
-libraryDependencies += "org.bdgenomics.utils" %% "utils-misc-spark2" % "0.2.10"
+libraryDependencies += "org.bdgenomics.adam" %% "adam-core-spark2" % "0.25.0"
+libraryDependencies += "org.bdgenomics.adam" %% "adam-apis-spark2" % "0.25.0"
+libraryDependencies += "org.bdgenomics.adam" %% "adam-cli-spark2" % "0.25.0"
 libraryDependencies += "org.scala-lang" % "scala-library" % "2.11.8"
 libraryDependencies += "org.rogach" %% "scallop" % "3.1.2"
 
 
 libraryDependencies += "org.hammerlab.bdg-utils" %% "cli" % "0.3.0"
 
-libraryDependencies += "com.github.samtools" % "htsjdk" % "2.14.1"
+libraryDependencies += "com.github.samtools" % "htsjdk" % "2.18.2"
 
 
-libraryDependencies += "com.github.potix2" %% "spark-google-spreadsheets" % "0.5.0"
+libraryDependencies += "ch.cern.sparkmeasure" %% "spark-measure" % "0.13" excludeAll (ExclusionRule("org.apache.hadoop"))
 
-libraryDependencies += "ch.cern.sparkmeasure" %% "spark-measure" % "0.13"
-
-libraryDependencies += "org.broadinstitute" % "gatk-native-bindings" % "1.0.0"
+libraryDependencies += "org.broadinstitute" % "gatk-native-bindings" % "1.0.0" excludeAll (ExclusionRule("org.apache.hadoop"))
 libraryDependencies += "org.apache.logging.log4j" % "log4j-core" % "2.11.0"
 libraryDependencies += "org.apache.logging.log4j" % "log4j-api" % "2.11.0"
 
@@ -58,7 +59,7 @@ libraryDependencies += "org.eclipse.jetty" % "jetty-servlet" % "9.3.24.v20180605
 libraryDependencies += "org.apache.derby" % "derbyclient" % "10.14.2.0"
 
 
-libraryDependencies += "org.biodatageeks" % "bdg-performance_2.11" % "0.1-SNAPSHOT"
+libraryDependencies += "org.biodatageeks" % "bdg-performance_2.11" % "0.2-SNAPSHOT" excludeAll (ExclusionRule("org.apache.hadoop"))
 
 
 
@@ -86,7 +87,8 @@ resolvers ++= Seq(
   "Job Server Bintray" at "https://dl.bintray.com/spark-jobserver/maven",
   "zsibio-snapshots" at "http://zsibio.ii.pw.edu.pl/nexus/repository/maven-snapshots/",
   "spring" at "http://repo.spring.io/libs-milestone/",
-  "Cloudera" at "https://repository.cloudera.com/content/repositories/releases/"
+  "Cloudera" at "https://repository.cloudera.com/content/repositories/releases/",
+  "Hortonworks" at "http://repo.hortonworks.com/content/repositories/releases/"
 )
 
 
@@ -111,6 +113,8 @@ assemblyMergeStrategy in assembly := {
   case "log4j.properties" => MergeStrategy.last
   case "parquet.thrift" => MergeStrategy.last
   case "plugin.xml" => MergeStrategy.last
+  case "codegen/config.fmpp" => MergeStrategy.last
+  case "git.properties" => MergeStrategy.last
 
   case x =>
     val oldStrategy = (assemblyMergeStrategy in assembly).value
@@ -118,11 +122,11 @@ assemblyMergeStrategy in assembly := {
 }
 
 /* only for releasing assemblies*/
-artifact in (Compile, assembly) := {
-  val art = (artifact in (Compile, assembly)).value
-  art.withClassifier(Some("assembly"))
-}
-addArtifact(artifact in (Compile, assembly), assembly)
+//artifact in (Compile, assembly) := {
+//  val art = (artifact in (Compile, assembly)).value
+//  art.withClassifier(Some("assembly"))
+//}
+//addArtifact(artifact in (Compile, assembly), assembly)
 
 publishConfiguration := publishConfiguration.value.withOverwrite(true)
 

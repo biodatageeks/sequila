@@ -32,7 +32,7 @@ case class SequilaDataSourceStrategy(spark: SparkSession) extends Strategy with 
     //optimized strategy for queries like SELECT (distinct )sampleId FROM  BDGAlignmentRelation
     case a: Aggregate if a.schema.length == 1 && a.schema.head.name == BDGInternalParams.SAMPLE_COLUMN_NAME => {
       a.child match {
-        case PhysicalOperation(projects, filters, l@LogicalRelation(t: PrunedFilteredScan, _, _)) => {
+        case PhysicalOperation(projects, filters, l@LogicalRelation(t: PrunedFilteredScan, _, _,false)) => {
           l.catalogTable.get.provider match {
             case Some(BDGInputDataType.BAMInputDataType) => {
               pruneFilterProject(
@@ -48,7 +48,7 @@ case class SequilaDataSourceStrategy(spark: SparkSession) extends Strategy with 
       }
     }
 
-    case PhysicalOperation(projects, filters, l @ LogicalRelation(t: CatalystScan, _, _)) =>
+    case PhysicalOperation(projects, filters, l @ LogicalRelation(t: CatalystScan, _, _,false)) =>
       pruneFilterProjectRaw(
         l,
         projects,
@@ -56,7 +56,7 @@ case class SequilaDataSourceStrategy(spark: SparkSession) extends Strategy with 
         (requestedColumns, allPredicates, _) =>
           toCatalystRDD(l, requestedColumns, t.buildScan(requestedColumns, allPredicates))) :: Nil
 
-    case PhysicalOperation(projects, filters, l @ LogicalRelation(t: PrunedFilteredScan, _, _)) => {
+    case PhysicalOperation(projects, filters, l @ LogicalRelation(t: PrunedFilteredScan, _, _,false)) => {
       pruneFilterProject(
         l,
         projects,
@@ -64,20 +64,21 @@ case class SequilaDataSourceStrategy(spark: SparkSession) extends Strategy with 
         (a, f) => toCatalystRDD(l, a, t.buildScan(a.map(_.name).toArray, f))) :: Nil
     }
 
-    case PhysicalOperation(projects, filters, l @ LogicalRelation(t: PrunedScan, _, _)) =>
+    case PhysicalOperation(projects, filters, l @ LogicalRelation(t: PrunedScan, _, _,false)) =>
       pruneFilterProject(
         l,
         projects,
         filters,
         (a, _) => toCatalystRDD(l, a, t.buildScan(a.map(_.name).toArray))) :: Nil
 
-    case l @ LogicalRelation(baseRelation: TableScan, _, _) =>
+    case l @ LogicalRelation(baseRelation: TableScan, _, _,false) =>
       RowDataSourceScanExec(
         l.output,
+        l.output.indices,
+        Set.empty,
+        Set.empty,
         toCatalystRDD(l, baseRelation.buildScan()),
         baseRelation,
-        UnknownPartitioning(0),
-        Map.empty,
         None) :: Nil
 
     case _ => Nil
@@ -186,8 +187,11 @@ case class SequilaDataSourceStrategy(spark: SparkSession) extends Strategy with 
 
       val scan = RowDataSourceScanExec(
         projects.map(_.toAttribute),
+        projects.map(_.toAttribute).indices,
+        Set.empty,
+        Set.empty,
         scanBuilder(requestedColumns, candidatePredicates, pushedFilters),
-        relation.relation, UnknownPartitioning(0), metadata,
+        relation.relation,
         relation.catalogTable.map(_.identifier))
       filterCondition.map(execution.FilterExec(_, scan)).getOrElse(scan)
     } else {
@@ -197,8 +201,11 @@ case class SequilaDataSourceStrategy(spark: SparkSession) extends Strategy with 
 
       val scan = RowDataSourceScanExec(
         requestedColumns,
+        requestedColumns.indices,
+        Set.empty,
+        Set.empty,
         scanBuilder(requestedColumns, candidatePredicates, pushedFilters),
-        relation.relation, UnknownPartitioning(0), metadata,
+        relation.relation,
         relation.catalogTable.map(_.identifier))
       execution.ProjectExec(
         projects, filterCondition.map(execution.FilterExec(_, scan)).getOrElse(scan))

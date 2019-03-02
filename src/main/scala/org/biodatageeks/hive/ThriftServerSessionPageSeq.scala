@@ -40,9 +40,9 @@ private[ui] class ThriftServerSessionPageSeq(parent: ThriftServerTabSeq)
             Session created at {formatDate(sessionStat.startTimestamp)},
             Total run {sessionStat.totalExecution} SQL
           </h4> ++
-          generateSQLStatsTable(sessionStat.sessionId)
+          generateSQLStatsTable(request,sessionStat.sessionId)
       }
-    UIUtils.headerSparkPage("JDBC/ODBC Session", content, parent, Some(5000))
+    UIUtils.headerSparkPage(request,"JDBC/ODBC Session", content, parent, Some(5000))
   }
 
   /** Generate basic stats of the thrift server program */
@@ -59,7 +59,7 @@ private[ui] class ThriftServerSessionPageSeq(parent: ThriftServerTabSeq)
   }
 
   /** Generate stats of batch statements of the thrift server program */
-  private def generateSQLStatsTable(sessionID: String): Seq[Node] = {
+  private def generateSQLStatsTable(request: HttpServletRequest, sessionID: String): Seq[Node] = {
     val executionList = listener.getExecutionList
       .filter(_.sessionId == sessionID)
     val numStatement = executionList.size
@@ -70,7 +70,7 @@ private[ui] class ThriftServerSessionPageSeq(parent: ThriftServerTabSeq)
 
       def generateDataRow(info: ExecutionInfo): Seq[Node] = {
         val jobLink = info.jobId.map { id: String =>
-          <a href={"%s/jobs/job?id=%s".format(UIUtils.prependBaseUri(parent.basePath), id)}>
+          <a href={"%s/jobs/job?id=%s".format(UIUtils.prependBaseUri(request,parent.basePath), id)}>
             [{id}]
           </a>
         }
