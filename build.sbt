@@ -78,6 +78,9 @@ javaOptions in Test ++= Seq(
 
 javaOptions ++= Seq("-Xms512M", "-Xmx8192M", "-XX:+CMSClassUnloadingEnabled")
 
+//fix for using with hdp warehouse connector
+javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint")
+
 updateOptions := updateOptions.value.withLatestSnapshots(false)
 
 outputStrategy := Some(StdoutOutput)
@@ -122,11 +125,11 @@ assemblyMergeStrategy in assembly := {
 }
 
 /* only for releasing assemblies*/
-//artifact in (Compile, assembly) := {
-//  val art = (artifact in (Compile, assembly)).value
-//  art.withClassifier(Some("assembly"))
-//}
-//addArtifact(artifact in (Compile, assembly), assembly)
+artifact in (Compile, assembly) := {
+  val art = (artifact in (Compile, assembly)).value
+  art.withClassifier(Some("assembly"))
+}
+addArtifact(artifact in (Compile, assembly), assembly)
 
 publishConfiguration := publishConfiguration.value.withOverwrite(true)
 

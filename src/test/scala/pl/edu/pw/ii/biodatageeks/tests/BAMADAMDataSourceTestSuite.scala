@@ -12,8 +12,8 @@ class BAMADAMDataSourceTestSuite extends FunSuite with DataFrameSuiteBase with B
 
   val bamPath = getClass.getResource("/NA12878.slice.bam").getPath
   val adamPath = getClass.getResource("/NA12878.slice.adam").getPath
-  val cramPath = getClass.getResource("/test.cram").getPath
-  val refPath = getClass.getResource("/phix-illumina.fa").getPath
+  val cramPath = getClass.getResource("/NA12878.slice.cram").getPath
+  val refPath = getClass.getResource("/NA12878.slice.fasta").getPath
   val metricsListener = new MetricsListener(new RecordedMetrics())
   val writer = new PrintWriter(new OutputStreamWriter(System.out))
   val tableNameBAM = "reads"
@@ -90,7 +90,7 @@ class BAMADAMDataSourceTestSuite extends FunSuite with DataFrameSuiteBase with B
   test("CRAM - select count" ){
 
     assert(spark
-      .sql(s"SELECT * FROM ${tableNameCRAM}").count() == 2860L )
+      .sql(s"SELECT * FROM ${tableNameCRAM}").count() == 3172L )
   }
 
 

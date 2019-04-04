@@ -79,7 +79,7 @@ def notifySlack = {
 
     attachments.add(attachment);
 
-  slackSend(bot:true, channel: channel, attachments: attachments.toString())
+  slackSend(bot:false, channel: channel, attachments: attachments.toString())
 }
 
 
