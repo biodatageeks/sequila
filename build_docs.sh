@@ -15,7 +15,7 @@ if [[ $version =~ SNAPSHOT ]]; then
 else
     docker build --no-cache -t zsi-bio/bdg-sequila-doc .
     if [ $(docker ps | grep bdg-sequila-doc | wc -l) -gt 0 ]; then docker stop bdg-sequila-doc && docker rm bdg-sequila-doc; fi
-    docker run -d --name bdg-sequila-doc zsi-bio/bdg-sequila-doc
+    docker run -d -p 80:80 --name bdg-sequila-doc zsi-bio/bdg-sequila-doc
 fi
 
 
