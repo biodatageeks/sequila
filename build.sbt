@@ -4,7 +4,7 @@ import scala.util.Properties
 
 name := """bdg-sequila"""
 
-version := "0.5.4-spark-2.4.1-SNAPSHOT"
+version := "0.5.4-spark-2.4.1"
 
 organization := "org.biodatageeks"
 
