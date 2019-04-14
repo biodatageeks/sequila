@@ -42,6 +42,7 @@ case class BDGSAMRecord(sampleId: String,
 trait BDGAlignFileReaderWriter [T <: BDGAlignInputFormat]{
 
 
+
 //  val bdgSerialize = new BDGSerializer()
   //val serializer = new BDGFastSerializer()
   val confMap = new mutable.HashMap[String,String]()
@@ -104,32 +105,66 @@ trait BDGAlignFileReaderWriter [T <: BDGAlignInputFormat]{
 
     spark
       .sparkContext
-      .hadoopConfiguration.set(SAMHeaderReader.VALIDATION_STRINGENCY_PROPERTY, ValidationStringency.SILENT.toString)
+      .hadoopConfiguration.set(SAMHeaderReader.VALIDATION_STRINGENCY_PROPERTY, ValidationStringency.LENIENT.toString)
   }
 
-  def readBAMFile(@transient sqlContext: SQLContext, path: String)(implicit c: ClassTag[T]) = {
+  def readBAMFile(@transient sqlContext: SQLContext, path: String, refPath: Option[String] = None)(implicit c: ClassTag[T]) = {
 
+    val logger =  Logger.getLogger(this.getClass.getCanonicalName)
     setLocalConf(sqlContext)
     setConf("spark.biodatageeks.bam.intervals","") //FIXME: disabled PP
     setHadoopConf(sqlContext)
 
 
+
+
     val spark = sqlContext
       .sparkSession
     val resolvedPath = BDGTableFuncs.getExactSamplePath(spark,path)
+//    val folderPath = BDGTableFuncs.getParentFolderPath(spark,path)
+    logger.info(s"######## Reading ${resolvedPath} or ${path}")
+    val alignReadMethod = spark.sqlContext.getConf(BDGInternalParams.IOReadAlignmentMethod,"hadoopBAM").toLowerCase
+    logger.info(s"######## Using ${alignReadMethod} for reading alignment files.")
 
-    if(!spark.sqlContext.getConf("spark.biodatageeks.bam.useSparkBAM","false").toBoolean)
-      spark.sparkContext
-        .newAPIHadoopFile[LongWritable, SAMRecordWritable, T](path)
-        .map(r => r._2.get())
-    else{
-      import spark_bam._, hammerlab.path._
-      val bamPath = Path(resolvedPath)
-      spark
-        .sparkContext
-        .loadReads(bamPath)
+    alignReadMethod match {
+      case "hadoopbam" => {
+        logger.info(s"Using Intel GKL inflater: ${BDGInternalParams.UseIntelGKL}")
+        spark.sparkContext
+          .newAPIHadoopFile[LongWritable, SAMRecordWritable, T](path)
+          .map(r => r._2.get())
+      }
+      case "sparkbam" => {
+        import spark_bam._, hammerlab.path._
+        val bamPath = Path(resolvedPath)
+        spark
+          .sparkContext
+          .loadReads(bamPath)
+      }
+
+      case "disq" => {
+        import org.disq_bio.disq.HtsjdkReadsRddStorage
+
+        refPath match {
+          case Some(ref) => {
+          HtsjdkReadsRddStorage
+            .makeDefault(sqlContext.sparkContext)
+            .validationStringency(ValidationStringency.LENIENT)
+            .referenceSourcePath(ref)
+            .read(resolvedPath)
+            .getReads
+            .rdd
+          }
+          case None => {
+            HtsjdkReadsRddStorage
+              .makeDefault(sqlContext.sparkContext)
+              .validationStringency(ValidationStringency.LENIENT)
+              .read(resolvedPath)
+              .getReads
+              .rdd
+          }
+          }
+        }
     }
-
 
   }
 
@@ -275,7 +310,7 @@ class BDGAlignmentRelation[T <:BDGAlignInputFormat](path:String, refPath:Option[
       sqlContext
         .sparkContext
         .hadoopConfiguration
-        .set(CRAMInputFormat.REFERENCE_SOURCE_PATH_PROPERTY,p)
+        .set(CRAMBDGInputFormat.REFERENCE_SOURCE_PATH_PROPERTY,p)
     }
     case _ => None
   }

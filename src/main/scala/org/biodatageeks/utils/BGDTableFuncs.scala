@@ -26,6 +26,11 @@ object BDGTableFuncs{
     statuses.head.getPath.toString
   }
 
+  def getParentFolderPath(spark: SparkSession, path: String): String = {
+    val fs = FileSystem.get(spark.sparkContext.hadoopConfiguration)
+    (new org.apache.hadoop.fs.Path(path)).getParent.toString
+  }
+
   def getAllSamples(spark: SparkSession, path:String) = {
     val fs = FileSystem.get(spark.sparkContext.hadoopConfiguration)
     val statuses = fs.globStatus(new org.apache.hadoop.fs.Path(path))

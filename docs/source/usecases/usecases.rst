@@ -707,3 +707,52 @@ Simple Multisample analyses
     .option("header", "true")
     .option("delimiter", "\t")
     .csv("/data/input/fc.txt")
+
+
+Nanopore long reads from WGS analyses
+#####################################
+
+.. code-block:: bash
+
+    imwiewior@cdh00:/data/work/nanopore_bam/minimap> hdfs dfs  -du -h  /data/granges/nanopore/* | grep sorted
+    130.9 G  261.9 G  /data/granges/nanopore/NA12878-Albacore2.1.sorted.bam
+    126.5 G  253.0 G  /data/granges/nanopore/rel5-guppy-0.3.0-chunk10k.sorted.bam
+    51.2 M   102.4 M  /data/granges/nanopore/rel5-guppy-0.3.0-chunk10k.sorted.bam.bai
+
+
+
+.. code-block:: scala
+
+  import org.apache.spark.sql.SequilaSession
+  import org.biodatageeks.utils.{SequilaRegister, UDFRegister,BDGInternalParams}
+
+
+  val ss = SequilaSession(spark)
+  SequilaRegister.register(ss)
+  /*enable disq support*/
+  ss.sqlContext.setConf("spark.biodatageeks.readAligment.method", "disq")
+
+  /* WGS -bases-blocks*/
+  ss.sql("""
+  CREATE TABLE IF NOT EXISTS reads_nanopore
+  USING org.biodatageeks.datasources.BAM.BAMDataSource
+  OPTIONS(path '/data/granges/nanopore/*sorted*.bam')
+  """.stripMargin)
+
+  ss.sql("select distinct sampleId from reads_nanopore").show
+
+    +--------------------------------+
+    |                        sampleId|
+    +--------------------------------+
+    |      NA12878-Albacore2.1.sorted|
+    |rel5-guppy-0.3.0-chunk10k.sorted|
+    +--------------------------------+
+
+
+  /*Albacore mapper*/
+  spark.time{
+  ss.sql(s"SELECT * FROM bdg_coverage('reads_nanopore','NA12878-Albacore2.1.sorted', 'blocks')").write.format("parquet").save("/tmp/NA12878-Albacore2.1.sorted.parquet")}
+
+  /*guppy mapper*/
+  spark.time{
+  ss.sql(s"SELECT * FROM bdg_coverage('reads_nanopore','rel5-guppy-0.3.0-chunk10k.sorted', 'blocks')").write.format("parquet").save("/tmp/rel5-guppy-0.3.0-chunk10k.sorted.parquet")}

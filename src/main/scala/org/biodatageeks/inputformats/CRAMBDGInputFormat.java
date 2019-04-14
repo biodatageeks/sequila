@@ -83,7 +83,7 @@ public class CRAMBDGInputFormat extends BDGAlignInputFormat {
 
     @Override
     public RecordReader<LongWritable, SAMRecordWritable> createRecordReader(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
-        RecordReader<LongWritable, SAMRecordWritable> rr = new org.seqdoop.hadoop_bam.CRAMBDGRecordReader();
+        RecordReader<LongWritable, SAMRecordWritable> rr = new CRAMRecordReader();
         rr.initialize(split, context);
         return rr;
     }

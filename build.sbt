@@ -1,14 +1,16 @@
+import sbtassembly.AssemblyPlugin.autoImport.ShadeRule
+
 import scala.util.Properties
 
 name := """bdg-sequila"""
 
-version := "0.5.3-spark-2.4.0-SNAPSHOT"
+version := "0.5.4-spark-2.4.1-SNAPSHOT"
 
 organization := "org.biodatageeks"
 
 scalaVersion := "2.11.8"
 
-val DEFAULT_SPARK_2_VERSION = "2.4.0"
+val DEFAULT_SPARK_2_VERSION = "2.4.1"
 val DEFAULT_HADOOP_VERSION = "2.6.5"
 
 
@@ -16,7 +18,7 @@ lazy val sparkVersion = Properties.envOrElse("SPARK_VERSION", DEFAULT_SPARK_2_VE
 lazy val hadoopVersion = Properties.envOrElse("SPARK_HADOOP_VERSION", DEFAULT_HADOOP_VERSION)
 
 
-
+libraryDependencies += "org.seqdoop" % "hadoop-bam" % "7.10.0"
 
 dependencyOverrides += "com.google.guava" % "guava" % "15.0"
 libraryDependencies += "org.apache.hadoop" % "hadoop-client" % hadoopVersion
@@ -39,7 +41,7 @@ libraryDependencies += "org.rogach" %% "scallop" % "3.1.2"
 
 libraryDependencies += "org.hammerlab.bdg-utils" %% "cli" % "0.3.0"
 
-libraryDependencies += "com.github.samtools" % "htsjdk" % "2.18.2"
+libraryDependencies += "com.github.samtools" % "htsjdk" % "2.19.0"
 
 
 libraryDependencies += "ch.cern.sparkmeasure" %% "spark-measure" % "0.13" excludeAll (ExclusionRule("org.apache.hadoop"))
@@ -60,6 +62,8 @@ libraryDependencies += "org.apache.derby" % "derbyclient" % "10.14.2.0"
 
 
 libraryDependencies += "org.biodatageeks" % "bdg-performance_2.11" % "0.2-SNAPSHOT" excludeAll (ExclusionRule("org.apache.hadoop"))
+
+libraryDependencies += "org.disq-bio" % "disq" % "0.3.0"
 
 
 
@@ -93,6 +97,17 @@ resolvers ++= Seq(
   "Cloudera" at "https://repository.cloudera.com/content/repositories/releases/",
   "Hortonworks" at "http://repo.hortonworks.com/content/repositories/releases/"
 )
+
+//logLevel in assembly := Level.Debug
+
+//fix for hdtsdjk patch in hadoop-bam and disq
+assemblyShadeRules in assembly := Seq(
+  ShadeRule.rename("htsjdk.samtools.SAMRecordHelper" -> "htsjdk.samtools.SAMRecordHelperDisq").inLibrary("org.disq-bio" % "disq" % "0.3.0"),
+  ShadeRule.rename("htsjdk.samtools.SAMRecordHelper" -> "htsjdk.samtools.SAMRecordHelperHadoopBAM").inLibrary("org.seqdoop" % "hadoop-bam" % "7.10.0")
+
+)
+
+
 
 
 assemblyMergeStrategy in assembly := {

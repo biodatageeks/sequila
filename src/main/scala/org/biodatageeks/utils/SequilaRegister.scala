@@ -22,6 +22,9 @@ object SequilaRegister {
       .sparkContext
       .hadoopConfiguration
       .setInt("mapred.max.split.size", spark.sqlContext.getConf(BDGInternalParams.InputSplitSize,"134217728").toInt)
+    spark
+      .sqlContext
+      .setConf(BDGInternalParams.IOReadAlignmentMethod,"hadoopBAM")
   }
 
 }

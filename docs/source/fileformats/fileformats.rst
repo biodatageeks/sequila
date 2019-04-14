@@ -307,6 +307,8 @@ In order to start using optimized Intel inflater library you need simply to set 
     ss.sqlContext.setConf("spark.biodatageeks.bam.useGKLInflate","true")
     ss.sql(...)
 
+Swappable alignment file reading mechanism
+====================================================================
 
 
 ADAM

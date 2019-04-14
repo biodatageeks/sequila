@@ -307,7 +307,6 @@ public class BAMBDGInputFormat
                 .setOption(SamReaderFactory.Option.EAGERLY_DECODE, false)
                 .setUseAsyncIo(false);
         if(conf.get(INFLATE_FACTORY) != null && conf.get(INFLATE_FACTORY).equalsIgnoreCase("intel_gkl")){
-            System.out.println("Using Intel GKL Inflater");
             IntelInflaterFactory intelDeflaterFactory =  new IntelInflaterFactory();
             readerFactory.inflaterFactory(intelDeflaterFactory);
         }

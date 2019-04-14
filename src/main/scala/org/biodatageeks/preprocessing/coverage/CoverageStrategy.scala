@@ -1,5 +1,6 @@
 package org.biodatageeks.preprocessing.coverage
 
+import org.apache.log4j.Logger
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions.{Attribute, UnsafeProjection}
@@ -8,7 +9,7 @@ import org.apache.spark.sql.execution.SparkPlan
 import org.apache.spark.sql._
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.unsafe.types.UTF8String
-import org.biodatageeks.datasources.BAM.{BDGAlignFileReaderWriter}
+import org.biodatageeks.datasources.BAM.BDGAlignFileReaderWriter
 import org.biodatageeks.datasources.BDGInputDataType
 import org.biodatageeks.inputformats.BDGAlignInputFormat
 import org.biodatageeks.utils.{BDGInternalParams, BDGTableFuncs}
@@ -87,8 +88,15 @@ case class BDGCoveragePlan [T<:BDGAlignInputFormat](plan: LogicalPlan, spark: Sp
       .dropRight(1) ++ Array(s"${sampleId}*.${fileExtension}"))
       .mkString("/")
 
-    setLocalConf(spark.sqlContext)
-    lazy val alignments = readBAMFile(spark.sqlContext, samplePath)
+
+
+    val refPath = sqlContext
+      .sparkContext
+      .hadoopConfiguration
+      .get(CRAMBDGInputFormat.REFERENCE_SOURCE_PATH_PROPERTY)
+    val logger =  Logger.getLogger(this.getClass.getCanonicalName)
+      logger.info(s"Processing ${samplePath} with reference: ${refPath}")
+    lazy val alignments = readBAMFile(spark.sqlContext, samplePath, if( refPath == null || refPath.length == 0) None else Some(refPath))
 
     val filterFlag = spark.sqlContext.getConf(BDGInternalParams.filterReadsByFlag, "1796").toInt
 

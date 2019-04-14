@@ -21,4 +21,12 @@ object BDGInternalParams {
   final val RDDEventsName = "spark.biodatageeks.events"
 
   final val InputSplitSize = "spark.biodatageeks.bam.splitSize"
+
+
+  /*disq support*/
+  final val IOReadAlignmentMethod = "spark.biodatageeks.readAligment.method"
+
+  /*Intel GKL support */
+  final val UseIntelGKL = "spark.biodatageeks.bam.useGKLInflate"
+
 }
