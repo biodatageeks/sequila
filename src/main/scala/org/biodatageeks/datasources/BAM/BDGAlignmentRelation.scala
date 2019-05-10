@@ -125,6 +125,7 @@ trait BDGAlignFileReaderWriter [T <: BDGAlignInputFormat]{
     logger.info(s"######## Reading ${resolvedPath} or ${path}")
     val alignReadMethod = spark.sqlContext.getConf(BDGInternalParams.IOReadAlignmentMethod,"hadoopBAM").toLowerCase
     logger.info(s"######## Using ${alignReadMethod} for reading alignment files.")
+    logger.info(s"######## Using inputformat: ${c.toString()}")
 
     alignReadMethod match {
       case "hadoopbam" => {

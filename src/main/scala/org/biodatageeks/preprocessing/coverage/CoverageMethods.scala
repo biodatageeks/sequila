@@ -16,8 +16,6 @@ abstract class AbstractCovRecord {
   def start: Int
   def end: Int
   //def cov: T
-
-
 }
 
 
@@ -91,20 +89,28 @@ object CoverageMethodsMos {
             while(cigarIterator.hasNext){
               val cigarElement = cigarIterator.next()
               val cigarOpLength = cigarElement.getLength
-              currCigarLength += cigarOpLength
               val cigarOp = cigarElement.getOperator
+              // add to cigarlen depending on operator
+              if (cigarOp == CigarOperator.M || cigarOp == CigarOperator.X || cigarOp == CigarOperator.EQ ||cigarOp == CigarOperator.N || cigarOp == CigarOperator.D)
+                currCigarLength += cigarOpLength
               if (cigarOp == CigarOperator.M || cigarOp == CigarOperator.X || cigarOp == CigarOperator.EQ) {
                 eventOp(position,contigStartStopPartMap(s"${contig}_start"),contig,contigEventsMap,true) //Fixme: use variable insteaad of lookup to a map
                 position += cigarOpLength
                 eventOp(position,contigStartStopPartMap(s"${contig}_start"),contig,contigEventsMap,false)
               }
               else  if (cigarOp == CigarOperator.N || cigarOp == CigarOperator.D) position += cigarOpLength
+              //else  position += cigarOpLength
             }
-            if(currCigarLength > cigarMap(contig)) cigarMap(contig) = currCigarLength
+            if(currCigarLength > cigarMap(contig)) {
+//              logger.warn(s"#### change of maxcigar ${cigarMap(contig)} -> $currCigarLength for read start:${read.getStart}, end: ${read.getEnd} ")
+              cigarMap(contig) = currCigarLength
+
+            }
 
           }
         }
-        lazy val output = contigEventsMap
+
+        lazy val output = contigEventsMap // cut-off last zeroes
           .map(r=>
           {
             var maxIndex = 0
@@ -114,7 +120,8 @@ object CoverageMethodsMos {
               if(r._2._1(i) != 0) maxIndex = i
               i +=1
             }
-            (r._1,(r._2._1.slice(0,maxIndex+1),r._2._2,r._2._2+maxIndex,r._2._4,cigarMap(r._1)) )// add max cigarLength // add first read index
+            (r._1,(r._2._1.slice(0,maxIndex+1),r._2._2, r._2._2+maxIndex ,r._2._4, cigarMap(r._1)) )// add max cigarLength // add first read index
+            //contig, cov[], start, maxpos, contiglen , maxcigar
           }
           )
         output.iterator
@@ -269,34 +276,52 @@ object CoverageMethodsMos {
 
 
   def upateContigRange(b:Broadcast[UpdateStruct],covEvents: RDD[(String,(Array[Short],Int,Int,Int,Int))]) = {
-   covEvents.map{
+    logger.info(s"### covEvents count ${covEvents.count()}")
+
+   val newCovEvents = covEvents.map {
      c => {
+       logger.debug (s"updating partition ${c._1}, ${c._2._2}")
        val upd = b.value.upd
        val shrink = b.value.shrink
        val(contig,(eventsArray,minPos,maxPos,contigLength,maxCigarLength)) = c // to REFACTOR
+       var eventsArrMutable = eventsArray
+       logger.debug(s"#### Update Partition: $contig, min=$minPos max=$maxPos len:${eventsArray.length} span: ${maxPos-minPos} ")
 
-       val updArray = upd.get( (contig,minPos) ) match { // check if there is a value for contigName and minPos in upd, returning array of coverage and cumSum to update current contigRange
-         case Some((arr,covSum)) => { // array of covs and cumSum
+       val updArray = upd.get((contig, minPos)) match { // check if there is a value for contigName and minPos in upd, returning array of coverage and cumSum to update current contigRange
+         case Some((arr, covSum)) => { // array of covs and cumSum
            arr match {
              case Some(overlapArray) => {
+               if (overlapArray.length > eventsArray.length) {
+                 eventsArrMutable = eventsArray ++ Array.fill[Short](overlapArray.length - eventsArray.length)(0) // extend array
+                 // logger.warn(s"Overlap longer than events arr. Updating array in ev_len=${eventsArrMutable.length}, ov_len=${overlapArray.length}")
+               }
+
                var i = 0
-               eventsArray(i) = (eventsArray(i) + covSum).toShort // add cumSum to zeroth element
+               logger.debug(s"$contig, min=$minPos max=$maxPos updating: ${eventsArrMutable.take(10).mkString(",")} with ${overlapArray.take(10).mkString(",")} and $covSum ")
+               eventsArrMutable(i) = (eventsArrMutable(i) + covSum).toShort // add cumSum to zeroth element
 
                while (i < overlapArray.length) {
-                 eventsArray(i) = (eventsArray(i) + overlapArray(i)).toShort
-                 i += 1
+                 try {
+                   eventsArrMutable(i) = (eventsArrMutable(i) + overlapArray(i)).toShort
+                   i += 1
+                 }
+                 catch {
+                   case e: ArrayIndexOutOfBoundsException => logger.error(s" Overlap array length: ${overlapArray.length}, events array length: ${eventsArray.length}")
+                   throw e
+                 }
                }
-               eventsArray
+               logger.debug(s"$contig, min=$minPos max=$maxPos Updated array ${eventsArrMutable.take(10).mkString(",")}")
+               eventsArrMutable
              }
              case None => {
-               eventsArray(0) = (eventsArray(0) + covSum).toShort
-               eventsArray
+               eventsArrMutable(0) = (eventsArrMutable(0) + covSum).toShort
+               eventsArrMutable
              }
            }
          }
-           case None =>{
-             eventsArray
-           }
+         case None => {
+           eventsArrMutable
+         }
        }
        val shrinkArray = shrink.get( (contig, minPos) ) match {
          case Some(len) => {
@@ -304,8 +329,10 @@ object CoverageMethodsMos {
          }
          case None => updArray
        }
+       logger.debug(s"#### End of Update Partition: $contig, min=$minPos max=$maxPos len:${eventsArray.length} span: ${maxPos-minPos}")
        (contig, (shrinkArray, minPos, maxPos, contigLength) )
      }
    }
+    newCovEvents
   }
 }

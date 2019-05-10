@@ -133,8 +133,10 @@ public class BAMBDGRecordReader
         // initialize() and Hadoop-BAM's own code that relies on
         // {@link BAMInputFormat} to call initialize() when the reader is
         // created. Therefore we add this check for the time being.
-        if(isInitialized)
+        if(isInitialized) {
+            if(in != null) in.close();
             close();
+        }
         isInitialized = true;
         reachedEnd = false;
 

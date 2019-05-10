@@ -4,13 +4,13 @@ import scala.util.Properties
 
 name := """bdg-sequila"""
 
-version := "0.5.4-spark-2.4.1"
+version := "0.5.5-spark-2.4.2-SNAPSHOT"
 
 organization := "org.biodatageeks"
 
 scalaVersion := "2.11.8"
 
-val DEFAULT_SPARK_2_VERSION = "2.4.1"
+val DEFAULT_SPARK_2_VERSION = "2.4.2"
 val DEFAULT_HADOOP_VERSION = "2.6.5"
 
 
@@ -103,7 +103,7 @@ resolvers ++= Seq(
 //fix for hdtsdjk patch in hadoop-bam and disq
 assemblyShadeRules in assembly := Seq(
   ShadeRule.rename("htsjdk.samtools.SAMRecordHelper" -> "htsjdk.samtools.SAMRecordHelperDisq").inLibrary("org.disq-bio" % "disq" % "0.3.0"),
-  ShadeRule.rename("htsjdk.samtools.SAMRecordHelper" -> "htsjdk.samtools.SAMRecordHelperHadoopBAM").inLibrary("org.seqdoop" % "hadoop-bam" % "7.10.0")
+  ShadeRule.rename("htsjdk.samtools.SAMRecordHelper" -> "htsjdk.samtools.SAMRecordHelperHadoopBAM").inLibrary("org.seqdoop" % "hadoop-bam" % "7.10.0").inProject
 
 )
 

@@ -13,7 +13,7 @@ The operation of joining two data sets is expressed in SQL as standard non-equi 
 
 .. code-block:: scala
 
-	// query where chromsome information is not included in the join condition
+	// query where chromosome information is not included in the join condition
    val query = 
       s"""
         |SELECT * 
@@ -22,7 +22,7 @@ The operation of joining two data sets is expressed in SQL as standard non-equi 
         """
    val res = ss.sql(query)
 
-	// query where chromsome information is included in the join condition
+	// query where chromosome information is included in the join condition
    val queryChrom = 
         s"""
         |SELECT * 

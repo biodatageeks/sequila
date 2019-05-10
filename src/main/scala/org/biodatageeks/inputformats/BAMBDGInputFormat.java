@@ -233,7 +233,7 @@ public class BAMBDGInputFormat
         final SeekableStream sin =
                 WrapSeekable.openPath(path.getFileSystem(cfg), path);
 
-        final BAMSplitGuesser guesser = new BAMSplitGuesser(sin, cfg);
+        final org.seqdoop.hadoop_bam.BAMBDGSplitGuesser guesser = new org.seqdoop.hadoop_bam.BAMBDGSplitGuesser(sin, cfg);
 
         FileVirtualSplit previousSplit = null;
 
@@ -246,6 +246,7 @@ public class BAMBDGInputFormat
             long end = beg + fspl.getLength();
 
             long alignedBeg = guesser.guessNextBAMRecordStart(beg, end);
+
 
             // As the guesser goes to the next BGZF block before looking for BAM
             // records, the ending BGZF blocks have to always be traversed fully.

@@ -86,11 +86,17 @@ Example.scala
 
 .. rubric:: Release notes:
 
+0.5.5 (2019-05-01)
+ - improved long reads support
+ - added hadoop-bam support for long reads
+ - fixed errors in hadoop-bam caused by not closing IO stream
+ - bumped Apache Spark version to 2.4.2
+
 0.5.4 (2019-04-13)
  - support for Apache Spark: 2.4.1 and HDP 2.3.2.3.1.0.0-78
  - support for `disq <https://github.com/disq-bio/disq>`_ for reading BAM and CRAM files in coverage calculations
  - `swappable alignment file read mechanism <fileformats/fileformats.html#swappable-alignment-file-reading-mechanism>`_ (``spark.biodatageeks.readAligment.method`` parameter defaults to "hadoopBAM")
- - support for `long reads <usecases/usecases.html#nanopore-long-reads-from-wgs-analyses>`_ (e.g. Nanopore) using disq library
+ - initial support for `long reads <usecases/usecases.html#nanopore-long-reads-from-wgs-analyses>`_ (e.g. Nanopore) using disq library
 
 0.5
 

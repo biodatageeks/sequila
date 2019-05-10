@@ -17,7 +17,7 @@ bdg_coverage is a table-valued function that calculates depth of coverage for sp
    Have a look on our custom data source providing tabular view on BAM files :ref:`Data formats`
 
 
-It can return results in blocks (which is the default, more efficient approach), with per base granularity or  avarage coverage in fixed-length windows.
+It can return results in blocks (which is the default, more efficient approach), with per base granularity or average coverage in fixed-length windows.
 
 
 Below you can find end-to-end code snippet from BAM file to calculating coverage.
