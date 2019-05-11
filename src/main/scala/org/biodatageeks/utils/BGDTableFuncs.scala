@@ -34,7 +34,7 @@ object BDGTableFuncs{
   def getAllSamples(spark: SparkSession, path:String) = {
     val fs = FileSystem.get(spark.sparkContext.hadoopConfiguration)
     val statuses = fs.globStatus(new org.apache.hadoop.fs.Path(path))
-    println(statuses.length)
+    //println(statuses.length)
     statuses
       .map(_.getPath.toString.split('/').takeRight(1).head.split('.').take(1).head)
   }

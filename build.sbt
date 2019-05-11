@@ -144,11 +144,13 @@ artifact in (Compile, assembly) := {
   val art = (artifact in (Compile, assembly)).value
   art.withClassifier(Some("assembly"))
 }
+
 addArtifact(artifact in (Compile, assembly), assembly)
 
 publishConfiguration := publishConfiguration.value.withOverwrite(true)
 
 credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
+
 publishTo := {
   val nexus = "http://zsibio.ii.pw.edu.pl/nexus/repository/"
   if (isSnapshot.value)

@@ -26,18 +26,18 @@ then
 fi
 
 
-
-#echo "$annotations $output $readsFile"
 echo '
-   _____      ____        _ __                ____________
-  / ___/___  / __ \__  __(_) /   ____ _      / ____/ ____/
-  \__ \/ _ \/ / / / / / / / /   / __ `/_____/ /_  / /
- ___/ /  __/ /_/ / /_/ / / /___/ /_/ /_____/ __/ / /___
-/____/\___/\___\_\__,_/_/_____/\__,_/     /_/    \____/
+
+   _____      ____        _ __                ____        ______
+  / ___/___  / __ \__  __(_) /   ____ _      / __ \____  / ____/
+  \__ \/ _ \/ / / / / / / / /   / __ `/_____/ / / / __ \/ /
+ ___/ /  __/ /_/ / /_/ / / /___/ /_/ /_____/ /_/ / /_/ / /___
+/____/\___/\___\_\__,_/_/_____/\__,_/     /_____/\____/\____/
+
                                                           '
 echo $BDG_VERSION
 echo -e "\n"
 echo "Running with the following arguments: $appParams"
 echo "Arguments passed to Apache Spark: $sparkParams"
 echo -e "\n"
-spark-submit -v ${sparkParams} --class org.biodatageeks.apps.FeatureCounts /tmp/bdg-toolset/bdg-sequila-assembly-${BDG_VERSION}.jar  $appParams
+spark-submit ${sparkParams} --class org.biodatageeks.apps.DepthOfCoverage /tmp/bdg-toolset/bdg-sequila-assembly-${BDG_VERSION}.jar  $appParams
