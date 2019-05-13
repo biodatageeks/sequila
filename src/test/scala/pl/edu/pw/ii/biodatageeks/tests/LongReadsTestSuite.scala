@@ -45,10 +45,16 @@ class LongReadsTestSuite extends FunSuite with DataFrameSuiteBase with BeforeAnd
     val covMultiPartitionDF = session2.sql(query)
 
     //covMultiPartitionDF.coalesce(1).write.mode("overwrite").option("delimiter", "\t").csv("/Users/aga/workplace/multiPart.csv")
-    assert(covMultiPartitionDF.count() == 45842) // total count check
+    assert(covMultiPartitionDF.count() == 45620) // total count check 45620<---> 45842
+
+    assert ( covMultiPartitionDF.filter("coverage== 0" ).count==0)
+
+
     assert(covMultiPartitionDF.where("contigName='chr21' and start == 5010515").first().getShort(2) == 1) // value check [first element]
     assert(covMultiPartitionDF.where("contigName='chr21' and start == 5022667").first().getShort(2) == 15) // value check [partition boundary]
     assert(covMultiPartitionDF.where("contigName='chr21' and start == 5036398").first().getShort(2) == 14) // value check [partition boundary]
     assert(covMultiPartitionDF.where("contigName='chr21' and start == 5056356").first().getShort(2) == 1) // value check [last element]
+
   }
+
 }

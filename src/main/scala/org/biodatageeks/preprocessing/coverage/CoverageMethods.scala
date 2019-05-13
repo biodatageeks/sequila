@@ -224,15 +224,19 @@ object CoverageMethodsMos {
             cov += r._2._1(i)
 
             if (!blocksResult) {                  // per-base output
-              if (i != covArrayLength - 1) { //HACK. otherwise we get doubled CovRecords for partition boundary index
-                result(ind) = CovRecord(contig, i + posShift, i + posShift, cov.toShort)
-                ind += 1
+              if (i != covArrayLength - 1 ) { //HACK. otherwise we get doubled CovRecords for partition boundary index
+                if (allPos ||  cov != 0) { // show all positions or only non-zero
+                  result(ind) = CovRecord(contig, i + posShift, i + posShift, cov.toShort)
+                  ind += 1
+                }
               }
             } else {                              // blocks output
               if (prevCov >= 0 && prevCov != cov && i > 0) { // for the first element we do not write block
-                result(ind) = CovRecord(contig, i + posShift - blockLength, i + posShift - 1, prevCov.toShort)
-                blockLength = 0
-                ind += 1
+                if (allPos ||  prevCov != 0) { // show all positions or only non-zero
+                  result(ind) = CovRecord(contig, i + posShift - blockLength, i + posShift - 1, prevCov.toShort)
+                  blockLength = 0
+                  ind += 1
+                }
               }
               blockLength += 1
               prevCov = cov

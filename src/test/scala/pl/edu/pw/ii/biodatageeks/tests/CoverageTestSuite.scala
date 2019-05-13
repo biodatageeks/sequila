@@ -119,6 +119,8 @@ class CoverageTestSuite extends FunSuite with DataFrameSuiteBase with BeforeAndA
       val bdg = session.sql(s"SELECT * FROM bdg_coverage('${tableNameMultiBAM}','NA12878', 'blocks')")
 
       assert(bdg.count() == 12865)
+      assert ( bdg.filter("coverage== 0" ).count== 29) // count check fo zero coverage elements
+
       assert(bdg.first().get(1) == 1) // first position check (should start from 1 with ShowAllPositions = true)
       assert(bdg.where("contigName='chr1' and start == 35").first().getShort(3) == 2) // value check
       assert(bdg.where("contigName='chrM' and start == 7").first().getShort(3) == 1) // value check [partition boundary]
@@ -144,7 +146,9 @@ class CoverageTestSuite extends FunSuite with DataFrameSuiteBase with BeforeAndA
 
       val bdg = session.sql(s"SELECT *  FROM bdg_coverage('${tableNameMultiBAM}','NA12878', 'blocks')")
 
-      assert(bdg.count() == 12861) // total count check
+      assert(bdg.count() == 12836) // total count check // old value before zero_elements fix
+      assert ( bdg.filter("coverage== 0" ).count==0)
+
       assert(bdg.first().get(1) != 1) // first position check (should not start from 1 with ShowAllPositions = false)
       assert(bdg.where("contigName='chr1' and start == 35").first().getShort(3) == 2) // value check
       assert(bdg.where("contigName='chrM' and start == 7").first().getShort(3) == 1) // value check [partition boundary]
@@ -168,7 +172,9 @@ class CoverageTestSuite extends FunSuite with DataFrameSuiteBase with BeforeAndA
       spark.sqlContext.setConf(BDGInternalParams.IOReadAlignmentMethod, m)
       val bdg = session.sql(s"SELECT contigName, start, end, coverage FROM bdg_coverage('${tableNameMultiBAM}','NA12878', 'bases')")
 
-      assert(bdg.count() == 26598) // total count check // was 26598
+      assert(bdg.count() == 24898 ) // total count check // was 26598
+      assert (bdg.filter("coverage== 0" ).count==0) // total count of zero coverage elements should be zero
+
       assert(bdg.first().get(1) != 1) // first position check (should not start from 1 with ShowAllPositions = false)
       assert(bdg.where("contigName='chr1' and start == 35").first().getShort(3) == 2) // value check
       assert(bdg.where("contigName='chr1' and start == 88").first().getShort(3) == 7)
