@@ -280,7 +280,7 @@ object CoverageMethodsMos {
 
 
   def upateContigRange(b:Broadcast[UpdateStruct],covEvents: RDD[(String,(Array[Short],Int,Int,Int,Int))]) = {
-    logger.info(s"### covEvents count ${covEvents.count()}")
+    logger.debug(s"### covEvents count ${covEvents.count()}")
 
    val newCovEvents = covEvents.map {
      c => {

@@ -25,6 +25,25 @@ process and query them using a SQL interface:
     ss.sql("SELECT sampleId,contigName,start,end,cigar FROM reads").show(5)
 
 
+The BAM file can contain aligned short reads or long reads. The structure and syntax of the analyses does not depend on the lenght of reads.
+
+.. code-block:: scala
+
+    val tableNameBAM = "reads"
+    ss.sql("CREATE DATABASE BDGEEK")
+    ss.sql("USE BDGEEK")
+    ss.sql(
+      s"""
+         |CREATE TABLE ${tableNameBAM}
+         |USING org.biodatageeks.datasources.BAM.BAMDataSource
+         |OPTIONS(path "/data/input/longs/rel5-guppy-0.3.0-chunk10k.sorted.bam.bam")
+         |
+      """.stripMargin)
+    ss.sql("SELECT sampleId,contigName,start,end,cigar FROM reads").show(5)
+
+
+
+
 In case of CRAM file format you need to specify both globbed path to the CRAM files as well as path to the reference file (both *.fa and *.fa.fai)
 files should stored together in the same folder, e.g.:
 
@@ -43,6 +62,7 @@ files should stored together in the same folder, e.g.:
            |
       """.stripMargin)
     ss.sql("SELECT sampleId,contigName,start,end,cigar FROM reads_cram").show(5)
+
 
 
 
@@ -310,6 +330,16 @@ In order to start using optimized Intel inflater library you need simply to set 
 Swappable alignment file reading mechanism
 ====================================================================
 
+SeQuiLa support two methods of reading alignment files (BAM/CRAM).
+It uses hadoopBAM library by default but it can be changed to disq by using ``spark.biodatageeks.readAligment.method`` parameter as follows:
+
+.. code-block:: scala
+
+    import org.apache.spark.sql.{SequilaSession, SparkSession}
+    import org.biodatageeks.utils.SequilaRegister
+    val ss = new SequilaSession(spark)
+    SequilaRegister.register(ss)
+    ss.sqlContext.setConf("spark.biodatageeks.readAligment.method","disq")
 
 ADAM
 ****
@@ -328,3 +358,27 @@ ADAM data source can be defined in the analogues way (just requires using org.bi
          |
       """.stripMargin)
     ss.sql("SELECT sampleId,contigName,start,end,cigar FROM reads_adam").show(5)
+
+
+
+BED
+****
+Coverage information can be exported to standard BED format. Actually, calculated data can be stored in any kind of text file (csv, tsv etc). Example export command 
+
+.. code-block:: scala
+
+    val tableNameADAM = "reads_adam"
+    ss.sql("CREATE DATABASE BDGEEK")
+    ss.sql("USE BDGEEK")
+    ss.sql(
+      s"""
+         |CREATE TABLE ${tableNameADAM}
+         |USING org.biodatageeks.datasources.ADAM.ADAMDataSource
+         |OPTIONS(path "/data/input/multisample/*.bame")
+         |
+      """.stripMargin)
+    val cov = ss.sql("SELECT * FROM bdg_coverage('${tableNameBAM}','NA12878', 'blocks')")
+    cov.coalesce(1).write.mode("overwrite").option("delimiter", "\t").csv("/data/output/cov.bed")
+
+
+

@@ -87,6 +87,7 @@ WES-SN - tests performed on a single node using WES dataset
 WGS-CL - tests performed on a cluster using WGS dataset
 
 
+
 Test procedure
 **************
 To achieve reliable results test cases have been run 3 times.
@@ -285,8 +286,9 @@ mosdepth        0.2.4   using --fast-mode option
 =============   ======= ========================
 
 
-Datasets
-********
+Datasets for coverage tests
+****************************
+
 Two NGS datasets have been used in all the tests.
 WES (whole exome sequencing) and WGS (whole genome sequencing) datasets have been used for vertical and horizontal scalability
 evaluation respectively. Both of them came from sequencing of NA12878 sample that is widely used in many benchmarks.
@@ -306,11 +308,15 @@ Data        Format  Size [GB]    Row count   test data URL                      
 =========   ======  =========    ========== ========================================================================================== =====================
 WES          BAM     17          161544693  `WES BAM <http://biodatageeks.org/sequila/data/WES/NA12878.proper.wes.bam>`_                `original WES BAM <ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/technical/working/20101201_cg_NA12878/NA12878.ga2.exome.maq.recal.bam>`_
 WGS          BAM     273         2617420313 `WGS BAM <http://biodatageeks.org/sequila/data/WGS/NA12878.proper.wgs.bam>`_                `original WGS BAM <ftp://ftp-trace.ncbi.nih.gov/1000genomes/ftp/technical/working/20101201_cg_NA12878/NA12878.hiseq.wgs.bwa.recal.bam>`_
+WGS-L        BAM     127         22314075   `WGS-L BAM <http://biodatageeks.org/sequila/data/rel5-guppy-0.3.0-chunk10k.sorted.bam>`_   `original WGS-L BAM <https://s3.amazonaws.com/nanopore-human-wgs/rel5-guppy-0.3.0-chunk10k.sorted.bam>`_
 =========   ======  =========    ========== ========================================================================================== =====================
+
 
 WES - tests performed on a single node using WES dataset
 
 WGS - tests performed on a cluster using WGS dataset
+
+WGS-L - tests performed on a single node using WGS dataset (long reads)
 
 
 Test procedure
@@ -477,9 +483,17 @@ For calculating the coverage the following commands have been used:
     ss.sqlContext.setConf("spark.biodatageeks.bam.useSparkBAM","false")
     /*bases-blocks*/
   ss.sql("""
-    CREATE TABLE IF NOT EXISTS reads_exome USING org.biodatageeks.datasources.BAM.BAMDataSource OPTIONS(path '/tmp/fp16yq/data/exome/32MB/*.bam')""")
+    CREATE TABLE IF NOT EXISTS reads_exome USING org.biodatageeks.datasources.BAM.BAMDataSource OPTIONS(path '/tmp/data/exome/*.bam')""")
     spark.time{
-    ss.sql(s"SELECT * FROM bdg_coverage('reads_exome','NA12878', 'blocks', '500')").write.format("parquet").save("/tmp/fp16yq/data/32MB_w500_3.parquet") }
+    ss.sql(s"SELECT * FROM bdg_coverage('reads_exome','NA12878', 'blocks', '500')").write.format("parquet").save("/tmp/data/32MB_w500_3.parquet") }
+
+    /* long reads */
+    ss.sql("""
+      CREATE TABLE IF NOT EXISTS qreads
+      USING org.biodatageeks.datasources.BAM.BAMDataSource
+      OPTIONS(path '/data/granges/nanopore/guppy.bam')""")
+
+    ss.sql(s"SELECT contigName, start, end, coverage FROM bdg_coverage('qreads','NA12878', 'blocks')").write.mode("overwrite").option("delimiter", "\t").csv("/data/granges/nanopore/guppy_cov.bed")}
 
 
 
@@ -536,6 +550,86 @@ Detailed results are shown in the table below:
 On the image below you can find performance and scalability comparison of samtools, mosdepth and SeQuiLa-cov.
 
 .. image:: coverage.*
+
+Base level coverage performance comparison for WES dataset with samtools
+------------------------------------------------------------------------
+
+The wall-time on a single core is comparable to the Samtools’ solution. We re-confirmed the scalability of SeQuiLa-cov with the base level output and significant time reduction when executed in distributed environment 
+
+=====   ============== =============== ========
+cores   sequila(bases) sequila(blocks) samtools
+=====   ============== =============== ========
+1       17m 13s           6m 54s        12m 26s
+5        4m 17s           1m 47s          -
+10       2m 21s           1m 04s          -
+=====   ============== =============== ========
+
+
+CRAM versus BAM performance comparison for WES dataset (blocks)
+---------------------------------------------------------------
+
+We observed that timings for processing CRAM files are ~2.5 - 4 times higher than for BAM files.
+Importantly, the processing times of the coverage calculation algorithm are equal for BAMs and CRAMs, however the reading stage is significantly slower in case of the latter one. Further speedup of processing CRAM files with SeQuiLa will require significant reimplementation of the data access layer which is an important direction of our future work.
+
+
+
+=====   ============== ============
+cores   sequila(CRAM)  sequila(BAM)
+=====   ============== ============
+1        26m 27s          6m 54s
+5        4m 35s           1m 47s
+10       2m 54s           1m 04s
+25       1m 44s           0m 28s
+50       1m 15s           0m 20s
+=====   ============== ============
+
+
+Performance of saving coverage results as a single BED file
+-----------------------------------------------------------
+
+In order to get coverage reults as a single file we need to explicite use ``coalesce`` method to merge records from
+all the partitions before writing them to the storage. Such an approach causes performance degradation
+as the data cannot be written in distributed fashion. Equally, due to the fact there is only one thread used for writing, the scalability is impaired as well.
+
+.. code-block:: scala
+
+    import org.apache.spark.sql.SequilaSession
+    import org.biodatageeks.utils.{SequilaRegister, UDFRegister,BDGInternalParams}
+
+    val ss = SequilaSession(spark)
+    SequilaRegister.register(ss)
+    ss.sqlContext.setConf("spark.biodatageeks.bam.useGKLInflate","true")
+    ss.sql("""CREATE TABLE IF NOT EXISTS reads_exome USING org.biodatageeks.datasources.BAM.BAMDataSource OPTIONS(path '/data/exome/NA12878.*.bam')""")
+    spark.time { ss.sql(s"SELECT * FROM bdg_coverage('reads_exome','NA12878', 'blocks')")
+            .coalesce(1)
+            .write.mode("overwrite")
+            .option("delimiter", "\t")
+            .csv("/data/granges/exome/coverage.bed")}
+
+
+
+=====   ========================   ======================
+cores   sequila(BED,coalesce(1))   sequila(Parquet,split)
+=====   ========================   ======================
+1       11m 59s                    6m 54s
+5        4m 56s                    1m 47s
+10       4m 05s                    1m 04s
+=====   ========================   ======================
+
+
+
+Long reads support
+---------------------
+
+We have tested coverage calculation for long reads in terms of wall-time and quality of the results. We have achieved identical results with samtools when run in 'bases' mode.
+
+=====   ============== ================
+cores   samtools       sequila(blocks)
+=====   ============== ================
+1        95m 8s         83m 3s
+5                       17m 25s
+10                      9m 10s
+=====   ============== ================
 
 Discussion
 -----------

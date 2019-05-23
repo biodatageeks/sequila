@@ -707,7 +707,79 @@ Simple Multisample analyses
     .option("header", "true")
     .option("delimiter", "\t")
     .csv("/data/input/fc.txt")
+    
+Generating coverage statistics for exons with the average depth-of-coverage > 20x (running on the Hadoop cluster)
+#################################################################################
 
+1. Get the data and move them to HDFS
+
+.. code-block:: bash
+
+    mkdir /data/work/sequila_test/
+    cd /data/work/sequila_test/
+    wget http://biodatageeks.org/sequila/data/annotated_exons_hg18.bed
+    wget http://biodatageeks.org/sequila/data/NA12878.slice.bam
+    hdfs dfs -mkdir /data/sequila_test/
+    hdfs dfs -put annotated_exons_hg18.bed /data/sequila_test/
+    hdfs dfs -put NA12878.slice.bam /data/sequila_test/
+
+2. Check the data on HDFS
+
+.. code-block:: bash
+
+    hdfs dfs -ls /data/sequila_test/
+    Found 2 items
+    -rw-r--r--   2 itgambin hadoop   24993287 2019-05-20 16:55 /data/sequila_test/NA12878.slice.bam
+    -rw-r--r--   2 itgambin hadoop    6735526 2019-05-20 16:55 /data/sequila_test/annotated_exons_hg18.bed
+
+3. Run spark-shell
+
+.. code-block:: bash
+
+    cd /data/local/opt/spark-2.4.0-bin-hadoop2.7/bin
+    unset SPARK_HOME
+    ./spark-shell -v --master=yarn --deploy-mode=client --num-executors=60 --executor-memory=4g --driver-memory=12g  --conf spark.sql.catalogImplementation=in-memory --conf spark.jars.ivy=/data/local/cache/ivy2/repository --conf spark.hadoop.yarn.timeline-service.enabled=false --repositories http://zsibio.ii.pw.edu.pl/nexus/repository/maven-releases/,http://zsibio.ii.pw.edu.pl/nexus/repository/maven-snapshots/ --packages org.biodatageeks:bdg-sequila_2.11:0.5.5-spark-2.4.2-SNAPSHOT
+
+4. Calculate the coverage statistics
+
+.. code-block:: scala
+
+    /*Calculate per-base coverage for sample NA12878*/
+    import org.apache.spark.sql.SequilaSession
+    import org.biodatageeks.utils.{SequilaRegister, UDFRegister,BDGInternalParams}
+    val ss = SequilaSession(spark)
+    SequilaRegister.register(ss)
+    ss.sqlContext.setConf("spark.biodatageeks.bam.useGKLInflate","true")
+    ss.sqlContext.setConf("spark.biodatageeks.bam.useSparkBAM","false")
+
+    /*Calculate per-base coverage for sample NA12878*/
+    ss.sql("""CREATE TABLE IF NOT EXISTS reads_exome USING org.biodatageeks.datasources.BAM.BAMDataSource OPTIONS(path '/data/sequila_test/*.bam')""")
+    val coverage_bases = ss.sql(s" SELECT * FROM bdg_coverage('reads_exome','NA12878', 'bases')") 
+    coverage_bases.registerTempTable( "coverage_bases")
+
+    /*Read BED file with exon definitions*/
+    val targets = spark.read.format("csv").option("header", true).option("inferSchema", true).option("delimiter", "\t").load("/data/sequila_test/annotated_exons_hg18.bed") 
+    targets.registerTempTable( "targets")
+
+    /*Calculate, total number of reads within each target, as well as min, max and average coverage*/
+    var q=""" SELECT t.chr, t.start, t.stop, t.gene, count(*) as cnt, min(c.coverage) as min_cov, round(avg(c.coverage),4) as avg_cov, max(c.coverage) as max_cov FROM coverage_bases c  JOIN targets t
+    ON (t.chr=c.contigName AND c.end >=t.start AND c.start <= t.stop)
+    GROUP BY t.chr,t.start,t.stop,t.gene
+    HAVING avg_cov > 20
+    ORDER BY t.chr, t.start"""
+    val covAgg = sql(q)
+    covAgg.show(5)
+    
+    +----+------+------+------------+---+-------+---------+-------+                 
+    | chr| start|  stop|        gene|cnt|min_cov|  avg_cov|max_cov|
+    +----+------+------+------------+---+-------+---------+-------+
+    |chr1| 20138| 20294|   NR_036051|157|    181| 622.0127|    923|
+    |chr1| 58932| 59892|NM_001005484|946|      1|1279.2209|   3209|
+    |chr1|218096|218217|           .|122|     74| 368.3852|    549|
+    |chr1|218334|218574|           .|241|     92| 340.3402|    536|
+    |chr1|357510|358471|NM_001005224|962|    374|1418.1362|   2341|
+    +----+------+------+------------+---+-------+---------+-------+
+    only showing top 5 rows
 
 Nanopore long reads from WGS analyses
 #####################################
@@ -749,10 +821,10 @@ Nanopore long reads from WGS analyses
     +--------------------------------+
 
 
-  /*Albacore mapper*/
+  /*Albacore base caller*/
   spark.time{
   ss.sql(s"SELECT * FROM bdg_coverage('reads_nanopore','NA12878-Albacore2.1.sorted', 'blocks')").write.format("parquet").save("/tmp/NA12878-Albacore2.1.sorted.parquet")}
 
-  /*guppy mapper*/
+  /*guppy base caller*/
   spark.time{
   ss.sql(s"SELECT * FROM bdg_coverage('reads_nanopore','rel5-guppy-0.3.0-chunk10k.sorted', 'blocks')").write.format("parquet").save("/tmp/rel5-guppy-0.3.0-chunk10k.sorted.parquet")}

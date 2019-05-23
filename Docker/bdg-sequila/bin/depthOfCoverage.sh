@@ -6,8 +6,10 @@ sparkParams=`echo $@ | sed 's/-- /|/g' | cut -f1 -d'|'`
 readsFile=`echo ${@:$#}`
 
 substr="master"
+
 if case ${sparkParams} in *"${substr}"*) true;; *) false;; esac; then
-    echo "Master specified"
+    #echo "Master specified"
+    echo
  else
     echo "Master not specified, adding --master=local[*]"
     master=" --master local[*] "
@@ -17,11 +19,10 @@ if case ${sparkParams} in *"${substr}"*) true;; *) false;; esac; then
 
 outfile=`echo $appParams | sed -n "s/^.*-o \([^ ]*\) .*$/\1/p"`
 
-echo "Checking output directory " $outfile
 
 if [ -e "$outfile" ]
 then
-    echo "Output directory already exists, please remove"
+    echo "Output already exists, please remove"
     exit 1;
 fi
 
@@ -41,3 +42,11 @@ echo "Running with the following arguments: $appParams"
 echo "Arguments passed to Apache Spark: $sparkParams"
 echo -e "\n"
 spark-submit ${sparkParams} --class org.biodatageeks.apps.DepthOfCoverage /tmp/bdg-toolset/bdg-sequila-assembly-${BDG_VERSION}.jar  $appParams
+
+if [ -e "$outfile" ]; then
+    mv ${outfile}/part*  ${outfile}_tmp;
+    rm -rf $outfile;
+    mv ${outfile}_tmp $outfile;
+fi
+
+

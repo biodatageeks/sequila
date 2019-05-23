@@ -38,7 +38,7 @@ object DepthOfCoverage {
 
     spark
       .sparkContext
-      .setLogLevel("WARN")
+      .setLogLevel("ERROR")
 
     spark
       .sparkContext
@@ -49,19 +49,15 @@ object DepthOfCoverage {
     SequilaRegister.register(ss)
 
 
-    ss.sql(s"""CREATE TABLE IF NOT EXISTS reads  USING org.biodatageeks.datasources.BAM.BAMDataSource  OPTIONS(path '${runConf.reads()}')""")
+    ss.sql(s"""CREATE TABLE IF NOT EXISTS reads_tmp  USING org.biodatageeks.datasources.BAM.BAMDataSource  OPTIONS(path '${runConf.reads()}')""")
 
-    val sample = ss.sql(s"SELECT DISTINCT (sampleId) from reads").first().get(0)
-    println(s"Input file: ${runConf.reads()}")
-    println(s"Format: ${runConf.format()}")
-    println(s"Sample: $sample")
+    val sample = ss.sql(s"SELECT DISTINCT (sampleId) from reads_tmp").first().get(0)
 
 
-    val query = "SELECT * FROM bdg_coverage('reads', '%s', '%s')".format(sample, runConf.format())
-
+    val query = "SELECT * FROM bdg_coverage('reads_tmp', '%s', '%s')".format(sample, runConf.format())
 
     ss.sql(query)
-      .orderBy("contigName", "start")
+      .orderBy("contigName","start")
       .coalesce(1)
       .write
         .mode("overwrite")

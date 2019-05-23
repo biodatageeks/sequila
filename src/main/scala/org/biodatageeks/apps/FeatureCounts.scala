@@ -50,7 +50,7 @@ object FeatureCounts {
       |GROUP BY targets.GeneId,targets.Chr,targets.Start,targets.End,targets.Strand""".stripMargin
       spark
         .sparkContext
-        .setLogLevel("WARN")
+        .setLogLevel("ERROR")
 
       spark
         .sparkContext

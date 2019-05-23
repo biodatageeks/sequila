@@ -57,39 +57,14 @@ sparklyr-sequila     `<https://github.com/ZSI-Bio/bdg-sparklyr-sequila/>`_
 Docker Hub           `<https://hub.docker.com/r/biodatageeks/|project_name|/>`_
 =================   =====================================================================
 
-.. rubric:: Using SeQuiLa in your Scala code :
-
-
-build.sbt
-
-.. code-block:: scala
-
-    libraryDependencies +=  "org.biodatageeks" % "|project_name|_2.11" % "|version|"
-
-    resolvers +=  "biodatageeks-releases" at "https://zsibio.ii.pw.edu.pl/nexus/repository/maven-releases/"
-    resolvers +=  "biodatageeks-snapshots" at "https://zsibio.ii.pw.edu.pl/nexus/repository/maven-snapshots/"
-
-Example.scala
-
-.. code-block:: scala
-
-    import org.biodatageeks.utils.{SequilaRegister, UDFRegister}
-    import org.apache.spark.sql.SequilaSession
-    import org.apache.spark.sql.SparkSession
-
-    val spark = SparkSession.builder()
-        .getOrCreate()
-    val ss = new SequilaSession(spark)
-    SequilaRegister.register(ss)
-    UDFRegister.register(ss)
-    ss.sql(...)
 
 .. rubric:: Release notes:
 
-0.5.5 (2019-05-01)
- - improved long reads support
+0.5.5 (2019-05-22)
+ - improved algorithm for long reads support
  - added hadoop-bam support for long reads
  - fixed errors in hadoop-bam caused by not closing IO stream
+ - standardizing ``showAllPositions`` parameter, leading to reduced output size
  - bumped Apache Spark version to 2.4.2
 
 0.5.4 (2019-04-13)

@@ -161,6 +161,10 @@ If an overlap is identified then the coverage values from the preceding ``partia
     Distributed event-based algorithm.
 
 
+.. note::
+
+   The described above algorithm is simplified. In the more general case (specifically when dealing with long reads), overlaps may occur between any number of partitions (more than two) and the overlap length can be bigger than partition length. 
+
 
 Implementation and optimizations
 ----------------------------------

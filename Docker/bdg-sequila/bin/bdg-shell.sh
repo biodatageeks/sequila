@@ -15,11 +15,12 @@ echo '
 echo $BDG_VERSION
 echo -e "\n"
 if [[ $3 != 'build' ]]; then
-spark-shell -i /tmp/bdg-toolset/bdginit.scala --packages org.biodatageeks:bdg-sequila_2.11:${BDG_VERSION} \
-  --conf spark.sql.warehouse.dir=/home/bdgeek/spark-warehouse \
-  --repositories https://zsibio.ii.pw.edu.pl/nexus/repository/maven-releases/,https://zsibio.ii.pw.edu.pl/nexus/repository/maven-snapshots/  $@
+#spark-shell -i /tmp/bdg-toolset/bdginit.scala --packages org.biodatageeks:bdg-sequila_2.11:${BDG_VERSION} \
+#  --conf spark.sql.warehouse.dir=/home/bdgeek/spark-warehouse \
+#  --repositories https://zsibio.ii.pw.edu.pl/nexus/repository/maven-releases/,https://zsibio.ii.pw.edu.pl/nexus/repository/maven-snapshots/  $@
 #--conf spark.jars.ivySettings=/tmp/ivy.xml
+spark-shell -i /tmp/bdg-toolset/bdginit.scala --jars /tmp/bdg-toolset/bdg-sequila-assembly-${BDG_VERSION}.jar \
+  --conf spark.sql.warehouse.dir=/home/bdgeek/spark-warehouse  $@
 else
-  spark-shell -i /tmp/bdg-toolset/bdginit.scala --packages org.biodatageeks:bdg-sequila_2.11:${BDG_VERSION} \
-  --repositories https://zsibio.ii.pw.edu.pl/nexus/repository/maven-releases/,https://zsibio.ii.pw.edu.pl/nexus/repository/maven-snapshots/  $@
+  spark-shell -i /tmp/bdg-toolset/bdginit.scala --jars /tmp/bdg-toolset/bdg-sequila-assembly-${BDG_VERSION}.jar  $@
 fi
