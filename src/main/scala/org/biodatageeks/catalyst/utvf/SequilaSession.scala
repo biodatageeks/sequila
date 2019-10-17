@@ -68,7 +68,7 @@ object UTVFRegister {
 //
 //    spark
 //      .sql("select * from range(1,2)")
-//        .explain(true)
+//        .explain(true
 
     //val conf: SparkConf = new SparkConf().setMaster("local[*]").setAppName("sparkathon")
     //val context: SparkContext = new SparkContext(conf)

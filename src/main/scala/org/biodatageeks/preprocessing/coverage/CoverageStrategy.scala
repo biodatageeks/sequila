@@ -96,7 +96,7 @@ case class BDGCoveragePlan [T<:BDGAlignInputFormat](plan: LogicalPlan, spark: Sp
       logger.info(s"Processing ${samplePath} with reference: ${refPath}")
     lazy val alignments = readBAMFile(spark.sqlContext, samplePath, if( refPath == null || refPath.length == 0) None else Some(refPath))
 
-    val filterFlag = spark.sqlContext.getConf(BDGInternalParams.filterReadsByFlag, "1796").toInt
+    val filterFlag = spark.conf.get(BDGInternalParams.filterReadsByFlag, "1796").toInt
 
     lazy val events = CoverageMethodsMos.readsToEventsArray(alignments,filterFlag)
 

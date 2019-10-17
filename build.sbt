@@ -4,13 +4,13 @@ import scala.util.Properties
 
 name := """bdg-sequila"""
 
-version := "0.5.5-spark-2.4.2"
+version := "0.5.6-spark-2.4.3"
 
 organization := "org.biodatageeks"
 
 scalaVersion := "2.11.8"
 
-val DEFAULT_SPARK_2_VERSION = "2.4.2"
+val DEFAULT_SPARK_2_VERSION = "2.4.3"
 val DEFAULT_HADOOP_VERSION = "2.6.5"
 
 
@@ -63,13 +63,16 @@ libraryDependencies += "org.apache.derby" % "derbyclient" % "10.14.2.0"
 
 libraryDependencies += "org.biodatageeks" % "bdg-performance_2.11" % "0.2-SNAPSHOT" excludeAll (ExclusionRule("org.apache.hadoop"))
 
-libraryDependencies += "org.disq-bio" % "disq" % "0.3.0"
+libraryDependencies += "org.disq-bio" % "disq" % "0.3.3"
+
+libraryDependencies += "com.lifeomic" % "spark-vcf" % "0.3.2"
 
 
 
 
 fork := true
 fork in Test := true
+
 //parallelExecution in Test := false
 //javaOptions in Test += "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=9999"
 //javaOptions in run += "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=9999"

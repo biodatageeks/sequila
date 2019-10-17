@@ -374,11 +374,38 @@ Coverage information can be exported to standard BED format. Actually, calculate
       s"""
          |CREATE TABLE ${tableNameADAM}
          |USING org.biodatageeks.datasources.ADAM.ADAMDataSource
-         |OPTIONS(path "/data/input/multisample/*.bame")
+         |OPTIONS(path "/data/input/multisample/*.bam")
          |
       """.stripMargin)
     val cov = ss.sql("SELECT * FROM bdg_coverage('${tableNameBAM}','NA12878', 'blocks')")
     cov.coalesce(1).write.mode("overwrite").option("delimiter", "\t").csv("/data/output/cov.bed")
 
 
+VCF
+****
+
+
+.. code-block:: scala
+
+    val tableNameVCF = "test_vcf"
+    ss.sql("CREATE DATABASE BDGEEK")
+    ss.sql("USE BDGEEK")
+    ss.sql(
+      s"""
+         |CREATE TABLE ${tableNameVCF}
+         |USING org.biodatageeks.datasources.VCF.VCFDataSource
+         |OPTIONS(path "/data/input/vcf/*.vcf")
+         |
+      """.stripMargin)
+   ss.sql(s"SELECT * FROM ${tableNameVCF} LIMIT 5").show(false)
+
+    +------+-----+-----+-----+---------+---+---+----+------+--------------------+---+---+---+-----+---------+
+    |contig|  pos|start| stop|       id|ref|alt|qual|filter|                info| gt| gq| dp|   hq|sample_id|
+    +------+-----+-----+-----+---------+---+---+----+------+--------------------+---+---+---+-----+---------+
+    |    20|14370|14369|14370|rs6054257|  G|  A|  29|  PASS|[ns -> 3, db -> D...|0|0| 48|  1|51,51|  NA00001|
+    |    20|14370|14369|14370|rs6054257|  G|  A|  29|  PASS|[ns -> 3, db -> D...|1|0| 48|  8|51,51|  NA00002|
+    |    20|14370|14369|14370|rs6054257|  G|  A|  29|  PASS|[ns -> 3, db -> D...|1/1| 43|  5|  .,.|  NA00003|
+    |    20|17330|17329|17330|        .|  T|  A|   3|   q10|[ns -> 3, dp -> 1...|0|0| 49|  3|58,50|  NA00001|
+    |    20|17330|17329|17330|        .|  T|  A|   3|   q10|[ns -> 3, dp -> 1...|0|1|  3|  5| 65,3|  NA00002|
+    +------+-----+-----+-----+---------+---+---+----+------+--------------------+---+---+---+-----+---------+
 
