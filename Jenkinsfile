@@ -91,6 +91,9 @@ node {
 
     populateGlobalVariables()
  try {
+          stage('Package sequila-py') {
+                sh 'bash -c "source /sequila/bin/activate && cd python && python3.6 setup.py sdist bdist_wheel &&  twine check dist/* && twine upload -r zsibio dist/* && deactivate"'
+             }
            stage('Test Scala code') {
 
                     echo 'Testing Scala code....'
