@@ -78,7 +78,7 @@ If using in Scala outside bdg-shell then you need first register the UDFs as fol
 
 .. code-block:: scala
 
-    import org.biodatageeks.utils.{SequilaRegister, UDFRegister}
+    import org.biodatageeks.sequila.utils.{SequilaRegister, UDFRegister}
     import org.apache.spark.sql.SequilaSession
     import org.apache.spark.sql.SparkSession
 
@@ -218,7 +218,7 @@ bdg_coverage is a function that calculates depth of coverage for specified sampl
    ss.sql(
       s"""
          |CREATE TABLE ${tableNameBAM}
-         |USING org.biodatageeks.datasources.BAM.BAMDataSource
+         |USING org.biodatageeks.sequila.datasources.BAM.BAMDataSource
          |OPTIONS(path "${bamPath}")
          |
     """.stripMargin)
@@ -279,7 +279,7 @@ ss is a SequilaSession object created as follows:
 
 .. code-block:: scala
 
-    import org.biodatageeks.utils.{SequilaRegister, UDFRegister}
+    import org.biodatageeks.sequila.utils.{SequilaRegister, UDFRegister}
     import org.apache.spark.sql.SequilaSession
     import org.apache.spark.sql.SparkSession
 

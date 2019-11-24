@@ -18,7 +18,7 @@ process and query them using a SQL interface:
     ss.sql(
       s"""
          |CREATE TABLE ${tableNameBAM}
-         |USING org.biodatageeks.datasources.BAM.BAMDataSource
+         |USING org.biodatageeks.sequila.datasources.BAM.BAMDataSource
          |OPTIONS(path "/data/input/multisample/*.bam")
          |
       """.stripMargin)
@@ -35,7 +35,7 @@ The BAM file can contain aligned short reads or long reads. The structure and sy
     ss.sql(
       s"""
          |CREATE TABLE ${tableNameBAM}
-         |USING org.biodatageeks.datasources.BAM.BAMDataSource
+         |USING org.biodatageeks.sequila.datasources.BAM.BAMDataSource
          |OPTIONS(path "/data/input/longs/rel5-guppy-0.3.0-chunk10k.sorted.bam.bam")
          |
       """.stripMargin)
@@ -57,7 +57,7 @@ files should stored together in the same folder, e.g.:
     spark.sql(
         s"""
            |CREATE TABLE ${tableNameCRAM}
-           |USING org.biodatageeks.datasources.BAM.CRAMDataSource
+           |USING org.biodatageeks.sequila.datasources.BAM.CRAMDataSource
            |OPTIONS(path "${cramPath}", refPath "${refPath}")
            |
       """.stripMargin)
@@ -79,7 +79,7 @@ Create table as select
     ss
       .sql(
         s"""
-          |CREATE TABLE IF NOT EXISTS bam_ctas USING org.biodatageeks.datasources.BAM.BAMDataSource
+          |CREATE TABLE IF NOT EXISTS bam_ctas USING org.biodatageeks.sequila.datasources.BAM.BAMDataSource
           |OPTIONS(path "/data/ctas/*.bam")
           |AS SELECT * FROM reads WHERE sampleId='NA12878'
         """.stripMargin)
@@ -95,7 +95,7 @@ Explain plan:
          +- 'Project [*]
             +- 'Filter ('sampleId = NA12878)
                +- SubqueryAlias reads
-                  +- Relation[sampleId#2,contigName#3,start#4,end#5,cigar#6,mapq#7,baseq#8,reference#9,flags#10,materefind#11,SAMRecord#12] org.biodatageeks.datasources.BAM.BDGAlignmentRelation@14b3ba01
+                  +- Relation[sampleId#2,contigName#3,start#4,end#5,cigar#6,mapq#7,baseq#8,reference#9,flags#10,materefind#11,SAMRecord#12] org.biodatageeks.sequila.datasources.BAM.BDGAlignmentRelation@14b3ba01
 
 
 Insert table as select
@@ -115,11 +115,11 @@ Explain plan:
 
    == Physical Plan ==
     ExecutedCommand
-   +- InsertIntoBAMDataSourceCommand Relation[sampleId#121,contigName#122,start#123,end#124,cigar#125,mapq#126,baseq#127,reference#128,flags#129,materefind#130,SAMRecord#131] org.biodatageeks.datasources.BAM.BDGAlignmentRelation@60fd33fe, false, reads
+   +- InsertIntoBAMDataSourceCommand Relation[sampleId#121,contigName#122,start#123,end#124,cigar#125,mapq#126,baseq#127,reference#128,flags#129,materefind#130,SAMRecord#131] org.biodatageeks.sequila.datasources.BAM.BDGAlignmentRelation@60fd33fe, false, reads
          +- 'Project [*]
             +- 'Filter ('sampleId = NA12878)
              +- SubqueryAlias reads
-               +- Relation[sampleId#110,contigName#111,start#112,end#113,cigar#114,mapq#115,baseq#116,reference#117,flags#118,materefind#119,SAMRecord#120] org.biodatageeks.datasources.BAM.BDGAlignmentRelation@765fc5be18
+               +- Relation[sampleId#110,contigName#111,start#112,end#113,cigar#114,mapq#115,baseq#116,reference#117,flags#118,materefind#119,SAMRecord#120] org.biodatageeks.sequila.datasources.BAM.BDGAlignmentRelation@765fc5be18
 
 Insert overwrite table as select
 --------------------------------
@@ -139,13 +139,13 @@ Explain plan:
 
   == Physical Plan ==
     ExecutedCommand
-   +- InsertIntoBAMDataSourceCommand Relation[sampleId#228,contigName#229,start#230,end#231,cigar#232,mapq#233,baseq#234,reference#235,flags#236,materefind#237,SAMRecord#238] org.biodatageeks.datasources.BAM.BDGAlignmentRelation@2afa03c8, true, reads
+   +- InsertIntoBAMDataSourceCommand Relation[sampleId#228,contigName#229,start#230,end#231,cigar#232,mapq#233,baseq#234,reference#235,flags#236,materefind#237,SAMRecord#238] org.biodatageeks.sequila.datasources.BAM.BDGAlignmentRelation@2afa03c8, true, reads
          +- 'GlobalLimit 10
             +- 'LocalLimit 10
                +- 'Project [*]
                   +- SubqueryAlias reads
                    +- 'Filter ('sampleId = NA12878)
-                     +- Relation[sampleId#217,contigName#218,start#219,end#220,cigar#221,mapq#222,baseq#223,reference#224,flags#225,materefind#226,SAMRecord#227] org.biodatageeks.datasources.BAM.BDGAlignmentRelation@140ae9941
+                     +- Relation[sampleId#217,contigName#218,start#219,end#220,cigar#221,mapq#222,baseq#223,reference#224,flags#225,materefind#226,SAMRecord#227] org.biodatageeks.sequila.datasources.BAM.BDGAlignmentRelation@140ae9941
 
 Implicit partition pruning for BAM data source
 ========================================================
@@ -174,7 +174,7 @@ mechanism to speed up queries that are restricted to only subset of samples from
      ss.sql(
       s"""
          |CREATE TABLE ${tableNameBAM}
-         |USING org.biodatageeks.datasources.BAM.BAMDataSource
+         |USING org.biodatageeks.sequila.datasources.BAM.BAMDataSource
          |OPTIONS(path "${bamPath}")
          |
       """.stripMargin)
@@ -213,14 +213,14 @@ Then you can create a new SeQuiLa table over this folder:
 .. code-block:: scala
 
     import org.apache.spark.sql.SequilaSession
-    import org.biodatageeks.utils.{SequilaRegister, UDFRegister}
+    import org.biodatageeks.sequila.utils.{SequilaRegister, UDFRegister}
 
     val ss = SequilaSession(spark)
     /*inject bdg-granges strategy*/
     SequilaRegister.register(ss)
 
     ss.sql("""
-    CREATE TABLE reads_exome USING org.biodatageeks.datasources.BAM.BAMDataSource
+    CREATE TABLE reads_exome USING org.biodatageeks.sequila.datasources.BAM.BAMDataSource
     OPTIONS(path '/data/NA12878.ga2.exome.*.bam')
     """.stripMargin)
 
@@ -321,7 +321,7 @@ In order to start using optimized Intel inflater library you need simply to set 
 .. code-block:: scala
 
     import org.apache.spark.sql.{SequilaSession, SparkSession}
-    import org.biodatageeks.utils.SequilaRegister
+    import org.biodatageeks.sequila.utils.SequilaRegister
     val ss = new SequilaSession(spark)
     SequilaRegister.register(ss)
     ss.sqlContext.setConf("spark.biodatageeks.bam.useGKLInflate","true")
@@ -336,14 +336,14 @@ It uses hadoopBAM library by default but it can be changed to disq by using ``sp
 .. code-block:: scala
 
     import org.apache.spark.sql.{SequilaSession, SparkSession}
-    import org.biodatageeks.utils.SequilaRegister
+    import org.biodatageeks.sequila.utils.SequilaRegister
     val ss = new SequilaSession(spark)
     SequilaRegister.register(ss)
     ss.sqlContext.setConf("spark.biodatageeks.readAligment.method","disq")
 
 ADAM
 ****
-ADAM data source can be defined in the analogues way (just requires using org.biodatageeks.datasources.ADAM.ADAMDataSource), e.g. :
+ADAM data source can be defined in the analogues way (just requires using org.biodatageeks.sequila.datasources.ADAM.ADAMDataSource), e.g. :
 
 .. code-block:: scala
 
@@ -353,7 +353,7 @@ ADAM data source can be defined in the analogues way (just requires using org.bi
     ss.sql(
       s"""
          |CREATE TABLE ${tableNameADAM}
-         |USING org.biodatageeks.datasources.ADAM.ADAMDataSource
+         |USING org.biodatageeks.sequila.datasources.ADAM.ADAMDataSource
          |OPTIONS(path "/data/input/multisample/*.adam")
          |
       """.stripMargin)
@@ -373,7 +373,7 @@ Coverage information can be exported to standard BED format. Actually, calculate
     ss.sql(
       s"""
          |CREATE TABLE ${tableNameADAM}
-         |USING org.biodatageeks.datasources.ADAM.ADAMDataSource
+         |USING org.biodatageeks.sequila.datasources.ADAM.ADAMDataSource
          |OPTIONS(path "/data/input/multisample/*.bam")
          |
       """.stripMargin)
@@ -393,7 +393,7 @@ VCF
     ss.sql(
       s"""
          |CREATE TABLE ${tableNameVCF}
-         |USING org.biodatageeks.datasources.VCF.VCFDataSource
+         |USING org.biodatageeks.sequila.datasources.VCF.VCFDataSource
          |OPTIONS(path "/data/input/vcf/*.vcf")
          |
       """.stripMargin)

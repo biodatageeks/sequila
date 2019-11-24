@@ -1,7 +1,7 @@
 
 
-import org.biodatageeks.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
-import org.biodatageeks.rangejoins.common.metrics.MetricsCollector
+import org.biodatageeks.sequila.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
+import org.biodatageeks.sequila.rangejoins.common.metrics.MetricsCollector
 
 val reads = spark.read.parquet("/data/granges/NA12878.hiseq.wgs.bwa.recal.adam")
 reads.createOrReplaceTempView("reads")
@@ -49,7 +49,7 @@ mc.runAndCollectMetrics(
 
 
 /*bdg-granges - NCList*/
-import org.biodatageeks.rangejoins.NCList.NCListsJoinStrategy
+import org.biodatageeks.sequila.rangejoins.NCList.NCListsJoinStrategy
 spark.experimental.extraStrategies = new NCListsJoinStrategy(spark) :: Nil
 val mc = new  MetricsCollector(spark,metricsTable)
 mc.runAndCollectMetrics(
@@ -60,7 +60,7 @@ mc.runAndCollectMetrics(
 )
 
 /*genap*/
-import org.biodatageeks.rangejoins.genApp.IntervalTreeJoinStrategy
+import org.biodatageeks.sequila.rangejoins.genApp.IntervalTreeJoinStrategy
 spark.experimental.extraStrategies =  new IntervalTreeJoinStrategy(spark) :: Nil
 val mc = new  MetricsCollector(spark,metricsTable)
 mc.runAndCollectMetrics(

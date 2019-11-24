@@ -1,5 +1,5 @@
 import org.apache.spark.sql.SequilaSession
-import org.biodatageeks.utils.{SequilaRegister, UDFRegister}
+import org.biodatageeks.sequila.utils.{SequilaRegister, UDFRegister}
 
 /*set params*/
 
@@ -30,6 +30,6 @@ SequilaRegister.register(ss)
 ss.sql(
   """
     |CREATE TABLE IF NOT EXISTS reads
-    |USING org.biodatageeks.datasources.BAM.BAMDataSource
+    |USING org.biodatageeks.sequila.datasources.BAM.BAMDataSource
     |OPTIONS(path "/data/input/bams/*.bam")
   """.stripMargin)

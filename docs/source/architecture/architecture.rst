@@ -109,7 +109,7 @@ Firstly, we provide a tabular view on the input data, through custom SQL-like da
 
     -- create table read_set
     CREATE TABLE read_set 
-    USING org.biodatageeks.org.biodatageeks.datasources.BAM.BAMDataSource 
+    USING org.biodatageeks.org.biodatageeks.sequila.datasources.BAM.BAMDataSource
     OPTIONS (path '/data/samples/*.bam'); 
 
     -- sample SQL query on read_set

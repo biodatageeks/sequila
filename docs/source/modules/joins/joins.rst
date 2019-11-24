@@ -146,7 +146,7 @@ ss is a SequilaSession object created as follows:
 
 .. code-block:: scala
 
-    import org.biodatageeks.utils.{SequilaRegister, UDFRegister}
+    import org.biodatageeks.sequila.utils.{SequilaRegister, UDFRegister}
     import org.apache.spark.sql.SequilaSession
     import org.apache.spark.sql.SparkSession
 

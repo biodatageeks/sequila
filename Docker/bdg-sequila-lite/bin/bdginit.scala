@@ -1,5 +1,5 @@
 import org.apache.spark.sql.SequilaSession
-import org.biodatageeks.utils.{SequilaRegister, UDFRegister}
+import org.biodatageeks.sequila.utils.{SequilaRegister, UDFRegister}
 
 /*set params*/
 

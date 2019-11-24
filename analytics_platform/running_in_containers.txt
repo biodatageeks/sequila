@@ -18,6 +18,6 @@ SELECT * from bdg_grange('chr2',1,1);
 
 #create a table
 CREATE TABLE reads
-USING org.biodatageeks.datasources.BAM.BAMDataSource
+USING org.biodatageeks.sequila.datasources.BAM.BAMDataSource
 OPTIONS(path "/data/input/bams/*.bam");
 

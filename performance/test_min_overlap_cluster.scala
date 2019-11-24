@@ -1,8 +1,8 @@
 
 
-import org.biodatageeks.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
-import org.biodatageeks.rangejoins.common.metrics.MetricsCollector
-import org.biodatageeks.rangejoins.methods.transformations.RangeMethods
+import org.biodatageeks.sequila.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
+import org.biodatageeks.sequila.rangejoins.common.metrics.MetricsCollector
+import org.biodatageeks.sequila.rangejoins.methods.transformations.RangeMethods
 
 val reads = spark.read.parquet("/data/granges/NA12878.hiseq.wgs.bwa.recal.adam")
 reads.createOrReplaceTempView("reads")

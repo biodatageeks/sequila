@@ -91,7 +91,7 @@ Load input data to SeQuiLa
     sequila_sql(ss,query="USE sequila")
 
     #create a BAM data source with reads
-    sequila_sql(ss,'reads','CREATE TABLE reads USING org.biodatageeks.datasources.BAM.BAMDataSource OPTIONS(path "/data/*bam")')
+    sequila_sql(ss,'reads','CREATE TABLE reads USING org.biodatageeks.sequila.datasources.BAM.BAMDataSource OPTIONS(path "/data/*bam")')
 
     # Check out the reads
     sequila_sql(ss, query= "select * from reads limit 10")
@@ -350,7 +350,7 @@ Load input data to SeQuila
     sequila_sql(ss,query="USE sequila")
 
     #create a BAM data source with reads
-    sequila_sql(ss,'reads','CREATE TABLE reads USING org.biodatageeks.datasources.BAM.BAMDataSource OPTIONS(path "/data/*bam")')
+    sequila_sql(ss,'reads','CREATE TABLE reads USING org.biodatageeks.sequila.datasources.BAM.BAMDataSource OPTIONS(path "/data/*bam")')
 
     # Check out the reads
 	sequila_sql(ss, query="select count(distinct sampleId) from reads"))
@@ -629,7 +629,7 @@ Simple Multisample analyses
     spark.sql(
       s"""
          |CREATE TABLE ${tableNameBAM}
-         |USING org.biodatageeks.datasources.BAM.BAMDataSource
+         |USING org.biodatageeks.sequila.datasources.BAM.BAMDataSource
          |OPTIONS(path "/data/input/multisample/*.bam")
          |
       """.stripMargin)
@@ -746,14 +746,14 @@ Generating coverage statistics for exons with the average depth-of-coverage > 20
 
     /*Calculate per-base coverage for sample NA12878*/
     import org.apache.spark.sql.SequilaSession
-    import org.biodatageeks.utils.{SequilaRegister, UDFRegister,BDGInternalParams}
+    import org.biodatageeks.sequila.utils.{SequilaRegister, UDFRegister,BDGInternalParams}
     val ss = SequilaSession(spark)
     SequilaRegister.register(ss)
     ss.sqlContext.setConf("spark.biodatageeks.bam.useGKLInflate","true")
     ss.sqlContext.setConf("spark.biodatageeks.bam.useSparkBAM","false")
 
     /*Calculate per-base coverage for sample NA12878*/
-    ss.sql("""CREATE TABLE IF NOT EXISTS reads_exome USING org.biodatageeks.datasources.BAM.BAMDataSource OPTIONS(path '/data/sequila_test/*.bam')""")
+    ss.sql("""CREATE TABLE IF NOT EXISTS reads_exome USING org.biodatageeks.sequila.datasources.BAM.BAMDataSource OPTIONS(path '/data/sequila_test/*.bam')""")
     val coverage_bases = ss.sql(s" SELECT * FROM bdg_coverage('reads_exome','NA12878', 'bases')") 
     coverage_bases.registerTempTable( "coverage_bases")
 
@@ -796,7 +796,7 @@ Nanopore long reads from WGS analyses
 .. code-block:: scala
 
   import org.apache.spark.sql.SequilaSession
-  import org.biodatageeks.utils.{SequilaRegister, UDFRegister,BDGInternalParams}
+  import org.biodatageeks.sequila.utils.{SequilaRegister, UDFRegister,BDGInternalParams}
 
 
   val ss = SequilaSession(spark)
@@ -807,7 +807,7 @@ Nanopore long reads from WGS analyses
   /* WGS -bases-blocks*/
   ss.sql("""
   CREATE TABLE IF NOT EXISTS reads_nanopore
-  USING org.biodatageeks.datasources.BAM.BAMDataSource
+  USING org.biodatageeks.sequila.datasources.BAM.BAMDataSource
   OPTIONS(path '/data/granges/nanopore/*sorted*.bam')
   """.stripMargin)
 

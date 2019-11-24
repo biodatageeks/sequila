@@ -1,7 +1,7 @@
 
 import htsjdk.samtools.ValidationStringency
 import org.apache.hadoop.io.LongWritable
-import org.biodatageeks.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
+import org.biodatageeks.sequila.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
 import org.seqdoop.hadoop_bam.{BAMInputFormat, SAMRecordWritable}
 import org.seqdoop.hadoop_bam.util.SAMHeaderReader
 

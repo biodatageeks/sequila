@@ -219,7 +219,7 @@ And inside the shell:
 
 .. code-block:: scala
 
-   import org.biodatageeks.utils.{SequilaRegister, UDFRegister}
+   import org.biodatageeks.sequila.utils.{SequilaRegister, UDFRegister}
 
    /*set params*/
 
@@ -254,7 +254,7 @@ Afterwards you can proceed with e.g. depth of coverage calculations
    ss.sql(
       s"""
          |CREATE TABLE ${tableNameBAM}
-         |USING org.biodatageeks.datasources.BAM.BAMDataSource
+         |USING org.biodatageeks.sequila.datasources.BAM.BAMDataSource
          |OPTIONS(path "${bamPath}")
          |
     """.stripMargin)
@@ -339,7 +339,7 @@ Once the spark-shell with SeQuiLa extension has been startup you can  import nec
 
 .. code-block:: scala
 
-   import org.biodatageeks.utils.{SequilaRegister, UDFRegister}
+   import org.biodatageeks.sequila.utils.{SequilaRegister, UDFRegister}
 
    /*set params*/
 
@@ -367,7 +367,7 @@ Once the spark-shell with SeQuiLa extension has been startup you can  import nec
    ss.sql(
       s"""
          |CREATE TABLE ${tableNameBAM}
-         |USING org.biodatageeks.datasources.BAM.BAMDataSource
+         |USING org.biodatageeks.sequila.datasources.BAM.BAMDataSource
          |OPTIONS(path "${bamPath}")
          |
     """.stripMargin)
@@ -405,7 +405,7 @@ In your code you need to import required classes, create and register SequilaSes
 
 .. code-block:: scala
 
-    import org.biodatageeks.utils.{SequilaRegister, UDFRegister}
+    import org.biodatageeks.sequila.utils.{SequilaRegister, UDFRegister}
     import org.apache.spark.sql.SequilaSession
     import org.apache.spark.sql.SparkSession
 

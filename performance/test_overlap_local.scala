@@ -1,7 +1,7 @@
 
 
-import org.biodatageeks.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
-import org.biodatageeks.rangejoins.common.metrics.MetricsCollector
+import org.biodatageeks.sequila.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
+import org.biodatageeks.sequila.rangejoins.common.metrics.MetricsCollector
 
 val ref = spark.read.parquet("src/test/resources/refFlat.adam")
 ref.createOrReplaceTempView("ref")

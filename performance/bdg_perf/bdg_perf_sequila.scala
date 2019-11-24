@@ -1,5 +1,5 @@
 import org.apache.spark.sql.SequilaSession
-import org.biodatageeks.utils.{SequilaRegister, UDFRegister}
+import org.biodatageeks.sequila.utils.{SequilaRegister, UDFRegister}
 import org.biodatageeks.BDGPerf
 import org.biodatageeks.BDGPerf.{BDGPerfRunner, BDGQuery, BDGTestParams}
 
@@ -25,12 +25,12 @@ val cramTable = "reads_cram"
 //preparation
 ss.sql(s"""
 CREATE TABLE IF NOT EXISTS ${bamTable}
-USING org.biodatageeks.datasources.BAM.BAMDataSource
+USING org.biodatageeks.sequila.datasources.BAM.BAMDataSource
 OPTIONS(path '${BAM_DIR}')""")
 
 ss.sql(s"""
 CREATE TABLE IF NOT EXISTS ${cramTable}
-USING org.biodatageeks.datasources.BAM.BAMDataSource
+USING org.biodatageeks.sequila.datasources.BAM.BAMDataSource
 OPTIONS(path '${CRAM_DIR}')""")
 
 //targets

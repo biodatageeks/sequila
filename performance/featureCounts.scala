@@ -3,8 +3,8 @@ import htsjdk.samtools.ValidationStringency
 import org.apache.hadoop.io.LongWritable
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.NewHadoopRDD
-import org.biodatageeks.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
-import org.biodatageeks.rangejoins.common.metrics.MetricsCollector
+import org.biodatageeks.sequila.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
+import org.biodatageeks.sequila.rangejoins.common.metrics.MetricsCollector
 import org.seqdoop.hadoop_bam.{BAMInputFormat, FileVirtualSplit, SAMRecordWritable}
 import org.seqdoop.hadoop_bam.util.SAMHeaderReader
 

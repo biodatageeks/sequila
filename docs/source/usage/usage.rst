@@ -150,7 +150,7 @@ If you would like to use our Docker image for running R analyses you can do it a
     sequila_sql(ss,query="CREATE DATABASE sequila")
     sequila_sql(ss,query="USE sequila")
     #create a BAM data source with reads
-    sequila_sql(ss,'reads','CREATE TABLE reads USING org.biodatageeks.datasources.BAM.BAMDataSource OPTIONS(path "/data/c1_10M.bam")')
+    sequila_sql(ss,'reads','CREATE TABLE reads USING org.biodatageeks.sequila.datasources.BAM.BAMDataSource OPTIONS(path "/data/c1_10M.bam")')
     #parse GTF with target regions
     sequila_sql(ss,'targets','CREATE TABLE targets_temp(Chr string, TypeDB string, Feature string, Start integer,
     End integer, t1 string, Strand string, t2 string, Gene_id_temp string ,Gene_id string)
@@ -289,7 +289,7 @@ Afterwards you can play with SQL.
 
     ---reads
     CREATE TABLE granges.NA12878_marek
-    USING org.biodatageeks.datasources.BAM.BAMDataSource
+    USING org.biodatageeks.sequila.datasources.BAM.BAMDataSource
     OPTIONS(path "/data/granges/NA12878.ga2.exome.maq.recal.bam");
 
     --targets

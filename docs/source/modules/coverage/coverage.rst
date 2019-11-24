@@ -37,7 +37,7 @@ Below you can find end-to-end code snippet from BAM file to calculating coverage
    ss.sql(
       s"""
          |CREATE TABLE ${tableNameBAM}
-         |USING org.biodatageeks.datasources.BAM.BAMDataSource
+         |USING org.biodatageeks.sequila.datasources.BAM.BAMDataSource
          |OPTIONS(path "${bamPath}")
          |
     """.stripMargin)
