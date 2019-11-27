@@ -12,6 +12,8 @@ import org.bdgenomics.utils.instrumentation.{
 import org.biodatageeks.sequila.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
 import org.biodatageeks.sequila.utils.Columns
 import org.scalatest.{BeforeAndAfter, FunSuite}
+import org.biodatageeks.formats.{Gene,Region}
+
 
 class MultisampleBAMTestSuite
     extends FunSuite
@@ -66,9 +68,9 @@ class MultisampleBAMTestSuite
         |  reads.${Columns.START} <= targets.${Columns.END}
         |)
         |GROUP BY ${Columns.SAMPLE}, targets.${Columns.CONTIG}, targets.${Columns.START}, targets.${Columns.END}
-        |HAVING ${Columns.CONTIG}='chr1' AND  ${Columns.START}=20138 AND  ${Columns.END}=20294 and ${Columns.SAMPLE}='NA12878'""".stripMargin
+        |HAVING ${Columns.CONTIG}='1' AND  ${Columns.START}=20138 AND  ${Columns.END}=20294 and ${Columns.SAMPLE}='NA12878'""".stripMargin
     val targets = spark.sqlContext
-      .createDataFrame(Array(Region("chr1", 20138, 20294)))
+      .createDataFrame(Array(Region("1", 20138, 20294)))
     targets
       .createOrReplaceTempView("targets")
     assert(spark.sql(query).first().getLong(1) === 1484L)
@@ -78,17 +80,17 @@ class MultisampleBAMTestSuite
     val ss = SequilaSession(spark)
     val query =
       s"""
-        |SELECT targets.GeneId as GeneId, targets.${Columns.CONTIG} as Chr,
+        |SELECT targets.gene_id as GeneId, targets.${Columns.CONTIG} as Chr,
         |targets.${Columns.START} as Start, targets.${Columns.END} as End, targets.${Columns.STRAND} as Strand,
         |count(*) as Counts
         |FROM targets JOIN reads on
         |(targets.${Columns.CONTIG} = reads.${Columns.CONTIG}  AND CAST(reads.${Columns.END} as Integer) >= CAST(targets.${Columns.START} as Integer)
         |AND CAST(reads.${Columns.START} as Integer) <= CAST(targets.${Columns.END} as Integer) )
-        |GROUP BY targets.GeneId, targets.${Columns.CONTIG}, targets.${Columns.START}, targets.${Columns.END}, targets.${Columns.STRAND}
+        |GROUP BY targets.gene_id, targets.${Columns.CONTIG}, targets.${Columns.START}, targets.${Columns.END}, targets.${Columns.STRAND}
       """.stripMargin
 
     val targets = ss.sqlContext
-      .createDataFrame(Array(Gene("chr1", 20138, 20294, "TestGene", "+")))
+      .createDataFrame(Array(Gene("1", 20138, 20294, "TestGene", "+")))
     targets
       .createOrReplaceTempView("targets")
 
@@ -102,7 +104,7 @@ class MultisampleBAMTestSuite
       s"""
         |SELECT ${Columns.SAMPLE}, ${Columns.START}, ${Columns.CIGAR}
         |FROM reads
-        |WHERE ${Columns.SAMPLE}='NA12879' AND ${Columns.CONTIG}='chr1'
+        |WHERE ${Columns.SAMPLE}='NA12879' AND ${Columns.CONTIG}='1'
         |LIMIT 5
       """.stripMargin
 

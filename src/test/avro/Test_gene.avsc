@@ -1,0 +1,34 @@
+{
+"type": "record",
+"name": "Gene",
+"namespace": "org.biodatageeks.formats",
+"fields": [
+    {
+        "name": "contig",
+        "type": "string",
+        "doc": "Reference sequence NAME"
+    },
+    {
+        "name": "pos_start",
+        "type": "int",
+        "doc": "1-based leftmost mapping POSition of a read"
+    },
+    {
+        "name": "pos_end",
+        "type": "int",
+        "doc": "1-based rightmost mapping POSition of a read"
+    },
+    {
+        "name": "gene_id",
+        "type": "string",
+        "doc": "Gene identifier"
+    },
+    {
+        "name": "strand",
+        "type": "string",
+        "doc": "Strand"
+    }
+]
+}
+
+

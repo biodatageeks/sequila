@@ -13,8 +13,8 @@ def register(session: SparkSession):
     assert check_argument_types()
     sparkSession = session._jvm.org.apache.spark.sql.SparkSession.builder().enableHiveSupport().getOrCreate()
     ss = session._jvm.org.apache.spark.sql.SequilaSession(sparkSession)
-    session._jvm.org.biodatageeks.utils.SequilaRegister.register(ss)
-    session._jvm.org.biodatageeks.utils.UDFRegister.register(ss)
+    session._jvm.org.biodatageeks.sequila.utils.SequilaRegister.register(ss)
+    session._jvm.org.biodatageeks.sequila.utils.UDFRegister.register(ss)
     return
 
 
@@ -24,8 +24,8 @@ class  SequilaSession (SparkSession):
 
         """
         ss = session._jvm.org.apache.spark.sql.SequilaSession(session._jsparkSession)
-        session._jvm.org.biodatageeks.utils.SequilaRegister.register(ss)
-        session._jvm.org.biodatageeks.utils.UDFRegister.register(ss)
+        session._jvm.org.biodatageeks.sequila.utils.SequilaRegister.register(ss)
+        session._jvm.org.biodatageeks.sequila.utils.UDFRegister.register(ss)
         session._jvm.SequilaSession.setDefaultSession(ss)
         sequilaSession = SequilaSession._instantiatedSession
         from pyspark.sql.context import SQLContext

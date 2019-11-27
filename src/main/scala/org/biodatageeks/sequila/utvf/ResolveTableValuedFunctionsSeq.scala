@@ -27,6 +27,7 @@ import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.catalyst.rules._
 import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.types.{StructField, _}
+import org.biodatageeks.sequila.utils.Columns
 
 
 /**
@@ -156,12 +157,12 @@ object BDGCoverage {
   def apply(tableName:String, sampleId:String, result: String, target: Option[String]): BDGCoverage = {
 
     val output = StructType(Seq(
-      StructField("contigName",StringType,nullable = true),
-      StructField("start",IntegerType,nullable = false),
-      StructField("end",IntegerType,nullable = false),
+      StructField(Columns.CONTIG,StringType,nullable = true),
+      StructField(Columns.START,IntegerType,nullable = false),
+      StructField(Columns.END,IntegerType,nullable = false),
       target match {
-        case Some(t) =>  StructField("coverage",FloatType,nullable = false)
-        case None =>     StructField("coverage",ShortType,nullable = false)
+        case Some(t) =>  StructField(Columns.COVERAGE,FloatType,nullable = false)
+        case None =>     StructField(Columns.COVERAGE,ShortType,nullable = false)
    })).toAttributes
 
     new BDGCoverage(tableName:String,sampleId.toString, result, target, output)

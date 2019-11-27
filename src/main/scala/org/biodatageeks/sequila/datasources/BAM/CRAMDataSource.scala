@@ -5,7 +5,7 @@ import org.apache.spark.sql.sources.{BaseRelation, DataSourceRegister, RelationP
 import org.seqdoop.hadoop_bam.{CRAMBDGInputFormat, CRAMInputFormat}
 
 class CRAMDataSource extends DataSourceRegister with RelationProvider {
-  override def shortName(): String = "CRAM"
+  override def shortName(): String = "cram"
 
   override def createRelation(sqlContext: SQLContext,
                               parameters: Map[String, String]): BaseRelation = {

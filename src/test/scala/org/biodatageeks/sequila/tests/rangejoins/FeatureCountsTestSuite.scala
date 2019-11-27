@@ -4,17 +4,18 @@ import com.holdenkarau.spark.testing.{DataFrameSuiteBase, SharedSparkContext}
 import htsjdk.samtools.ValidationStringency
 import org.apache.hadoop.io.LongWritable
 import org.biodatageeks.sequila.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
-import org.biodatageeks.sequila.utils.Columns
+import org.biodatageeks.sequila.utils.{Columns, DataQualityFuncs}
 import org.scalatest.{BeforeAndAfter, FunSuite}
 import org.seqdoop.hadoop_bam.util.SAMHeaderReader
 import org.seqdoop.hadoop_bam.{BAMInputFormat, SAMRecordWritable}
 
-case class Region(contig: String, start: Int, end: Int)
-case class Gene(contig: String,
-                start: Int,
-                end: Int,
-                geneId: String,
-                strand: String)
+import org.biodatageeks.formats.Region
+
+//case class Gene(contig: String,
+//                start: Int,
+//                end: Int,
+//                geneId: String,
+//                strand: String)
 
 class FeatureCountsTestSuite
     extends FunSuite
@@ -40,7 +41,7 @@ class FeatureCountsTestSuite
         |  reads.${Columns.START} <= targets.${Columns.END}
         |)
         | GROUP BY targets.${Columns.CONTIG},targets.${Columns.START},targets.${Columns.END}
-        | HAVING ${Columns.CONTIG}='chr1' AND ${Columns.START} = 20138 AND ${Columns.END} = 20294""".stripMargin
+        | HAVING ${Columns.CONTIG}='1' AND ${Columns.START} = 20138 AND ${Columns.END} = 20294""".stripMargin
 
     spark.sparkContext.hadoopConfiguration.set(
       SAMHeaderReader.VALIDATION_STRINGENCY_PROPERTY,
@@ -50,7 +51,7 @@ class FeatureCountsTestSuite
       .newAPIHadoopFile[LongWritable, SAMRecordWritable, BAMInputFormat](
         getClass.getResource("/NA12878.slice.bam").getPath)
       .map(_._2.get)
-      .map(r => Region(r.getContig, r.getStart, r.getEnd))
+      .map(r => Region(DataQualityFuncs.cleanContig(r.getContig), r.getStart, r.getEnd))
 
     val reads = spark.sqlContext
       .createDataFrame(alignments)
@@ -58,7 +59,7 @@ class FeatureCountsTestSuite
     reads.createOrReplaceTempView("reads")
 
     val targets = spark.sqlContext
-      .createDataFrame(Array(Region("chr1", 20138, 20294)))
+      .createDataFrame(Array(Region("1", 20138, 20294)))
 
     targets.createOrReplaceTempView("targets")
 

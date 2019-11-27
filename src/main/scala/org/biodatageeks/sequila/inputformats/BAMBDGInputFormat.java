@@ -388,7 +388,8 @@ public class BAMBDGInputFormat
             throw new IllegalArgumentException("sequence dictionary may not be null");
         }
 
-        final int contigIndex = sequenceDictionary.getSequenceIndex(interval.getContig());
+        int cIndex = sequenceDictionary.getSequenceIndex(interval.getContig()) ;
+        final int contigIndex =  cIndex != -1 ? cIndex : sequenceDictionary.getSequenceIndex("chr"+interval.getContig());
         if ( contigIndex == -1 ) {
             throw new IllegalArgumentException("Contig " + interval.getContig() + " not present in reads sequence " +
                     "dictionary");

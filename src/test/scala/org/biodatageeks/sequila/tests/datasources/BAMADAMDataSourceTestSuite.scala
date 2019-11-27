@@ -3,14 +3,13 @@ package org.biodatageeks.sequila.tests.datasources
 import java.io.{OutputStreamWriter, PrintWriter}
 
 import com.holdenkarau.spark.testing.{DataFrameSuiteBase, SharedSparkContext}
-import org.bdgenomics.utils.instrumentation.{
-  Metrics,
-  MetricsListener,
-  RecordedMetrics
-}
-import org.biodatageeks.sequila.tests.rangejoins.Region
+import org.apache.log4j.Logger
+import org.bdgenomics.utils.instrumentation.{Metrics, MetricsListener, RecordedMetrics}
+
 import org.biodatageeks.sequila.utils.{Columns, InternalParams}
 import org.scalatest.{BeforeAndAfter, FunSuite}
+
+import org.biodatageeks.formats.Region
 
 class BAMADAMDataSourceTestSuite
     extends FunSuite
@@ -65,29 +64,14 @@ class BAMADAMDataSourceTestSuite
 
   test("BAM - select limit") {
 
+    val sqlText = s"SELECT ${Columns.CONTIG}, ${Columns.START}, ${Columns.END} FROM $tableNameBAM limit 1"
+    val log = Logger.getLogger("TEST")
+    log.warn(sqlText)
     spark
-      .sql(
-        s"SELECT ${Columns.CONTIG}, ${Columns.START}, ${Columns.END} FROM $tableNameBAM limit 1")
-      .show()
+      .sql(sqlText)
+      .printSchema()
   }
 
-  test("BAM - select * limit - skipping SAMRecord") {
-
-    assert(
-      spark
-        .sql(s"SELECT ${Columns.SAMRECORD} FROM $tableNameBAM limit 1")
-        .first()
-        .get(0) === null)
-
-    sqlContext.setConf(InternalParams.BAMCTASCmd, "true")
-
-    assert(
-      spark
-        .sql(s"SELECT ${Columns.SAMRECORD} FROM $tableNameBAM limit 1")
-        .first()
-        .get(0) != null)
-    sqlContext.setConf(InternalParams.BAMCTASCmd, "false")
-  }
 
   test("BAM - Row count ADAMDataSource2") {
     assert(
@@ -121,7 +105,7 @@ class BAMADAMDataSourceTestSuite
 
   test("IntervalTree strategy over BAMDataSource") {
     val targets = spark.sqlContext
-      .createDataFrame(Array(Region("chr1", 20138, 20294)))
+      .createDataFrame(Array(Region("1", 20138, 20294)))
     targets
       .createOrReplaceTempView("targets")
     val query =
@@ -135,7 +119,7 @@ class BAMADAMDataSourceTestSuite
         |  reads.${Columns.START} <= targets.${Columns.END}
         |)
         |GROUP BY ${Columns.SAMPLE}, targets.${Columns.CONTIG}, targets.${Columns.START}, targets.${Columns.END}
-        |HAVING ${Columns.CONTIG} = 'chr1' AND  ${Columns.START} = 20138 AND  ${Columns.END} = 20294""".stripMargin
+        |HAVING ${Columns.CONTIG} = '1' AND  ${Columns.START} = 20138 AND  ${Columns.END} = 20294""".stripMargin
 
     spark
       .sql(query)

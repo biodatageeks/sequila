@@ -2,7 +2,7 @@ package org.biodatageeks.sequila.tests.datasources
 
 import com.holdenkarau.spark.testing.{DataFrameSuiteBase, SharedSparkContext}
 import org.apache.spark.sql.SequilaSession
-import org.biodatageeks.sequila.utils.{Columns, SequilaRegister}
+import org.biodatageeks.sequila.utils.{Columns, InternalParams, SequilaRegister}
 import org.scalatest.{BeforeAndAfter, FunSuite}
 
 class BAMReaderTestSuite
@@ -31,7 +31,7 @@ class BAMReaderTestSuite
     ss.sqlContext.setConf("spark.biodatageeks.bam.predicatePushdown", "false")
 
     val query = s"""
-                       |SELECT * FROM reads WHERE ${Columns.CONTIG}='chr1' AND ${Columns.START}=20138
+                       |SELECT * FROM reads WHERE ${Columns.CONTIG}='1' AND ${Columns.START}=20138
                      """.stripMargin
     val withoutPPDF = ss.sql(query).collect()
 
@@ -53,7 +53,7 @@ class BAMReaderTestSuite
     SequilaRegister.register(ss)
     ss.sqlContext.setConf("spark.biodatageeks.bam.predicatePushdown", "false")
     val query = s"""
-                   |SELECT * FROM reads WHERE ${Columns.CONTIG}='chr1' AND ${Columns.START} >= 1996 AND ${Columns.END} <= 2071
+                   |SELECT * FROM reads WHERE ${Columns.CONTIG}='1' AND ${Columns.START} >= 1996 AND ${Columns.END} <= 2071
                  """.stripMargin
     val withoutPPDF = ss.sql(query).collect()
 
@@ -69,4 +69,41 @@ class BAMReaderTestSuite
     }
 
   }
+
+  test("Read BAM wide record"){
+    val ss = SequilaSession(spark)
+    SequilaRegister.register(ss)
+    val df = ss.sql(s"""
+                       |SELECT * FROM $tableNameBAM
+      """.stripMargin)
+    df.printSchema()
+    df.show(1,false)
+
+  }
+
+
+  test("Repartitioning") {
+    spark.sqlContext.setConf(InternalParams.InputSplitSize, "100000")
+    val ss = SequilaSession(spark)
+    SequilaRegister.register(ss)
+
+    val a = ss.sql(s"""
+                      |SELECT * FROM $tableNameBAM
+      """.stripMargin)
+    println(s"""Partitions number: ${a.rdd.partitions.length}""")
+
+  }
+
+
+
+  test("Simple select over a BAM table group by") {
+    val ss = SequilaSession(spark)
+    SequilaRegister.register(ss)
+    assert(
+      ss.sql(
+        s"SELECT ${Columns.SAMPLE},count(*) FROM $tableNameBAM group by ${Columns.SAMPLE}")
+        .first()
+        .getLong(1) === 3172)
+  }
+
 }

@@ -4,6 +4,7 @@ import htsjdk.samtools.{CigarOperator, _}
 import org.apache.log4j.Logger
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
+import org.biodatageeks.sequila.utils.DataQualityFuncs
 
 import scala.collection.mutable
 
@@ -77,7 +78,7 @@ object CoverageMethodsMos {
       while (p.hasNext) {
         val r = p.next()
         val read = r
-        val contig = read.getContig
+        val contig = DataQualityFuncs.cleanContig(read.getContig)
 
         // default value of filterFlag 1796:
         // * read unmapped (0x4)
@@ -89,7 +90,7 @@ object CoverageMethodsMos {
         if (contig != null && (read.getFlags & filterFlag) == 0) {
           if (!contigLengthMap.contains(contig)) { //FIXME: preallocate basing on header, n
             val contigLength =
-              read.getHeader.getSequence(contig).getSequenceLength
+              read.getHeader.getSequence(read.getContig).getSequenceLength
             contigLengthMap += contig -> contigLength
             contigEventsMap += contig -> (new Array[Short](
               contigLength - read.getStart + 10), read.getStart, contigLength - 1, contigLength)

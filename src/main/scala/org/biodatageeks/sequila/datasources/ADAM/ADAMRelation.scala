@@ -14,7 +14,10 @@ class ADAMRelation(path: String)(@transient val sqlContext: SQLContext)
   val spark: SparkSession = sqlContext.sparkSession
 
   private def df: DataFrame = {
-    spark.read.parquet(path).withColumnRenamed("contigName", Columns.CONTIG)
+    spark.read.parquet(path)
+      .withColumnRenamed("contigName", Columns.CONTIG)
+      .withColumnRenamed("start",Columns.START)
+      .withColumnRenamed("end", Columns.END)
 
   }
 

@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='sequila.py',
-    version='0.1.0',
+    version='0.1.1',
     packages=['sequila'],
     install_requires=[
         'typeguard==2.5.0',

@@ -4,13 +4,9 @@ import java.io.{OutputStreamWriter, PrintWriter}
 
 import com.holdenkarau.spark.testing.{DataFrameSuiteBase, SharedSparkContext}
 import org.apache.spark.sql.{SequilaSession, SparkSession}
-import org.bdgenomics.utils.instrumentation.{
-  Metrics,
-  MetricsListener,
-  RecordedMetrics
-}
+import org.bdgenomics.utils.instrumentation.{Metrics, MetricsListener, RecordedMetrics}
 import org.biodatageeks.sequila.coverage.CoverageStrategy
-import org.biodatageeks.sequila.utils.{InternalParams, SequilaRegister}
+import org.biodatageeks.sequila.utils.{Columns, InternalParams, SequilaRegister}
 import org.scalatest.{BeforeAndAfter, FunSuite}
 
 class CoverageTestSuite
@@ -97,39 +93,37 @@ class CoverageTestSuite
       val windowLength = 100
       val bdg = session.sql(
         s"SELECT * FROM bdg_coverage('$tableNameMultiBAM','NA12878', 'blocks', '$windowLength')")
-
-      bdg.printSchema()
       assert(bdg.count == 267)
       assert(bdg.first().getInt(1) % windowLength == 0) // check for fixed window start position
       assert(bdg.first().getInt(2) % windowLength == windowLength - 1) // // check for fixed window end position
       assert(
         bdg
-          .where("contigName == 'chr1' and start == 2700")
+          .where(s"${Columns.CONTIG} == '1' and ${Columns.START} == 2700")
           .first()
           .getFloat(3) == 4.65.toFloat)
       assert(
         bdg
-          .where("contigName == 'chr1' and start == 3200")
+          .where(s"${Columns.CONTIG} == '1' and ${Columns.START}  == 3200")
           .first()
           .getFloat(3) == 166.79.toFloat)
       assert(
         bdg
-          .where("contigName == 'chr1' and start == 10000")
+          .where(s"${Columns.CONTIG} == '1' and ${Columns.START} == 10000")
           .first()
           .getFloat(3) == 1.5522388.toFloat) //value check [partition boundary]
       assert(
         bdg
-          .where("contigName == 'chrM' and start == 7800")
+          .where(s"${Columns.CONTIG} == 'MT' and ${Columns.START} == 7800")
           .first()
           .getFloat(3) == 253.03001.toFloat) //value check [partition boundary]
       assert(
         bdg
-          .where("contigName == 'chrM' and start == 14400")
+          .where(s"${Columns.CONTIG} == 'MT' and ${Columns.START} == 14400")
           .first()
           .getFloat(3) == 134.7.toFloat) //value check [partition boundary]
       assert(
         bdg
-          .groupBy("contigName", "start")
+          .groupBy(s"${Columns.CONTIG}", s"${Columns.START}")
           .count()
           .where("count != 1")
           .count == 0) // no duplicates check
@@ -156,51 +150,51 @@ class CoverageTestSuite
       assert(bdg.first().get(1) == 1) // first position check (should start from 1 with ShowAllPositions = true)
       assert(
         bdg
-          .where("contigName='chr1' and start == 35")
+          .where(s"${Columns.CONTIG}='1' and ${Columns.START} == 35")
           .first()
           .getShort(3) == 2) // value check
       assert(
         bdg
-          .where("contigName='chrM' and start == 7")
+          .where(s"${Columns.CONTIG}='MT' and ${Columns.START} == 7")
           .first()
           .getShort(3) == 1) // value check [partition boundary]
       assert(
         bdg
-          .where("contigName='chrM' and start == 7881")
+          .where(s"${Columns.CONTIG}='MT' and ${Columns.START} == 7881")
           .first()
           .getShort(3) == 248) // value check [partition boundary]
       assert(
         bdg
-          .where("contigName='chrM' and start == 7882")
+          .where(s"${Columns.CONTIG}='MT' and ${Columns.START} == 7882")
           .first()
           .getShort(3) == 247) // value check [partition boundary]
       assert(
         bdg
-          .where("contigName='chrM' and start == 7883")
+          .where(s"${Columns.CONTIG}='MT' and ${Columns.START} == 7883")
           .first()
           .getShort(3) == 246) // value check [partition boundary]
       assert(
         bdg
-          .where("contigName='chrM' and start == 14402")
+          .where(s"${Columns.CONTIG}='MT' and ${Columns.START} == 14402")
           .first()
           .getShort(3) == 182) // value check [partition boundary]
       assert(
         bdg
-          .groupBy("contigName")
-          .max("end")
-          .where("contigName == 'chr1'")
+          .groupBy(s"${Columns.CONTIG}")
+          .max(Columns.END)
+          .where(s"${Columns.CONTIG} == '1'")
           .first()
           .get(1) == 247249719) // max value check
       assert(
         bdg
-          .groupBy("contigName")
-          .max("end")
-          .where("contigName == 'chrM'")
+          .groupBy(s"${Columns.CONTIG}")
+          .max(Columns.END)
+          .where(s"${Columns.CONTIG} == 'MT'")
           .first()
           .get(1) == 16571) // max value check
       assert(
         bdg
-          .groupBy("contigName", "start")
+          .groupBy(s"${Columns.CONTIG}", s"${Columns.START}")
           .count()
           .where("count != 1")
           .count == 0) // no duplicates check
@@ -226,51 +220,51 @@ class CoverageTestSuite
       assert(bdg.first().get(1) != 1) // first position check (should not start from 1 with ShowAllPositions = false)
       assert(
         bdg
-          .where("contigName='chr1' and start == 35")
+          .where(s"${Columns.CONTIG}='1' and ${Columns.START} == 35")
           .first()
           .getShort(3) == 2) // value check
       assert(
         bdg
-          .where("contigName='chrM' and start == 7")
+          .where(s"${Columns.CONTIG}='MT' and ${Columns.START} == 7")
           .first()
           .getShort(3) == 1) // value check [partition boundary]
       assert(
         bdg
-          .where("contigName='chrM' and start == 7881")
+          .where(s"${Columns.CONTIG}='MT' and ${Columns.START} == 7881")
           .first()
           .getShort(3) == 248) // value check [partition boundary]
       assert(
         bdg
-          .where("contigName='chrM' and start == 7882")
+          .where(s"${Columns.CONTIG}='MT' and ${Columns.START} == 7882")
           .first()
           .getShort(3) == 247) // value check [partition boundary]
       assert(
         bdg
-          .where("contigName='chrM' and start == 7883")
+          .where(s"${Columns.CONTIG}='MT' and ${Columns.START} == 7883")
           .first()
           .getShort(3) == 246) // value check [partition boundary]
       assert(
         bdg
-          .where("contigName='chrM' and start == 14402")
+          .where(s"${Columns.CONTIG}='MT' and ${Columns.START} == 14402")
           .first()
           .getShort(3) == 182) // value check [partition boundary]
       assert(
         bdg
-          .groupBy("contigName")
-          .max("end")
-          .where("contigName == 'chr1'")
+          .groupBy(s"${Columns.CONTIG}")
+          .max(Columns.END)
+          .where(s"${Columns.CONTIG} == '1'")
           .first()
           .get(1) == 10066) // max value check
       assert(
         bdg
-          .groupBy("contigName")
-          .max("end")
-          .where("contigName == 'chrM'")
+          .groupBy(s"${Columns.CONTIG}")
+          .max(Columns.END)
+          .where(s"${Columns.CONTIG} == 'MT'")
           .first()
           .get(1) == 16571) // max value check
       assert(
         bdg
-          .groupBy("contigName", "start")
+          .groupBy(s"${Columns.CONTIG}", s"${Columns.START}")
           .count()
           .where("count != 1")
           .count == 0) // no duplicates check
@@ -286,61 +280,61 @@ class CoverageTestSuite
     alignReadMethods.foreach { m =>
       spark.sqlContext.setConf(InternalParams.IOReadAlignmentMethod, m)
       val bdg = session.sql(
-        s"SELECT contigName, start, end, coverage FROM bdg_coverage('${tableNameMultiBAM}','NA12878', 'bases')")
+        s"SELECT ${Columns.CONTIG}, ${Columns.START}, ${Columns.END}, ${Columns.COVERAGE} FROM bdg_coverage('${tableNameMultiBAM}','NA12878', 'bases')")
 
       assert(bdg.count() == 24898) // total count check // was 26598
-      assert(bdg.filter("coverage== 0").count == 0) // total count of zero coverage elements should be zero
+      assert(bdg.filter(s"${Columns.COVERAGE}== 0").count == 0) // total count of zero coverage elements should be zero
 
       assert(bdg.first().get(1) != 1) // first position check (should not start from 1 with ShowAllPositions = false)
       assert(
         bdg
-          .where("contigName='chr1' and start == 35")
+          .where(s"${Columns.CONTIG}='1' and ${Columns.START} == 35")
           .first()
           .getShort(3) == 2) // value check
       assert(
-        bdg.where("contigName='chr1' and start == 88").first().getShort(3) == 7)
+        bdg.where(s"${Columns.CONTIG}='1' and ${Columns.START} == 88").first().getShort(3) == 7)
       assert(
         bdg
-          .where("contigName='chrM' and start == 7")
+          .where(s"${Columns.CONTIG}='MT' and ${Columns.START} == 7")
           .first()
           .getShort(3) == 1) // value check [partition boundary]
       assert(
         bdg
-          .where("contigName='chrM' and start == 7881")
+          .where(s"${Columns.CONTIG}='MT' and ${Columns.START} == 7881")
           .first()
           .getShort(3) == 248) // value check [partition boundary]
       assert(
         bdg
-          .where("contigName='chrM' and start == 7882")
+          .where(s"${Columns.CONTIG}='MT' and ${Columns.START} == 7882")
           .first()
           .getShort(3) == 247) // value check [partition boundary]
       assert(
         bdg
-          .where("contigName='chrM' and start == 7883")
+          .where(s"${Columns.CONTIG}='MT' and ${Columns.START} == 7883")
           .first()
           .getShort(3) == 246) // value check [partition boundary]
       assert(
         bdg
-          .where("contigName='chrM' and start == 14402")
+          .where(s"${Columns.CONTIG}='MT' and ${Columns.START} == 14402")
           .first()
           .getShort(3) == 182) // value check [partition boundary]
       assert(
         bdg
-          .groupBy("contigName")
-          .max("end")
-          .where("contigName == 'chr1'")
+          .groupBy(s"${Columns.CONTIG}")
+          .max(s"${Columns.END}")
+          .where(s"${Columns.CONTIG} == '1'")
           .first()
           .get(1) == 10066) // max value check
       assert(
         bdg
-          .groupBy("contigName")
-          .max("end")
-          .where("contigName == 'chrM'")
+          .groupBy(s"${Columns.CONTIG}")
+          .max(s"${Columns.END}")
+          .where(s"${Columns.CONTIG} == 'MT'")
           .first()
           .get(1) == 16571) // max value check
       assert(
         bdg
-          .groupBy("contigName", "start")
+          .groupBy(s"${Columns.CONTIG}", s"${Columns.START}")
           .count()
           .where("count != 1")
           .count == 0) // no duplicates check
@@ -358,7 +352,7 @@ class CoverageTestSuite
         s"SELECT * FROM bdg_coverage('${tableNameCRAM}','test', 'blocks') ")
 
       assert(bdg.count() == 49)
-      assert(bdg.where("start == 107").first().getShort(3) == 459)
+      assert(bdg.where(s"${Columns.START} == 107").first().getShort(3) == 459)
     }
   }
 

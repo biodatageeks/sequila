@@ -1,5 +1,8 @@
 package org.biodatageeks.sequila.rangejoins.methods.transformations
 
+import org.biodatageeks.formats.Interval
+
+
 object RangeMethods {
 
   /**
@@ -98,5 +101,5 @@ object RangeMethods {
     Interval(newStart, newStart+end-start)
   }
 
-  case class Interval(start: Int, end: Int)
+
 }
