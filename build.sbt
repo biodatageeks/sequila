@@ -65,10 +65,8 @@ libraryDependencies += "org.biodatageeks" % "bdg-performance_2.11" % "0.2-SNAPSH
 
 libraryDependencies += "org.disq-bio" % "disq" % "0.3.3"
 
-libraryDependencies += "com.lifeomic" % "spark-vcf" % "0.3.2"
 
-libraryDependencies += "org.scala-lang.modules" % "scala-java8-compat_2.11" % "0.9.0"
-
+libraryDependencies += "io.projectglow" %% "glow" % "0.1.2"
 
 avroSpecificSourceDirectories in Compile += (sourceDirectory in Compile).value / "avro/input"
 avroSpecificSourceDirectories in Test += (sourceDirectory in Test).value / "avro"
@@ -81,6 +79,8 @@ sourceGenerators in Test += (avroScalaGenerate in Test).taskValue
 avroSpecificScalaSource in Compile := new java.io.File("src/main/org/biodatageeks/formats")
 
 avroSpecificScalaSource in Test := new java.io.File("src/test/org/biodatageeks/formats")
+
+
 
 
 

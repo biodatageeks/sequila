@@ -1,0 +1,93 @@
+{
+"type": "record",
+"name": "BrowserExtensibleData",
+"namespace": "org.biodatageeks.formats",
+"fields": [
+                    {
+                        "name": "contig",
+                        "type": "string",
+                        "doc": "Reference sequence NAME"
+                    },
+                    {
+                        "name": "pos_start",
+                        "type": "int",
+                        "doc": "1-based leftmost mapping POSition of a read"
+                    },
+                    {
+                        "name": "pos_end",
+                        "type": "int",
+                        "doc": "1-based rightmost mapping POSition of a read"
+                    },
+                    {
+                        "name": "name",
+                        "type": ["string", "null"],
+                        "default": null,
+                        "doc": "Defines the name of the BED line"
+                    },
+                    {
+                        "name": "score",
+                        "type": ["int", "null"],
+                        "default": null,
+                        "doc": "A score between 0 and 1000"
+                    },
+                    {
+                        "name": "strand",
+                        "type": ["string", "null"],
+                        "default": null,
+                        "doc": "Defines the strand. Either '.' (=no strand) or '+' or '-'"
+                    },
+                    {
+                        "name": "thick_start",
+                        "type": ["int", "null"],
+                        "default": null,
+                        "doc": "The starting position at which the feature is drawn thickly (for example, the start codon in gene displays). When there is no thick part, thickStart and thickEnd are usually set to the chromStart position"
+                    },
+                    {
+                        "name": "thick_end",
+                        "type": ["int", "null"],
+                        "default": null,
+                        "doc": "The ending position at which the feature is drawn thickly (for example the stop codon in gene displays)"
+                    },
+                    {
+                        "name": "item_rgb",
+                        "type": [ "null",
+                                        {
+                                            "type":"array",
+                                            "items":"int"
+                                        }
+                                   ],
+                        "default": null,
+                        "doc": "An RGB value of the form R,G,B (e.g. 255,0,0)"
+                    },
+                    {
+                        "name": "block_count",
+                        "type": ["int", "null"],
+                        "default": null,
+                        "doc": "The number of blocks (exons) in the BED line"
+                    },
+                    {
+                        "name": "block_sizes",
+                        "type": [ "null",
+                                         {
+                                             "type":"array",
+                                             "items":"int"
+                                         }
+                                    ],
+                        "default": null,
+                        "doc": "A comma-separated list of the block sizes. The number of items in this list should correspond to blockCount"
+                    },
+                    {
+                        "name": "block_starts",
+                        "type": [ "null",
+                                         {
+                                             "type":"array",
+                                             "items":"int"
+                                         }
+                                    ],
+                        "default": null,
+                        "doc": " A comma-separated list of block starts. All of the blockStart positions should be calculated relative to chromStart. The number of items in this list should correspond to blockCount"
+                    }
+          ]
+
+
+}

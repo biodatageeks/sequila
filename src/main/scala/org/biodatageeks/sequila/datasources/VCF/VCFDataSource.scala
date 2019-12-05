@@ -9,7 +9,7 @@ class VCFDataSource extends DataSourceRegister
   override def shortName(): String = "VCF"
   override def createRelation(sqlContext: SQLContext,
                               parameters: Map[String, String]): BaseRelation = {
-    new VCFRelation(parameters("path"))(sqlContext)
+    new VCFRelation(parameters("path"),parameters.get("normalization_mode"), parameters.get("ref_genome_path"))(sqlContext)
   }
 
 }

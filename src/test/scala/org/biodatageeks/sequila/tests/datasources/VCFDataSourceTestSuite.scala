@@ -1,6 +1,7 @@
 package org.biodatageeks.sequila.tests.datasources
 
 import com.holdenkarau.spark.testing.{DataFrameSuiteBase, SharedSparkContext}
+import org.biodatageeks.sequila.utils.Columns
 import org.scalatest.{BeforeAndAfter, FunSuite}
 
 class VCFDataSourceTestSuite
@@ -27,17 +28,14 @@ class VCFDataSourceTestSuite
       .sql(query)
       .printSchema()
 
-    println(
-      spark.sparkContext.hadoopConfiguration
-        .get("hadoop.io.compression.codecs"))
-
     assert(
       spark
         .sql(query)
         .first()
-        .getString(8) === "PASS")
+        .getString(0) === "20")
 
-    assert(spark.sql(query).count() === 21L)
+    assert(spark.sql(query).count() === 7L)
+
   }
 
   after {

@@ -1,0 +1,73 @@
+{
+"type": "record",
+"name": "SequencedFragment",
+"namespace": "org.biodatageeks.formats",
+"fields": [
+         {
+                "name": "sample_id",
+                "type": "string",
+                "doc": "SAMPLE name"
+         },
+         {
+                 "name": "instrument_name",
+                 "type": "string",
+                 "doc": "the unique instrument name"
+         },
+         {
+                 "name": "run_id",
+                 "type": "int",
+                 "doc": "the run id"
+         },
+         {
+                 "name": "flowcell_id",
+                 "type": "string",
+                 "doc": "the flowcell id"
+         },
+         {
+                 "name": "lane",
+                 "type": "int",
+                 "doc": "the flowcell lane"
+         },
+         {
+                 "name": "tile",
+                 "type": "int",
+                 "doc": "tile number within the flowcell lane"
+         },
+         {
+                 "name": "pos_x",
+                 "type": "int",
+                 "doc": "'x'-coordinate of the cluster within the tile"
+         },
+         {
+                 "name": "pos_y",
+                 "type": "int",
+                 "doc": "'y'-coordinate of the cluster within the tile"
+         },
+         {
+                 "name": "filter_passed",
+                 "type": "boolean",
+                 "doc": "Y if the read is filtered, N otherwise"
+         },
+         {
+                 "name": "control_num",
+                 "type": "int",
+                 "doc": "0 when none of the control bits are on, otherwise it is an even number"
+         },
+         {
+                 "name": "index_seq",
+                 "type": "string",
+                 "doc": "index sequence"
+         },
+         {
+                "name": "seq",
+                "type": "string",
+                "doc": "segment SEQuence"
+         },
+         {
+                "name": "qual",
+                "type": "string",
+                "doc": "ASCII of Phred-scaled base QUALity+33"
+          }
+    ]
+
+}
