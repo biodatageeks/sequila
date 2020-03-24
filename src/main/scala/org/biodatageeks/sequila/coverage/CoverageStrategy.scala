@@ -24,21 +24,18 @@ class CoverageStrategy(spark: SparkSession) extends Strategy with Serializable  
 
   def apply(plan: LogicalPlan): Seq[SparkPlan] = plan match {
 
-    //add support for CRAM
-
     case BDGCoverage(tableName,sampleId,result,target,output) =>
       val inputFormat = TableFuncs
         .getTableMetadata(spark, tableName)
         .provider
       inputFormat match {
         case Some(f) =>
-
           if (f == InputDataType.BAMInputDataType)
             BDGCoveragePlan[BAMBDGInputFormat](plan, spark, tableName, sampleId,result,target, output) :: Nil
           else if (f == InputDataType.CRAMInputDataType)
             BDGCoveragePlan[CRAMBDGInputFormat](plan, spark, tableName, sampleId, result,target, output) :: Nil
           else Nil
-        case None => throw new Exception("Only BAM and CRAM file formats are supported in bdg_coverage.")
+        case None => throw new RuntimeException("Only BAM and CRAM file formats are supported in pileup function.")
       }
 
     case _ => Nil
@@ -72,6 +69,7 @@ case class BDGCoveragePlan [T<:BDGAlignInputFormat](plan: LogicalPlan, spark: Sp
     val schema = plan.schema
     val sampleTable = TableFuncs
       .getTableMetadata(spark,table)
+
     val fileExtension = sampleTable.provider match{
       case Some(f) =>
         if (f == InputDataType.BAMInputDataType) "bam"

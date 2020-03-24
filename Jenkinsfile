@@ -138,12 +138,12 @@ node {
              sh './build_docs.sh'
           }
 
-           stage('Building Docker images') {
-
-                     echo 'Building Docker images....'
-                     sh './build.sh'
-
-                     }
+//           stage('Building Docker images') {
+//
+//                     echo 'Building Docker images....'
+//                     sh './build.sh'
+//
+//                     }
 
            stage('Performance testing') {
                 sh "${tool name: 'sbt-0.13.15', type: 'org.jvnet.hudson.plugins.SbtPluginBuilder$SbtInstallation'}/bin/sbt -J-Xms2048m -J-Xmx2048m 'set test in assembly := {}' assembly"

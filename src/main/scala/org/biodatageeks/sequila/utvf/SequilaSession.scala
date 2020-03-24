@@ -70,7 +70,6 @@ object UTVFRegister {
 //      .sql("select * from range(1,2)")
 //        .explain(true
 
-    //val conf: SparkConf = new SparkConf().setMaster("local[*]").setAppName("sparkathon")
     //val context: SparkContext = new SparkContext(conf)
     val session: SparkSession = SequilaSession(spark)
     session.sparkContext.setLogLevel("INFO")

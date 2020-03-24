@@ -19,7 +19,7 @@ import org.biodatageeks.sequila.utils.{Columns, DataQualityFuncs, FastSerializer
 import org.biodatageeks.formats.{Alignment}
 import scala.reflect.runtime.universe._
 
-
+//TODO refactor rename to AlignmentsFileReaderWriter
 trait BDGAlignFileReaderWriter [T <: BDGAlignInputFormat]{
 
   val confMap = new mutable.HashMap[String,String]()

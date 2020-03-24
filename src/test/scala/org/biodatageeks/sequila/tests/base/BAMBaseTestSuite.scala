@@ -8,7 +8,7 @@ class BAMBaseTestSuite
     with DataFrameSuiteBase
     with SharedSparkContext with BeforeAndAfter{
 
-  val bamPath: String = getClass.getResource("/NA12878.slice.bam").getPath
+  val bamPath: String = getClass.getResource("/NA12878.slice.md.bam").getPath
   val tableNameBAM = "reads"
 
   before{

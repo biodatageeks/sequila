@@ -70,7 +70,7 @@ object CoverageMethodsMos {
       reads: RDD[SAMRecord],
       filterFlag: Int): RDD[(String, (Array[Short], Int, Int, Int, Int))] = {
     reads.mapPartitions { p =>
-      val contigLengthMap = new mutable.HashMap[String, Int]()
+      val contigLengthMap = new mutable.HashMap[String, Int]() // ?? Czy to jest gdzies dalej uzywane??
       val contigEventsMap =
         new mutable.HashMap[String, (Array[Short], Int, Int, Int)]()
       val contigStartStopPartMap = new mutable.HashMap[String, Int]()

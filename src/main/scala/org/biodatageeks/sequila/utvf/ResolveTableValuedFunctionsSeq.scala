@@ -84,6 +84,13 @@ object ResolveTableValuedFunctionsSeq extends Rule[LogicalPlan] {
     * Internal registry of table-valued functions.
     */
   private val builtinFunctions: Map[String, TVF] = Map(
+    "pileup" -> Map(
+      /* pileup(tableName) */
+      tvf("table" -> StringType)
+      { case Seq(table: Any) =>
+        PileupTemplate(table.toString)
+      }),
+
     "bdg_coverage" -> Map(
       /* coverage(tableName) */
       tvf("table" -> StringType, "sampleId" -> StringType, "result" -> StringType)
@@ -95,6 +102,7 @@ object ResolveTableValuedFunctionsSeq extends Rule[LogicalPlan] {
       { case Seq(table: Any,sampleId:Any, result:Any, target: Any) =>
         BDGCoverage(table.toString,sampleId.toString,result.toString, Some(target.toString))
       }),
+
     "range" -> Map(
       /* range(end) */
       tvf("end" -> LongType) { case Seq(end: Long) =>
@@ -191,5 +199,42 @@ case class BDGCoverage(tableName:String, sampleId:String, result: String, target
 
   override def simpleString: String = {
     s"BDGCoverage ('$tableName')"
+  }
+}
+
+object PileupTemplate {
+  // throwing away sampleId, we don't need it for calculations
+  // for now ignoring resultType, probably will be added later
+
+  def apply(tableName:String): PileupTemplate = {
+
+    val output = StructType(Seq(
+      StructField(Columns.CONTIG,StringType,nullable = true),
+      StructField(Columns.START,IntegerType,nullable = false),
+      StructField(Columns.REF,StringType,nullable = false),
+      StructField(Columns.COVERAGE,ShortType,nullable = false),
+      StructField(Columns.COUNT_REF,ShortType,nullable = false),
+      StructField(Columns.COUNT_NONREF,ShortType,nullable = false)
+    )).toAttributes
+
+    new PileupTemplate(tableName, output)
+  }
+}
+
+case class PileupTemplate(tableName: String, output: Seq[Attribute] )
+  extends LeafNode with MultiInstanceRelation {
+
+  override def newInstance(): PileupTemplate = copy(output = output.map(_.newInstance()))
+
+  def toSQL(): String = {
+
+    s"""
+      SELECT ${Columns.CONTIG}, ${Columns.POS}, ${Columns.REF}, ${Columns.COVERAGE}
+      AS `${output.head.name}`
+      FROM pileup('$tableName')"""
+  }
+
+  override def simpleString: String = {
+    s"PileupFunction ('$tableName')"
   }
 }
