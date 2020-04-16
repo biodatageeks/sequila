@@ -3,6 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+
+
 SeQuiLa User Guide 
 ====================
 
@@ -111,6 +113,7 @@ Docker Hub           `<https://hub.docker.com/r/biodatageeks/|project_name|/>`_
    development/development
    benchmarking/benchmarking
    citation/citation
+
 
 
 
