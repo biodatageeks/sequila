@@ -3,7 +3,7 @@ import sbtassembly.AssemblyPlugin.autoImport.ShadeRule
 import scala.util.Properties
 
 name := """bdg-sequila"""
-version := "0.6.0-spark-2.4.3-SNAPSHOT"
+version := "0.5.6-spark-2.4.3"
 organization := "org.biodatageeks"
 scalaVersion := "2.11.8"
 
