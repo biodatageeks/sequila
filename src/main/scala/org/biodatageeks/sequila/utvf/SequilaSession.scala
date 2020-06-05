@@ -1,19 +1,12 @@
 package org.apache.spark.sql
 
 
-import org.apache.spark.sql.SparkSession.Builder
-import org.apache.spark.{SparkConf, SparkContext}
-import org.apache.spark.sql.catalyst.analysis.{AliasViewChild, Analyzer, CleanupAliases, EliminateUnions, ResolveCreateNamedStruct, ResolveHints, ResolveInlineTables, ResolveTableValuedFunctions, ResolveTimeZone, SeQuiLaAnalyzer, SubstituteUnresolvedOrdinals, TimeWindowing, TypeCoercion, UpdateOuterReferences}
-import org.apache.spark.sql.catalyst.catalog.SessionCatalog
+import org.apache.spark.sql.catalyst.analysis.{Analyzer, SeQuiLaAnalyzer}
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
-import org.apache.spark.sql.catalyst.rules.Rule
 import org.apache.spark.sql.execution.QueryExecution
 //import org.apache.spark.sql.execution.command.{BAMCTASOptimizationRule, BAMIASOptimizationRule}
-import org.apache.spark.sql.internal.SQLConf
-import org.apache.spark.sql.internal.{SQLConf, SessionState}
+import org.apache.spark.sql.internal.SessionState
 import org.biodatageeks.sequila.coverage.CoverageStrategy
-
-import scala.util.Random
 
 
 
@@ -72,7 +65,6 @@ object UTVFRegister {
 
     //val context: SparkContext = new SparkContext(conf)
     val session: SparkSession = SequilaSession(spark)
-    session.sparkContext.setLogLevel("INFO")
     session.experimental.extraStrategies = new CoverageStrategy(session) :: Nil
   }
 

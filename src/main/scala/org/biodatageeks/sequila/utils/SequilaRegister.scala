@@ -33,6 +33,10 @@ object SequilaRegister {
     spark
       .sqlContext
       .setConf(InternalParams.BAMValidationStringency, ValidationStringency.LENIENT.toString)
+
+    spark
+      .sqlContext
+      .setConf(InternalParams.EnableInstrumentation, "false")
   }
 
 }

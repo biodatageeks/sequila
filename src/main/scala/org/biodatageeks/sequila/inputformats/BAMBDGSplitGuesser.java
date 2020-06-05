@@ -52,6 +52,8 @@ public class BAMBDGSplitGuesser extends BaseSplitGuesser {
     private final int                        referenceSequenceCount;
     private final SAMFileHeader              header;
 
+
+
     // We want to go through this many BGZF blocks fully, checking that they
     // contain valid BAM records, when guessing a BAM record position.
     private final static byte BLOCKS_NEEDED_FOR_GUESS = 3;

@@ -16,13 +16,20 @@ SequilaRegister.register(ss)
 
 
 
-val BAM_DIR = s"${sys.env("BGD_PERF_SEQ_BAM_DIR")}/*.bam"
+val BAM_DIR = s"${sys.env("BGD_PERF_SEQ_BAM_DIR")}/*wes.bam"
+val BAM_MD_DIR = s"${sys.env("BGD_PERF_SEQ_BAM_DIR")}/md/*wes.md.bam"
+
 val CRAM_DIR = s"${sys.env("BGD_PERF_SEQ_BAM_DIR")}/*.cram"
 val FASTA_PATH = s"${sys.env("BGD_PERF_SEQ_BAM_DIR")}/Homo_sapiens_assembly18.fasta"
 val bamTable = "reads_bam"
+val bamMdTable="reads_md_bam"
 val cramTable = "reads_cram"
 
 //preparation
+ss.sql(s"DROP TABLE IF EXISTS ${bamTable}")
+ss.sql(s"DROP TABLE IF EXISTS ${cramTable}")
+ss.sql(s"DROP TABLE IF EXISTS ${bamMdTable}")
+
 ss.sql(s"""
 CREATE TABLE IF NOT EXISTS ${bamTable}
 USING org.biodatageeks.sequila.datasources.BAM.BAMDataSource
@@ -32,6 +39,13 @@ ss.sql(s"""
 CREATE TABLE IF NOT EXISTS ${cramTable}
 USING org.biodatageeks.sequila.datasources.BAM.BAMDataSource
 OPTIONS(path '${CRAM_DIR}')""")
+
+ss.sql(s"""
+CREATE TABLE IF NOT EXISTS ${bamMdTable}
+USING org.biodatageeks.sequila.datasources.BAM.BAMDataSource
+OPTIONS(path '${BAM_MD_DIR}')""")
+
+
 
 //targets
 val  bedPath="/data/granges/tgp_exome_hg18.bed"
@@ -60,8 +74,8 @@ val queries = Array(
     """.stripMargin),
   BDGQuery("bdg_cov_window_fix_length_500_count_NA12878_BAM",s"SELECT COUNT(*) FROM bdg_coverage ('${bamTable}','NA12878', 'bases','500')"),
   BDGQuery("bdg_cov_window_fix_length_500_count_NA12878_CRAM",s"SELECT COUNT(*) FROM bdg_coverage ('${cramTable}','NA12878', 'bases','500')"),
-  BDGQuery("bdg_cov_bases_NA12878_BAM",s"SELECT COUNT(*) FROM bdg_coverage ('${bamTable}','NA12878', 'bases')"),
-  BDGQuery("bdg_pileup_cov_only_NA12878",s"SELECT COUNT(*) FROM pileup ('${bamTable}')")
+  BDGQuery("bdg_cov_bases_NA12878_BAM",s"SELECT COUNT(*) FROM bdg_coverage ('${bamTable}','NA12878', 'bases')")
+//  BDGQuery("bdg_pileup_cov_only_NA12878",s"SELECT COUNT(*) FROM pileup ('${bamMdTable}')")
 
 )
 
@@ -70,7 +84,7 @@ BDGPerfRunner.run(ss,queries)
 
 //cleanup
 ss.sql(s"""DROP TABLE IF EXISTS ${bamTable}""")
-ss.sql(s"""DROP TABLE IF EXISTS ${cramTable}""")
+ss.sql(s"""DROP TABLE IF EXISTS ${cramTable}""")  
 
 ss.sql(s"""DROP TABLE IF EXISTS targets""")
 System.exit(0)

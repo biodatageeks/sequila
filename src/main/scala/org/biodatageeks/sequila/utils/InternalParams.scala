@@ -29,4 +29,8 @@ object InternalParams {
 
   final val BAMValidationStringency = "spark.biodatageeks.bam.validation"
 
+  /*instrumentation*/
+
+  final val EnableInstrumentation = "spark.biodatageeks.instrumentation"
+
 }

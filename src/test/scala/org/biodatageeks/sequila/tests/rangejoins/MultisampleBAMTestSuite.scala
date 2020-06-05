@@ -4,15 +4,12 @@ import java.io.{OutputStreamWriter, PrintWriter}
 
 import com.holdenkarau.spark.testing.{DataFrameSuiteBase, SharedSparkContext}
 import org.apache.spark.sql.SequilaSession
-import org.bdgenomics.utils.instrumentation.{
-  Metrics,
-  MetricsListener,
-  RecordedMetrics
-}
+import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
+import org.bdgenomics.utils.instrumentation.{Metrics, MetricsListener, RecordedMetrics}
+import org.biodatageeks.sequila.apps.FeatureCounts.Region
 import org.biodatageeks.sequila.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
 import org.biodatageeks.sequila.utils.Columns
 import org.scalatest.{BeforeAndAfter, FunSuite}
-import org.biodatageeks.formats.{Gene,Region}
 
 
 class MultisampleBAMTestSuite
@@ -76,7 +73,18 @@ class MultisampleBAMTestSuite
     assert(spark.sql(query).first().getLong(1) === 1484L)
   }
 
+  case class GeneRegion(contig:String, pos_start:Int, pos_end:Int, gene_id:String, strand:String)
+
+
   test("Multisample groupby - cast issue") {
+
+    val schema = new StructType()
+      .add(StructField(Columns.CONTIG, StringType))
+      .add(StructField(Columns.START, IntegerType))
+      .add(StructField(Columns.END, IntegerType))
+      .add(StructField("gene_id", StringType))
+      .add(StructField(Columns.STRAND, StringType))
+
     val ss = SequilaSession(spark)
     val query =
       s"""
@@ -89,8 +97,10 @@ class MultisampleBAMTestSuite
         |GROUP BY targets.gene_id, targets.${Columns.CONTIG}, targets.${Columns.START}, targets.${Columns.END}, targets.${Columns.STRAND}
       """.stripMargin
 
+    import spark.implicits._
+
     val targets = ss.sqlContext
-      .createDataFrame(Array(Gene("1", 20138, 20294, "TestGene", "+")))
+      .createDataFrame(Array(GeneRegion("1", 20138, 20294, "TestGene", "+")))
     targets
       .createOrReplaceTempView("targets")
 

@@ -75,10 +75,17 @@ object CoverageMethodsMos {
         new mutable.HashMap[String, (Array[Short], Int, Int, Int)]()
       val contigStartStopPartMap = new mutable.HashMap[String, Int]()
       val cigarMap = new mutable.HashMap[String, Int]()
+      var contigIter  = ""
+      var contigCleanIter  = ""
       while (p.hasNext) {
         val r = p.next()
         val read = r
-        val contig = DataQualityFuncs.cleanContig(read.getContig)
+        val contigIn = read.getContig
+        if(contigIn != contigIter) {
+          contigCleanIter =  DataQualityFuncs.cleanContig(contigIn)
+          contigIter = contigIn
+        }
+        val contig = contigCleanIter
 
         // default value of filterFlag 1796:
         // * read unmapped (0x4)
@@ -196,7 +203,7 @@ object CoverageMethodsMos {
                            result: Array[AbstractCovRecord]): Int = {
     var indexShift = ind
     if (allPos && maxPosition == contigMax) {
-      logger.debug(
+      if (logger.isDebugEnabled()) logger.debug(
         s"Adding last block for index: $indexShift, start: $maxPosition end: $contigLength, cov: 0")
       if (blocksResult) {
         result(indexShift) = CovRecord(contig, maxPosition, contigLength, 0)
@@ -265,8 +272,8 @@ object CoverageMethodsMos {
           val result = new Array[AbstractCovRecord](
             firstBlockMaxLength + covArrayLength + lastBlockMaxLength)
 
-          logger.debug(s"$contig shift $posShift")
-          logger.debug(
+          if (logger.isDebugEnabled()) logger.debug(s"$contig shift $posShift")
+          if (logger.isDebugEnabled()) logger.debug(
             s"size: ${firstBlockMaxLength + covArrayLength + lastBlockMaxLength}")
 
           var i = 0
@@ -287,7 +294,7 @@ object CoverageMethodsMos {
               cov += r._2._1(i)
 
               if (!blocksResult) { // per-base output
-                if (i != covArrayLength - 1) { //HACK. otherwise we get doubled CovRecords for partition boundary index
+                if (i != covArrayLength - 1) {
                   if (allPos || cov != 0) { // show all positions or only non-zero
                     result(ind) =
                       CovRecord(contig, i + posShift, i + posShift, cov.toShort)
@@ -368,16 +375,16 @@ object CoverageMethodsMos {
       b: Broadcast[UpdateStruct],
       covEvents: RDD[(String, (Array[Short], Int, Int, Int, Int))])
     : RDD[(String, (Array[Short], Int, Int, Int))] = {
-    logger.debug(s"### covEvents count ${covEvents.count()}")
+    if (logger.isDebugEnabled()) logger.debug(s"### covEvents count ${covEvents.count()}")
 
     val newCovEvents = covEvents.map { c =>
       {
-        logger.debug(s"updating partition ${c._1}, ${c._2._2}")
+        if (logger.isDebugEnabled()) logger.debug(s"updating partition ${c._1}, ${c._2._2}")
         val upd = b.value.upd
         val shrink = b.value.shrink
         val (contig, (eventsArray, minPos, maxPos, contigLength, _)) = c // to REFACTOR
         var eventsArrMutable = eventsArray
-        logger.debug(
+        if (logger.isDebugEnabled()) logger.debug(
           s"#### Update Partition: $contig, min=$minPos max=$maxPos len:${eventsArray.length} span: ${maxPos - minPos} ")
 
         val updArray =
@@ -392,7 +399,7 @@ object CoverageMethodsMos {
                   }
 
                   var i = 0
-                  logger.debug(s"$contig, min=$minPos max=$maxPos updating: ${eventsArrMutable
+                  if (logger.isDebugEnabled()) logger.debug(s"$contig, min=$minPos max=$maxPos updating: ${eventsArrMutable
                     .take(10)
                     .mkString(",")} with ${overlapArray.take(10).mkString(",")} and $covSum ")
                   eventsArrMutable(i) = (eventsArrMutable(i) + covSum).toShort // add cumSum to zeroth element
@@ -409,7 +416,7 @@ object CoverageMethodsMos {
                         throw e
                     }
                   }
-                  logger.debug(
+                  if (logger.isDebugEnabled()) logger.debug(
                     s"$contig, min=$minPos max=$maxPos Updated array ${eventsArrMutable.take(10).mkString(",")}")
                   eventsArrMutable
                 case None =>
@@ -424,7 +431,7 @@ object CoverageMethodsMos {
             updArray.take(len)
           case None => updArray
         }
-        logger.debug(
+        if (logger.isDebugEnabled())  logger.debug(
           s"#### End of Update Partition: $contig, min=$minPos max=$maxPos len:${eventsArray.length} span: ${maxPos - minPos}")
         (contig, (shrinkArray, minPos, maxPos, contigLength))
       }

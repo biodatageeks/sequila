@@ -12,6 +12,8 @@ author = ""
 message = ""
 channel = "#project-sequila"
 
+sbtOpts = "'-XX:+CMSClassUnloadingEnabled -XX:MaxPermSize=2G -Xmx4G'"
+
 
 def getGitAuthor = {
     def commit = sh(returnStdout: true, script: 'git rev-parse HEAD')
@@ -97,19 +99,17 @@ node {
            stage('Test Scala code') {
 
                     echo 'Testing Scala code....'
-                    sh "${tool name: 'sbt-0.13.15', type: 'org.jvnet.hudson.plugins.SbtPluginBuilder$SbtInstallation'}/bin/sbt clean test"
-
-
+                    sh "SBT_OPTS=${sbtOpts} ${tool name: 'sbt-0.13.15', type: 'org.jvnet.hudson.plugins.SbtPluginBuilder$SbtInstallation'}/bin/sbt clean test"
 
 
             }
 
             stage('Package scala code') {
 
-                            echo 'Building Scala code....'
-                            sh "${tool name: 'sbt-0.13.15', type: 'org.jvnet.hudson.plugins.SbtPluginBuilder$SbtInstallation'}/bin/sbt package"
+                            //echo 'Building Scala code....'
+                            //sh "${tool name: 'sbt-0.13.15', type: 'org.jvnet.hudson.plugins.SbtPluginBuilder$SbtInstallation'}/bin/sbt package"
     			            echo "Generating documentation"
-    			            sh "${tool name: 'sbt-0.13.15', type: 'org.jvnet.hudson.plugins.SbtPluginBuilder$SbtInstallation'}/bin/sbt doc"
+    			            sh "SBT_OPTS=${sbtOpts} ${tool name: 'sbt-0.13.15', type: 'org.jvnet.hudson.plugins.SbtPluginBuilder$SbtInstallation'}/bin/sbt doc"
     			            //publishHTML([allowMissing: false, alwaysLinkToLastBuild: true, keepAll: false, reportDir: 'target/scala-2.11/api/', reportFiles: 'package.html', reportName: 'Scala Doc', reportTitles: ''])
 
                         }
@@ -119,7 +119,7 @@ node {
 
                         echo "branch: ${env.BRANCH_NAME}"
                         echo 'Publishing to ZSI-BIO snapshots repository....'
-                        sh "SBT_OPTS='-XX:+CMSClassUnloadingEnabled -XX:MaxPermSize=2G -Xmx2G' ${tool name: 'sbt-0.13.15', type: 'org.jvnet.hudson.plugins.SbtPluginBuilder$SbtInstallation'}/bin/sbt 'set test in publish := {}' publish"
+                        sh "SBT_OPTS=${sbtOpts} ${tool name: 'sbt-0.13.15', type: 'org.jvnet.hudson.plugins.SbtPluginBuilder$SbtInstallation'}/bin/sbt 'set test in publish := {}' publish"
 
 
             }
@@ -127,7 +127,7 @@ node {
             stage('Code stats') {
 
                echo 'Gathering code stats....'
-               sh "${tool name: 'sbt-0.13.15', type: 'org.jvnet.hudson.plugins.SbtPluginBuilder$SbtInstallation'}/bin/sbt stats"
+               sh "SBT_OPTS=${sbtOpts} ${tool name: 'sbt-0.13.15', type: 'org.jvnet.hudson.plugins.SbtPluginBuilder$SbtInstallation'}/bin/sbt stats"
 
                                     }
           stage('Readthedocs') {
@@ -146,7 +146,7 @@ node {
 //                     }
 
            stage('Performance testing') {
-                sh "${tool name: 'sbt-0.13.15', type: 'org.jvnet.hudson.plugins.SbtPluginBuilder$SbtInstallation'}/bin/sbt -J-Xms2048m -J-Xmx2048m 'set test in assembly := {}' assembly"
+                sh "SBT_OPTS=${sbtOpts} ${tool name: 'sbt-0.13.15', type: 'org.jvnet.hudson.plugins.SbtPluginBuilder$SbtInstallation'}/bin/sbt 'set test in assembly := {}' assembly"
                 sh "ssh bdg-perf@cdh00 rm -rf /tmp/bdg-sequila-assembly-*.jar"
                 sh "scp target/scala-2.11/bdg-sequila-assembly-*.jar bdg-perf@cdh00:/tmp"
                 sh "scp performance/bdg_perf/bdg_perf_sequila.scala bdg-perf@cdh00:/tmp"

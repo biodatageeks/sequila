@@ -64,4 +64,5 @@ object Columns {
 
   final val REF = "ref"
   final val ALT = "alt"
+  final val ALTS= "alts"
 }

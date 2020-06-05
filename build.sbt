@@ -27,8 +27,9 @@ libraryDependencies += "org.bdgenomics.adam" %% "adam-apis-spark2" % "0.25.0"
 libraryDependencies += "org.bdgenomics.adam" %% "adam-cli-spark2" % "0.25.0"
 libraryDependencies += "org.scala-lang" % "scala-library" % "2.11.8"
 libraryDependencies += "org.rogach" %% "scallop" % "3.1.2"
-libraryDependencies += "org.apache.logging.log4j" % "log4j-slf4j-impl" % "2.11.1"
-libraryDependencies += "org.hammerlab.bdg-utils" %% "cli" % "0.3.0"
+//libraryDependencies += "org.apache.logging.log4j" % "log4j-slf4j-impl" % "2.11.1"
+//libraryDependencies += "org.hammerlab.bdg-utils" %% "cli" %
+libraryDependencies += "org.bdgenomics.utils" % "utils-metrics-spark2_2.11" % "0.2.16"
 libraryDependencies += "com.github.samtools" % "htsjdk" % "2.19.0"
 libraryDependencies += "ch.cern.sparkmeasure" %% "spark-measure" % "0.13" excludeAll (ExclusionRule("org.apache.hadoop"))
 libraryDependencies += "org.broadinstitute" % "gatk-native-bindings" % "1.0.0" excludeAll (ExclusionRule("org.apache.hadoop"))
@@ -55,13 +56,15 @@ avroSpecificScalaSource in Compile := new java.io.File("src/main/org/biodatageek
 avroSpecificScalaSource in Test := new java.io.File("src/test/org/biodatageeks/formats")
 
 
-fork := true
-fork in Test := true
+fork := false
+fork in Test := false
+parallelExecution in Test := false
+
 javaOptions in Test ++= Seq(
   "-Dlog4j.debug=false",
   "-Dlog4j.configuration=log4j.properties")
 
-javaOptions ++= Seq("-Xms512M", "-Xmx8192M", "-XX:+CMSClassUnloadingEnabled")
+javaOptions ++= Seq("-Xms512M", "-Xmx8192M", "-XX:+CMSClassUnloadingEnabled" , "-Dlog4j.configuration=log4j.properties")
 
 //fix for using with hdp warehouse connector
 javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint")
@@ -70,8 +73,8 @@ outputStrategy := Some(StdoutOutput)
 
 
 resolvers ++= Seq(
-  "Job Server Bintray" at "https://dl.bintray.com/spark-jobserver/maven",
   "zsibio-snapshots" at "http://zsibio.ii.pw.edu.pl/nexus/repository/maven-snapshots/",
+  "Job Server Bintray" at "https://dl.bintray.com/spark-jobserver/maven",
   "spring" at "http://repo.spring.io/libs-milestone/",
   "Cloudera" at "https://repository.cloudera.com/content/repositories/releases/",
   "Hortonworks" at "http://repo.hortonworks.com/content/repositories/releases/",
@@ -92,6 +95,7 @@ assemblyMergeStrategy in assembly := {
   case PathList("com", xs@_*) => MergeStrategy.first
   case PathList("shadeio", xs@_*) => MergeStrategy.first
   case PathList("au", xs@_*) => MergeStrategy.first
+  case PathList("htsjdk", xs@_*) => MergeStrategy.first
   case ("META-INF/org/apache/logging/log4j/core/config/plugins/Log4j2Plugins.dat") => MergeStrategy.first
   case ("images/ant_logo_large.gif") => MergeStrategy.first
   case "overview.html" => MergeStrategy.rename

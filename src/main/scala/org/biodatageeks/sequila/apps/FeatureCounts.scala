@@ -4,12 +4,13 @@ import htsjdk.samtools.ValidationStringency
 import org.apache.hadoop.io.LongWritable
 import org.apache.spark.sql.SparkSession
 import org.biodatageeks.sequila.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
+import org.biodatageeks.sequila.utils.Columns
 import org.rogach.scallop.ScallopConf
 import org.seqdoop.hadoop_bam.{BAMInputFormat, SAMRecordWritable}
 import org.seqdoop.hadoop_bam.util.SAMHeaderReader
 
 object FeatureCounts {
-  case class Region(contigName:String,start:Int,end:Int)
+  case class Region(contig:String, pos_start:Int, pos_end:Int)
   class RunConf(args:Array[String]) extends ScallopConf(args){
 
     val output = opt[String](required = true)
@@ -69,7 +70,9 @@ object FeatureCounts {
         .option("header", "true")
         .option("delimiter", "\t")
         .csv(runConf.annotations())
-      targets.createOrReplaceTempView("targets")
+      targets
+        .withColumnRenamed("contigName", Columns.CONTIG)
+        .createOrReplaceTempView("targets")
 
      spark.sql(query)
        .orderBy("GeneId")

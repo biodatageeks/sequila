@@ -1,5 +1,7 @@
 package org.biodatageeks.sequila.pileup.model
 
+import scala.collection.mutable
+
 /**
   * generic pileup representation
   */
@@ -12,11 +14,13 @@ abstract class GenericPileupRecord {
   */
 case class PileupRecord (
                           contig: String,
-                          pos: Int,
+                          start: Int,
+                          end: Int,
                           ref: String,
                           cov: Short,
                           countRef:Short,
-                          countNonRef:Short)
+                          countNonRef:Short,
+                          alts: Map[Byte, Short])
   extends GenericPileupRecord
 
 

@@ -4,15 +4,13 @@ import java.io.File
 
 import htsjdk.samtools.reference.IndexedFastaSequenceFile
 import htsjdk.samtools.{Cigar, CigarOperator, SAMRecord}
+import org.apache.log4j.Logger
 import org.apache.spark.sql.SparkSession
 import org.biodatageeks.sequila.datasources.BAM.BDGAlignFileReaderWriter
 import org.seqdoop.hadoop_bam.BAMBDGInputFormat
-import org.apache.log4j.Logger
 
+import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer
-import collection.JavaConverters._
-import scala.util.matching.Regex
-import util.control.Breaks._
 
 case class MDOperator(length: Int, base: Char) //S means to skip n positions, not fix needed
 case class RefDiff(contig: String,  pos:Int, diff: Array[Char]) //start position and difference - length = 1 SNP, length > 1 Insertion :FIXME use byte array instead os str for performance
@@ -42,7 +40,7 @@ object MDTagParser extends BDGAlignFileReaderWriter[BAMBDGInputFormat]{
 //      logger.debug(s"Read has ${alignmentBlocks.size()} aligment blocks to process")
       var ind = 0
       val leftOver =  0
-      val mdOperators = parseMDTag(r.getAttribute("MD").toString, pattern)
+      val mdOperators = parseMDTag(r.getAttribute("MD").toString)
       if (alignmentBlocks !=  null  && alignmentBlocks.size() > 0){
         for(b <- alignmentBlocks.asScala){
             val deletions = {
@@ -135,22 +133,22 @@ object MDTagParser extends BDGAlignFileReaderWriter[BAMBDGInputFormat]{
     //fast if matches return seq, both MD and cigar is one block
     if(mdTag.matches(onlyDigits)
       && cigarElements.size() == 1 && cigarElements.get(0).getOperator ==  CigarOperator.MATCH_OR_MISMATCH ) {
-      logger.debug(s"Seq aft: ${seq}")
+//      logger.debug(s"Seq aft: ${seq}")
       (seq,0)
     }
 
     //fixing SNPs, cigar is one block size
     else if (cigarElements.size() == 1 && cigarElements.get(0).getOperator ==  CigarOperator.MATCH_OR_MISMATCH) {
 
-      val mdOperators = parseMDTag(mdTag, pattern)
+      val mdOperators = parseMDTag(mdTag)
       val result = applyMDTag(seq,mdOperators, 0, cigarElements.get(0).getLength, 0,leftOver)
-      logger.debug(s"Seq aft: ${result._1}")
+//      logger.debug(s"Seq aft: ${result._1}")
       result
     }
     //handling INDELS, multiple aligment blocks
     else {
-      logger.debug("Processing complex CIGAR with INDELs")
-      logger.debug(s"Processing ${blockNum}(+1) alignment block of ${cigar.toString}")
+//      logger.debug("Processing complex CIGAR with INDELs")
+//      logger.debug(s"Processing ${blockNum}(+1) alignment block of ${cigar.toString}")
 
       var startPos = 0
       val cigarElements = cigar.getCigarElements
@@ -178,12 +176,12 @@ object MDTagParser extends BDGAlignFileReaderWriter[BAMBDGInputFormat]{
 
       val blockLength =  cigarElements.get(cigarInd).getLength
       val result = applyMDTag(seq, mdOperators, startPos, blockLength, insertInd, leftOver)
-      logger.debug(s"Seq aft: ${result._1}")
+//      logger.debug(s"Seq aft: ${result._1}")
       result
     }
   }
 
-  def parseMDTag(t : String, pattern: Regex) = {
+  def parseMDTag(t : String) = {
 //    logger.debug(s"Parsing MD tag: ${t}")
 
     if (isAllDigits(t)) {

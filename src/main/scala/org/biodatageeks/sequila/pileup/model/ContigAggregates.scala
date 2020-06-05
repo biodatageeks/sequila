@@ -12,11 +12,16 @@ import scala.collection.mutable.ArrayBuffer
 case class ContigEventAggregate (
                                   contig: String = "",
                                   contigLen: Int = 0,
-                                  events: Array[Short]= Array(0),
+                                  events: Array[Short],
+                                  alts: mutable.HashMap[Int, mutable.HashMap[Byte,Short]],
                                   startPosition: Int = 0,
                                   maxPosition: Int = 0,
+                                  shrinkedEventsArraySize: Int = 0,
                                   maxSeqLen:Int = 0
-                                )
+                                ) {
+ def hasAltOnPosition(pos:Int):Boolean = alts.contains(pos)
+
+}
 
 
 /**
@@ -32,6 +37,7 @@ case class TailEdge(
                      minPos: Int,
                      startPoint: Int,
                      events: Array[Short],
+                     alts: mutable.HashMap[Int, mutable.HashMap[Byte,Short]],
                      cumSum: Short
                    )
 
@@ -102,7 +108,7 @@ class PileupAccumulator(var pilAcc: PileupUpdate)
 
 
 case class UpdateStruct(
-                         upd: mutable.HashMap[(String,Int), (Option[Array[Short]],Short)],
+                         upd: mutable.HashMap[(String,Int), (Option[Array[Short]], Option[mutable.HashMap[Int, mutable.HashMap[Byte,Short]]], Short)],
                          shrink: mutable.HashMap[(String,Int), Int],
                          minmax: mutable.HashMap[String,(Int,Int)]
                        )

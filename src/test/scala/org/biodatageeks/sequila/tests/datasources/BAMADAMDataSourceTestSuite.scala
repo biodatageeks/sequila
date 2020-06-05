@@ -5,11 +5,10 @@ import java.io.{OutputStreamWriter, PrintWriter}
 import com.holdenkarau.spark.testing.{DataFrameSuiteBase, SharedSparkContext}
 import org.apache.log4j.Logger
 import org.bdgenomics.utils.instrumentation.{Metrics, MetricsListener, RecordedMetrics}
-
-import org.biodatageeks.sequila.utils.{Columns, InternalParams}
+import org.biodatageeks.sequila.apps.FeatureCounts.Region
+import org.biodatageeks.sequila.utils.Columns
 import org.scalatest.{BeforeAndAfter, FunSuite}
 
-import org.biodatageeks.formats.Region
 
 class BAMADAMDataSourceTestSuite
     extends FunSuite
@@ -106,6 +105,9 @@ class BAMADAMDataSourceTestSuite
   test("IntervalTree strategy over BAMDataSource") {
     val targets = spark.sqlContext
       .createDataFrame(Array(Region("1", 20138, 20294)))
+      .withColumnRenamed("contigName", Columns.CONTIG)
+      .withColumnRenamed("start", Columns.START)
+      .withColumnRenamed("end", Columns.END)
     targets
       .createOrReplaceTempView("targets")
     val query =

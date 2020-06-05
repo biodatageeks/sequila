@@ -3,19 +3,14 @@ package org.biodatageeks.sequila.tests.rangejoins
 import com.holdenkarau.spark.testing.{DataFrameSuiteBase, SharedSparkContext}
 import htsjdk.samtools.ValidationStringency
 import org.apache.hadoop.io.LongWritable
+import org.biodatageeks.sequila.apps.FeatureCounts.Region
 import org.biodatageeks.sequila.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
 import org.biodatageeks.sequila.utils.{Columns, DataQualityFuncs}
 import org.scalatest.{BeforeAndAfter, FunSuite}
 import org.seqdoop.hadoop_bam.util.SAMHeaderReader
 import org.seqdoop.hadoop_bam.{BAMInputFormat, SAMRecordWritable}
 
-import org.biodatageeks.formats.Region
 
-//case class Gene(contig: String,
-//                start: Int,
-//                end: Int,
-//                geneId: String,
-//                strand: String)
 
 class FeatureCountsTestSuite
     extends FunSuite
@@ -55,11 +50,17 @@ class FeatureCountsTestSuite
 
     val reads = spark.sqlContext
       .createDataFrame(alignments)
+      .withColumnRenamed("contigName", Columns.CONTIG)
+      .withColumnRenamed("start", Columns.START)
+      .withColumnRenamed("end", Columns.END)
 
     reads.createOrReplaceTempView("reads")
 
     val targets = spark.sqlContext
       .createDataFrame(Array(Region("1", 20138, 20294)))
+      .withColumnRenamed("contigName", Columns.CONTIG)
+      .withColumnRenamed("start", Columns.START)
+      .withColumnRenamed("end", Columns.END)
 
     targets.createOrReplaceTempView("targets")
 

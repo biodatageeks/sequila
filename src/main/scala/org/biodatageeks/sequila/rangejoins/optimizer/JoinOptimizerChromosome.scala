@@ -1,6 +1,7 @@
 package org.biodatageeks.sequila.rangejoins.optimizer
 
 import jdk.nashorn.internal.ir.debug.ObjectSizeCalculator
+import org.apache.log4j.Logger
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SparkSession
@@ -13,7 +14,7 @@ import org.biodatageeks.sequila.rangejoins.optimizer.RangeJoinMethod.RangeJoinMe
 
 class JoinOptimizerChromosome(spark: SparkSession, rdd: RDD[(String,Interval[Int],InternalRow)], rddCount : Long) {
 
-
+  val logger =  Logger.getLogger(this.getClass.getCanonicalName)
   val maxBroadcastSize = spark.sqlContext
     .getConf("spark.biodatageeks.rangejoin.maxBroadcastSize","0") match {
     case "0" => 0.1*scala.math.max((spark.sparkContext.getConf.getSizeAsBytes("spark.driver.memory","0")),1024*(1024*1024)) //defaults 128MB or 0.1 * Spark Driver's memory
@@ -22,7 +23,15 @@ class JoinOptimizerChromosome(spark: SparkSession, rdd: RDD[(String,Interval[Int
 
 
    private def estimateBroadcastSize(rdd: RDD[(String,Interval[Int],InternalRow)], rddCount: Long): Long = {
-     (ObjectSizeCalculator.getObjectSize(rdd.first()) * rddCount) /10
+     try{
+       (ObjectSizeCalculator.getObjectSize(rdd.first()) * rddCount) /10
+     }
+     catch {
+       case e @ (_ : NoClassDefFoundError | _ : ExceptionInInitializerError ) => {
+         logger.warn("Method ObjectSizeCalculator.getObjectSize not available falling back to Spark methods")
+         SizeEstimator.estimate(rdd.first()) * rddCount
+       }
+     }
      //FIXME: Do not know why the size ~10x the actual size is- Spark row representation or getObject size in bits???
   }
 

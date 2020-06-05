@@ -9,9 +9,11 @@ import org.apache.spark.sql.execution.SparkPlan
 import org.apache.spark.sql._
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.unsafe.types.UTF8String
+import org.biodatageeks.sequila.coverage.CoverageMethodsMos.logger
 import org.biodatageeks.sequila.datasources.BAM.BDGAlignFileReaderWriter
 import org.biodatageeks.sequila.datasources.InputDataType
 import org.biodatageeks.sequila.inputformats.BDGAlignInputFormat
+import org.biodatageeks.sequila.pileup.PileupMethods.logger
 import org.biodatageeks.sequila.utils.{InternalParams, TableFuncs}
 import org.seqdoop.hadoop_bam.{BAMBDGInputFormat, CRAMBDGInputFormat}
 
@@ -116,7 +118,7 @@ case class BDGCoveragePlan [T<:BDGAlignInputFormat](plan: LogicalPlan, spark: Sp
           val left = ContigRange(contigName, minPos, maxPos)
           val cu = new CovUpdate(ArrayBuffer(right), ArrayBuffer(left))
           val loggerIN =  Logger.getLogger(this.getClass.getCanonicalName)
-          loggerIN.debug(s"#### CoverageAccumulator Adding partition record for: chr:=$contigName,start=$minPos,end=$maxPos,span=${maxPos - minPos + 1}, max cigar length: $maxCigarLength")
+          if (loggerIN.isDebugEnabled()) loggerIN.debug(s"#### CoverageAccumulator Adding partition record for: chr:=$contigName,start=$minPos,end=$maxPos,span=${maxPos - minPos + 1}, max cigar length: $maxCigarLength")
 
           acc.add(cu)
         }
@@ -125,25 +127,13 @@ case class BDGCoveragePlan [T<:BDGAlignInputFormat](plan: LogicalPlan, spark: Sp
 
     def prepareBroadcast(a: CovUpdate) = {
 
-      logger.debug("Preparing broadcast")
+      if (logger.isDebugEnabled()) logger.debug("Preparing broadcast")
 
       val contigRanges = a.left
       val updateArray = a.right
       val updateMap = new mutable.HashMap[(String, Int), (Option[Array[Short]], Short)]()
       val shrinkMap = new mutable.HashMap[(String, Int), Int]()
       val minmax = new mutable.HashMap[String, (Int, Int)]()
-//      val updateArraySplit = new ArrayBuffer[RightCovEdge]()
-
-    //In case of long reads overlap from n partition can overlap not only n+1 partition but any number of forthcoming partitions
-      //
-//      for(u<-updateArray){
-//        val partitions = contigRanges.filter(c=> (u.contigName == c.contigName && u.startPoint + u.cov.length > c.minPos) && u.minPos < c.minPos)
-//        if (partitions.length  == 1)
-//          updateArraySplit.append(u)
-//        else if(partitions.length > 1){
-//          partitions
-//        }
-//      }
       var it = 0
       for (c<-contigRanges.sortBy(r=>(r.contig,r.minPos))) {
           val contig = c.contig
@@ -152,12 +142,7 @@ case class BDGCoveragePlan [T<:BDGAlignInputFormat](plan: LogicalPlan, spark: Sp
           val filterUpd =  updateArray
             .filter(f => (f.contig == contig && f.startPoint + f.cov.length > c.minPos) && f.minPos < c.minPos)
             .sortBy(r => (r.contig, r.minPos)) // updates for overlaps
-        //.filter(f => (f.contigName == c.contigName && f.startPoint + f.cov.length > c.minPos) && f.minPos < c.minPos)
           val upd = filterUpd //should be always 1 or 0 elements, not true for long reads
-         // logger.warn(s"#### Partittion ${c.contigName},${c.minPos},${c.maxPos} overlaped by : ${if(filterUpd.length>0) {filterUpd.mkString("|")} else "0"} update structs")
-
-        //filterUpd.foreach(u=>logger.warn(s"UpdateStructs overlapping ${c.contigName},${c.minPos},${c.maxPos} : ${u.contigName},${u.minPos}, ${u.startPoint}, ${u.cov.length} "))
-
         val cumSum = updateArray //cumSum of all contigRanges lt current contigRange
           .filter(f => f.contig == c.contig && f.minPos < c.minPos)
           .map(_.cumSum)
@@ -167,7 +152,6 @@ case class BDGCoveragePlan [T<:BDGAlignInputFormat](plan: LogicalPlan, spark: Sp
               for(u <- upd) {
                 val overlapLength =
                   if ((u.startPoint + u.cov.length) > c.maxPos &&  ( (contigRanges.length - 1 == it) ||  contigRanges(it+1).contig != c.contig))  {
-//                  logger.warn(s"Counting overlap #1 ${u.startPoint + u.cov.length - c.minPos + 1}")
                     u.startPoint + u.cov.length - c.minPos + 1
                   }
                   else if ((u.startPoint + u.cov.length) > c.maxPos) {
@@ -177,7 +161,7 @@ case class BDGCoveragePlan [T<:BDGAlignInputFormat](plan: LogicalPlan, spark: Sp
                     u.startPoint + u.cov.length - c.minPos  + 1
                   }
 
-                logger.debug(s"##### Overlap length $overlapLength for $it from ${u.contig},${u.minPos}, ${u.startPoint},${u.cov.length}")
+                if (logger.isDebugEnabled()) logger.debug(s"##### Overlap length $overlapLength for $it from ${u.contig},${u.minPos}, ${u.startPoint},${u.cov.length}")
                 shrinkMap.get((u.contig, u.minPos)) match {
                   case Some(s) => shrinkMap.update((u.contig, u.minPos), math.min(s,c.minPos - u.minPos + 1))
                   case _ =>  shrinkMap += (u.contig, u.minPos) -> (c.minPos - u.minPos + 1)
@@ -188,29 +172,21 @@ case class BDGCoveragePlan [T<:BDGAlignInputFormat](plan: LogicalPlan, spark: Sp
                     val newArr=up._1.get.zipAll(arr, 0.toShort ,0.toShort).map{ case (x, y) => (x + y).toShort }
                     val newCumSum= (up._2 - u.cov.takeRight(overlapLength).sum).toShort
 
-                    logger.debug(s"overlap u.minPos=${u.minPos} len = ${newArr.length}")
-                    logger.debug(s"next update to updateMap: c.minPos=${c.minPos}, u.minPos=${u.minPos} curr_len${up._1.get.length}, new_len = ${newArr.length}")
-
-//                    updateMap.update(
-//                    (u.contigName, u.minPos),
-//                    (Some(up._1
-//                      .get
-//                      .zipAll(Array.fill[Short](math.max(0,u.startPoint-c.minPos))(0) ++ u.cov.takeRight(overlapLength), 0.toShort, 0.toShort) //first drop abovr part maxPos and take the overlap
-//                      .map { case (x, y) => (x + y).toShort }), //merge coverage
-//                      (up._2 - u.cov.takeRight(overlapLength).sum).toShort ) // delete anything that is > c.minPos
+                    if (logger.isDebugEnabled()) logger.debug(s"overlap u.minPos=${u.minPos} len = ${newArr.length}")
+                    if (logger.isDebugEnabled())  logger.debug(s"next update to updateMap: c.minPos=${c.minPos}, u.minPos=${u.minPos} curr_len${up._1.get.length}, new_len = ${newArr.length}")
 
                     if(u.minPos < c.minPos)
                       updateMap.update((c.contig, c.minPos), (Some(newArr), newCumSum))
                     else
                       updateMap.update((c.contig, u.minPos), (Some(newArr), newCumSum)) // delete anything that is > c.minPos
                   case _ =>
-                    logger.debug(s"overlap u.minPos=${u.minPos} u.max = ${u.minPos + overlapLength - 1} len = $overlapLength")
-                    logger.debug(s"first update to updateMap: ${math.max(0,u.startPoint-c.minPos)}, $overlapLength ")
+                    if (logger.isDebugEnabled()) logger.debug(s"overlap u.minPos=${u.minPos} u.max = ${u.minPos + overlapLength - 1} len = $overlapLength")
+                    if (logger.isDebugEnabled()) logger.debug(s"first update to updateMap: ${math.max(0,u.startPoint-c.minPos)}, $overlapLength ")
                     updateMap += (c.contig, c.minPos) -> (Some(Array.fill[Short](math.max(0,u.startPoint-c.minPos))(0) ++u.cov.takeRight(overlapLength)), (cumSum - u.cov.takeRight(overlapLength).sum).toShort)
                 }
               }
-            logger.debug(s"#### Update struct length: ${updateMap(c.contig, c.minPos)._1.get.length}")
-            logger.debug(s"#### Shrinking struct ${shrinkMap.mkString("|")}")
+            if (logger.isDebugEnabled()) logger.debug(s"#### Update struct length: ${updateMap(c.contig, c.minPos)._1.get.length}")
+            if (logger.isDebugEnabled()) logger.debug(s"#### Shrinking struct ${shrinkMap.mkString("|")}")
             }
             else {
               updateMap += (c.contig, c.minPos) -> (None, cumSum)
@@ -222,7 +198,7 @@ case class BDGCoveragePlan [T<:BDGAlignInputFormat](plan: LogicalPlan, spark: Sp
             minmax(contig) = (minmax(contig)._1, c.maxPos)
         it += 1
       }
-      logger.debug(s"Prepared broadcast $updateMap, $shrinkMap")
+      if (logger.isDebugEnabled()) logger.debug(s"Prepared broadcast $updateMap, $shrinkMap")
 
       UpdateStruct(updateMap, shrinkMap, minmax)
     }
