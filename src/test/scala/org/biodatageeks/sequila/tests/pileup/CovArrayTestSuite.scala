@@ -3,6 +3,7 @@ package org.biodatageeks.sequila.tests.pileup
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.biodatageeks.sequila.pileup.{MDTagParser, PileupMethods}
 import org.biodatageeks.sequila.tests.base.BAMBaseTestSuite
+import org.biodatageeks.sequila.utils.FastMath
 
 class CovArrayTestSuite  extends BAMBaseTestSuite with SharedSparkContext{
 
@@ -18,7 +19,7 @@ class CovArrayTestSuite  extends BAMBaseTestSuite with SharedSparkContext{
 
     th.pbench(testArr.lastIndexWhere(x=> x!=0))
 
-    th.pbench(PileupMethods.findMaxIndex(testArr))
+    th.pbench(FastMath.findMaxIndex(testArr))
 
   }
 

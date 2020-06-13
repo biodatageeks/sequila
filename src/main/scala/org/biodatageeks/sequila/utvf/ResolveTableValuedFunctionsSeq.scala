@@ -86,9 +86,9 @@ object ResolveTableValuedFunctionsSeq extends Rule[LogicalPlan] {
   private val builtinFunctions: Map[String, TVF] = Map(
     "pileup" -> Map(
       /* pileup(tableName) */
-      tvf("table" -> StringType, "refPath" -> StringType)
-      { case Seq(table: Any, refPath: Any) =>
-        PileupTemplate(table.toString, refPath.toString)
+      tvf("table" -> StringType, "sampleId" -> StringType, "refPath" -> StringType)
+      { case Seq(table: Any, sampleId: Any, refPath: Any) =>
+        PileupTemplate(table.toString, sampleId.toString, refPath.toString)
       }),
 
     "bdg_coverage" -> Map(
@@ -203,10 +203,8 @@ case class BDGCoverage(tableName:String, sampleId:String, result: String, target
 }
 
 object PileupTemplate {
-  // throwing away sampleId, we don't need it for calculations
-  // for now ignoring resultType, probably will be added later
 
-  def apply(tableName:String, refPath: String): PileupTemplate = {
+  def apply(tableName:String, sampleId: String, refPath: String): PileupTemplate = {
 
     val output = StructType(Seq(
       StructField(Columns.CONTIG,StringType,nullable = true),
@@ -219,11 +217,11 @@ object PileupTemplate {
       StructField(Columns.ALTS,MapType(ByteType,ShortType),nullable = true)
     )).toAttributes
 
-    new PileupTemplate(tableName, refPath,  output)
+    new PileupTemplate(tableName, sampleId, refPath, output)
   }
 }
 
-case class PileupTemplate(tableName: String,refPath: String, output: Seq[Attribute] )
+case class PileupTemplate(tableName: String, sampleId: String, refPath: String, output: Seq[Attribute] )
   extends LeafNode with MultiInstanceRelation {
 
   override def newInstance(): PileupTemplate = copy(output = output.map(_.newInstance()))

@@ -12,7 +12,10 @@ import org.seqdoop.hadoop_bam.BAMBDGInputFormat
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer
 
-case class MDOperator(length: Int, base: Char) //S means to skip n positions, not fix needed
+case class MDOperator(length: Int, base: Char) { //S means to skip n positions, not fix needed
+  def isDeletion:Boolean = base.isLower
+  def isNonDeletion:Boolean = base.isUpper
+}
 case class RefDiff(contig: String,  pos:Int, diff: Array[Char]) //start position and difference - length = 1 SNP, length > 1 Insertion :FIXME use byte array instead os str for performance
 case class PartialReffDiff(diff : Array[RefDiff], leftOver: Int)
 object MDTagParser extends BDGAlignFileReaderWriter[BAMBDGInputFormat]{

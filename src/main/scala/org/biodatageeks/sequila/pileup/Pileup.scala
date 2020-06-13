@@ -18,10 +18,10 @@ import scala.reflect.ClassTag
 class Pileup[T<:BDGAlignInputFormat](spark:SparkSession)(implicit c: ClassTag[T]) extends BDGAlignFileReaderWriter[T] {
   val logger = LoggerFactory.getLogger(this.getClass.getCanonicalName)
 
-  def handlePileup(tableName: String, refPath:String, output: Seq[Attribute]): RDD[InternalRow] = {
+  def handlePileup(tableName: String, sampleId: String, refPath:String, output: Seq[Attribute]): RDD[InternalRow] = {
     logger.info("Calculating pileup on table: {}", tableName)
 
-    lazy val allAlignments = readTableFile(name=tableName)
+    lazy val allAlignments = readTableFile(name=tableName, sampleId)
 
     if(logger.isDebugEnabled()) logger.debug("Processing {} reads in total", allAlignments.count() )
 
@@ -40,20 +40,26 @@ class Pileup[T<:BDGAlignInputFormat](spark:SparkSession)(implicit c: ClassTag[T]
     cleaned
   }
 
-  private def readTableFile(name: String): RDD[SAMRecord] = {
+  private def readTableFile(name: String, sampleId: String): RDD[SAMRecord] = {
     val metadata = TableFuncs.getTableMetadata(spark, name)
     val path = metadata.location.toString
+
+    val samplePathTemplate = (
+      path
+      .split('/')
+      .dropRight(1) ++ Array(s"$sampleId*.{{fileExtension}}"))
+      .mkString("/")
 
     metadata.provider match {
       case Some(f) =>
         if (f == InputDataType.BAMInputDataType)
-           readBAMFile(spark.sqlContext, path, refPath = None)
+           readBAMFile(spark.sqlContext, samplePathTemplate.replace("{{fileExtension}}", "bam"), refPath = None)
         else if (f == InputDataType.CRAMInputDataType) {
           val refPath = spark.sqlContext
             .sparkContext
             .hadoopConfiguration
             .get(CRAMBDGInputFormat.REFERENCE_SOURCE_PATH_PROPERTY)
-           readBAMFile(spark.sqlContext, path, Some(refPath))
+           readBAMFile(spark.sqlContext, samplePathTemplate.replace("{{fileExtension}}", "cram"), Some(refPath))
         }
         else throw new Exception("Only BAM and CRAM file formats are supported in bdg_coverage.")
       case None => throw new Exception("Wrong file extension - only BAM and CRAM file formats are supported in bdg_coverage.")

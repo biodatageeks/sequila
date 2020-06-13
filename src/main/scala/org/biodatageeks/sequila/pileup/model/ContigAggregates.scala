@@ -2,6 +2,7 @@ package org.biodatageeks.sequila.pileup.model
 
 
 import org.apache.spark.util.AccumulatorV2
+import org.biodatageeks.sequila.utils.FastMath
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -13,7 +14,7 @@ case class ContigEventAggregate (
                                   contig: String = "",
                                   contigLen: Int = 0,
                                   events: Array[Short],
-                                  alts: mutable.HashMap[Int, mutable.HashMap[Byte,Short]],
+                                  alts: mutable.HashMap[Int, mutable.HashMap[Byte,Short]], // todo make altsMap class
                                   startPosition: Int = 0,
                                   maxPosition: Int = 0,
                                   shrinkedEventsArraySize: Int = 0,
@@ -21,6 +22,48 @@ case class ContigEventAggregate (
                                 ) {
  def hasAltOnPosition(pos:Int):Boolean = alts.contains(pos)
 
+  def calculateMaxLength(allPositions: Boolean): Int = {
+    if (! allPositions)
+      return events.length
+
+    val firstBlockMaxLength = startPosition - 1
+    val lastBlockMaxLength = contigLen - maxPosition
+    firstBlockMaxLength + events.length + lastBlockMaxLength
+
+  }
+
+  /**
+    * updates events array for contig. Should be invoked with delta = 1 for alignment start and -1 for alignment stop
+    *
+    * @param pos            - position to be changed
+    * @param startPart      - starting position of partition (offset)
+    * @param delta          - value to be added to position
+    */
+
+  def updateEvents(pos: Int, startPart: Int, delta: Short): Unit = {
+    val position = pos - startPart
+    events(position) = (events(position) + delta).toShort
+  }
+
+  def updateAlts(pos: Int, startPart: Int, alt: Char): Unit = {
+   // val position = pos - startPart - 1
+    val position = pos // naturally indexed
+    val altByte = alt.toByte
+
+    if (alts.contains(position)) {
+      val altMap = alts(position)
+      if (altMap.contains(altByte)) {
+        val prevAltCount = altMap(altByte)
+        alts(position)(altByte) = (prevAltCount + 1).toShort
+      }
+      else
+        alts(position) += (altByte -> 1)
+    }
+    else
+      alts(position) = mutable.HashMap(altByte -> 1)
+
+    assert(alts(position) != null)
+  }
 }
 
 
@@ -47,11 +90,22 @@ case class TailEdge(
   * @param minPos
   * @param maxPos
   */
-case class ContigRange(
-                        contig: String,
-                        minPos: Int,
-                        maxPos: Int
-                      )
+case class ContigRange(contig: String, minPos: Int,maxPos: Int) {
+
+  def findOverlappingTails(tails: ArrayBuffer[TailEdge]):ArrayBuffer[TailEdge] = {
+    tails
+      .filter(t => (t.contig == contig && t.startPoint + t.events.length > minPos) && t.minPos < minPos)
+      .sortBy(r => (r.contig, r.minPos))
+  }
+
+  def precedingCumulativeSum(tails: ArrayBuffer[TailEdge]): Short = {
+    val tailsFiltered = tails
+      .filter(t => t.contig == contig && t.minPos < minPos)
+    val cumSum = tailsFiltered.map(_.cumSum)
+    val cumsSumArr = cumSum.toArray
+    FastMath.sumShort(cumsSumArr)
+  }
+}
 
 
 /**

@@ -24,7 +24,6 @@ import scala.collection.{JavaConverters, mutable}
   * Class implementing pileup calculations on set of aligned reads
   */
 object PileupMethods {
-
   val logger: Logger = LoggerFactory.getLogger(this.getClass.getCanonicalName)
 
   /**
@@ -48,16 +47,16 @@ object PileupMethods {
       accumulateTails(aggregates, spark)
     }
 
-    val broadcast = BroadcastTimer.time{ spark.sparkContext.broadcast(prepareOverlaps(accumulator.value())) }
+    val broadcast = BroadcastTimer.time{
+      spark.sparkContext.broadcast(prepareOverlaps(accumulator.value()))
+    }
 
-    val adjustedEvents = AdjustedEventsTimer.time {adjustEventAggregatesWithOverlaps(aggregates, broadcast) }
+    val adjustedEvents = AdjustedEventsTimer.time {
+      adjustEventAggregatesWithOverlaps(aggregates, broadcast) }
     val pileup =
       eventsToPileup(adjustedEvents, refPath)
 
     pileup
-    //      .count()
-    //    adjustedEvents.count
-    //    spark.sparkContext.parallelize(Array(InternalRow()))
   }
 
   /**
@@ -70,7 +69,6 @@ object PileupMethods {
     val contigLenMap = InitContigLengthsTimer.time  {
       initContigLengths(alignments.first())
     }
-
     alignments.mapPartitions { partition =>
       val aggMap = new mutable.HashMap[String, ContigEventAggregate]()
       val contigMaxReadLen = new mutable.HashMap[String, Int]()
@@ -111,8 +109,6 @@ object PileupMethods {
     }
   }
 
-
-
   /**
     * gathers "tails" of events array that might be overlapping with other partitions. length of tail is equal to the
     * longest read in this aggregate
@@ -120,6 +116,7 @@ object PileupMethods {
     * @return
     */
 
+    // -> refactor -> move to PileupAccumulator class
   private def accumulateTails(events: RDD[ContigEventAggregate], spark:SparkSession): PileupAccumulator = {
 
     val accumulator = AccumulatorAllocTimer.time {new PileupAccumulator(new PileupUpdate(new ArrayBuffer[TailEdge](), new ArrayBuffer[ContigRange]())) }
@@ -133,18 +130,16 @@ object PileupMethods {
           val maxPos = agg.maxPosition
           val maxSeqLen = agg.maxSeqLen
 
-          val tailStartPos = maxPos - maxSeqLen
+          val tailStartIndex = maxPos - maxSeqLen
           val tailCov = TailCovTimer.time {
             if(agg.maxSeqLen ==  agg.events.length ) agg.events
             else
               agg.events.takeRight(agg.maxSeqLen)
           }
-          val tailAlts = TailAltsTimer.time { agg.alts.filter(_._1 >= tailStartPos) } // verify >= or >
-
-
+          val tailAlts = TailAltsTimer.time { agg.alts.filter(_._1 >= tailStartIndex) } // verify >= or >
+          val cumSum = FastMath.sumShort(agg.events)
           val tail = TailEdgeTimer.time {
-
-            TailEdge(contig, minPos, tailStartPos, tailCov, tailAlts, FastMath.sumShort(agg.events))
+            TailEdge(contig, minPos, tailStartIndex, tailCov, tailAlts, cumSum)
           }
           val range = ContigRange(contig, minPos, maxPos)
           val pileupUpdate = new PileupUpdate(ArrayBuffer(tail), ArrayBuffer(range))
@@ -161,6 +156,7 @@ object PileupMethods {
     * @param update - structure containing tails of slices and their contig ranges
     * @return - structure for broadcast
     */
+    // TODO -move to PileupUpdate method
   def prepareOverlaps(update: PileupUpdate): UpdateStruct = {
     val tails = update.tails
     val ranges = update.ranges
@@ -173,8 +169,8 @@ object PileupMethods {
       if (!minmax.contains(range.contig))
         minmax += range.contig -> (Int.MaxValue, 0)
 
-      val overlaps = findOverlappingTailsForRange(range, tails)
-      val cumSum = precedingCumulativeSum(range, tails)
+      val overlaps = range.findOverlappingTails(tails)
+      val cumSum = range.precedingCumulativeSum(tails)
 
       if(overlaps.isEmpty)
         updateMap += (range.contig, range.minPos) -> (None, None, cumSum)
@@ -184,7 +180,6 @@ object PileupMethods {
           updateShrinksByOverlap(o, range, shrinkMap)
           updateUpdateByOverlap(o, overlapLength, range, cumSum, updateMap)
         }
-        if(logger.isDebugEnabled())  logger.debug(s"UpdateStruct len:${updateMap(range.contig,range.minPos)._1.get.length}, shrinkmap ${shrinkMap.mkString("|")}")
       }
       updateMinMaxByOverlap(range, minmax)
       it += 1
@@ -203,8 +198,6 @@ object PileupMethods {
   def adjustEventAggregatesWithOverlaps(events: RDD[ContigEventAggregate],
                                         b: Broadcast[UpdateStruct])
   : RDD[ContigEventAggregate] = {
-    if(logger.isDebugEnabled())  logger.debug("Updating aggregates. Agg count={}", events.count)
-
     val upd: mutable.HashMap[(String, Int), (Option[Array[Short]], Option[mutable.HashMap[Int, mutable.HashMap[Byte,Short]]], Short)] = b.value.upd
     val shrink = b.value.shrink
 
@@ -213,16 +206,12 @@ object PileupMethods {
       val updatedEventsArray = CalculateEventsTimer.time { calculateEventsArrayWithBroadcast(agg, upd) }
       val updatedAltsMap = CalculateAltsTimer.time{ calculateAltsWithBroadcast(agg,upd) }
 
-      //val shrinkedEventsArray = ShrinkArrayTimer.time { shrinkArrayWithBroadcast(agg, shrink, updatedEventsArray) }
       val shrinkedEventsArraySize = ShrinkArrayTimer.time { getShrinkSizeWithBroadCast(agg, shrink, updatedEventsArray) }
       val shrinkedAltsMap = ShrinkAltsTimer.time { shrinkAltsMapWithBroadcast(agg, shrink, updatedAltsMap) }
-      if(logger.isDebugEnabled())  logger.debug(
-        s"End of Update Partition: $agg.contig, min=${agg.startPosition} max=${agg.maxPosition} len:${agg.events.length} span: ${agg.maxPosition - agg.startPosition}")
-      ContigEventAggregate(agg.contig, agg.contigLen, updatedEventsArray, shrinkedAltsMap,  agg.startPosition, agg.maxPosition, shrinkedEventsArraySize)
+      val c = ContigEventAggregate(agg.contig, agg.contigLen, updatedEventsArray, shrinkedAltsMap,  agg.startPosition, agg.maxPosition, shrinkedEventsArraySize, agg.maxSeqLen)
+      c
     }}
   }
-
-
 
   @inline private def updateMinMaxByOverlap(range: ContigRange, minmax: mutable.HashMap[String, (Int, Int)]): Unit = {
     if (range.minPos < minmax(range.contig)._1)
@@ -231,29 +220,6 @@ object PileupMethods {
       minmax(range.contig) = (minmax(range.contig)._1, range.maxPos)
   }
 
-  def mergeMaps(map1: mutable.HashMap[Byte, Short], map2: mutable.HashMap[Byte, Short]): mutable.HashMap[Byte, Short] = {
-    if (map1 == null)
-      return map2
-    if (map2 == null)
-      return map1
-    val keyset = map1.keySet++map2.keySet
-    val mergedMap = new mutable.HashMap[Byte, Short]()
-    for (k <- keyset)
-      mergedMap(k) = (map1.getOrElse(k, 0.toShort) + map2.getOrElse(k, 0.toShort)).toShort
-    mergedMap
-  }
-
-  def mergeAltsMaps(map1: mutable.HashMap[Int, mutable.HashMap[Byte,Short]], map2: mutable.HashMap[Int, mutable.HashMap[Byte,Short]]): mutable.HashMap[Int, mutable.HashMap[Byte,Short]] = {
-    if (map1 == null)
-      return map2
-    if (map2 == null)
-      return map1
-    val keyset = map1.keySet++map2.keySet
-    var mergedAltsMap = mutable.HashMap.empty[Int, mutable.HashMap[Byte,Short]]
-    for (k <- keyset)
-      mergedAltsMap += k -> mergeMaps(map1.getOrElse(k,null), map2.getOrElse(k,null)) // to refactor
-    mergedAltsMap
-  }
 
   private def updateUpdateByOverlap(o: TailEdge, overlapLength: Int, range: ContigRange, cumSum: Short, updateMap: mutable.HashMap[(String, Int), (Option[Array[Short]], Option[mutable.HashMap[Int, mutable.HashMap[Byte,Short]]], Short)]) = {
     updateMap.get((range.contig, range.minPos)) match {
@@ -264,19 +230,13 @@ object PileupMethods {
         val newMap = up._2.get ++ o.alts
         val newAlts= newMap.asInstanceOf[mutable.HashMap[Int, mutable.HashMap[Byte,Short]]]
 
-
         val newCumSum = (up._3 - FastMath.sumShort(o.events.takeRight(overlapLength)) ).toShort
-
-        if(logger.isDebugEnabled()) logger.debug(s"overlap o.minPos=${o.minPos} len = ${newArrEvents.length}")
-        if(logger.isDebugEnabled()) logger.debug(s"next update to updateMap: range.minPos=${range.minPos}, o.minPos=${o.minPos} curr_len${up._1.get.length}, new_len = ${newArrEvents.length}")
 
         if (o.minPos < range.minPos)
           updateMap.update((range.contig, range.minPos), (Some(newArrEvents), Some(newAlts), newCumSum))
         else
           updateMap.update((range.contig, o.minPos), (Some(newArrEvents), Some(newAlts), newCumSum)) // delete anything that is > range.minPos
       case _ =>
-        if(logger.isDebugEnabled())  logger.debug(s"overlap o.minPos=${o.minPos} o.max = ${o.minPos + overlapLength - 1} len = $overlapLength")
-        if(logger.isDebugEnabled())  logger.debug(s"first update to updateMap: ${math.max(0, o.startPoint - range.minPos)}, $overlapLength ")
         updateMap +=
           (range.contig, range.minPos) ->
             (
@@ -294,46 +254,17 @@ object PileupMethods {
     }
   }
 
-
   @inline private def calculateOverlapLength(o: TailEdge, range: ContigRange, it: Int, ranges: ArrayBuffer[ContigRange]) = {
-    val length = if ((o.startPoint + o.events.length) > range.maxPos && ((ranges.length - 1 == it) || ranges(it + 1).contig != range.contig)) {
+    val length = if ((o.startPoint + o.events.length) > range.maxPos && ((ranges.length - 1 == it) || ranges(it + 1).contig != range.contig))
       o.startPoint + o.events.length - range.minPos + 1
-    }
-    else if ((o.startPoint + o.events.length) > range.maxPos) {
+    else if ((o.startPoint + o.events.length) > range.maxPos)
       range.maxPos - range.minPos
-    } //if it's the last part in contig or the last at all
-    else {
+    //if it's the last part in contig or the last at all
+    else
       o.startPoint + o.events.length - range.minPos + 1
-    }
     if(logger.isDebugEnabled())  logger.debug("Overlap length $l for $it from ${o.contig},${o.minPos}, ${o.startPoint},${o.cov.length}")
     length
-
   }
-
-  @inline private def precedingCumulativeSum(range:ContigRange, tails: ArrayBuffer[TailEdge]): Short =
-    FastMath.sumShort(tails
-      .filter(t => t.contig == range.contig && t.minPos < range.minPos)
-      .map(_.cumSum).toArray
-    )
-
-
-  @inline private def findOverlappingTailsForRange(range: ContigRange, tails: ArrayBuffer[TailEdge]) = {
-    tails
-      .filter(t => (t.contig == range.contig && t.startPoint + t.events.length > range.minPos) && t.minPos < range.minPos)
-      .sortBy(r => (r.contig, r.minPos))
-  }
-
-  @inline
-  def calculateMaxLength(agg: ContigEventAggregate, allPositions: Boolean): Int = {
-    if (! allPositions)
-      return agg.events.length
-
-    val firstBlockMaxLength = agg.startPosition - 1
-    val lastBlockMaxLength = agg.contigLen - agg.maxPosition
-    firstBlockMaxLength + agg.events.length + lastBlockMaxLength
-
-  }
-
 
   def addBaseRecord(result:Array[InternalRow], ind:Int,
                     agg:ContigEventAggregate, bases:String, i:Int, prev:BlockProperties) {
@@ -364,31 +295,31 @@ object PileupMethods {
       part.map { agg => {
         var cov, ind, i = 0
         val allPos = false
-        val maxLen = calculateMaxLength(agg, allPos)
+        val maxLen = agg. calculateMaxLength(allPos)
         val result = new Array[InternalRow](maxLen)
         val prev = new BlockProperties()
+        val startPosition = agg.startPosition
 
         val bases = EventsGetBasesTimer.time {
           getBasesFromReference(reference, contigMap(agg.contig), agg.startPosition, agg.startPosition + agg.events.length - 1)
         }
         while (i < agg.shrinkedEventsArraySize) {
           cov += agg.events(i)
-
           if (prev.hasAlt) {
             addBaseRecord(result, ind, agg, bases, i, prev)
             ind += 1;
             prev.reset(i)
-            if (agg.hasAltOnPosition(i))
-              prev.alt=agg.alts(i)
+            if (agg.hasAltOnPosition(i+startPosition))
+              prev.alt=agg.alts(i+startPosition)
           }
-          else if (agg.hasAltOnPosition(i)) { // there is ALT in this posiion
+          else if (agg.hasAltOnPosition(i+startPosition)) { // there is ALT in this posiion
             if (prev.isNonZeroCoverage) { // there is previous group non-zero group -> convert it
               addBlockRecord(result, ind, agg, bases, i, prev)
               ind += 1;
               prev.reset(i)
             } else if (prev.isZeroCoverage) // previous ZERO group, clear block
             prev.reset(i)
-            prev.alt = agg.alts(i)
+            prev.alt = agg.alts(i+startPosition)
           }
           else if (isEndOfZeroCoverageRegion(cov, prev.cov, i)) { // coming back from zero coverage. clear block
             prev.reset(i)
@@ -416,21 +347,9 @@ object PileupMethods {
     cov != 0 && prevCov >= 0 && prevCov != cov && i > 0
   }
 
-
-  private def previousGroupIsZeroCoverage(prevCov: Int, blockLength: Int) = {
-    blockLength != 0 && prevCov == 0
-  }
-
-  private def previousGroupIsNonZeroCoverage(prevCov: Int, blockLength: Int) = {
-    blockLength != 0 && prevCov != 0
-  }
-
   private def isEndOfZeroCoverageRegion(cov: Int, prevCov: Int, i: Int) = {
     cov != 0 && prevCov == 0 && i > 0
   }
-
-  private def existsAltOnPositon(agg: ContigEventAggregate, position:Int):Boolean = agg.alts.contains(position)
-
 
   private def createBasePileupRow(map: mutable.HashMap[Byte,Short], agg: ContigEventAggregate, ref: String, cov: Int, i: Int ) = {
     val altsCount = map.foldLeft(0)(_ + _._2).toShort
@@ -470,15 +389,13 @@ object PileupMethods {
     var eventsArrMutable = agg.events
 
     upd.get((agg.contig, agg.startPosition)) match { // check if there is a value for contigName and minPos in upd, returning array of coverage and cumSum to update current contigRange
-      case Some((arrEvents, arrAlt, covSum)) => // array of covs and cumSum
+      case Some((arrEvents, _, covSum)) => // array of covs and cumSum
         arrEvents match {
           case Some(overlapArray) =>
             if (overlapArray.length > agg.events.length)
               eventsArrMutable =  agg.events ++ Array.fill[Short](overlapArray.length -  agg.events.length)(0) // extend array
 
             var i = 0
-            //logger.debug(s"$agg.contig, min=${agg.startPosition} max=${agg.maxPosition} updating: ${eventsArrMutable
-            // .take(10).mkString(",")} with ${overlapArray.take(10).mkString(",")} and $covSum ")
             eventsArrMutable(i) = (eventsArrMutable(i) + covSum).toShort // add cumSum to zeroth element
 
             while (i < overlapArray.length) {
@@ -507,22 +424,14 @@ object PileupMethods {
     upd.get((agg.contig, agg.startPosition)) match { // check if there is a value for contigName and minPos in upd, returning array of coverage and cumSum to update current contigRange
       case Some((_, alts, _)) => // covs alts cumSum
         alts match {
-          case Some(overlapAlts) =>
-            mergeAltsMaps(agg.alts, overlapAlts)
+          case Some(overlapAlts) => {
+              FastMath.mergeNestedMaps(agg.alts, overlapAlts)
+          }
           case None =>
             agg.alts
         }
       case None =>
         agg.alts
-    }
-  }
-
-
-  private def shrinkArrayWithBroadcast[T](agg: ContigEventAggregate, shrink: mutable.HashMap[(String, Int), Int], updArray: Array[T]):Array[T] = {
-    shrink.get((agg.contig, agg.startPosition)) match {
-      case Some(len) =>
-        if(updArray.length > len) updArray.take(len) else updArray
-      case None => updArray
     }
   }
 
@@ -533,7 +442,6 @@ object PileupMethods {
     }
   }
 
-
   private def shrinkAltsMapWithBroadcast[T](agg: ContigEventAggregate, shrink: mutable.HashMap[(String, Int), Int], altsMap: mutable.HashMap[Int, mutable.HashMap[Byte,Short]]): mutable.HashMap[Int, mutable.HashMap[Byte,Short]] = {
     shrink.get((agg.contig, agg.startPosition)) match {
       case Some(len) =>
@@ -542,7 +450,6 @@ object PileupMethods {
       case None => altsMap
     }
   }
-
 
   private def handleFirstReadForContigInPartition(read: SAMRecord, contig: String, contigLenMap: Map[String, Int],
                                                   contigMaxReadLen: mutable.HashMap[String, Int],
@@ -560,20 +467,6 @@ object PileupMethods {
 
     aggMap += contig -> contigEventAggregate
     contigMaxReadLen += contig -> 0
-  }
-
-  /**
-    * simply updates the map between contig and max read length (for overlaps). If current read len is greater update map
-    *
-    * @param read             analyzed aligned read from partition
-    * @param contig           read contig (cleaned)
-    * @param contigMaxReadLen map between contig and max read length
-    */
-  @inline
-  private def updateMaxReadLenInContig(read: SAMRecord, contig: String, contigMaxReadLen: mutable.HashMap[String, Int]): Unit = {
-    val seqLen = read.getReadLength
-    if (seqLen > contigMaxReadLen(contig))
-      contigMaxReadLen(contig) = seqLen
   }
 
   @inline
@@ -595,13 +488,12 @@ object PileupMethods {
                   aggregate: ContigEventAggregate,
                   contigMaxReadLen: mutable.HashMap[String, Int]): Unit = {
 
-    AnalyzeReadsCalculateEventsTimer.time { calculateEvents(read, contig, aggregate) }
+    AnalyzeReadsCalculateEventsTimer.time { calculateEvents(read, contig, aggregate, contigMaxReadLen) }
     AnalyzeReadsCalculateAltsTimer.time{ calculateAlts(read, aggregate) }
-    AnalyzeReadsUpdateMaxReadLenInContigTimer.time{ updateMaxReadLenInContig(read, contig, contigMaxReadLen) }
   }
 
 
-  def calculateEvents(read: SAMRecord, contig: String, aggregate: ContigEventAggregate): Unit = {
+  def calculateEvents(read: SAMRecord, contig: String, aggregate: ContigEventAggregate, contigMaxReadLen: mutable.HashMap[String, Int]): Unit = {
 
     val partitionStart = aggregate.startPosition
     var position = read.getStart
@@ -623,22 +515,19 @@ object PileupMethods {
       // update events array according to read alignment blocks start/end
       if (cigarOperator == CigarOperator.M || cigarOperator == CigarOperator.X || cigarOperator == CigarOperator.EQ) {
 
-        updateContigEventsArray(position, partitionStart, contig, aggregate, delta = 1)
+        aggregate.updateEvents(position, partitionStart, delta = 1)
         position += cigarOperatorLen
-        updateContigEventsArray(position, partitionStart, contig, aggregate, delta = -1)
+        aggregate.updateEvents(position, partitionStart, delta = -1)
       }
       else if (cigarOperator == CigarOperator.N || cigarOperator == CigarOperator.D)
         position += cigarOperatorLen
 
     }
-
-
-    //    updateMaxCigarInContig(cigarLen, contig, contigMaxReadLen)
-
+    updateMaxCigarInContig(cigarLen, contig, contigMaxReadLen)
   }
 
   private def getAltBaseFromSequence(read: SAMRecord, position: Int):Char = {
-    read.getReadString.charAt(position-1) // FIXME - verify -1
+    read.getReadString.charAt(position-1)
   }
 
   def calculatePositionInReadSeq(read: SAMRecord, mdPosition: Int): Int = {
@@ -646,7 +535,6 @@ object PileupMethods {
     if (!cigar.containsOperator(CigarOperator.INSERTION))
       return mdPosition
 
-    var cnt = 0
     var numInsertions = 0
     val cigarIterator = cigar.iterator()
     var position = 0
@@ -667,10 +555,6 @@ object PileupMethods {
     mdPosition + numInsertions
   }
 
-  private def isNonDeletion (mdtag: MDOperator):Boolean = mdtag.base.isUpper
-
-  private def isDeletion (mdtag: MDOperator):Boolean = mdtag.base.isLower
-
   private def calculateAlts(read: SAMRecord, eventAggregate: ContigEventAggregate): Unit = {
     val partitionStart = eventAggregate.startPosition
     var position = read.getStart
@@ -684,17 +568,15 @@ object PileupMethods {
     position += clipLen
 
     for (mdtag <- ops) {
-      if (isDeletion(mdtag)) {
+      if (mdtag.isDeletion) {
         delCounter += 1
         position +=1
       } else if (mdtag.base != 'S') {
-        //        if (isDeletion(mdtag))
-        //          delCounter += 1
         position += 1
 
         val indexInSeq = calculatePositionInReadSeq(read, position - read.getStart -delCounter)
         val altBase = getAltBaseFromSequence(read, indexInSeq)
-        updateContigAltsMap(position - clipLen, partitionStart, eventAggregate, altBase)
+        eventAggregate.updateAlts(position - clipLen - 1, partitionStart, altBase)
       }
       else if(mdtag.base == 'S')
         position += mdtag.length
@@ -719,7 +601,7 @@ object PileupMethods {
       val contig = nextVal._1
       val contigEventAgg = nextVal._2
 
-      val maxIndex: Int = findMaxIndex(contigEventAgg.events)
+      val maxIndex: Int = FastMath.findMaxIndex(contigEventAgg.events)
       val agg = ContigEventAggregate(
         contig,
         contigEventAgg.contigLen,
@@ -727,58 +609,12 @@ object PileupMethods {
         contigEventAgg.alts,
         contigEventAgg.startPosition,
         contigEventAgg.startPosition + maxIndex,
+        0,
         cigarMap(contig))
       output(i) = agg
       i += 1
     }
     output
-  }
-
-  /**
-    * updates events array for contig. Should be invoked with delta = 1 for alignment start and -1 for alignment stop
-    *
-    * @param pos            - position to be changed
-    * @param startPart      - starting position of partition (offset)
-    * @param contig         - contig
-    * @param eventAggregate - aggregate
-    * @param delta          - value to be added to position
-    */
-
-  @inline
-  def updateContigEventsArray(
-                               pos: Int,
-                               startPart: Int,
-                               contig: String,
-                               eventAggregate: ContigEventAggregate,
-                               delta: Short): Unit = {
-    val position = pos - startPart
-    eventAggregate.events(position) = (eventAggregate.events(position) + delta).toShort
-  }
-
-
-  @inline
-  def updateContigAltsMap(
-                           pos: Int,
-                           startPart: Int,
-                           eventAggregate: ContigEventAggregate,
-                           alt: Char): Unit = {
-
-    val position = pos - startPart - 1
-    val altByte = alt.toByte
-
-    if (eventAggregate.alts.contains(position)) {
-      val altMap = eventAggregate.alts(position)
-      if (altMap.contains(altByte)) {
-        val prevAltCount = altMap(altByte)
-        eventAggregate.alts(position)(altByte) = (prevAltCount + 1).toShort
-      }
-      else
-        eventAggregate.alts(position) += (altByte -> 1)
-    }
-    else
-      eventAggregate.alts(position) = mutable.HashMap(altByte -> 1)
-
-    assert(eventAggregate.alts(position) != null)
   }
 
   /**
@@ -789,33 +625,14 @@ object PileupMethods {
     */
   def initContigLengths(read: SAMRecord): Map[String, Int] = {
     val contigLenMap = new mutable.HashMap[String, Int]()
-
     val sequenceList = read.getHeader.getSequenceDictionary.getSequences
     val sequenceSeq = JavaConverters.asScalaIteratorConverter(sequenceList.iterator()).asScala.toSeq
 
     for (sequence <- sequenceSeq) {
-      if(logger.isDebugEnabled())  logger.debug("sequence name {} => {} ", sequence.getSequenceName, sequence.getSequenceLength)
       val contigName = DataQualityFuncs.cleanContig(sequence.getSequenceName)
       contigLenMap += contigName -> sequence.getSequenceLength
     }
     contigLenMap.toMap
-  }
-
-  /**
-    * finds index of the last non zero element of array
-    * @param array array of Short elements
-    * @return index
-    */
-
-  def findMaxIndex(array: Array[Short]): Int = {
-    var i = array.length - 1
-
-    while (i > 0) {
-      if (array(i) != 0)
-        return i
-      i -= 1
-    }
-    -1
   }
 
   def main(args: Array[String]): Unit = {
@@ -863,15 +680,11 @@ object PileupMethods {
     ss.time{
       results.show()
     }
-
-
     val writer = new PrintWriter(new OutputStreamWriter(System.out, "UTF-8"))
     Metrics.print(writer, Some(metricsListener.metrics.sparkMetrics.stageTimes))
     writer.close()
 
     ss.stop()
   }
-
-
 
 }

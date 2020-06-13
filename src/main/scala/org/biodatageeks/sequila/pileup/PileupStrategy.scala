@@ -17,14 +17,14 @@ import scala.reflect.ClassTag
 class PileupStrategy (spark:SparkSession) extends Strategy with Serializable {
   override def apply(plan: LogicalPlan): Seq[SparkPlan] = {
     plan match {
-      case PileupTemplate(tableName, refPath, output) =>
+      case PileupTemplate(tableName, sampleId, refPath, output) =>
         val inputFormat = TableFuncs.getTableMetadata(spark, tableName).provider
         inputFormat match {
           case Some(f) =>
             if (f == InputDataType.BAMInputDataType)
-              PileupPlan[BAMBDGInputFormat](plan, spark, tableName, refPath, output) :: Nil
+              PileupPlan[BAMBDGInputFormat](plan, spark, tableName, sampleId, refPath, output) :: Nil
             else if (f == InputDataType.CRAMInputDataType)
-              PileupPlan[CRAMBDGInputFormat](plan, spark, tableName, refPath, output) :: Nil
+              PileupPlan[CRAMBDGInputFormat](plan, spark, tableName, sampleId, refPath, output) :: Nil
             else Nil
           case None => throw new RuntimeException("Only BAM and CRAM file formats are supported in pileup function.")
         }
@@ -35,6 +35,7 @@ class PileupStrategy (spark:SparkSession) extends Strategy with Serializable {
 
 case class PileupPlan [T<:BDGAlignInputFormat](plan:LogicalPlan, spark:SparkSession,
                                                tableName:String,
+                                               sampleId:String,
                                                refPath: String,
                                                output:Seq[Attribute])(implicit c: ClassTag[T])
   extends SparkPlan with Serializable  with BDGAlignFileReaderWriter [T]{
@@ -42,7 +43,7 @@ case class PileupPlan [T<:BDGAlignInputFormat](plan:LogicalPlan, spark:SparkSess
   override def children: Seq[SparkPlan] = Nil
 
   override protected def doExecute(): RDD[InternalRow] = {
-    new Pileup(spark).handlePileup(tableName, refPath, output)
+    new Pileup(spark).handlePileup(tableName, sampleId, refPath, output)
   }
 
 }
