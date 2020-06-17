@@ -1,9 +1,10 @@
 package org.biodatageeks.sequila.utils
 
+import org.biodatageeks.sequila.pileup.model.{MultiLociAlts, SingleLocusAlts}
+
 import scala.collection.mutable
 
 object FastMath {
-
 
   def sumShort(a: Array[Short]) = {
     var i = 0
@@ -32,25 +33,27 @@ object FastMath {
     -1
   }
 
-  def mergeMaps(map1: mutable.HashMap[Byte, Short], map2: mutable.HashMap[Byte, Short]): mutable.HashMap[Byte, Short] = {
+  def mergeMaps(map1: SingleLocusAlts, map2: SingleLocusAlts): SingleLocusAlts = {
     if (map1 == null)
       return map2
     if (map2 == null)
       return map1
+    if(map1.keySet.intersect(map2.keySet).isEmpty) return map1 ++ map2
     val keyset = map1.keySet++map2.keySet
-    val mergedMap = new mutable.HashMap[Byte, Short]()
+    val mergedMap = new SingleLocusAlts()
     for (k <- keyset)
       mergedMap(k) = (map1.getOrElse(k, 0.toShort) + map2.getOrElse(k, 0.toShort)).toShort
     mergedMap
   }
 
-  def mergeNestedMaps(map1: mutable.HashMap[Int, mutable.HashMap[Byte,Short]], map2: mutable.HashMap[Int, mutable.HashMap[Byte,Short]]): mutable.HashMap[Int, mutable.HashMap[Byte,Short]] = {
+  def mergeNestedMaps(map1: MultiLociAlts, map2: MultiLociAlts): MultiLociAlts = {
     if (map1 == null || map1.isEmpty)
       return map2
     if (map2 == null || map2.isEmpty)
       return map1
+    if(map1.keySet.intersect(map2.keySet).isEmpty) return map1 ++ map2
     val keyset = map1.keySet++map2.keySet
-    var mergedAltsMap = mutable.HashMap.empty[Int, mutable.HashMap[Byte,Short]]
+    var mergedAltsMap = new MultiLociAlts()
     for (k <- keyset)
       mergedAltsMap += k -> mergeMaps(map1.getOrElse(k,null), map2.getOrElse(k,null)) // to refactor
     mergedAltsMap

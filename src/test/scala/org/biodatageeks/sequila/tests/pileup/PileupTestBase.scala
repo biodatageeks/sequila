@@ -30,6 +30,8 @@ class PileupTestBase extends FunSuite
     )
   )
   before {
+    System.setProperty("spark.kryo.registrator", "org.biodatageeks.sequila.pileup.serializers.CustomKryoRegistrator")
+
     sparkSes = SparkSession.builder().master("local").getOrCreate()
     spark.sql(s"DROP TABLE IF EXISTS $tableName")
     spark.sql(

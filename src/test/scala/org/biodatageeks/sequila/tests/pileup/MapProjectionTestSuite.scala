@@ -6,10 +6,10 @@ import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.CatalystTypeConverters
 import org.apache.spark.sql.types.StructType
 import org.biodatageeks.sequila.tests.base.BAMBaseTestSuite
-import org.biodatageeks.sequila.pileup.PileupProjection
 
 import scala.collection.mutable
 import org.apache.spark.unsafe.types.UTF8String
+import org.biodatageeks.sequila.pileup.serializers.PileupProjection
 
 case class TestRecord (array: Map[Int, Int])
 case class TestShortRecord(array:Map[Short,Short])

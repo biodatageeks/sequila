@@ -22,6 +22,10 @@ object PileupTimers extends Metrics {
 
 
   val AccumulatorNestedTimer = timer("AccumulatorNestedTimer from PileupMethods")
+  val PileupUpdateCreationTimer = timer("PileupUpdateCreationTimer from PileupMethods")
+  val AccumulatorAddTimer = timer("AcumulatorAddTimer from PileupMethods")
+
+
   val BroadcastTimer = timer("BroadcastTimer from PileupMethods")
   val AdjustedEventsTimer = timer("AdjustedEventsTimer from PileupMethods")
 

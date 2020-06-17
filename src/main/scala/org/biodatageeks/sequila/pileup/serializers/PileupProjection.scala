@@ -1,4 +1,4 @@
-package org.biodatageeks.sequila.pileup
+package org.biodatageeks.sequila.pileup.serializers
 
 import org.apache.spark.sql.catalyst.expressions.UnsafeRow
 import org.apache.spark.unsafe.types.UTF8String

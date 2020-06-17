@@ -6,8 +6,8 @@ import org.apache.spark.sql.catalyst.{CatalystTypeConverters, InternalRow, Scala
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.unsafe.types.UTF8String
 import org.scalatest.FunSuite
-import org.biodatageeks.sequila.pileup.PileupProjection
 import org.biodatageeks.sequila.pileup.model.PileupRecord
+import org.biodatageeks.sequila.pileup.serializers.PileupProjection
 
 import scala.collection.mutable
 
