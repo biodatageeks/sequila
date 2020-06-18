@@ -8,4 +8,5 @@ package object model {
 
   type MultiLociAlts= mutable.LongMap[SingleLocusAlts]
   val MultiLociAlts = mutable.LongMap[SingleLocusAlts] _
+
 }

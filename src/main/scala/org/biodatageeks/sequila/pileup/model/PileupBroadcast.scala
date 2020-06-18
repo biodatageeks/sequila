@@ -7,15 +7,6 @@ import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
 
-/**
-  * contains only tails of contigAggregates
-  *
-  * @param contig
-  * @param minPos
-  * @param startPoint
-  * @param events
-  * @param cumSum
-  */
 case class Tail(
                      contig: String,
                      minPos: Int,
@@ -25,12 +16,7 @@ case class Tail(
                      cumSum: Short
                    )
 
-/**
-  * holds ranges of contig ranges (in particular contigAggregate)
-  * @param contig
-  * @param minPos
-  * @param maxPos
-  */
+
 case class Range(contig: String, minPos: Int, maxPos: Int) {
 
   def findOverlappingTails(tails: ArrayBuffer[Tail]):ArrayBuffer[Tail] = {
@@ -49,11 +35,6 @@ case class Range(contig: String, minPos: Int, maxPos: Int) {
 }
 
 
-/**
-  * keeps update structure
-  * @param tails array of tails of contigAggregates
-  * @param ranges array of contig ranges
-  */
 class PileupUpdate(
                     var tails: ArrayBuffer[Tail],
                     var ranges: ArrayBuffer[Range]
@@ -70,10 +51,6 @@ class PileupUpdate(
     this
   }
 
-  /**
-    * calculate actual overlaps between slices. They will be then broadcasted.
-    * @return - structure for broadcast
-    */
   def prepareOverlaps(): UpdateStruct = {
     val updateMap = new mutable.HashMap[(String, Int), (Option[Array[Short]], Option[MultiLociAlts], Short)]()
     val shrinkMap = new mutable.HashMap[(String, Int), Int]()
@@ -145,10 +122,6 @@ class PileupUpdate(
 
 }
 
-/**
-  * accumulator gathering potential overlaps between contig aggregates in consecutive partitions
-  * @param pilAcc update structure with tail info and contig range info
-  */
 class PileupAccumulator(var pilAcc: PileupUpdate)
   extends AccumulatorV2[PileupUpdate, PileupUpdate] {
 
