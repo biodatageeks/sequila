@@ -51,6 +51,7 @@ object PileupTimers extends Metrics {
   val AnalyzeReadsTimer = timer("AnalyzeReadsTimer from PileupMethods")
   val AnalyzeReadsCalculateEventsTimer = timer("AnalyzeReadsCalculateEventsTimer from PileupMethods")
   val AnalyzeReadsCalculateAltsTimer = timer("AnalyzeReadsCalculateAltsTimer from PileupMethods")
+  val AnalyzeReadsCalculateAltsParseMDTimer = timer("AnalyzeReadsCalculateAltsParseMDTimer from PileupMethods")
   val AnalyzeReadsUpdateMaxReadLenInContigTimer = timer("AnalyzeReadsUpdateMaxReadLenInContigTimer from PileupMethods")
 
   //

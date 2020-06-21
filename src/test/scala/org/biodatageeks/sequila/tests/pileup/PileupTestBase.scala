@@ -17,7 +17,6 @@ class PileupTestBase extends FunSuite
   val cramPath : String = getClass.getResource(s"/multichrom/mdcram/${sampleId}.cram").getPath
   val tableName = "reads_bam"
   val tableNameCRAM = "reads_cram"
-  var sparkSes: SparkSession = _
 
   val schema: StructType = StructType(
     List(
@@ -31,8 +30,8 @@ class PileupTestBase extends FunSuite
   )
   before {
     System.setProperty("spark.kryo.registrator", "org.biodatageeks.sequila.pileup.serializers.CustomKryoRegistrator")
-
-    sparkSes = SparkSession.builder().master("local").getOrCreate()
+    spark
+      .conf.set("spark.sql.shuffle.partitions",1) //FIXME: In order to get orderBy in Samtools tests working - related to exchange partitions stage
     spark.sql(s"DROP TABLE IF EXISTS $tableName")
     spark.sql(
       s"""

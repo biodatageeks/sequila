@@ -2,7 +2,7 @@ package org.biodatageeks.sequila.pileup.model
 
 import htsjdk.samtools.{CigarOperator, SAMRecord}
 import org.biodatageeks.sequila.pileup.MDTagParser
-import org.biodatageeks.sequila.pileup.timers.PileupTimers.{AnalyzeReadsCalculateAltsTimer, AnalyzeReadsCalculateEventsTimer}
+import org.biodatageeks.sequila.pileup.timers.PileupTimers.{AnalyzeReadsCalculateAltsTimer, AnalyzeReadsCalculateEventsTimer, AnalyzeReadsCalculateAltsParseMDTimer}
 
 import scala.collection.mutable
 
@@ -81,10 +81,9 @@ case class ExtendedReads(r:SAMRecord) {
 
   private def calculateAlts(eventAggregate: ContigAggregate): Unit = {
     val read = this.r
-    val partitionStart = eventAggregate.startPosition
     var position = read.getStart
     val md = read.getAttribute("MD").toString
-    val ops = MDTagParser.parseMDTag(md)
+    val ops = AnalyzeReadsCalculateAltsParseMDTimer.time { MDTagParser.parseMDTag(md) }
     var delCounter = 0
     val clipLen =
       if (read.getCigar.getCigarElement(0).getOperator.isClipping)

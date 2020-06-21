@@ -43,7 +43,7 @@ case class PileupPlan [T<:BDGAlignInputFormat](plan:LogicalPlan, spark:SparkSess
   override def children: Seq[SparkPlan] = Nil
 
   override protected def doExecute(): RDD[InternalRow] = {
-    new Pileup(spark).handlePileup(tableName, sampleId, refPath, output)
+   new Pileup(spark).handlePileup(tableName, sampleId, refPath, output)
   }
 
 }

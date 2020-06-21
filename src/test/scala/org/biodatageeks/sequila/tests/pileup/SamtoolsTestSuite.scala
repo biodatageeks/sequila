@@ -14,14 +14,16 @@ class SamtoolsTestSuite extends PileupTestBase {
        |FROM  pileup('$tableName', '${sampleId}', '$referencePath')
                          """.stripMargin
 
+
   test("testing bdg-samtools single partition") {
     val df = spark.read
       .format("csv")
       .option("delimiter", "\t")
       .schema(schema)
-      .load(samResPath).drop("quality")
+      .load(samResPath)
+      .drop("quality")
 
-    val converter = new PileupConverter(sparkSes)
+    val converter = new PileupConverter(spark)
     val sam = converter.transformSamtoolsResult(df).orderBy("contig", "pos_start")
 
     val ss = SequilaSession(spark)
@@ -42,7 +44,7 @@ class SamtoolsTestSuite extends PileupTestBase {
       .schema(schema)
       .load(samResPath).drop("quality")
 
-    val converter = new PileupConverter(sparkSes)
+    val converter = new PileupConverter(spark)
     val sam = converter.transformSamtoolsResult(df).orderBy("contig", "pos_start")
 
     val ss = SequilaSession(spark)
