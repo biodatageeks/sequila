@@ -12,6 +12,7 @@ import org.biodatageeks.sequila.utils.FastMath
 import org.biodatageeks.sequila.pileup.model.Alts._
 import org.biodatageeks.sequila.pileup.model.Quals._
 
+import scala.collection.{SortedSet, mutable}
 import scala.collection.mutable.ArrayBuffer
 
 
@@ -31,21 +32,12 @@ case class ContigAggregate(
                             qualityCache: QualityCache
                                 ) {
 
-  private val altsKeyCache  = new Array[Long](QualityConstants.CACHE_SIZE/2)
-  private var altsKeyCacheInd = 0
-  private var altsKeyCacheMin = Int.MaxValue
-  private var altsKeyCacheMax = Int.MinValue
+  private val altsKeyCache  = mutable.TreeSet.empty[Long]
 
   def hasAltOnPosition(pos:Int):Boolean = alts.contains(pos)
   def getRange: broadcast.Range = broadcast.Range(contig, startPosition, maxPosition)
   def getPileupUpdate:PileupUpdate = new PileupUpdate(ArrayBuffer(getTail), ArrayBuffer(getRange))
-  def getAltPositionsForRange(start: Int, end: Int): Array[Long] = {
-    if (end >= altsKeyCacheMin && start <= altsKeyCacheMax)
-      altsKeyCache.filter(pos => pos >= start && pos <= end)
-    else Array.emptyLongArray
-  }
-
-
+  def getAltPositionsForRange(start: Int, end: Int): SortedSet[Long] = altsKeyCache.range(start,end+1)
   def addToCache(readQualSummary: ReadQualSummary):Unit = qualityCache.addOrReplace(readQualSummary)
   def trimQuals: MultiLociQuals = if(quals != null) quals.trim else null
 
@@ -64,17 +56,9 @@ case class ContigAggregate(
   }
 
   def updateAlts(pos: Int, alt: Char): Unit = {
-    val shouldUpdateCache =  Conf.includeBaseQualities && ! alts.contains(pos)
     alts.updateAlts(pos, alt)
-    if(shouldUpdateCache) {
-      if(altsKeyCacheInd == QualityConstants.CACHE_SIZE/2 - 1)
-        altsKeyCacheInd = 0
-      altsKeyCache(altsKeyCacheInd) = pos
-      altsKeyCacheInd += 1
-      if(pos > altsKeyCacheMax)
-        altsKeyCacheMax = pos
-      if(pos < altsKeyCacheMin)
-        altsKeyCacheMin = pos
+    if(Conf.includeBaseQualities) {
+      altsKeyCache.add(pos)
     }
   }
 

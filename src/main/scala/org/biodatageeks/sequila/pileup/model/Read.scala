@@ -138,9 +138,10 @@ case class ExtendedReads(r:SAMRecord) {
 
   def fillBaseQualitiesForExistingAlts(agg: ContigAggregate, blackList:scala.collection.Set[Long], readQualSummary: ReadQualSummary): Unit = {
     val altsPositions = AnalyzeReadsCalculateQualsCheckRangeTimer.time {agg.getAltPositionsForRange(r.getStart, r.getEnd) }
+    val positionsToFill = altsPositions diff blackList
 
-    for (pos <- altsPositions) {
-      if(!blackList.contains(pos) && !readQualSummary.hasDeletionOnPosition(pos))
+    for (pos <- positionsToFill) {
+      if(!readQualSummary.hasDeletionOnPosition(pos))
         agg.updateQuals(pos.toInt, QualityConstants.REF_SYMBOL, readQualSummary.getBaseQualityForPosition(pos.toInt))
     }
   }
