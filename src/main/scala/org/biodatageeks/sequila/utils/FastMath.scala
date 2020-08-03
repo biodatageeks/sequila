@@ -1,10 +1,28 @@
 package org.biodatageeks.sequila.utils
 
-import org.biodatageeks.sequila.pileup.model.{MultiLociAlts, SingleLocusAlts}
-
 import scala.collection.mutable
 
 object FastMath {
+  def getSubArrayForRange(input: Array[Long], start: Int, end: Int):Array[Long] = {
+    val sortedArray = input.sorted
+    val output = new Array[Long](input.size)
+    var currPosition = input.size-1
+    var outputPos = 0
+
+    while(currPosition >=0){
+      val item = sortedArray(currPosition)
+      if (item >= start && item <= end) {
+        output(outputPos) = item
+        outputPos += 1
+      }
+      currPosition -=1
+
+      if (item < start)
+        return output.take(outputPos)
+    }
+    output.take(outputPos)
+
+  }
 
   def sumShort(a: Array[Short]) = {
     var i = 0
@@ -33,30 +51,14 @@ object FastMath {
     -1
   }
 
-  def mergeMaps(map1: SingleLocusAlts, map2: SingleLocusAlts): SingleLocusAlts = {
-    if (map1 == null)
-      return map2
-    if (map2 == null)
-      return map1
-    if(map1.keySet.intersect(map2.keySet).isEmpty) return map1 ++ map2
-    val keyset = map1.keySet++map2.keySet
-    val mergedMap = new SingleLocusAlts()
-    for (k <- keyset)
-      mergedMap(k) = (map1.getOrElse(k, 0.toShort) + map2.getOrElse(k, 0.toShort)).toShort
-    mergedMap
-  }
-
-  def mergeNestedMaps(map1: MultiLociAlts, map2: MultiLociAlts): MultiLociAlts = {
+  def merge [A,B](map1: mutable.Map[A,B], map2:mutable.Map[A,B] ): Option[mutable.Map[A,B]] ={
     if (map1 == null || map1.isEmpty)
-      return map2
+      return Option(map2)
     if (map2 == null || map2.isEmpty)
-      return map1
-    if(map1.keySet.intersect(map2.keySet).isEmpty) return map1 ++ map2
-    val keyset = map1.keySet++map2.keySet
-    var mergedAltsMap = new MultiLociAlts()
-    for (k <- keyset)
-      mergedAltsMap += k -> mergeMaps(map1.getOrElse(k,null), map2.getOrElse(k,null)) // to refactor
-    mergedAltsMap
+      return Option(map1)
+    if(map1.keySet.intersect(map2.keySet).isEmpty)
+      return Option(map1 ++ map2)
+    None
   }
 
 

@@ -12,3 +12,5 @@ build/
 source_v/
 
 *.csv
+
+${seq.metastore.dir}

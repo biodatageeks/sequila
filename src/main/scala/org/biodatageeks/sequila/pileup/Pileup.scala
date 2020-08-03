@@ -8,6 +8,7 @@ import org.apache.spark.sql.catalyst.expressions.Attribute
 import org.biodatageeks.sequila.datasources.BAM.BDGAlignFileReaderWriter
 import org.biodatageeks.sequila.datasources.InputDataType
 import org.biodatageeks.sequila.inputformats.BDGAlignInputFormat
+import org.biodatageeks.sequila.pileup.conf.Conf
 import org.biodatageeks.sequila.utils.{InternalParams, TableFuncs}
 import org.seqdoop.hadoop_bam.CRAMBDGInputFormat
 import org.slf4j.LoggerFactory
@@ -19,7 +20,7 @@ class Pileup[T<:BDGAlignInputFormat](spark:SparkSession)(implicit c: ClassTag[T]
   val logger = LoggerFactory.getLogger(this.getClass.getCanonicalName)
 
   def handlePileup(tableName: String, sampleId: String, refPath:String, output: Seq[Attribute]): RDD[InternalRow] = {
-    logger.info("Calculating pileup on table: {}", tableName)
+    logger.info(s"### Calculating pileup on table: $tableName with quals set = ${Conf.includeBaseQualities}")
 
     lazy val allAlignments = readTableFile(name=tableName, sampleId)
 
@@ -27,14 +28,13 @@ class Pileup[T<:BDGAlignInputFormat](spark:SparkSession)(implicit c: ClassTag[T]
 
     val alignments = filterAlignments(allAlignments )
 
-
-    PileupMethods.calculatePileup(alignments, spark ,refPath)
+    PileupMethods.calculatePileup(alignments, spark, refPath)
 
   }
 
   private def filterAlignments(alignments:RDD[SAMRecord]): RDD[SAMRecord] = {
     // any other filtering conditions should go here
-    val filterFlag = spark.conf.get(InternalParams.filterReadsByFlag, "1796").toInt
+    val filterFlag = spark.conf.get(InternalParams.filterReadsByFlag, Conf.filterFlag).toInt
     val cleaned = alignments.filter(read => read.getContig != null && (read.getFlags & filterFlag) == 0)
     if(logger.isDebugEnabled()) logger.debug("Processing {} cleaned reads in total", cleaned.count() )
     cleaned

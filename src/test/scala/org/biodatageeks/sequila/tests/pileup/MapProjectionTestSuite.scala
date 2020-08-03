@@ -42,7 +42,7 @@ class MapProjectionTestSuite extends BAMBaseTestSuite with SharedSparkContext{
 //        println (s"$i -> ${array(i)}")
 
     PileupProjection.setContigMap(contigMap)
-    val (mapSize, keySize, valSize) = PileupProjection.calculateMapSizes(map)
+    val (mapSize, keySize, valSize) = PileupProjection.calculateAltsMapSizes(map)
 
 
     assert(mapTotalSize == mapSize)

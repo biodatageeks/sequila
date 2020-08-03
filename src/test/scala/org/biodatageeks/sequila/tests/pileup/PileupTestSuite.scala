@@ -1,9 +1,7 @@
 package org.biodatageeks.sequila.tests.pileup
 
-import com.holdenkarau.spark.testing.{DataFrameSuiteBase, SharedSparkContext}
 import org.apache.spark.sql.{DataFrame, SequilaSession}
 import org.biodatageeks.sequila.utils.{Columns, InternalParams, SequilaRegister}
-import org.scalatest.{BeforeAndAfter, FunSuite}
 
 class PileupTestSuite extends PileupTestBase {
 
@@ -13,8 +11,9 @@ class PileupTestSuite extends PileupTestBase {
     s"""
        |SELECT ${Columns.CONTIG}, ${Columns.START}, ${Columns.END}, ${Columns.REF}, ${Columns.COVERAGE}, ${Columns.ALTS}
        |FROM  pileup('$tableName', '${sampleId}', '$referencePath')
-       |ORDER BY ${Columns.CONTIG}
+       | order by ${Columns.CONTIG}
                  """.stripMargin
+
   
   test("Normal split") {
     val ss = SequilaSession(spark)
@@ -22,7 +21,8 @@ class PileupTestSuite extends PileupTestBase {
     ss.sparkContext.setLogLevel("ERROR")
 
     val result = ss.sql(pileupQuery)
-    result.show(100, truncate = false)
+//    Writer.saveToFile(ss, result, "bdgNorm.csv")
+//    result.where(s"${Columns.CONTIG}='MT' and ${Columns.START} >= 7").show(20)
     performAssertions(result)
   }
 
@@ -32,11 +32,14 @@ class PileupTestSuite extends PileupTestBase {
     SequilaRegister.register(ss)
     val result = ss.sql(pileupQuery)
 //    Writer.saveToFile(ss, result, "bdgSplit.csv")
+//    result.where(s"${Columns.CONTIG}='MT' and ${Columns.START} >= 7 and ${Columns.START} <= 50").show(20)
     performAssertions(result)
+
 
   }
 
   private def performAssertions(result:DataFrame):Unit ={
+    assert(result.count()==14671)
     assert(result.first().get(1) != 1) // first position check (should not start from 1 with ShowAllPositions = false)
     assert(
       result

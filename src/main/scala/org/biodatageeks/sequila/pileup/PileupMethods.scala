@@ -34,13 +34,13 @@ object PileupMethods {
       .getConf(InternalParams.EnableInstrumentation).toBoolean
     val alignmentsInstr = if(enableInstrumentation) alignments.instrument() else alignments
     val aggregates = ContigAggrTimer.time {
-      alignmentsInstr.assembleContigAggregates()
+      alignmentsInstr.assembleContigAggregates
         .persist(StorageLevel.MEMORY_AND_DISK) //FIXME: Add automatic unpersist
     }
     val accumulator = AccumulatorTimer.time {aggregates.accumulateTails(spark)}
 
     val broadcast = BroadcastTimer.time{
-      spark.sparkContext.broadcast(accumulator.value().prepareOverlaps())
+      spark.sparkContext.broadcast(accumulator.value().prepareCorrectionsForOverlaps())
     }
     val adjustedEvents = AdjustedEventsTimer.time {aggregates.adjustWithOverlaps(broadcast) }
     val pileup = EventsToPileupTimer.time {adjustedEvents.toPileup}

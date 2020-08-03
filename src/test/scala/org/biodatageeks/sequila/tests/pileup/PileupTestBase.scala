@@ -3,7 +3,12 @@ package org.biodatageeks.sequila.tests.pileup
 import com.holdenkarau.spark.testing.{DataFrameSuiteBase, SharedSparkContext}
 import org.apache.spark.sql.{Dataset, Row, SaveMode, SparkSession}
 import org.apache.spark.sql.types.{IntegerType, ShortType, StringType, StructField, StructType}
+import org.biodatageeks.sequila.pileup.conf.QualityConstants
+import org.biodatageeks.sequila.pileup.model.Quals._
+import org.eclipse.jetty.server.Authentication.Wrapped
 import org.scalatest.{BeforeAndAfter, FunSuite}
+
+import scala.collection.mutable
 
 class PileupTestBase extends FunSuite
   with DataFrameSuiteBase
@@ -11,7 +16,7 @@ class PileupTestBase extends FunSuite
   with SharedSparkContext{
 
   val sampleId = "NA12878.multichrom.md"
-  val samResPath: String = getClass.getResource("/multichrom/mdbam/samtools.pileup").getPath
+  val samResPath: String = getClass.getResource("/multichrom/mdbam/samtools_x_esc.pileup").getPath
   val referencePath: String = getClass.getResource("/reference/Homo_sapiens_assembly18_chr1_chrM.small.fasta").getPath
   val bamPath: String = getClass.getResource(s"/multichrom/mdbam/${sampleId}.bam").getPath
   val cramPath : String = getClass.getResource(s"/multichrom/mdcram/${sampleId}.cram").getPath
@@ -60,8 +65,35 @@ class PileupTestBase extends FunSuite
 
     val byteToString = ((byte: Byte) => byte.toString)
 
+    val qualMapToCoverage = (map: Map[Byte, mutable.WrappedArray[Short]], cov: Short) => {
+      if (map == null) cov
+      else map.map({case (k,v) => v.sum}).sum
+    }
+
+    val qualMapAgg = (map: Map[Byte, mutable.WrappedArray[Short]]) => {
+//      val nestedMap = new mutable.HashMap[String, Short]()
+
+      if (map == null) null
+      else map.map({case (k,v) => {
+        val nestedMap = new mutable.HashMap[String, Short]()
+        for (i <- v.indices)
+          if (v(i) != 0)
+            nestedMap += (i + QualityConstants.OFFSET).toChar.toString -> v(i)
+        k-> nestedMap
+      }
+
+      })
+    }
+
+    val covEquality = (originalCov:Short, qualityCov:Short) => originalCov==qualityCov
+
+
     spark.udf.register("mapToString", mapToString)
     spark.udf.register("byteToString", byteToString)
+    spark.udf.register("qualMapToCoverage", qualMapToCoverage)
+    spark.udf.register("covEquality", covEquality)
+    spark.udf.register("qualMapAgg", qualMapAgg)
+
   }
 
 }

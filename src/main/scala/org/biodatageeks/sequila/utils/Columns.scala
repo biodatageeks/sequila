@@ -31,6 +31,7 @@ object Columns {
   final val COVERAGE= "coverage"
   final val COUNT_REF="countRef"
   final val COUNT_NONREF="countNonRef"
+  final val QUALS="quals"
 
   private val sequencedFragmentColumns = ScalaFuncs
     .classAccessors[SequencedFragment]
@@ -66,3 +67,5 @@ object Columns {
   final val ALT = "alt"
   final val ALTS= "alts"
 }
+
+

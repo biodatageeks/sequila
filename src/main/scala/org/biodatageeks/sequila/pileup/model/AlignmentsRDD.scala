@@ -4,11 +4,16 @@ import java.util
 
 import htsjdk.samtools.SAMRecord
 import org.apache.spark.rdd.RDD
-import org.biodatageeks.sequila.pileup.timers.PileupTimers.{AggMapLookupTimer,AnalyzeReadsTimer, BAMReadTimer, DQTimerTimer, HandleFirstContingTimer, InitContigLengthsTimer, MapPartitionTimer, PrepareOutupTimer}
+import org.biodatageeks.sequila.pileup.timers.PileupTimers.{AggMapLookupTimer, AnalyzeReadsTimer, BAMReadTimer, DQTimerTimer, HandleFirstContingTimer, InitContigLengthsTimer, MapPartitionTimer, PrepareOutupTimer}
 import org.biodatageeks.sequila.utils.{DataQualityFuncs, FastMath}
 
 import scala.collection.{JavaConverters, mutable}
 import ReadOperations.implicits._
+import org.apache.spark.util.SizeEstimator
+import org.slf4j.{Logger, LoggerFactory}
+import org.biodatageeks.sequila.pileup.conf.{Conf, QualityConstants}
+import org.biodatageeks.sequila.pileup.model.Alts.MultiLociAlts
+import org.biodatageeks.sequila.pileup.model.Quals.MultiLociQuals
 
 object AlignmentsRDDOperations {
   object implicits {
@@ -17,21 +22,24 @@ object AlignmentsRDDOperations {
 }
 
 case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
+  val logger: Logger = LoggerFactory.getLogger(this.getClass.getCanonicalName)
+
   /**
     * Collects "interesting" (read start, stop, ref/nonref counting) events on alignments
     *
     * @return distributed collection of PileupRecords
     */
-  def assembleContigAggregates(): RDD[ContigAggregate] = {
+  def assembleContigAggregates: RDD[ContigAggregate] = {
     val contigLenMap = InitContigLengthsTimer.time  {
       initContigLengths(this.rdd.first())
     }
     this.rdd.mapPartitions { partition =>
+//      println(s"Creating aggregates from alignments")
+
       val aggMap = new mutable.HashMap[String, ContigAggregate]()
       val contigMaxReadLen = new mutable.HashMap[String, Int]()
-      var contigIter  = ""
-      var contigCleanIter  = ""
-      var contigEventAggregate: ContigAggregate = null
+      var contigIter, contigCleanIter  = ""
+      var contigAggregate: ContigAggregate = null
       MapPartitionTimer.time {
         while (partition.hasNext) {
           val read = BAMReadTimer.time {partition.next()}
@@ -48,12 +56,12 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
           if (!aggMap.contains(contig))
             HandleFirstContingTimer.time {
               handleFirstReadForContigInPartition(read, contig, contigLenMap, contigMaxReadLen, aggMap)
-              contigEventAggregate = AggMapLookupTimer.time {aggMap(contig) }
+              contigAggregate = AggMapLookupTimer.time {aggMap(contig) }
             }
-
-          AnalyzeReadsTimer.time {read.analyzeRead(contig, contigEventAggregate, contigMaxReadLen)}
+          AnalyzeReadsTimer.time {read.analyzeRead(contig, contigAggregate, contigMaxReadLen)}
         }
-        PrepareOutupTimer.time {prepareOutputAggregates(aggMap, contigMaxReadLen).toIterator}
+        val aggregates = PrepareOutupTimer.time {prepareOutputAggregates(aggMap, contigMaxReadLen).toIterator}
+        aggregates
       }
     }
   }
@@ -68,6 +76,7 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
     * @return
     */
   def prepareOutputAggregates(aggMap: mutable.HashMap[String, ContigAggregate], cigarMap: mutable.HashMap[String, Int]): Array[ContigAggregate] = {
+    //println(s"Preparing output aggregates")
     val output = new Array[ContigAggregate](aggMap.size)
     var i = 0
     val iter = aggMap.toIterator
@@ -82,11 +91,20 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
         contigEventAgg.contigLen,
         util.Arrays.copyOfRange(contigEventAgg.events, 0, maxIndex + 1), //FIXME: https://stackoverflow.com/questions/37969193/why-is-array-slice-so-shockingly-slow
         contigEventAgg.alts,
+        contigEventAgg.trimQuals,
         contigEventAgg.startPosition,
         contigEventAgg.startPosition + maxIndex,
         0,
-        cigarMap(contig))
+        cigarMap(contig),
+        contigEventAgg.qualityCache)
+//      val coef = 1048576.0
+//      val aggSize = SizeEstimator.estimate(agg)/coef
+//      val altsSize = SizeEstimator.estimate(agg.alts)/coef
+//      val qualSize = SizeEstimator.estimate(agg.quals)/coef
+//      val cacheSize = SizeEstimator.estimate(agg.qualityCache)/coef
       output(i) = agg
+
+
       i += 1
     }
     output
@@ -95,7 +113,8 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
 
   private def handleFirstReadForContigInPartition(read: SAMRecord, contig: String, contigLenMap: Map[String, Int],
                                                   contigMaxReadLen: mutable.HashMap[String, Int],
-                                                  aggMap: mutable.HashMap[String, ContigAggregate]) = {
+                                                  aggMap: mutable.HashMap[String, ContigAggregate]
+                                                  ):Unit = {
     val contigLen = contigLenMap(contig)
     val arrayLen = contigLen - read.getStart + 10
 
@@ -104,8 +123,10 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
       contigLen = contigLen,
       events = new Array[Short](arrayLen),
       alts = new MultiLociAlts(),
+      quals = if(Conf.includeBaseQualities ) new MultiLociQuals() else null,
       startPosition = read.getStart,
-      maxPosition = contigLen - 1)
+      maxPosition = contigLen - 1,
+      qualityCache =  if(Conf.includeBaseQualities ) new QualityCache(QualityConstants.CACHE_SIZE) else null)
 
     aggMap += contig -> contigEventAggregate
     contigMaxReadLen += contig -> 0

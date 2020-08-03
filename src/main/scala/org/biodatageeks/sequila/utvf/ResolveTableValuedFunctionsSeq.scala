@@ -85,11 +85,17 @@ object ResolveTableValuedFunctionsSeq extends Rule[LogicalPlan] {
     */
   private val builtinFunctions: Map[String, TVF] = Map(
     "pileup" -> Map(
-      /* pileup(tableName) */
+      /* pileup(tableName, sampleId, refPath) */
       tvf("table" -> StringType, "sampleId" -> StringType, "refPath" -> StringType)
       { case Seq(table: Any, sampleId: Any, refPath: Any) =>
-        PileupTemplate(table.toString, sampleId.toString, refPath.toString)
-      }),
+        PileupTemplate(table.toString, sampleId.toString, refPath.toString, qual = false)
+      },
+      /* pileup(tableName, sampleId, refPath, baseQual) */
+      tvf("table" -> StringType, "sampleId" -> StringType, "refPath" -> StringType, "qual"->BooleanType)
+      { case Seq(table: Any, sampleId: Any, refPath: Any, qual:Any) =>
+        PileupTemplate(table.toString, sampleId.toString, refPath.toString, qual.toString.toBoolean)
+      }
+    ),
 
     "bdg_coverage" -> Map(
       /* coverage(tableName) */
@@ -204,9 +210,9 @@ case class BDGCoverage(tableName:String, sampleId:String, result: String, target
 
 object PileupTemplate {
 
-  def apply(tableName:String, sampleId: String, refPath: String): PileupTemplate = {
+  def apply(table:String, sampleId: String, refPath: String, qual: Boolean): PileupTemplate = {
 
-    val output = StructType(Seq(
+    val basicOutput = StructType(Seq(
       StructField(Columns.CONTIG,StringType,nullable = true),
       StructField(Columns.START,IntegerType,nullable = false),
       StructField(Columns.END,IntegerType,nullable = false),
@@ -215,13 +221,21 @@ object PileupTemplate {
       StructField(Columns.COUNT_REF,ShortType,nullable = false),
       StructField(Columns.COUNT_NONREF,ShortType,nullable = false),
       StructField(Columns.ALTS,MapType(ByteType,ShortType),nullable = true)
-    )).toAttributes
+    ))
 
-    new PileupTemplate(tableName, sampleId, refPath, output)
+    val output = if (!qual)
+                  basicOutput
+                else
+                  basicOutput
+                    .add(StructField(Columns.QUALS,MapType(ByteType,ArrayType(ShortType)),nullable = true))
+
+    val outputAttrs = output.toAttributes
+
+    new PileupTemplate(table, sampleId, refPath, qual, outputAttrs)
   }
 }
 
-case class PileupTemplate(tableName: String, sampleId: String, refPath: String, output: Seq[Attribute] )
+case class PileupTemplate(tableName: String, sampleId: String, refPath: String, qual:Boolean, output: Seq[Attribute] )
   extends LeafNode with MultiInstanceRelation {
 
   override def newInstance(): PileupTemplate = copy(output = output.map(_.newInstance()))

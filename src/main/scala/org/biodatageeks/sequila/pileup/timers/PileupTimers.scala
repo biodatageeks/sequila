@@ -41,17 +41,28 @@ object PileupTimers extends Metrics {
   val TailEdgeTimer = timer("TailEdgeTimer from PileupMethods")
 
   //calculate broadacast
-  val CalculateEventsTimer = timer("CalculateEventsTimer from PileupMethods")
-  val CalculateAltsTimer = timer("CalculateAltsTimer from PileupMethods")
+  val CalculateEventsTimer = timer("CalculateEventsTimer from ContigAggregate")
+  val CalculateAltsTimer = timer("CalculateAltsTimer from ContigAggregate")
+  val CalculateQualsTimer = timer("CalculateQualsTimer from ContigAggregate")
+  val FillQualityForHigherAltsTimer = timer("FillQualityForHigherAltsTimer from ContigAggregate")
+  val FillQualityForLowerAltsTimer = timer("FillQualityForLowerAltsTimer from ContigAggregate")
+
 
   val ShrinkArrayTimer = timer("ShrinkArrayTimer from PileupMethods")
   val ShrinkAltsTimer = timer("ShrinkAltsTimer from PileupMethods")
 
   //analyze
-  val AnalyzeReadsTimer = timer("AnalyzeReadsTimer from PileupMethods")
-  val AnalyzeReadsCalculateEventsTimer = timer("AnalyzeReadsCalculateEventsTimer from PileupMethods")
-  val AnalyzeReadsCalculateAltsTimer = timer("AnalyzeReadsCalculateAltsTimer from PileupMethods")
-  val AnalyzeReadsCalculateAltsParseMDTimer = timer("AnalyzeReadsCalculateAltsParseMDTimer from PileupMethods")
+  val AnalyzeReadsTimer = timer("AnalyzeReadsTimer from Read")
+  val AnalyzeReadsCalculateEventsTimer = timer("AnalyzeReadsCalculateEventsTimer from Read")
+  val AnalyzeReadsCalculateAltsTimer = timer("AnalyzeReadsCalculateAltsTimer from Read")
+  val AnalyzeReadsCalculateQualsTimer = timer("AnalyzeReadsCalculateQualsTimer from Read")
+  val AnalyzeReadsCalculateQualsFillQualsTimer = timer("AnalyzeReadsCalculateQualsFillQualsTimer from Read")
+  val AnalyzeReadsCalculateQualsCheckRangeTimer = timer("AnalyzeReadsCalculateQualsCheckRangeTimer from Read")
+  val AnalyzeReadsCalculateQualsAddToCacheTimer = timer("AnalyzeReadsCalculateQualsAddToCacheTimer from Read")
+  val AnalyzeReadsCalculateQualsUpdateAltsTimer = timer("AnalyzeReadsCalculateQualsUpdateAltsTimer from Read")
+
+  val FillPastQualitiesFromCacheTimer = timer ("FillPastQualitiesFromCacheTimer from Read")
+  val AnalyzeReadsCalculateAltsParseMDTimer = timer("AnalyzeReadsCalculateAltsParseMDTimer from Read")
   val AnalyzeReadsUpdateMaxReadLenInContigTimer = timer("AnalyzeReadsUpdateMaxReadLenInContigTimer from PileupMethods")
 
   //
