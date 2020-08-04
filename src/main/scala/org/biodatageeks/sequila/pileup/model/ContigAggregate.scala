@@ -62,7 +62,7 @@ case class ContigAggregate(
     }
   }
 
-  def updateQuals(pos: Int, alt: Char, quality: Short, updateMax:Boolean = true): Unit = quals.updateQuals(pos, alt,quality, updateMax)
+  def updateQuals(pos: Int, alt: Char, quality: Byte, updateMax:Boolean = true): Unit = quals.updateQuals(pos, alt,quality, updateMax)
 
   def getTail:Tail ={
     val tailStartIndex = maxPosition - maxSeqLen

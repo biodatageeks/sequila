@@ -17,7 +17,7 @@ object ReadOperations {
 case class ExtendedReads(r:SAMRecord) {
 
   private def getAltBaseFromSequence(position: Int):Char = this.r.getReadString.charAt(position-1)
-  private def getAltBaseQualFromSequence(position: Int):Short = this.r.getBaseQualityString.charAt(position-1).toShort
+  private def getAltBaseQualFromSequence(position: Int):Byte = this.r.getBaseQualities()(position-1)
 
   def analyzeRead(contig: String,
                   agg: ContigAggregate,
@@ -29,7 +29,7 @@ case class ExtendedReads(r:SAMRecord) {
     val foundAlts = AnalyzeReadsCalculateAltsTimer.time{calculateAlts(agg, qualityCache) }
     AnalyzeReadsCalculateQualsTimer.time {
       if (Conf.includeBaseQualities) {
-        val readQualSummary = ReadQualSummary(r.getStart, r.getEnd, r.getBaseQualityString, r.getCigar)
+        val readQualSummary = ReadQualSummary(r.getStart, r.getEnd, r.getBaseQualities, r.getCigar)
         AnalyzeReadsCalculateQualsFillQualsTimer.time {fillBaseQualitiesForExistingAlts(agg, foundAlts, readQualSummary)}
         agg.addToCache(readQualSummary)
       }
