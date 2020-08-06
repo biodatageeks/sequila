@@ -4,10 +4,10 @@ import htsjdk.samtools.{Cigar, CigarOperator}
 
 case class EventsForReadPosition(hasDeletion:Boolean, numDeletionsBefore: Int, numInsertionsBefore:Int)
 
-case class ReadQualSummary (start: Int, end: Int, qualsArray: Array[Byte], cigar: Cigar) {
+case class ReadQualSummary (start: Int, end: Int, qualString: String, cigar: Cigar) {
 
-  def getBaseQualityForPosition(position: Int): Byte = {
-    qualsArray(relativePosition(position))
+  def getBaseQualityForPosition(position: Int): Short = {
+    qualString.charAt(relativePosition(position)).toShort
   }
 
   def overlapsPosition(pos:Long):Boolean = isPositionInRange(pos) && !hasDeletionOnPosition(pos)
