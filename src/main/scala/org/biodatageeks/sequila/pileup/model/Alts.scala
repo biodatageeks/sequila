@@ -9,8 +9,8 @@ object Alts {
   val SingleLocusAlts = mutable.HashMap[Byte,Short] _
 
 
-  type MultiLociAlts= mutable.LongMap [SingleLocusAlts]
-  val MultiLociAlts = mutable.LongMap [SingleLocusAlts] _
+  type MultiLociAlts= mutable.IntMap [SingleLocusAlts]
+  val MultiLociAlts = mutable.IntMap [SingleLocusAlts] _
 
   implicit class SingleLocusAltsExtension(val map: Alts.SingleLocusAlts) {
     def derivedAltsNumber:Short = map.foldLeft(0)(_+_._2).toShort
@@ -51,9 +51,6 @@ object Alts {
         mergedAltsMap += k -> map.getOrElse(k, new SingleLocusAlts()).merge(mapOther.getOrElse(k, new SingleLocusAlts()))
       mergedAltsMap
     }
-
-    def getPositionsForRange(start:Int, end: Int):Array[Long] =
-      FastMath.getSubArrayForRange(map.keySet.toArray[Long], start, end)
 
 
   }

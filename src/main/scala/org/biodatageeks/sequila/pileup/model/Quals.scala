@@ -9,8 +9,8 @@ object Quals {
   type SingleLocusQuals = mutable.HashMap[Byte, Array[Short]]
   val SingleLocusQuals = mutable.HashMap[Byte, Array[Short]] _
 
-  type MultiLociQuals = mutable.LongMap[Quals.SingleLocusQuals]
-  val MultiLociQuals = mutable.LongMap[Quals.SingleLocusQuals] _
+  type MultiLociQuals = mutable.IntMap[Quals.SingleLocusQuals]
+  val MultiLociQuals = mutable.IntMap[Quals.SingleLocusQuals] _
 
   implicit class SingleLocusQualsExtension(val map: Quals.SingleLocusQuals) {
     def derivedCoverage:Short = map.map({case (k,v) => v.sum}).sum

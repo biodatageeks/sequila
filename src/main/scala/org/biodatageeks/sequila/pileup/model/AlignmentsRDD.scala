@@ -102,6 +102,11 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
 //      val altsSize = SizeEstimator.estimate(agg.alts)/coef
 //      val qualSize = SizeEstimator.estimate(agg.quals)/coef
 //      val cacheSize = SizeEstimator.estimate(agg.qualityCache)/coef
+//      val altsKeySize = SizeEstimator.estimate(agg.alts.keySet)/coef
+//      val altsValuesSize = SizeEstimator.estimate(agg.alts.values.toSet)/coef
+//      val qualsKeySize = SizeEstimator.estimate(agg.quals.keySet)/coef
+//      val qualsValueSize = SizeEstimator.estimate(agg.quals.values.toSet)/coef
+
       output(i) = agg
 
 

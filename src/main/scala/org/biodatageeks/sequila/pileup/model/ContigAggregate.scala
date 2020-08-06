@@ -6,12 +6,11 @@ import org.biodatageeks.sequila.pileup.broadcast.Correction.PartitionCorrections
 import org.biodatageeks.sequila.pileup.broadcast.Shrink.PartitionShrinks
 import org.biodatageeks.sequila.pileup.broadcast.{FullCorrections, PileupUpdate, Tail}
 import org.biodatageeks.sequila.pileup.conf.{Conf, QualityConstants}
-import org.biodatageeks.sequila.pileup.model.Alts.MultiLociAlts
 import org.biodatageeks.sequila.pileup.timers.PileupTimers.{CalculateAltsTimer, CalculateEventsTimer, CalculateQualsTimer, FillQualityForHigherAltsTimer, FillQualityForLowerAltsTimer, ShrinkArrayTimer, TailAltsTimer, TailCovTimer, TailEdgeTimer}
 import org.biodatageeks.sequila.utils.FastMath
+
 import org.biodatageeks.sequila.pileup.model.Alts._
 import org.biodatageeks.sequila.pileup.model.Quals._
-
 import scala.collection.{SortedSet, mutable}
 import scala.collection.mutable.ArrayBuffer
 
@@ -32,12 +31,12 @@ case class ContigAggregate(
                             qualityCache: QualityCache
                                 ) {
 
-  private val altsKeyCache  = mutable.TreeSet.empty[Long]
+  private val altsKeyCache  = mutable.TreeSet.empty[Int]
 
   def hasAltOnPosition(pos:Int):Boolean = alts.contains(pos)
   def getRange: broadcast.Range = broadcast.Range(contig, startPosition, maxPosition)
   def getPileupUpdate:PileupUpdate = new PileupUpdate(ArrayBuffer(getTail), ArrayBuffer(getRange))
-  def getAltPositionsForRange(start: Int, end: Int): SortedSet[Long] = altsKeyCache.range(start,end+1)
+  def getAltPositionsForRange(start: Int, end: Int): SortedSet[Int] = altsKeyCache.range(start,end+1)
   def addToCache(readQualSummary: ReadQualSummary):Unit = qualityCache.addOrReplace(readQualSummary)
   def trimQuals: MultiLociQuals = if(quals != null) quals.trim else null
 
@@ -134,7 +133,7 @@ case class ContigAggregate(
     }
   }
 
-  def fillQualityForHigherAlts(upd: PartitionCorrections, adjustedQuals: MultiLociQuals, blacklist: scala.collection.Set[Long]): MultiLociQuals = {
+  def fillQualityForHigherAlts(upd: PartitionCorrections, adjustedQuals: MultiLociQuals, blacklist: scala.collection.Set[Int]): MultiLociQuals = {
 
     upd.get((contig, startPosition)) match { // check if there is a value for contigName and minPos in upd, returning array of coverage and cumSum to update current contigRange
       case Some(correction) =>
@@ -161,7 +160,7 @@ case class ContigAggregate(
 
   }
 
-  def fillQualityForLowerAlts(upd: PartitionCorrections, qualsInterim: MultiLociQuals, blacklist: scala.collection.Set[Long]): MultiLociQuals ={
+  def fillQualityForLowerAlts(upd: PartitionCorrections, qualsInterim: MultiLociQuals, blacklist: scala.collection.Set[Int]): MultiLociQuals ={
 
     upd.get((contig, startPosition)) match { // check if there is a value for contigName and minPos in upd, returning array of coverage and cumSum to update current contigRange
       case Some(correction) =>
