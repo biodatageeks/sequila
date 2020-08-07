@@ -7,10 +7,9 @@ import org.biodatageeks.sequila.utils.DataQualityFuncs
 
 import scala.collection.mutable
 
-object Reference {
-  var fasta:IndexedFastaSequenceFile  = null
+class Reference(refPath : String) {
 
-  def init(path:String): Unit = fasta = new IndexedFastaSequenceFile(new File(path))
+  val fasta = new IndexedFastaSequenceFile(new File(refPath))
 
   def getNormalizedContigMap: mutable.HashMap[String, String] = {
     val normContigMap = new mutable.HashMap[String, String]()

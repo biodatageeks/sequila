@@ -46,10 +46,11 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
     this.rdd map { agg =>  agg.getAdjustedAggregate(b)}
   }
 
-  def toPileup: RDD[InternalRow] = {
+  def toPileup(refPath: String ) : RDD[InternalRow] = {
 
     this.rdd.mapPartitions { part =>
-      val contigMap = Reference.getNormalizedContigMap
+      val reference = new Reference(refPath)
+      val contigMap = reference.getNormalizedContigMap
       PileupProjection.setContigMap(contigMap)
 
       part.map { agg => {
@@ -60,7 +61,7 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
         val result = new Array[InternalRow](maxLen)
         val prev = new BlockProperties()
         val startPosition = agg.startPosition
-        val bases = Reference.getBasesFromReference(contigMap(agg.contig), agg.startPosition, agg.startPosition + agg.events.length - 1)
+        val bases = reference.getBasesFromReference(contigMap(agg.contig), agg.startPosition, agg.startPosition + agg.events.length - 1)
 
         while (i < agg.shrinkedEventsArraySize) {
           cov += agg.events(i)

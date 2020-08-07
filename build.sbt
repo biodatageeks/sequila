@@ -3,13 +3,16 @@ import sbtassembly.AssemblyPlugin.autoImport.ShadeRule
 import scala.util.Properties
 
 name := """bdg-sequila"""
-version := "0.5.6-spark-2.4.3"
+val DEFAULT_SPARK_2_VERSION = "2.4.3"
+lazy val sparkVersion = Properties.envOrElse("SPARK_VERSION", DEFAULT_SPARK_2_VERSION)
+
+version := s"0.6.0-spark-${sparkVersion}"
 organization := "org.biodatageeks"
 scalaVersion := "2.11.8"
 
-val DEFAULT_SPARK_2_VERSION = "2.4.3"
+
 val DEFAULT_HADOOP_VERSION = "2.6.5"
-lazy val sparkVersion = Properties.envOrElse("SPARK_VERSION", DEFAULT_SPARK_2_VERSION)
+
 lazy val hadoopVersion = Properties.envOrElse("SPARK_HADOOP_VERSION", DEFAULT_HADOOP_VERSION)
 
 

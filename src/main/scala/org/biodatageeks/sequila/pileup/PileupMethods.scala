@@ -28,7 +28,7 @@ object PileupMethods {
     */
   def calculatePileup(alignments: RDD[SAMRecord], spark: SparkSession, refPath: String): RDD[InternalRow] = {
 
-    Reference.init(refPath)
+
     val enableInstrumentation = spark
       .sqlContext
       .getConf(InternalParams.EnableInstrumentation).toBoolean
@@ -43,7 +43,7 @@ object PileupMethods {
       spark.sparkContext.broadcast(accumulator.value().prepareCorrectionsForOverlaps())
     }
     val adjustedEvents = AdjustedEventsTimer.time {aggregates.adjustWithOverlaps(broadcast) }
-    val pileup = EventsToPileupTimer.time {adjustedEvents.toPileup}
+    val pileup = EventsToPileupTimer.time {adjustedEvents.toPileup(refPath)}
     pileup
   }
 }
