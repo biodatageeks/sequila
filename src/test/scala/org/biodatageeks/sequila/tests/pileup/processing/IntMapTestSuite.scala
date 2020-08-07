@@ -11,8 +11,7 @@ class IntMapTestSuite extends FunSuite{
     map.update(11, "eleven")
     map.update(0, "zero")
     map.update(Int.MaxValue, "max int")
-    println(map)
-    println(map.size)
+    assert(map.size == 3)
   }
 
 }

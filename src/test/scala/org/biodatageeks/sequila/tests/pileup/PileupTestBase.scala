@@ -78,7 +78,7 @@ class PileupTestBase extends FunSuite
         val nestedMap = new mutable.HashMap[String, Short]()
         for (i <- v.indices)
           if (v(i) != 0)
-            nestedMap += (i + QualityConstants.OFFSET).toChar.toString -> v(i)
+            nestedMap += (i + 33).toChar.toString -> v(i)
         k-> nestedMap
       }
 

@@ -55,10 +55,10 @@ object Quals {
       map.map({case(k,v) => k->v.take(v(QualityConstants.MAX_QUAL_IND) + 1)})
     }
 
-    def addQualityForAlt(alt: Char, quality: Short, updateMax: Boolean=true):Unit ={
+    def addQualityForAlt(alt: Char, quality: Byte, updateMax: Boolean=true):Unit ={
       val altByte = alt.toByte
       var array = map.getOrElse(altByte, new Array[Short](QualityConstants.QUAL_ARR_SIZE))
-      val qualityIndex = quality - QualityConstants.OFFSET
+      val qualityIndex = quality
       if(updateMax ) {
         array(qualityIndex) = (array(qualityIndex) + 1).toShort
         if (qualityIndex > array(array.length - 1))
@@ -82,7 +82,7 @@ object Quals {
 
     def trim: MultiLociQuals = map.map({case (k,v) => k-> v.trim})
 
-    def  updateQuals(position: Int, alt: Char, quality: Short, updateMax:Boolean = true): Unit = {
+    def  updateQuals(position: Int, alt: Char, quality: Byte, updateMax:Boolean = true): Unit = {
 
       val singleLocusQualMap = map.getOrElse(position, new SingleLocusQuals())
       singleLocusQualMap.addQualityForAlt(alt,quality, updateMax)

@@ -46,34 +46,38 @@ class QualityCache(size: Int) extends Serializable {
     else currentIndex-1
   }
 
-  def getReadsOverlappingPosition(position: Long): Array[ReadQualSummary] = {
-    val buffer = new ArrayBuffer[ReadQualSummary]()
+  def getReadsOverlappingPosition(position: Int): Array[ReadQualSummary] = {
     var currPos = initSearchIndex
-    var it = 0
-    val maxIterations = (cache.length/2)-1
-
-    while (it <= maxIterations){
-      val rs = cache(currPos)
-      if (rs == null || rs.start > position)
-        return buffer.toArray
-      else if (rs.overlapsPosition(position))
-        buffer.append(rs)
-
-      if(isFull) {
-        if (currPos==rollingIndexStart) currPos = cache.length-1
-        else currPos -= 1
-      } else if (!isFull) {
-        if(currPos==0)
+    val rs = cache(currPos)
+    if(rs == null || rs.start > position)
+      return Array.empty[ReadQualSummary]
+    else {
+      var it = 0
+      val maxIterations = (cache.length/2)-1
+      val buffer = new ArrayBuffer[ReadQualSummary]()
+      while (it <= maxIterations) {
+        val rs = cache(currPos)
+        if (rs == null || rs.start > position)
           return buffer.toArray
-        else
-          currPos -=1
+        else if (rs.overlapsPosition(position))
+          buffer.append(rs)
+
+        if (isFull) {
+          if (currPos == rollingIndexStart) currPos = cache.length - 1
+          else currPos -= 1
+        } else if (!isFull) {
+          if (currPos == 0)
+            return buffer.toArray
+          else
+            currPos -= 1
+        }
+        it += 1
       }
-      it += 1
+      buffer.toArray
     }
-    buffer.toArray
   }
 
-  def getReadsOverlappingPositionFullCache(position: Long): Array[ReadQualSummary] = {
+  def getReadsOverlappingPositionFullCache(position: Int): Array[ReadQualSummary] = {
     val buffer = new ArrayBuffer[ReadQualSummary]()
         for (rs <- cache) {
           if (rs == null )

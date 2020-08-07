@@ -7,7 +7,7 @@ object QualityConstants {
   final val CACHE_SIZE = 600
   final val MAX_QUAL = 93
   final val QUAL_ARR_SIZE = MAX_QUAL + 2
-  final val OFFSET  =33
+  final val OFFSET  = 0
   final val MAX_QUAL_IND = MAX_QUAL + 1
 
 }
