@@ -38,7 +38,6 @@ case class ContigAggregate(
   def getPileupUpdate:PileupUpdate = new PileupUpdate(ArrayBuffer(getTail), ArrayBuffer(getRange))
   def getAltPositionsForRange(start: Int, end: Int): SortedSet[Int] = altsKeyCache.range(start,end+1)
   def addToCache(readQualSummary: ReadQualSummary):Unit = qualityCache.addOrReplace(readQualSummary)
-  def trimQuals: MultiLociQuals = if(quals != null) quals.trim else null
 
   def calculateMaxLength(allPositions: Boolean): Int = {
     if (! allPositions)
@@ -61,7 +60,9 @@ case class ContigAggregate(
     }
   }
 
-  def updateQuals(pos: Int, alt: Char, quality: Byte, updateMax:Boolean = true): Unit = quals.updateQuals(pos, alt,quality, updateMax)
+  def updateQuals(pos: Int, alt: Char, quality: Byte, firstUpdate: Boolean = false): Unit = {
+      quals.updateQuals(pos, alt,quality, firstUpdate)
+  }
 
   def getTail:Tail ={
     val tailStartIndex = maxPosition - maxSeqLen
@@ -147,7 +148,7 @@ case class ContigAggregate(
               val reads = correction.qualityCache.getReadsOverlappingPosition(pos)
               for (read <- reads) {
                 val qual = read.getBaseQualityForPosition(pos.toInt)
-                adjustedQuals.updateQuals(pos.toInt, QualityConstants.REF_SYMBOL, qual, updateMax = false)
+                adjustedQuals.updateQuals(pos.toInt, QualityConstants.REF_SYMBOL, qual, false)
               }
             }
             adjustedQuals
@@ -172,7 +173,7 @@ case class ContigAggregate(
               val reads = qualityCache.getReadsOverlappingPositionFullCache(pos)
               for (read <- reads) {
                 val qual = read.getBaseQualityForPosition(pos.toInt)
-                qualsInterim.updateQuals(pos.toInt, QualityConstants.REF_SYMBOL, qual, updateMax=false)
+                qualsInterim.updateQuals(pos.toInt, QualityConstants.REF_SYMBOL, qual, false)
               }
             }
             qualsInterim

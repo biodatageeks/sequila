@@ -7,12 +7,15 @@ case class ReadQualSummary (start: Int, end: Int,
                             cigarDerivedConf: CigarDerivedConf
                             ) {
 
+  @inline
   def getBaseQualityForPosition(position: Int): Byte = {
     qualsArray(relativePosition(position))
   }
 
-  def overlapsPosition(pos: Int): Boolean = isPositionInRange(pos) && !hasDeletionOnPosition(pos)
+  @inline
+  def overlapsPosition(pos: Int): Boolean = !hasDeletionOnPosition(pos) && start <= pos && end >= pos
 
+  @inline
   def relativePosition(absPosition: Int): Int = {
     if(!cigarDerivedConf.hasClip)
       absPosition - start + inDelEventsOffset(absPosition)
@@ -20,8 +23,7 @@ case class ReadQualSummary (start: Int, end: Int,
       absPosition - start + inDelEventsOffset(absPosition) + cigarDerivedConf.leftClipLength
   }
 
-  private def isPositionInRange(pos: Int) = start <= pos && end >= pos
-
+  @inline
   private def inDelEventsOffset(pos: Int): Int = {
     if (!cigarDerivedConf.hasIndel)
       return 0
@@ -36,6 +38,7 @@ case class ReadQualSummary (start: Int, end: Int,
 
   }
 
+  @inline
   def hasDeletionOnPosition(pos: Int): Boolean = {
     if (!cigarDerivedConf.hasDel)
       false
