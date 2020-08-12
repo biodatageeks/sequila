@@ -71,6 +71,10 @@ javaOptions ++= Seq("-Xms512M", "-Xmx8192M", "-XX:+CMSClassUnloadingEnabled" , "
 
 //fix for using with hdp warehouse connector
 javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint")
+
+scalacOptions ++=Seq (
+  "-optimize"
+)
 updateOptions := updateOptions.value.withLatestSnapshots(false)
 outputStrategy := Some(StdoutOutput)
 

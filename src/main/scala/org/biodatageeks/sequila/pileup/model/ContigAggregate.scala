@@ -33,12 +33,12 @@ case class ContigAggregate(
 
   private val altsKeyCache  = mutable.TreeSet.empty[Int]
 
-  def hasAltOnPosition(pos:Int):Boolean = alts.contains(pos)
-  def getRange: broadcast.Range = broadcast.Range(contig, startPosition, maxPosition)
-  def getPileupUpdate:PileupUpdate = new PileupUpdate(ArrayBuffer(getTail), ArrayBuffer(getRange))
-  def getAltPositionsForRange(start: Int, end: Int): SortedSet[Int] = altsKeyCache.range(start,end+1)
-  def addToCache(readQualSummary: ReadQualSummary):Unit = qualityCache.addOrReplace(readQualSummary)
-  def trimQuals: MultiLociQuals = if(quals != null) quals.trim else null
+  @inline final def hasAltOnPosition(pos:Int):Boolean = alts.contains(pos)
+  @inline final def getRange: broadcast.Range = broadcast.Range(contig, startPosition, maxPosition)
+  @inline final def getPileupUpdate:PileupUpdate = new PileupUpdate(ArrayBuffer(getTail), ArrayBuffer(getRange))
+  @inline final def getAltPositionsForRange(start: Int, end: Int): SortedSet[Int] = altsKeyCache.range(start,end+1)
+  @inline final def addToCache(readQualSummary: ReadQualSummary):Unit = qualityCache.addOrReplace(readQualSummary)
+  @inline final def trimQuals: MultiLociQuals = if(quals != null) quals.trim else null
 
   def calculateMaxLength(allPositions: Boolean): Int = {
     if (! allPositions)
@@ -61,7 +61,7 @@ case class ContigAggregate(
     }
   }
 
-  def updateQuals(pos: Int, alt: Char, quality: Byte, firstUpdate: Boolean = false, updateMax:Boolean = true): Unit = {
+  @inline final def updateQuals(pos: Int, alt: Char, quality: Byte, firstUpdate: Boolean = false, updateMax:Boolean = true): Unit = {
       quals.updateQuals(pos, alt,quality, firstUpdate, updateMax)
   }
 

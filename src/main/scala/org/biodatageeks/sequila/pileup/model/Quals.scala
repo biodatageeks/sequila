@@ -52,7 +52,7 @@ object Quals {
 
     }
 
-    def trim: SingleLocusQuals = {
+    @inline final def trim: SingleLocusQuals = {
       map.map({ case (k, v) => k -> v.take(v(QualityConstants.MAX_QUAL_IND) + 1) })
     }
 
@@ -91,9 +91,8 @@ object Quals {
     implicit class MultiLociQualsExtension(val map: Quals.MultiLociQuals) {
       def ++(that: Quals.MultiLociQuals): Quals.MultiLociQuals = (map ++ that).asInstanceOf[Quals.MultiLociQuals]
 
-      def trim: MultiLociQuals = map.map({ case (k, v) => k -> v.trim })
+      @inline final def trim: MultiLociQuals = map.map({ case (k, v) => k -> v.trim })
 
-      @inline
       def updateQuals(position: Int, alt: Char, quality: Byte, firstUpdate:Boolean = false, updateMax:Boolean=false): Unit = {
         if( !firstUpdate || map.contains(position) ) {
           map(position).addQualityForAlt(alt, quality, updateMax)
