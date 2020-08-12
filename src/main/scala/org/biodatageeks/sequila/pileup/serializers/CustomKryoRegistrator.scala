@@ -10,6 +10,6 @@ class CustomKryoRegistrator extends KryoRegistrator {
   override def registerClasses(kryo: Kryo): Unit = {
     kryo.register(classOf[mutable.LongMap[mutable.HashMap[Byte,Short]]], new LongMapSerializer())
     kryo.register(classOf[mutable.IntMap[mutable.HashMap[Byte,Short]]], new IntMapSerializer())
-    kryo.register(classOf[mutable.LinkedHashSet[Int]])
+    kryo.register(classOf[mutable.LinkedHashSet[Int]], new LinkedHashSetSerializer())
   }
 }
