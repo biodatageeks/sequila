@@ -33,4 +33,8 @@ object InternalParams {
 
   final val EnableInstrumentation = "spark.biodatageeks.instrumentation"
 
+  /* serialization mode */
+
+  final val SerializationMode = "spark.biodatageeks.serialization"
+
 }

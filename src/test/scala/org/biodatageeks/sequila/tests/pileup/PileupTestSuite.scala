@@ -1,6 +1,7 @@
 package org.biodatageeks.sequila.tests.pileup
 
 import org.apache.spark.sql.{DataFrame, SequilaSession}
+import org.apache.spark.storage.StorageLevel
 import org.biodatageeks.sequila.utils.{Columns, InternalParams, SequilaRegister}
 
 class PileupTestSuite extends PileupTestBase {
@@ -28,6 +29,7 @@ class PileupTestSuite extends PileupTestBase {
 
   test("Pileup  changed split size") {
     spark.sqlContext.setConf(InternalParams.InputSplitSize, splitSize)
+
     val ss = SequilaSession(spark)
     SequilaRegister.register(ss)
     val result = ss.sql(pileupQuery)

@@ -29,14 +29,14 @@ object PileupMethods {
   def calculatePileup(alignments: RDD[SAMRecord], spark: SparkSession, refPath: String): RDD[InternalRow] = {
 
 
-    val enableInstrumentation = spark
-      .sqlContext
-      .getConf(InternalParams.EnableInstrumentation).toBoolean
+    val enableInstrumentation = spark.sqlContext.getConf(InternalParams.EnableInstrumentation).toBoolean
     val alignmentsInstr = if(enableInstrumentation) alignments.instrument() else alignments
-    val aggregates = ContigAggrTimer.time {
-      alignmentsInstr.assembleContigAggregates
-        .persist(StorageLevel.MEMORY_AND_DISK) //FIXME: Add automatic unpersist
-    }
+    val storageLevel =
+      if (spark.sqlContext.getConf(InternalParams.SerializationMode)==StorageLevel.DISK_ONLY.toString()) StorageLevel.DISK_ONLY
+      else StorageLevel.MEMORY_AND_DISK
+
+    //FIXME: Add automatic unpersist
+    val aggregates = ContigAggrTimer.time {alignmentsInstr.assembleContigAggregates.persist(storageLevel) }
     val accumulator = AccumulatorTimer.time {aggregates.accumulateTails(spark)}
 
     val broadcast = BroadcastTimer.time{
