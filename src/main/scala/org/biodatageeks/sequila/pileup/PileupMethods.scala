@@ -32,7 +32,8 @@ object PileupMethods {
     val enableInstrumentation = spark.sqlContext.getConf(InternalParams.EnableInstrumentation).toBoolean
     val alignmentsInstr = if(enableInstrumentation) alignments.instrument() else alignments
     val storageLevel =
-      if (spark.sqlContext.getConf(InternalParams.SerializationMode)==StorageLevel.DISK_ONLY.toString()) StorageLevel.DISK_ONLY
+      if (spark.sqlContext.getConf(InternalParams.SerializationMode, StorageLevel.MEMORY_AND_DISK.toString())==StorageLevel.DISK_ONLY.toString())
+        StorageLevel.DISK_ONLY
       else StorageLevel.MEMORY_AND_DISK
 
     //FIXME: Add automatic unpersist

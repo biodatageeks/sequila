@@ -16,12 +16,7 @@ case class ReadQualSummary (start: Int, end: Int,
   def overlapsPosition(pos: Int): Boolean = !hasDeletionOnPosition(pos) && start <= pos && end >= pos
 
   @inline
-  def relativePosition(absPosition: Int): Int = {
-    if(!cigarDerivedConf.hasClip)
-      absPosition - start + inDelEventsOffset(absPosition)
-    else
-      absPosition - start + inDelEventsOffset(absPosition) + cigarDerivedConf.leftClipLength
-  }
+  def relativePosition(absPosition: Int): Int = absPosition - start + inDelEventsOffset(absPosition) + cigarDerivedConf.leftClipLength
 
   @inline
   private def inDelEventsOffset(pos: Int): Int = {

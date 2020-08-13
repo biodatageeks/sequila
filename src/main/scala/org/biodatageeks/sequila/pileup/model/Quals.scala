@@ -56,17 +56,36 @@ object Quals {
       map.map({ case (k, v) => k -> v.take(v(QualityConstants.MAX_QUAL_IND) + 1) })
     }
 
-    def addQualityForAlt(alt: Char, quality: Byte): Unit = {
-        val altByte = alt.toByte
-        val qualityIndex = quality
-        if (!map.contains(altByte)) {
-          val array = new Array[Short](QualityConstants.QUAL_ARR_SIZE)
-          array(qualityIndex) = (array(qualityIndex) + 1).toShort
-          map.update(altByte, array)
-        }
-        else
-          map(altByte)(qualityIndex) = (map(altByte)(qualityIndex) + 1).toShort
+    def addQualityForAlt(alt: Char, quality: Byte, updateMax:Boolean): Unit = {
+      val altByte = alt.toByte
+      val qualityIndex = quality
+
+      if (!map.contains(altByte)) {
+        val array = new Array[Short](QualityConstants.QUAL_ARR_SIZE)
+        array(qualityIndex) = 1.toShort // no need for incrementing. first and last time here.
+        array(QualityConstants.MAX_QUAL_IND) = qualityIndex
+        map.update(altByte, array)
+        return
       }
+
+      if(updateMax) {
+        map(altByte)(qualityIndex) = (map(altByte)(qualityIndex) + 1).toShort
+        if (qualityIndex > map(altByte).last)
+          map(altByte)(QualityConstants.MAX_QUAL_IND) = qualityIndex
+        return
+      }
+
+      if (qualityIndex >= map(altByte).length){
+        val array = new Array[Short](QualityConstants.QUAL_ARR_SIZE)
+        System.arraycopy(map(altByte),0,array, 0, map(altByte).length)
+        array(qualityIndex) = 1.toShort
+        map.update(altByte, array)
+        return
+      }
+
+      map(altByte)(qualityIndex) = (map(altByte)(qualityIndex) + 1).toShort
+
+    }
   }
 
     implicit class MultiLociQualsExtension(val map: Quals.MultiLociQuals) {
@@ -75,13 +94,13 @@ object Quals {
       def trim: MultiLociQuals = map.map({ case (k, v) => k -> v.trim })
 
       @inline
-      def updateQuals(position: Int, alt: Char, quality: Byte, firstUpdate:Boolean = false): Unit = {
+      def updateQuals(position: Int, alt: Char, quality: Byte, firstUpdate:Boolean = false, updateMax:Boolean=false): Unit = {
         if( !firstUpdate || map.contains(position) ) {
-          map(position).addQualityForAlt(alt, quality)
+          map(position).addQualityForAlt(alt, quality, updateMax)
         }
         else {
           val singleLocusQualMap = new SingleLocusQuals()
-          singleLocusQualMap.addQualityForAlt(alt, quality)
+          singleLocusQualMap.addQualityForAlt(alt, quality, updateMax)
           map.update(position, singleLocusQualMap)
         }
       }

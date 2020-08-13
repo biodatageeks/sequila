@@ -91,7 +91,7 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
         contigEventAgg.contigLen,
         util.Arrays.copyOfRange(contigEventAgg.events, 0, maxIndex + 1), //FIXME: https://stackoverflow.com/questions/37969193/why-is-array-slice-so-shockingly-slow
         contigEventAgg.alts,
-        contigEventAgg.quals,
+        contigEventAgg.trimQuals,
         contigEventAgg.startPosition,
         contigEventAgg.startPosition + maxIndex,
         0,
