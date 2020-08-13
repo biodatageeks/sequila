@@ -1,11 +1,11 @@
 package org.biodatageeks.sequila.pileup.model
 
-import htsjdk.samtools.util.StringUtil
 import htsjdk.samtools.{CigarOperator, SAMRecord}
 import org.biodatageeks.sequila.pileup.MDTagParser
 import org.biodatageeks.sequila.pileup.conf.{Conf, QualityConstants}
 import org.biodatageeks.sequila.pileup.timers.PileupTimers.{AnalyzeReadsCalculateAltsParseMDTimer, AnalyzeReadsCalculateAltsTimer, AnalyzeReadsCalculateEventsTimer}
 import org.biodatageeks.sequila.pileup.timers.PileupTimers._
+import org.biodatageeks.sequila.pileup.model.Quals._
 
 import scala.collection.mutable
 
@@ -35,7 +35,7 @@ case class ExtendedReads(r:SAMRecord) {
           val cigarConf = CigarDerivedConf.create(start, cigar)
           val readQualSummary = ReadQualSummary(start, r.getEnd, r.getBaseQualities, cigarConf)
           ReadQualSummaryFillExisitingQualTimer.time { fillBaseQualitiesForExistingAlts(agg, foundAlts, readQualSummary) }
-          agg.addToCache(readQualSummary)
+          agg.qualityCache.addOrReplace(readQualSummary)
         }
       }
   }
@@ -117,10 +117,10 @@ case class ExtendedReads(r:SAMRecord) {
         position += 1
 
         val indexInSeq = calculatePositionInReadSeq(position - read.getStart -delCounter)
-        val altBase = getAltBaseFromSequence(indexInSeq)
-        val altBaseQual = getAltBaseQualFromSequence(indexInSeq)
+        val altBase = read.getReadString.charAt(indexInSeq-1)
+        val altBaseQual = read.getBaseQualities()(indexInSeq-1)
         val altPosition = position - clipLen - 1
-        val newAlt = !aggregate.hasAltOnPosition(altPosition)
+        val newAlt = !aggregate.alts.contains(altPosition)
         aggregate.updateAlts(altPosition, altBase)
         if(Conf.includeBaseQualities) aggregate.updateQuals(altPosition, altBase, altBaseQual, true)
 
@@ -142,24 +142,25 @@ case class ExtendedReads(r:SAMRecord) {
 
   //~100s
   def fillBaseQualitiesForExistingAlts(agg: ContigAggregate, blackList:scala.collection.Set[Int], readQualSummary: ReadQualSummary): Unit = {
-    val altsPositions =  agg.getAltPositionsForRange(r.getStart, r.getEnd) //~1s
+    val altsPositions =  agg.altsKeyCache.range(r.getStart,r.getEnd+1)
     val positionsToFill =  altsPositions diff blackList //~1s
-    for (pos <- positionsToFill.iterator) { //~10s empty loop
-      if(!readQualSummary.cigarDerivedConf.hasDel || !readQualSummary.hasDeletionOnPosition(pos) ) {
-        val relativePos = if(!readQualSummary.cigarDerivedConf.hasIndel && !readQualSummary.cigarDerivedConf.hasClip ) pos - readQualSummary.start
-        else readQualSummary.relativePosition(pos)
+    for (altPosition <- positionsToFill.iterator) { //~10s empty loop
+      if(!readQualSummary.cigarDerivedConf.hasDel || !readQualSummary.hasDeletionOnPosition(altPosition) ) {
+        val relativePos = if(!readQualSummary.cigarDerivedConf.hasIndel && !readQualSummary.cigarDerivedConf.hasClip ) altPosition - readQualSummary.start
+        else readQualSummary.relativePosition(altPosition)
         val qual = readQualSummary.qualsArray(relativePos)
-        agg.updateQuals(pos, QualityConstants.REF_SYMBOL, qual, false)
+        agg.quals.updateQuals(altPosition, QualityConstants.REF_SYMBOL,qual, false, true)
       }
     }
   }
 
   def fillPastQualitiesFromCache(agg: ContigAggregate, altPosition: Int, qualityCache: QualityCache): Unit = {
     val reads = qualityCache.getReadsOverlappingPosition(altPosition)
-     for (read <- reads) {
-       val relativePos = if(!read.cigarDerivedConf.hasIndel && !read.cigarDerivedConf.hasClip ) altPosition - read.start
-       else read.relativePosition(altPosition)
-       agg.updateQuals(altPosition, QualityConstants.REF_SYMBOL, read.qualsArray(relativePos) )
+     for (readQualSummary <- reads) {
+       val relativePos = if(!readQualSummary.cigarDerivedConf.hasIndel && !readQualSummary.cigarDerivedConf.hasClip ) altPosition - readQualSummary.start
+       else readQualSummary.relativePosition(altPosition)
+       val qual = readQualSummary.qualsArray(relativePos)
+       agg.quals.updateQuals(altPosition, QualityConstants.REF_SYMBOL,qual,false, true)
      }
   }
 }

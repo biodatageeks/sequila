@@ -31,7 +31,7 @@ case class ContigAggregate(
                             qualityCache: QualityCache
                                 ) {
 
-  private val altsKeyCache  = mutable.TreeSet.empty[Int]
+  val altsKeyCache  = mutable.TreeSet.empty[Int]
 
   def hasAltOnPosition(pos:Int):Boolean = alts.contains(pos)
   def getRange: broadcast.Range = broadcast.Range(contig, startPosition, maxPosition)
