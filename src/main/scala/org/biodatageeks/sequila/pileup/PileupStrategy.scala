@@ -50,9 +50,11 @@ case class PileupPlan [T<:BDGAlignInputFormat](plan:LogicalPlan, spark:SparkSess
     if(binSize.isDefined) {
       Conf.isBinningEnabled = true
       Conf.binSize = binSize.get
+      Conf.qualityArrayLength = Math.round(QualityConstants.MAX_QUAL_IND  / Conf.binSize.toDouble).toInt + 1
     } else {
       Conf.isBinningEnabled = false
       Conf.binSize = QualityConstants.DEFAULT_BIN_SIZE
+      Conf.qualityArrayLength = QualityConstants.QUAL_ARR_SIZE
     }
    new Pileup(spark).handlePileup(tableName, sampleId, refPath, output)
   }
