@@ -12,7 +12,7 @@ class BinningTestSuite extends PileupTestBase {
   val covEquality = "cov_equal"
   val qualAgg = "qualMapAgg"
 
-  val binSize = 1
+  val binSize = 2
 
   val pileupQuery =
     s"""

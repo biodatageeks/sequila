@@ -7,7 +7,6 @@ import org.biodatageeks.sequila.utils.{Columns, InternalParams, SequilaRegister}
 class BaseQualityTestSuite extends PileupTestBase {
 
   val splitSize = "1000000"
-
   val qualCoverageCol = "qual_coverage"
   val covEquality = "cov_equal"
   val qualAgg = "qualMapAgg"
@@ -29,17 +28,10 @@ class BaseQualityTestSuite extends PileupTestBase {
     ss.sparkContext.setLogLevel("ERROR")
 
     val result = ss.sql(pileupQuery)
-    assert(!Conf.isBinningEnabled)
-//    result.show(100, truncate = false)
-//    assert(result.count()==14671)
-//    result.where(s"${Columns.CONTIG}=1 and $covEquality = false").show(20, truncate=false)
-
-//    result.select(Columns.CONTIG, Columns.START, Columns.END,Columns.REF, Columns.ALTS, qualCoverageCol, Columns.COVERAGE,qualAgg)
-//      .where(s"$covEquality=false").show(20, truncate=false)
-
     val equals = result.select(covEquality).distinct()
     assert(equals.count()==1)
     assert(equals.head.getBoolean(0))
+    assert(!Conf.isBinningEnabled)
   }
 
   test("Simple Quals lookup Multiple partitions") {
@@ -49,15 +41,7 @@ class BaseQualityTestSuite extends PileupTestBase {
     ss.sparkContext.setLogLevel("ERROR")
 
     val result = ss.sql(pileupQuery)
-
-    //result.show(100, truncate = false)
     assert(result.count()==14671)
-    assert(!Conf.isBinningEnabled)
-//    result.where(s"$covEquality=false").show(20, truncate=false)
-
-//  result.select(Columns.CONTIG, Columns.START, Columns.END,Columns.REF, Columns.ALTS, Columns.COVERAGE, qualCoverageCol).
-//    where(s"$covEquality=false").show(50, truncate=false)
-
 
     val equals = result.select(covEquality).distinct()
     assert(equals.count()==1)
