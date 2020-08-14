@@ -7,7 +7,7 @@ class QualityCache(size: Int) extends Serializable {
   var cache = new Array[ReadQualSummary](QualityConstants.CACHE_EXPANDER*size)
   val rollingIndexStart = size
   var currentIndex = 0
-  var isFull = false // necessary for resize method, otherwise can be removed
+  var isFull = false
 
   def this (qualityArray:Array[ReadQualSummary] ) {
     this(qualityArray.size/2)
@@ -47,7 +47,11 @@ class QualityCache(size: Int) extends Serializable {
   }
 
   def getReadsOverlappingPosition(position: Int): Array[ReadQualSummary] = {
-    var currPos = initSearchIndex
+    var currPos =  if(currentIndex==0) 0
+    else if (!isFull) currentIndex -1
+    else if (isFull && currentIndex == rollingIndexStart) cache.length-1
+    else currentIndex-1
+
     val rs = cache(currPos)
     if(rs == null || rs.start > position)
       return Array.empty[ReadQualSummary]
@@ -59,7 +63,7 @@ class QualityCache(size: Int) extends Serializable {
         val rs = cache(currPos)
         if (rs == null || rs.start > position)
           return buffer.toArray
-        else if (rs.overlapsPosition(position))
+        else if (!rs.hasDeletionOnPosition(position) && rs.start <= position && rs.end >= position) // overlapsPosition
           buffer.append(rs)
 
         if (isFull) {
@@ -82,38 +86,10 @@ class QualityCache(size: Int) extends Serializable {
         for (rs <- cache) {
           if (rs == null )
             return buffer.toArray
-          else if (rs.overlapsPosition(position))
+          else if (!rs.hasDeletionOnPosition(position) && rs.start <= position && rs.end >= position) // overlapsPosition
             buffer.append(rs)
         }
     buffer.toArray
-  }
-
-
-    // currently not used
-    def resize (newSize: Int): Unit =  {
-      if (newSize <= length)
-        return
-      val newCache= new Array[ReadQualSummary](newSize)
-      if (isFull) {
-        System.arraycopy(cache, currentIndex, newCache, 0, length-currentIndex)
-        System.arraycopy(cache, 0, newCache, length-currentIndex, currentIndex)
-        currentIndex = length
-      } else
-        System.arraycopy(cache, 0, newCache, 0, length)
-
-      cache = newCache
-    }
-
-  // currently not used
-  def getCacheTailFromPosition(position:Long):QualityCache ={
-    val buffer = new ArrayBuffer[ReadQualSummary]()
-    for (rs <- cache) {
-      if(rs == null)
-        return new QualityCache(buffer.toArray)
-      else if (rs.start >=position)
-        buffer.append(rs)
-    }
-    new QualityCache(buffer.toArray)
   }
 
 }

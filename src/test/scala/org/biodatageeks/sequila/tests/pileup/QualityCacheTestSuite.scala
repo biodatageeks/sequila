@@ -10,11 +10,9 @@ class QualityCacheTestSuite extends FunSuite{
 
   test("Qual cache test"){
 
-    val qualCache = new QualityCache(0)
-    assert(qualCache.length==0)
+    val qualCache = new QualityCache(4)
+    assert(qualCache.length==8)
 
-    qualCache.resize(2)
-    assert(qualCache.length==2)
 
 
     val cElement = new CigarElement(89, CigarOperator.M)
@@ -35,8 +33,6 @@ class QualityCacheTestSuite extends FunSuite{
     assert(qualCache(0).start==read0.start)
     assert(qualCache(1).start==read1.start)
 
-    qualCache.resize(4)
-    assert(qualCache.length==4)
 
     qualCache.addOrReplace(read2)
 
