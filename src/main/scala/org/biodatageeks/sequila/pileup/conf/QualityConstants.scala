@@ -9,5 +9,6 @@ object QualityConstants {
   final val QUAL_ARR_SIZE = MAX_QUAL + 2
   final val OFFSET  = 0
   final val MAX_QUAL_IND = MAX_QUAL + 1
+  final val DEFAULT_BIN_SIZE = 1
 
 }

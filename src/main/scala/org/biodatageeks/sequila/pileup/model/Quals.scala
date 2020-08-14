@@ -1,6 +1,6 @@
 package org.biodatageeks.sequila.pileup.model
 
-import org.biodatageeks.sequila.pileup.conf.QualityConstants
+import org.biodatageeks.sequila.pileup.conf.{Conf, QualityConstants}
 import org.biodatageeks.sequila.utils.FastMath
 import org.biodatageeks.sequila.pileup.timers.PileupTimers._
 
@@ -53,17 +53,18 @@ object Quals {
     }
 
     def trim: SingleLocusQuals = {
-      map.map({ case (k, v) => k -> v.take(v(QualityConstants.MAX_QUAL_IND) + 1) })
+      map.map({ case (k, v) => k -> v.take(v(Conf.qualityArrayLength - 1) + 1) })
     }
 
     def addQualityForAlt(alt: Char, quality: Byte, updateMax:Boolean): Unit = {
       val altByte = alt.toByte
-      val qualityIndex = quality
+      val qualityIndex = if (Conf.isBinningEnabled) (quality/Conf.binSize).toShort else quality
+      val arrSize = Conf.qualityArrayLength
 
       if (!map.contains(altByte)) {
-        val array = new Array[Short](QualityConstants.QUAL_ARR_SIZE)
+        val array = new Array[Short](arrSize)
         array(qualityIndex) = 1.toShort // no need for incrementing. first and last time here.
-        array(QualityConstants.MAX_QUAL_IND) = qualityIndex
+        array(arrSize-1) = qualityIndex
         map.update(altByte, array)
         return
       }
@@ -71,12 +72,12 @@ object Quals {
       if(updateMax) {
         map(altByte)(qualityIndex) = (map(altByte)(qualityIndex) + 1).toShort
         if (qualityIndex > map(altByte).last)
-          map(altByte)(QualityConstants.MAX_QUAL_IND) = qualityIndex
+          map(altByte)(arrSize-1) = qualityIndex
         return
       }
 
       if (qualityIndex >= map(altByte).length){
-        val array = new Array[Short](QualityConstants.QUAL_ARR_SIZE)
+        val array = new Array[Short](arrSize)
         System.arraycopy(map(altByte),0,array, 0, map(altByte).length)
         array(qualityIndex) = 1.toShort
         map.update(altByte, array)
