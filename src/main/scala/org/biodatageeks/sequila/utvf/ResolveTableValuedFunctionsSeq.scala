@@ -21,12 +21,14 @@ package org.apache.spark.sql
 
 import java.util.Locale
 
+import org.apache.spark.sql.ResolveTableValuedFunctionsSeq.tvf
 import org.apache.spark.sql.catalyst.analysis.{MultiInstanceRelation, TypeCoercion, UnresolvedTableValuedFunction}
 import org.apache.spark.sql.catalyst.expressions.{Alias, Attribute, Expression}
 import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.catalyst.rules._
 import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.types.{StructField, _}
+import org.biodatageeks.sequila.pileup.conf.QualityConstants
 import org.biodatageeks.sequila.utils.Columns
 
 
@@ -88,12 +90,16 @@ object ResolveTableValuedFunctionsSeq extends Rule[LogicalPlan] {
       /* pileup(tableName, sampleId, refPath) */
       tvf("table" -> StringType, "sampleId" -> StringType, "refPath" -> StringType)
       { case Seq(table: Any, sampleId: Any, refPath: Any) =>
-        PileupTemplate(table.toString, sampleId.toString, refPath.toString, qual = false)
+        PileupTemplate(table.toString, sampleId.toString, refPath.toString, false, None)
       },
       /* pileup(tableName, sampleId, refPath, baseQual) */
       tvf("table" -> StringType, "sampleId" -> StringType, "refPath" -> StringType, "qual"->BooleanType)
       { case Seq(table: Any, sampleId: Any, refPath: Any, qual:Any) =>
-        PileupTemplate(table.toString, sampleId.toString, refPath.toString, qual.toString.toBoolean)
+        PileupTemplate(table.toString, sampleId.toString, refPath.toString, qual.toString.toBoolean, None)
+      },
+      tvf("table" -> StringType, "sampleId" -> StringType, "refPath" -> StringType, "qual"->BooleanType, "binSize"->IntegerType)
+      { case Seq(table: Any, sampleId: Any, refPath: Any, qual:Any, binSize:Any) =>
+        PileupTemplate(table.toString, sampleId.toString, refPath.toString, qual.toString.toBoolean, Some(binSize.toString.toInt))
       }
     ),
 
@@ -210,7 +216,7 @@ case class BDGCoverage(tableName:String, sampleId:String, result: String, target
 
 object PileupTemplate {
 
-  def apply(table:String, sampleId: String, refPath: String, qual: Boolean): PileupTemplate = {
+  def apply(table:String, sampleId: String, refPath: String, qual: Boolean, binSize: Option[Int]): PileupTemplate = {
 
     val basicOutput = StructType(Seq(
       StructField(Columns.CONTIG,StringType,nullable = true),
@@ -231,11 +237,11 @@ object PileupTemplate {
 
     val outputAttrs = output.toAttributes
 
-    new PileupTemplate(table, sampleId, refPath, qual, outputAttrs)
+    new PileupTemplate(table, sampleId, refPath, qual, binSize, outputAttrs)
   }
 }
 
-case class PileupTemplate(tableName: String, sampleId: String, refPath: String, qual:Boolean, output: Seq[Attribute] )
+case class PileupTemplate(tableName: String, sampleId: String, refPath: String, qual:Boolean, binSize: Option[Int], output: Seq[Attribute] )
   extends LeafNode with MultiInstanceRelation {
 
   override def newInstance(): PileupTemplate = copy(output = output.map(_.newInstance()))
