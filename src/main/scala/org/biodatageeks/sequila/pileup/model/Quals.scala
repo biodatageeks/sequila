@@ -2,7 +2,6 @@ package org.biodatageeks.sequila.pileup.model
 
 import org.biodatageeks.sequila.pileup.conf.{Conf, QualityConstants}
 import org.biodatageeks.sequila.utils.FastMath
-
 import scala.collection.mutable
 
 object Quals {
@@ -22,8 +21,7 @@ object Quals {
         if (x == null) y
         else if (y == null) x
         else x.zipAll(y, 0.toShort, 0.toShort).map(a => (a._1 + a._2).toShort)
-      }
-    }
+      }}
 
     def trim: SingleLocusQuals = {
       arr.map({ array =>
