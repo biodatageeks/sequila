@@ -72,7 +72,7 @@ object Quals {
           map(position).addQualityForAlt(alt, quality, updateMax)
         }
         else {
-          val singleLocusQualMap = new SingleLocusQuals(30)
+          val singleLocusQualMap = new SingleLocusQuals(QualityConstants.OUTER_QUAL_SIZE)
           singleLocusQualMap.addQualityForAlt(alt, quality, updateMax)
           map.update(position, singleLocusQualMap)
         }
@@ -86,7 +86,7 @@ object Quals {
         val keyset = map.keySet ++ mapOther.keySet
         var mergedQualsMap = new MultiLociQuals()
         for (k <- keyset) {
-          mergedQualsMap += k -> map.getOrElse(k, new SingleLocusQuals(30)).merge(mapOther.getOrElse(k, new SingleLocusQuals(30)))
+          mergedQualsMap += k -> map.getOrElse(k, new SingleLocusQuals(QualityConstants.OUTER_QUAL_SIZE)).merge(mapOther.getOrElse(k, new SingleLocusQuals(QualityConstants.OUTER_QUAL_SIZE)))
         }
         mergedQualsMap
       }
