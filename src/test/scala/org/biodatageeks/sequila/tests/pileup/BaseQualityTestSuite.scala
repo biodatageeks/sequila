@@ -29,6 +29,8 @@ class BaseQualityTestSuite extends PileupTestBase {
 
     val result = ss.sql(pileupQuery)
     val equals = result.select(covEquality).distinct()
+    result.where(s"$covEquality == false").show(10, false)
+
     assert(equals.count()==1)
     assert(equals.head.getBoolean(0))
     assert(!Conf.isBinningEnabled)
@@ -42,6 +44,7 @@ class BaseQualityTestSuite extends PileupTestBase {
 
     val result = ss.sql(pileupQuery)
     assert(result.count()==14671)
+    result.where(s"$covEquality == false").show(10, false)
 
     val equals = result.select(covEquality).distinct()
     assert(equals.count()==1)
