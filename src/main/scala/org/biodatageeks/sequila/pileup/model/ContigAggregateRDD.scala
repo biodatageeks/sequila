@@ -116,17 +116,16 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
   }
 
   private def prepareOutputQualMap(agg: ContigAggregate, posStart: Int, ref:String, cov: Short): Map[Byte, Array[Short]] = {
-    if (Conf.includeBaseQualities) {
-      val qualsMap = agg.quals(posStart)
-      qualsMap.map {
-        case (k, v) =>
-          if (k != QualityConstants.REF_SYMBOL)
-            (k, v.toArray[Short])
-          else
-            (ref.charAt(0).toByte, v.toArray[Short])
-      }.toMap
-    }
-    else null
+    if (!Conf.includeBaseQualities)
+      return null
+
+    val qualsMap = agg.quals(posStart)
+    qualsMap.zipWithIndex.map { case (_, i) =>
+      val ind = i + QualityConstants.QUAL_INDEX_SHIFT
+      if (qualsMap(i) != null)
+        (if(ind != QualityConstants.REF_SYMBOL) ind.toByte else ref(0).toByte) -> qualsMap(i)
+      else null
+    }.filter(_ != null).toMap
   }
 
   private def addBlockRecord(result:Array[InternalRow], ind:Int,

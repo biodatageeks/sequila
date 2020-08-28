@@ -10,5 +10,7 @@ object QualityConstants {
   final val OFFSET  = 0
   final val MAX_QUAL_IND = MAX_QUAL + 1
   final val DEFAULT_BIN_SIZE = 1
+  final val QUAL_INDEX_SHIFT = 65
+  final val OUTER_QUAL_SIZE = 30
 
 }
