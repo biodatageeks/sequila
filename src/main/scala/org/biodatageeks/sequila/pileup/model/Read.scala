@@ -122,10 +122,12 @@ case class ExtendedReads(r:SAMRecord) {
         val altPosition = position - clipLen - 1
         val newAlt = !aggregate.alts.contains(altPosition)
         aggregate.updateAlts(altPosition, altBase)
-        if(Conf.includeBaseQualities) aggregate.updateQuals(altPosition, altBase, altBaseQual, true)
-
-        if (newAlt && Conf.includeBaseQualities)
-          fillPastQualitiesFromCache(aggregate, altPosition, qualityCache)
+        if(Conf.includeBaseQualities) {
+          if (newAlt)
+            fillPastQualitiesFromCache(aggregate, altPosition, altBase, altBaseQual, qualityCache)
+          else
+            aggregate.updateQuals(altPosition, altBase, altBaseQual, true)
+        }
         altsPositions+=altPosition
       }
       else if(mdtag.base == 'S')
@@ -140,11 +142,10 @@ case class ExtendedReads(r:SAMRecord) {
   }
 
 
-  //~100s
   def fillBaseQualitiesForExistingAlts(agg: ContigAggregate, blackList:scala.collection.Set[Int], readQualSummary: ReadQualSummary): Unit = {
     val altsPositions =  agg.altsKeyCache.range(r.getStart,r.getEnd+1)
-    val positionsToFill =  altsPositions diff blackList //~1s
-    for (altPosition <- positionsToFill.iterator) { //~10s empty loop
+    val positionsToFill =  altsPositions diff blackList
+    for (altPosition <- positionsToFill.iterator) {
       if(!readQualSummary.cigarDerivedConf.hasDel || !readQualSummary.hasDeletionOnPosition(altPosition) ) {
         val relativePos = if(!readQualSummary.cigarDerivedConf.hasIndel && !readQualSummary.cigarDerivedConf.hasClip ) altPosition - readQualSummary.start
         else readQualSummary.relativePosition(altPosition)
@@ -154,13 +155,31 @@ case class ExtendedReads(r:SAMRecord) {
     }
   }
 
-  def fillPastQualitiesFromCache(agg: ContigAggregate, altPosition: Int, qualityCache: QualityCache): Unit = {
+  def fillPastQualitiesFromCache(agg: ContigAggregate, altPosition: Int, altBase:Char, altBaseQual: Byte, qualityCache: QualityCache): Unit = {
     val reads = qualityCache.getReadsOverlappingPosition(altPosition)
+    val altQualArr = new Array [Short] (Conf.qualityArrayLength)
+    val locusQuals = new SingleLocusQuals(QualityConstants.OUTER_QUAL_SIZE)
+    agg.quals(altPosition) = locusQuals
+    locusQuals(altBase - QualityConstants.QUAL_INDEX_SHIFT) = altQualArr
+
+    altQualArr(altBaseQual) = 1
+    altQualArr(Conf.qualityArrayLength - 1 ) = altBaseQual
+
+    if(reads.isEmpty)
+      return
+
+    val refQualArr = new Array [Short] (Conf.qualityArrayLength)
+    var maxQual = 0.toShort
+
      for (readQualSummary <- reads) {
        val relativePos = if(!readQualSummary.cigarDerivedConf.hasIndel && !readQualSummary.cigarDerivedConf.hasClip ) altPosition - readQualSummary.start
        else readQualSummary.relativePosition(altPosition)
        val qual = readQualSummary.qualsArray(relativePos)
-       agg.quals.updateQuals(altPosition, QualityConstants.REF_SYMBOL,qual,false, true)
+       refQualArr(qual) = (refQualArr(qual) + 1).toShort
+       if (qual > maxQual)
+         maxQual = qual
      }
+    refQualArr(Conf.qualityArrayLength-1) = maxQual
+    locusQuals(QualityConstants.REF_SYMBOL - QualityConstants.QUAL_INDEX_SHIFT) = refQualArr
   }
 }
