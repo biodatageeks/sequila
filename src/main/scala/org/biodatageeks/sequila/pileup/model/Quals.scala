@@ -2,89 +2,61 @@ package org.biodatageeks.sequila.pileup.model
 
 import org.biodatageeks.sequila.pileup.conf.{Conf, QualityConstants}
 import org.biodatageeks.sequila.utils.FastMath
-import org.biodatageeks.sequila.pileup.timers.PileupTimers._
 
 import scala.collection.mutable
 
 object Quals {
-  type SingleLocusQuals = mutable.HashMap[Byte, Array[Short]]
-  val SingleLocusQuals = mutable.HashMap[Byte, Array[Short]] _
+  type SingleLocusQuals = Array[Array[Short]]
+  val SingleLocusQuals = Array[Array[Short]] _
 
   type MultiLociQuals = mutable.IntMap[Quals.SingleLocusQuals]
   val MultiLociQuals = mutable.IntMap[Quals.SingleLocusQuals] _
 
-  implicit class SingleLocusQualsExtension(val map: Quals.SingleLocusQuals) {
-    def derivedCoverage: Short = map.map({ case (k, v) => v.sum }).sum
+  implicit class SingleLocusQualsExtension(val arr: Quals.SingleLocusQuals) {
+    def derivedCoverage: Short = arr.flatMap(x => if (x != null) x.toList else List.empty).sum
 
-    def totalEntries: Long = map.map({ case (k, v) => 1 }).sum
+    def totalEntries: Long = arr.flatMap(_.toList).count(_ != 0)
 
-    def merge(mapOther: SingleLocusQuals): SingleLocusQuals = {
-
-      val fastMerge = FastMath.merge(map, mapOther)
-      if (fastMerge.isDefined)
-        return FastMath.merge(map, mapOther).get.asInstanceOf[SingleLocusQuals]
-
-      val keyset = map.keySet ++ mapOther.keySet
-      val mergedMap = new SingleLocusQuals()
-      for (k <- keyset)
-        mergedMap(k) = addArrays(map.get(k), mapOther.get(k))
-      mergedMap
-    }
-
-    def addArrays(arrOp1: Option[Array[Short]], arrOp2: Option[Array[Short]]): Array[Short] = {
-      if (arrOp1.isEmpty)
-        return arrOp2.get
-      if (arrOp2.isEmpty)
-        return arrOp1.get
-
-      val arr1 = arrOp1.get
-      val arr2 = arrOp2.get
-
-      if (arr1.length >= arr2.length) {
-        for (ind <- arr2.indices)
-          arr1(ind) = (arr1(ind) + arr2(ind)).toShort
-        arr1
-      } else {
-        for (ind <- arr1.indices)
-          arr2(ind) = (arr1(ind) + arr2(ind)).toShort
-        arr2
-      }
-
-    }
+    def merge(arrOther: SingleLocusQuals): SingleLocusQuals = {
+      arr.zip(arrOther).map{ case (x,y) =>
+      if (x == null) y
+      else if (y== null) x
+      else x.zipAll(y,0.toShort,0.toShort).map(a=>(a._1+a._2).toShort)
+    }}
 
     def trim: SingleLocusQuals = {
-      map.map({ case (k, v) => k -> v.take(v(Conf.qualityArrayLength - 1) + 1) })
+      arr.map({ array => if (array != null) array.take(array(Conf.qualityArrayLength - 1) + 1) else null })
     }
 
     def addQualityForAlt(alt: Char, quality: Byte, updateMax:Boolean): Unit = {
-      val altByte = alt.toByte
       val qualityIndex = if (Conf.isBinningEnabled) (quality/Conf.binSize).toShort else quality
       val arrSize = Conf.qualityArrayLength
+      val altArrIndex = alt - QualityConstants.QUAL_INDEX_SHIFT
 
-      if (!map.contains(altByte)) {
+      if (arr(altArrIndex) == null){
         val array = new Array[Short](arrSize)
         array(qualityIndex) = 1.toShort // no need for incrementing. first and last time here.
         array(arrSize-1) = qualityIndex
-        map.update(altByte, array)
+        arr(altArrIndex) =  array
         return
       }
 
       if(updateMax) {
-        map(altByte)(qualityIndex) = (map(altByte)(qualityIndex) + 1).toShort
-        if (qualityIndex > map(altByte).last)
-          map(altByte)(arrSize-1) = qualityIndex
+        arr(altArrIndex)(qualityIndex) = (arr(altArrIndex)(qualityIndex) + 1).toShort
+        if (qualityIndex > arr(altArrIndex).last)
+          arr(altArrIndex)(arrSize-1) = qualityIndex
         return
       }
 
-      if (qualityIndex >= map(altByte).length){
+      if (qualityIndex >= arr(altArrIndex).length){
         val array = new Array[Short](arrSize)
-        System.arraycopy(map(altByte),0,array, 0, map(altByte).length)
+        System.arraycopy(arr(altArrIndex),0,array, 0, arr(altArrIndex).length)
         array(qualityIndex) = 1.toShort
-        map.update(altByte, array)
+        arr(altArrIndex) = array
         return
       }
 
-      map(altByte)(qualityIndex) = (map(altByte)(qualityIndex) + 1).toShort
+      arr(altArrIndex)(qualityIndex) = (arr(altArrIndex)(qualityIndex) + 1).toShort
 
     }
   }
@@ -100,7 +72,7 @@ object Quals {
           map(position).addQualityForAlt(alt, quality, updateMax)
         }
         else {
-          val singleLocusQualMap = new SingleLocusQuals()
+          val singleLocusQualMap = new SingleLocusQuals(QualityConstants.OUTER_QUAL_SIZE)
           singleLocusQualMap.addQualityForAlt(alt, quality, updateMax)
           map.update(position, singleLocusQualMap)
         }
@@ -113,8 +85,9 @@ object Quals {
 
         val keyset = map.keySet ++ mapOther.keySet
         var mergedQualsMap = new MultiLociQuals()
-        for (k <- keyset)
-          mergedQualsMap += k -> map.getOrElse(k, new SingleLocusQuals()).merge(mapOther.getOrElse(k, new SingleLocusQuals()))
+        for (k <- keyset) {
+          mergedQualsMap += k -> map.getOrElse(k, new SingleLocusQuals(QualityConstants.OUTER_QUAL_SIZE)).merge(mapOther.getOrElse(k, new SingleLocusQuals(QualityConstants.OUTER_QUAL_SIZE)))
+        }
         mergedQualsMap
       }
 
@@ -122,19 +95,19 @@ object Quals {
         map.map { case (k, v) => k -> map(k).totalEntries }.foldLeft(0L)(_ + _._2)
       }
 
-      def getQualitiesCount: mutable.IntMap[Int] = {
-        val res = new mutable.IntMap[Int]()
-        map.map { case (k, v) =>
-          v.map { case (kk, vv) =>
-            for (index <- vv.indices by 2) {
-              val item = vv(index)
-              if (res.contains(item)) res.update(item, res(item) + 1)
-              else res.update(item, 1)
-            }
-          }
-        }
-        res
-      }
+//      def getQualitiesCount: mutable.IntMap[Int] = {
+//        val res = new mutable.IntMap[Int]()
+//        map.map { case (k, v) =>
+//          v.map { case (kk, vv) =>
+//            for (index <- vv.indices by 2) {
+//              val item = vv(index)
+//              if (res.contains(item)) res.update(item, res(item) + 1)
+//              else res.update(item, 1)
+//            }
+//          }
+//        }
+//        res
+//      }
 
     }
 
