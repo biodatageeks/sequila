@@ -124,7 +124,7 @@ case class ExtendedReads(r:SAMRecord) {
           if (!aggregate.alts.contains(altPosition))
             fillPastQualitiesFromCache(aggregate, altPosition, altBase, altBaseQual, qualityCache)
           else
-            aggregate.updateQuals(altPosition, altBase, altBaseQual, true)
+            aggregate.updateQuals(altPosition, altBase, altBaseQual, true) // FIXME
         }
         aggregate.updateAlts(altPosition, altBase)
         altsPositions+=altPosition
