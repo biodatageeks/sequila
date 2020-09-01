@@ -6,6 +6,7 @@ import org.biodatageeks.sequila.pileup.conf.{Conf, QualityConstants}
 import org.biodatageeks.sequila.pileup.timers.PileupTimers.{AnalyzeReadsCalculateAltsParseMDTimer, AnalyzeReadsCalculateAltsTimer, AnalyzeReadsCalculateEventsTimer}
 import org.biodatageeks.sequila.pileup.timers.PileupTimers._
 import org.biodatageeks.sequila.pileup.model.Quals._
+import org.biodatageeks.sequila.pileup.model.Alts._
 
 import scala.collection.mutable
 
@@ -124,9 +125,11 @@ case class ExtendedReads(r:SAMRecord) {
           if (!aggregate.alts.contains(altPosition))
             fillPastQualitiesFromCache(aggregate, altPosition, altBase, altBaseQual, qualityCache)
           else
-            aggregate.updateQuals(altPosition, altBase, altBaseQual, true) // FIXME
+            aggregate.quals.updateQuals(altPosition, altBase,altBaseQual, firstUpdate = true, updateMax = true)
         }
-        aggregate.updateAlts(altPosition, altBase)
+        aggregate.alts.updateAlts(altPosition, altBase)
+        if(Conf.includeBaseQualities)
+          aggregate.altsKeyCache.add(altPosition)
         altsPositions+=altPosition
       }
       else if(mdtag.base == 'S')
