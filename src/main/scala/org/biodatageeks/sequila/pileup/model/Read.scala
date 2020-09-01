@@ -16,7 +16,7 @@ object ReadOperations {
   }
 }
 
-case class ExtendedReads(r:SAMRecord) {
+case class ExtendedReads(read:SAMRecord) {
 
   def analyzeRead(contig: String,
                   agg: ContigAggregate,
@@ -26,9 +26,9 @@ case class ExtendedReads(r:SAMRecord) {
     val foundAlts = AnalyzeReadsCalculateAltsTimer.time{calculateAlts(agg, agg.qualityCache) }
       if (Conf.includeBaseQualities) {
         ReadQualSummaryTimer.time{
-          val start = r.getStart
-          val cigarConf = CigarDerivedConf.create(start, r.getCigar)
-          val readQualSummary = ReadQualSummary(start, r.getEnd, r.getBaseQualities, cigarConf)
+          val start = read.getStart
+          val cigarConf = CigarDerivedConf.create(start, read.getCigar)
+          val readQualSummary = ReadQualSummary(start, read.getEnd, read.getBaseQualities, cigarConf)
           ReadQualSummaryFillExisitingQualTimer.time { fillBaseQualitiesForExistingAlts(agg, foundAlts, readQualSummary) }
           agg.qualityCache.addOrReplace(readQualSummary)
         }
@@ -37,8 +37,8 @@ case class ExtendedReads(r:SAMRecord) {
 
   def calculateEvents(contig: String, aggregate: ContigAggregate, contigMaxReadLen: mutable.HashMap[String, Int]): Unit = {
     val partitionStart = aggregate.startPosition
-    var position = this.r.getStart
-    val cigarIterator = this.r.getCigar.iterator()
+    var position = read.getStart
+    val cigarIterator = this.read.getCigar.iterator()
     var cigarLen = 0
 
     while (cigarIterator.hasNext) {
@@ -68,7 +68,7 @@ case class ExtendedReads(r:SAMRecord) {
   }
 
   def calculatePositionInReadSeq( mdPosition: Int): Int = {
-    val cigar = this.r.getCigar
+    val cigar = read.getCigar
     if (!cigar.containsOperator(CigarOperator.INSERTION))
       return mdPosition
 
@@ -92,10 +92,8 @@ case class ExtendedReads(r:SAMRecord) {
   }
 
   private def calculateAlts(aggregate: ContigAggregate, qualityCache: QualityCache): scala.collection.Set[Int] = {
-    val read = this.r
     var position = read.getStart
-    val md = read.getAttribute("MD").toString
-    val ops = AnalyzeReadsCalculateAltsParseMDTimer.time { MDTagParser.parseMDTag(md) }
+    val ops = AnalyzeReadsCalculateAltsParseMDTimer.time { MDTagParser.parseMDTag(read.getAttribute("MD").toString) }
     var delCounter = 0
     var altsPositions = mutable.Set.empty[Int]
     val clipLen =
@@ -140,7 +138,7 @@ case class ExtendedReads(r:SAMRecord) {
 
 
   def fillBaseQualitiesForExistingAlts(agg: ContigAggregate, blackList:scala.collection.Set[Int], readQualSummary: ReadQualSummary): Unit = {
-    val positionsToFill =  (agg.altsKeyCache.range(r.getStart,r.getEnd+1) diff blackList).toArray
+    val positionsToFill =  (agg.altsKeyCache.range(read.getStart,read.getEnd+1) diff blackList).toArray
     var ind = 0
     while (ind < positionsToFill.length) {
       val altPosition = positionsToFill(ind)
