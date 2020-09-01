@@ -171,13 +171,16 @@ case class ExtendedReads(r:SAMRecord) {
     val refQualArr = new Array [Short] (Conf.qualityArrayLength)
     var maxQual = 0.toShort
 
-     for (readQualSummary <- reads) {
+    var ind = 0
+     while (ind < reads.length) {
+       val readQualSummary = reads(ind)
        val relativePos = if(!readQualSummary.cigarDerivedConf.hasIndel && !readQualSummary.cigarDerivedConf.hasClip ) altPosition - readQualSummary.start
        else readQualSummary.relativePosition(altPosition)
        val qual = readQualSummary.qualsArray(relativePos)
        refQualArr(qual) = (refQualArr(qual) + 1).toShort
        if (qual > maxQual)
          maxQual = qual
+       ind += 1
      }
     refQualArr(Conf.qualityArrayLength-1) = maxQual
     locusQuals(QualityConstants.REF_SYMBOL - QualityConstants.QUAL_INDEX_SHIFT) = refQualArr
