@@ -18,17 +18,12 @@ object ReadOperations {
 
 case class ExtendedReads(r:SAMRecord) {
 
-  private def getAltBaseFromSequence(position: Int):Char = this.r.getReadString.charAt(position-1)
-  private def getAltBaseQualFromSequence(position: Int):Byte = this.r.getBaseQualities()(position-1)
-
   def analyzeRead(contig: String,
                   agg: ContigAggregate,
                   contigMaxReadLen: mutable.HashMap[String, Int]
                   ): Unit = {
-    val qualityCache = agg.qualityCache
-
     AnalyzeReadsCalculateEventsTimer.time { calculateEvents(contig, agg, contigMaxReadLen) }
-    val foundAlts = AnalyzeReadsCalculateAltsTimer.time{calculateAlts(agg, qualityCache) }
+    val foundAlts = AnalyzeReadsCalculateAltsTimer.time{calculateAlts(agg, agg.qualityCache) }
       if (Conf.includeBaseQualities) {
         ReadQualSummaryTimer.time{
           val start = r.getStart
