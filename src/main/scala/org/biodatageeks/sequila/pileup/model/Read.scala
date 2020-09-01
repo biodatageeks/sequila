@@ -120,10 +120,9 @@ case class ExtendedReads(r:SAMRecord) {
         val altBase = read.getReadString.charAt(indexInSeq-1)
         val altBaseQual = read.getBaseQualities()(indexInSeq-1)
         val altPosition = position - clipLen - 1
-        val newAlt = !aggregate.alts.contains(altPosition)
         aggregate.updateAlts(altPosition, altBase)
         if(Conf.includeBaseQualities) {
-          if (newAlt)
+          if (!aggregate.alts.contains(altPosition))
             fillPastQualitiesFromCache(aggregate, altPosition, altBase, altBaseQual, qualityCache)
           else
             aggregate.updateQuals(altPosition, altBase, altBaseQual, true)
@@ -143,15 +142,16 @@ case class ExtendedReads(r:SAMRecord) {
 
 
   def fillBaseQualitiesForExistingAlts(agg: ContigAggregate, blackList:scala.collection.Set[Int], readQualSummary: ReadQualSummary): Unit = {
-    val altsPositions =  agg.altsKeyCache.range(r.getStart,r.getEnd+1)
-    val positionsToFill =  altsPositions diff blackList
-    for (altPosition <- positionsToFill.iterator) {
+    val positionsToFill =  (agg.altsKeyCache.range(r.getStart,r.getEnd+1) diff blackList).toArray
+    var ind = 0
+    while (ind < positionsToFill.length) {
+      val altPosition = positionsToFill(ind)
       if(!readQualSummary.cigarDerivedConf.hasDel || !readQualSummary.hasDeletionOnPosition(altPosition) ) {
         val relativePos = if(!readQualSummary.cigarDerivedConf.hasIndel && !readQualSummary.cigarDerivedConf.hasClip ) altPosition - readQualSummary.start
         else readQualSummary.relativePosition(altPosition)
-        val qual = readQualSummary.qualsArray(relativePos)
-        agg.quals.updateQuals(altPosition, QualityConstants.REF_SYMBOL,qual, false, true)
+        agg.quals.updateQuals(altPosition, QualityConstants.REF_SYMBOL,readQualSummary.qualsArray(relativePos), false, true)
       }
+      ind += 1
     }
   }
 
