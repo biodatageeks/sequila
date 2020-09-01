@@ -75,8 +75,7 @@ case class ContigAggregate(
     val tailAlts = TailAltsTimer.time {alts.filter(_._1 >= tailStartIndex)}
     val tailQuals = if (Conf.includeBaseQualities) quals.filter(_._1 >= tailStartIndex) else null
     val cumSum = FastMath.sumShort(events)
-    val tail = TailEdgeTimer.time {broadcast.Tail(contig, startPosition, tailStartIndex, tailCov, tailAlts, tailQuals,cumSum, qualityCache)}
-    tail
+    TailEdgeTimer.time {broadcast.Tail(contig, startPosition, tailStartIndex, tailCov, tailAlts, tailQuals,cumSum, qualityCache)}
   }
 
   def calculateAdjustedQuals(upd: PartitionCorrections): MultiLociQuals = {
