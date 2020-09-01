@@ -119,13 +119,14 @@ case class ExtendedReads(r:SAMRecord) {
         val altBase = read.getReadString.charAt(indexInSeq-1)
         val altBaseQual = read.getBaseQualities()(indexInSeq-1)
         val altPosition = position - clipLen - 1
-        aggregate.updateAlts(altPosition, altBase)
+
         if(Conf.includeBaseQualities) {
           if (!aggregate.alts.contains(altPosition))
             fillPastQualitiesFromCache(aggregate, altPosition, altBase, altBaseQual, qualityCache)
           else
             aggregate.updateQuals(altPosition, altBase, altBaseQual, true)
         }
+        aggregate.updateAlts(altPosition, altBase)
         altsPositions+=altPosition
       }
       else if(mdtag.base == 'S')
