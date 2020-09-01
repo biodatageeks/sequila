@@ -38,13 +38,6 @@ class QualityCache(size: Int) extends Serializable {
     else currentIndex = currentIndex + 1
   }
 
-  def initSearchIndex:Int ={
-    if(currentIndex==0) 0
-    else if (!isFull) currentIndex -1
-    else if (isFull && currentIndex == rollingIndexStart) cache.length-1
-    else currentIndex-1
-  }
-
   def getReadsOverlappingPosition(position: Int): Array[ReadQualSummary] = {
     var currPos =  if(currentIndex==0) 0
     else if (!isFull) currentIndex -1
