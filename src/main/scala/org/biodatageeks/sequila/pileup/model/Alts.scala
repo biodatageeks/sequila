@@ -16,8 +16,9 @@ object Alts {
     def derivedAltsNumber:Short = map.foldLeft(0)(_+_._2).toShort
 
     def merge(mapOther: SingleLocusAlts): SingleLocusAlts = {
-      if (FastMath.merge(map, mapOther).isDefined)
-        return FastMath.merge(map, mapOther).get.asInstanceOf[SingleLocusAlts]
+      val fastMerge = FastMath.merge(map, mapOther)
+      if (fastMerge.isDefined)
+        return fastMerge.get.asInstanceOf[SingleLocusAlts]
 
       val mergedMap = new SingleLocusAlts()
       for (k <- map.keySet ++ mapOther.keySet)

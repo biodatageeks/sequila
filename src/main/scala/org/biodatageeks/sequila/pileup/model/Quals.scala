@@ -85,8 +85,9 @@ object Quals {
     }
 
     def merge(mapOther: MultiLociQuals): MultiLociQuals = {
-      if (FastMath.merge(map, mapOther).isDefined)
-        return FastMath.merge(map, mapOther).get.asInstanceOf[MultiLociQuals]
+      val fastMerge = FastMath.merge(map, mapOther)
+      if (fastMerge.isDefined)
+        return fastMerge.get.asInstanceOf[MultiLociQuals]
 
       var mergedQualsMap = new MultiLociQuals()
       for (k <- map.keySet ++ mapOther.keySet) {
