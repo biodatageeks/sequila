@@ -6,6 +6,7 @@ import org.biodatageeks.sequila.pileup.conf.{Conf, QualityConstants}
 import org.biodatageeks.sequila.pileup.timers.PileupTimers.{AnalyzeReadsCalculateAltsParseMDTimer, AnalyzeReadsCalculateAltsTimer, AnalyzeReadsCalculateEventsTimer}
 import org.biodatageeks.sequila.pileup.timers.PileupTimers._
 import org.biodatageeks.sequila.pileup.model.Quals._
+import org.biodatageeks.sequila.pileup.model.Alts._
 
 import scala.collection.mutable
 
@@ -15,25 +16,19 @@ object ReadOperations {
   }
 }
 
-case class ExtendedReads(r:SAMRecord) {
-
-  private def getAltBaseFromSequence(position: Int):Char = this.r.getReadString.charAt(position-1)
-  private def getAltBaseQualFromSequence(position: Int):Byte = this.r.getBaseQualities()(position-1)
+case class ExtendedReads(read:SAMRecord) {
 
   def analyzeRead(contig: String,
                   agg: ContigAggregate,
                   contigMaxReadLen: mutable.HashMap[String, Int]
                   ): Unit = {
-    val qualityCache = agg.qualityCache
-
     AnalyzeReadsCalculateEventsTimer.time { calculateEvents(contig, agg, contigMaxReadLen) }
-    val foundAlts = AnalyzeReadsCalculateAltsTimer.time{calculateAlts(agg, qualityCache) }
+    val foundAlts = AnalyzeReadsCalculateAltsTimer.time{calculateAlts(agg, agg.qualityCache) }
       if (Conf.includeBaseQualities) {
         ReadQualSummaryTimer.time{
-          val cigar = r.getCigar
-          val start = r.getStart
-          val cigarConf = CigarDerivedConf.create(start, cigar)
-          val readQualSummary = ReadQualSummary(start, r.getEnd, r.getBaseQualities, cigarConf)
+          val start = read.getStart
+          val cigarConf = CigarDerivedConf.create(start, read.getCigar)
+          val readQualSummary = ReadQualSummary(start, read.getEnd, read.getBaseQualities, cigarConf)
           ReadQualSummaryFillExisitingQualTimer.time { fillBaseQualitiesForExistingAlts(agg, foundAlts, readQualSummary) }
           agg.qualityCache.addOrReplace(readQualSummary)
         }
@@ -42,8 +37,8 @@ case class ExtendedReads(r:SAMRecord) {
 
   def calculateEvents(contig: String, aggregate: ContigAggregate, contigMaxReadLen: mutable.HashMap[String, Int]): Unit = {
     val partitionStart = aggregate.startPosition
-    var position = this.r.getStart
-    val cigarIterator = this.r.getCigar.iterator()
+    var position = read.getStart
+    val cigarIterator = this.read.getCigar.iterator()
     var cigarLen = 0
 
     while (cigarIterator.hasNext) {
@@ -73,7 +68,7 @@ case class ExtendedReads(r:SAMRecord) {
   }
 
   def calculatePositionInReadSeq( mdPosition: Int): Int = {
-    val cigar = this.r.getCigar
+    val cigar = read.getCigar
     if (!cigar.containsOperator(CigarOperator.INSERTION))
       return mdPosition
 
@@ -97,10 +92,8 @@ case class ExtendedReads(r:SAMRecord) {
   }
 
   private def calculateAlts(aggregate: ContigAggregate, qualityCache: QualityCache): scala.collection.Set[Int] = {
-    val read = this.r
     var position = read.getStart
-    val md = read.getAttribute("MD").toString
-    val ops = AnalyzeReadsCalculateAltsParseMDTimer.time { MDTagParser.parseMDTag(md) }
+    val ops = AnalyzeReadsCalculateAltsParseMDTimer.time { MDTagParser.parseMDTag(read.getAttribute("MD").toString) }
     var delCounter = 0
     var altsPositions = mutable.Set.empty[Int]
     val clipLen =
@@ -120,12 +113,16 @@ case class ExtendedReads(r:SAMRecord) {
         val altBase = read.getReadString.charAt(indexInSeq-1)
         val altBaseQual = read.getBaseQualities()(indexInSeq-1)
         val altPosition = position - clipLen - 1
-        val newAlt = !aggregate.alts.contains(altPosition)
-        aggregate.updateAlts(altPosition, altBase)
-        if(Conf.includeBaseQualities) aggregate.updateQuals(altPosition, altBase, altBaseQual, true)
 
-        if (newAlt && Conf.includeBaseQualities)
-          fillPastQualitiesFromCache(aggregate, altPosition, qualityCache)
+        if(Conf.includeBaseQualities) {
+          if (!aggregate.alts.contains(altPosition))
+            fillPastQualitiesFromCache(aggregate, altPosition, altBase, altBaseQual, qualityCache)
+          else
+            aggregate.quals.updateQuals(altPosition, altBase,altBaseQual, firstUpdate = true, updateMax = true)
+        }
+        aggregate.alts.updateAlts(altPosition, altBase)
+        if(Conf.includeBaseQualities)
+          aggregate.altsKeyCache.add(altPosition)
         altsPositions+=altPosition
       }
       else if(mdtag.base == 'S')
@@ -140,27 +137,48 @@ case class ExtendedReads(r:SAMRecord) {
   }
 
 
-  //~100s
   def fillBaseQualitiesForExistingAlts(agg: ContigAggregate, blackList:scala.collection.Set[Int], readQualSummary: ReadQualSummary): Unit = {
-    val altsPositions =  agg.altsKeyCache.range(r.getStart,r.getEnd+1)
-    val positionsToFill =  altsPositions diff blackList //~1s
-    for (altPosition <- positionsToFill.iterator) { //~10s empty loop
+    val positionsToFill =  (agg.altsKeyCache.range(read.getStart,read.getEnd+1) diff blackList).toArray
+    var ind = 0
+    while (ind < positionsToFill.length) {
+      val altPosition = positionsToFill(ind)
       if(!readQualSummary.cigarDerivedConf.hasDel || !readQualSummary.hasDeletionOnPosition(altPosition) ) {
         val relativePos = if(!readQualSummary.cigarDerivedConf.hasIndel && !readQualSummary.cigarDerivedConf.hasClip ) altPosition - readQualSummary.start
         else readQualSummary.relativePosition(altPosition)
-        val qual = readQualSummary.qualsArray(relativePos)
-        agg.quals.updateQuals(altPosition, QualityConstants.REF_SYMBOL,qual, false, true)
+        agg.quals.updateQuals(altPosition, QualityConstants.REF_SYMBOL,readQualSummary.qualsArray(relativePos), false, true)
       }
+      ind += 1
     }
   }
 
-  def fillPastQualitiesFromCache(agg: ContigAggregate, altPosition: Int, qualityCache: QualityCache): Unit = {
+  def fillPastQualitiesFromCache(agg: ContigAggregate, altPosition: Int, altBase:Char, altBaseQual: Byte, qualityCache: QualityCache): Unit = {
     val reads = qualityCache.getReadsOverlappingPosition(altPosition)
-     for (readQualSummary <- reads) {
+    val altQualArr = new Array [Short] (Conf.qualityArrayLength)
+    val locusQuals = new SingleLocusQuals(QualityConstants.OUTER_QUAL_SIZE)
+    agg.quals(altPosition) = locusQuals
+    locusQuals(altBase - QualityConstants.QUAL_INDEX_SHIFT) = altQualArr
+
+    altQualArr(altBaseQual) = 1
+    altQualArr(Conf.qualityArrayLength - 1 ) = altBaseQual
+
+    if(reads.isEmpty)
+      return
+
+    val refQualArr = new Array [Short] (Conf.qualityArrayLength)
+    var maxQual = 0.toShort
+
+    var ind = 0
+     while (ind < reads.length) {
+       val readQualSummary = reads(ind)
        val relativePos = if(!readQualSummary.cigarDerivedConf.hasIndel && !readQualSummary.cigarDerivedConf.hasClip ) altPosition - readQualSummary.start
        else readQualSummary.relativePosition(altPosition)
        val qual = readQualSummary.qualsArray(relativePos)
-       agg.quals.updateQuals(altPosition, QualityConstants.REF_SYMBOL,qual,false, true)
+       refQualArr(qual) = (refQualArr(qual) + 1).toShort
+       if (qual > maxQual)
+         maxQual = qual
+       ind += 1
      }
+    refQualArr(Conf.qualityArrayLength-1) = maxQual
+    locusQuals(QualityConstants.REF_SYMBOL - QualityConstants.QUAL_INDEX_SHIFT) = refQualArr
   }
 }

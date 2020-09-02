@@ -16,23 +16,20 @@ object Alts {
     def derivedAltsNumber:Short = map.foldLeft(0)(_+_._2).toShort
 
     def merge(mapOther: SingleLocusAlts): SingleLocusAlts = {
-      val fastMerge = FastMath.merge(map, mapOther)
-      if (fastMerge.isDefined)
+      if (FastMath.merge(map, mapOther).isDefined)
         return FastMath.merge(map, mapOther).get.asInstanceOf[SingleLocusAlts]
 
-      val keys = map.keySet ++ mapOther.keySet
       val mergedMap = new SingleLocusAlts()
-      for (k <- keys)
+      for (k <- map.keySet ++ mapOther.keySet)
         mergedMap(k) = (map.getOrElse(k, 0.toShort) + mapOther.getOrElse(k, 0.toShort)).toShort
       mergedMap
     }
   }
 
   implicit class MultiLociAltsExtension (val map: Alts.MultiLociAlts) {
-    def ++ (that: Alts.MultiLociAlts): Alts.MultiLociAlts = (map ++ that).asInstanceOf[Alts.MultiLociAlts]
+    def ++ (that: Alts.MultiLociAlts): Alts.MultiLociAlts = (map ++ that)
 
-    def updateAlts(pos: Int, alt: Char): Unit = {
-      val position = pos // naturally indexed
+    def updateAlts(position: Int, alt: Char): Unit = {
       val altByte = alt.toByte
 
       val altMap = map.getOrElse(position, new Alts.SingleLocusAlts())
@@ -41,23 +38,15 @@ object Alts {
     }
 
     def merge(mapOther: MultiLociAlts): MultiLociAlts = {
-      val fastMerge = FastMath.merge(map, mapOther)
-      if (fastMerge.isDefined)
+      if (FastMath.merge(map, mapOther).isDefined)
         return FastMath.merge(map, mapOther).get.asInstanceOf[MultiLociAlts]
 
-      val keyset = map.keySet ++ mapOther.keySet
       var mergedAltsMap = new MultiLociAlts()
-      for (k <- keyset)
+      for (k <- map.keySet ++ mapOther.keySet)
         mergedAltsMap += k -> map.getOrElse(k, new SingleLocusAlts()).merge(mapOther.getOrElse(k, new SingleLocusAlts()))
       mergedAltsMap
     }
-
-
   }
-
-
-
-
 }
 
 

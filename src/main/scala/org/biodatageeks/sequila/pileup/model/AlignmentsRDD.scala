@@ -76,7 +76,6 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
     * @return
     */
   def prepareOutputAggregates(aggMap: mutable.HashMap[String, ContigAggregate], cigarMap: mutable.HashMap[String, Int]): Array[ContigAggregate] = {
-    //println(s"Preparing output aggregates")
     val output = new Array[ContigAggregate](aggMap.size)
     var i = 0
     val iter = aggMap.toIterator

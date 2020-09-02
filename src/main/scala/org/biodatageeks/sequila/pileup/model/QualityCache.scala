@@ -30,20 +30,12 @@ class QualityCache(size: Int) extends Serializable {
   }
 
   def addOrReplace(readSummary: ReadQualSummary):Unit = {
-    cache(currentIndex) = null
     cache(currentIndex) = readSummary
     if (currentIndex + 1 >= length) {
       currentIndex = rollingIndexStart
       isFull = true
     }
     else currentIndex = currentIndex + 1
-  }
-
-  def initSearchIndex:Int ={
-    if(currentIndex==0) 0
-    else if (!isFull) currentIndex -1
-    else if (isFull && currentIndex == rollingIndexStart) cache.length-1
-    else currentIndex-1
   }
 
   def getReadsOverlappingPosition(position: Int): Array[ReadQualSummary] = {
