@@ -126,7 +126,8 @@ case class ExtendedReads(read: SAMRecord) {
 
         if (Conf.includeBaseQualities) {
           if (!aggregate.alts.contains(altPosition))
-            fillPastQualitiesFromCache(aggregate, altPosition, altBase, altBaseQual, qualityCache)
+            fillPastQualitiesFromCache(aggregate, altPosition, altBase,
+              if (Conf.isBinningEnabled) (altBaseQual/Conf.binSize).toByte else altBaseQual, qualityCache)
           else
             aggregate.quals.updateQuals(altPosition, altBase, altBaseQual, firstUpdate = true, updateMax = true)
         }
@@ -178,17 +179,17 @@ case class ExtendedReads(read: SAMRecord) {
     var maxQual = 0.toShort
 
     var ind = 0
-    while (ind < reads.length) {
-      val readQualSummary = reads(ind)
-      val relativePos = if (!readQualSummary.cigarDerivedConf.hasIndel && !readQualSummary.cigarDerivedConf.hasClip) altPosition - readQualSummary.start
-      else readQualSummary.relativePosition(altPosition)
-      val qual = readQualSummary.qualsArray(relativePos)
-      refQualArr(qual) = (refQualArr(qual) + 1).toShort
-      if (qual > maxQual)
-        maxQual = qual
-      ind += 1
-    }
-    refQualArr(Conf.qualityArrayLength - 1) = maxQual
+     while (ind < reads.length) {
+       val readQualSummary = reads(ind)
+       val relativePos = if(!readQualSummary.cigarDerivedConf.hasIndel && !readQualSummary.cigarDerivedConf.hasClip ) altPosition - readQualSummary.start
+       else readQualSummary.relativePosition(altPosition)
+       val qual =  if (Conf.isBinningEnabled) (readQualSummary.qualsArray(relativePos)/Conf.binSize).toByte  else readQualSummary.qualsArray(relativePos)
+       refQualArr(qual) = (refQualArr(qual) + 1).toShort
+       if (qual > maxQual)
+         maxQual = qual
+       ind += 1
+     }
+    refQualArr(Conf.qualityArrayLength-1) = maxQual
     locusQuals(QualityConstants.REF_SYMBOL - QualityConstants.QUAL_INDEX_SHIFT) = refQualArr
   }
 }
