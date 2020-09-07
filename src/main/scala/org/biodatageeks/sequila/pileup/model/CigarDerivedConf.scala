@@ -2,7 +2,7 @@ package org.biodatageeks.sequila.pileup.model
 
 import htsjdk.samtools.{Cigar, CigarOperator}
 
-import scala.collection.{SortedSet, mutable}
+import scala.collection.mutable
 
 case class InDelPositions(
                            delPositions: mutable.LinkedHashSet[Int],
@@ -18,7 +18,7 @@ case class CigarDerivedConf(
 
 object CigarDerivedConf {
   def create(start: Int, cigar:Cigar) ={
-    val hasClip = cigar.isLeftClipped //FIXME: to verify
+    val hasClip = cigar.isLeftClipped
     val softClipLength = if(hasClip) {
       val cigarElement = cigar.getFirstCigarElement
       cigarElement.getLength
@@ -52,7 +52,7 @@ object CigarDerivedConf {
    InDelPositions(delPositions, insertPositions)
   }
 
-  private def fillPositionSet(start:Int, end: Int, set: mutable.LinkedHashSet[Int]) = {
+  private def fillPositionSet(start:Int, end: Int, set: mutable.LinkedHashSet[Int]): mutable.LinkedHashSet[Int] = {
     var i = start
     while(i < end) {
       set.add(i)
