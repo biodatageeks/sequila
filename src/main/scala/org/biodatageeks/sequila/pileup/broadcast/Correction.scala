@@ -7,6 +7,7 @@ import org.biodatageeks.sequila.pileup.model.QualityCache
 import org.biodatageeks.sequila.utils.FastMath
 import org.biodatageeks.sequila.pileup.model.Quals._
 
+import scala.collection.immutable.TreeSet
 import scala.collection.mutable
 
 
@@ -16,7 +17,8 @@ case class Correction(
                        quals: Option[MultiLociQuals],
                        cumulativeSum: Short,
                        qualityCache:QualityCache
-                     )
+                     ) {
+}
 
 
 object Correction {
@@ -55,8 +57,8 @@ object Correction {
       map.get((range.contig, range.minPos))  match {
         case Some(correction) => {
           val newArrEvents = correction.events.get.zipAll(arrEvents, 0.toShort, 0.toShort).map { case (x, y) => (x + y).toShort }
-          val newAlts = (correction.alts.get ++ overlap.alts).asInstanceOf[MultiLociAlts]
-          val newQuals = (correction.quals.get ++ overlap.quals).asInstanceOf[MultiLociQuals]
+          val newAlts = (correction.alts.get ++ overlap.alts)
+          val newQuals = (correction.quals.get ++ overlap.quals)
           val newCumSum = (correction.cumulativeSum - FastMath.sumShort(overlap.events.takeRight(overlapLen)) ).toShort
           val newCache = correction.qualityCache ++ overlap.cache
 

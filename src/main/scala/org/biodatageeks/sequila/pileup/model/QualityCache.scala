@@ -84,5 +84,19 @@ class QualityCache(size: Int) extends Serializable {
     buffer.toArray
   }
 
+  def getReadsOverlappingPositionInHeader(position: Int): Array[ReadQualSummary] = {
+    val buffer = new ArrayBuffer[ReadQualSummary]()
+    for (ind <- cache.indices) {
+      if(ind > rollingIndexStart)
+        return buffer.toArray
+      val rs = cache(ind)
+      if (rs == null )
+        return buffer.toArray
+      else if (!rs.hasDeletionOnPosition(position) && rs.start <= position && rs.end >= position) // overlapsPosition
+        buffer.append(rs)
+    }
+    buffer.toArray
+  }
+
 }
 

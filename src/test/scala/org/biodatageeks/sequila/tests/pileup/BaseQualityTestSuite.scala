@@ -47,6 +47,8 @@ class BaseQualityTestSuite extends PileupTestBase {
     result.where(s"$covEquality == false").show(10, false)
 
     val equals = result.select(covEquality).distinct()
+    result.where(s"$covEquality=false").show(false)
+
     assert(equals.count()==1)
     assert(equals.head.getBoolean(0))
     assert(!Conf.isBinningEnabled)
