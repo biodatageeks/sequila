@@ -14,3 +14,8 @@ source_v/
 *.csv
 
 ${seq.metastore.dir}
+
+
+.ipynb_checkpoints
+__pycache__
+venv/
