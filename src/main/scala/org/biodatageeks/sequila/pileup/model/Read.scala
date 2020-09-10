@@ -121,13 +121,12 @@ case class ExtendedReads(read: SAMRecord) {
 
         val indexInSeq = calculatePositionInReadSeq(position - start - delCounter, cigar)
         val altBase = read.getReadString.charAt(indexInSeq - 1)
-        val altBaseQual = bQual(indexInSeq - 1)
+        val altBaseQual = if (Conf.isBinningEnabled) (bQual(indexInSeq - 1)/Conf.binSize).toByte else bQual(indexInSeq - 1)
         val altPosition = position - clipLen - 1
 
         if (Conf.includeBaseQualities) {
           if (!aggregate.alts.contains(altPosition))
-            fillPastQualitiesFromCache(aggregate, altPosition, altBase,
-              if (Conf.isBinningEnabled) (altBaseQual/Conf.binSize).toByte else altBaseQual, qualityCache)
+            fillPastQualitiesFromCache(aggregate, altPosition, altBase, altBaseQual, qualityCache)
           else
             aggregate.quals.updateQuals(altPosition, altBase, altBaseQual, firstUpdate = true, updateMax = true)
         }

@@ -27,10 +27,10 @@ object Quals {
       arr.map({ array =>
         if (array != null) {
           val maxIndex = array.last
-          if (maxIndex < QualityConstants.MAX_QUAL_IND)
-            array.take(array(Conf.qualityArrayLength - 1) + 1)
+          if (maxIndex < Conf.maxQuality)
+            array.take(maxIndex + 1)
           else
-            array
+            array.dropRight(1) // remove maxQuality from array
         }
         else null
       })
@@ -71,7 +71,7 @@ object Quals {
     def ++(that: Quals.MultiLociQuals): Quals.MultiLociQuals = (map ++ that)
 
 
-    def trim: MultiLociQuals = map.map({ case (k, v) => k -> v.trim })
+    def trim: MultiLociQuals = map.map({ case (k, v) => k -> v.trim})
 
     @inline
     def updateQuals(position: Int, alt: Char, quality: Byte, firstUpdate: Boolean = false, updateMax: Boolean = false): Unit = {

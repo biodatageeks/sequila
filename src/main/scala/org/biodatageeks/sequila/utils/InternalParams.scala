@@ -37,4 +37,9 @@ object InternalParams {
 
   final val SerializationMode = "spark.biodatageeks.serialization"
 
+  /* max base quality value, depends on sequencing technology. Default = 40 (Illumina 1.5) */
+  // TODO add to documentation
+  final val maxBaseQualityValue = "spark.biodatageeks.pileup.maxBaseQuality"
+
+
 }

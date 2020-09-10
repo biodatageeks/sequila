@@ -20,14 +20,11 @@ class Pileup[T<:BDGAlignInputFormat](spark:SparkSession)(implicit c: ClassTag[T]
   val logger = LoggerFactory.getLogger(this.getClass.getCanonicalName)
 
   def handlePileup(tableName: String, sampleId: String, refPath:String, output: Seq[Attribute]): RDD[InternalRow] = {
-    logger.info(s"### Calculating pileup on table: $tableName with quals set = ${Conf.includeBaseQualities}")
+    logger.info(s"Calculating pileup on table: $tableName")
+    logger.info(s"Current configuration\n$Conf")
 
     lazy val allAlignments = readTableFile(name=tableName, sampleId)
-
-    if(logger.isDebugEnabled()) logger.debug("Processing {} reads in total", allAlignments.count() )
-
     val alignments = filterAlignments(allAlignments )
-
     PileupMethods.calculatePileup(alignments, spark, refPath)
 
   }

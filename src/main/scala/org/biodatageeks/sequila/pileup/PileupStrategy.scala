@@ -9,8 +9,9 @@ import org.apache.spark.sql.{PileupTemplate, SparkSession, Strategy}
 import org.biodatageeks.sequila.datasources.BAM.BDGAlignFileReaderWriter
 import org.biodatageeks.sequila.datasources.InputDataType
 import org.biodatageeks.sequila.inputformats.BDGAlignInputFormat
-import org.biodatageeks.sequila.pileup.conf.{Conf, QualityConstants}
-import org.biodatageeks.sequila.utils.TableFuncs
+import org.biodatageeks.sequila.pileup.conf.QualityConstants.{DEFAULT_MAX_QUAL,DEFAULT_BIN_SIZE}
+import org.biodatageeks.sequila.pileup.conf.Conf
+import org.biodatageeks.sequila.utils.{InternalParams, TableFuncs}
 import org.seqdoop.hadoop_bam.{BAMBDGInputFormat, CRAMBDGInputFormat}
 
 import scala.reflect.ClassTag
@@ -46,17 +47,24 @@ case class PileupPlan [T<:BDGAlignInputFormat](plan:LogicalPlan, spark:SparkSess
   override def children: Seq[SparkPlan] = Nil
 
   override protected def doExecute(): RDD[InternalRow] = {
+    setupPileupConfiguration()
+    new Pileup(spark).handlePileup(tableName, sampleId, refPath, output)
+  }
+
+  private def setupPileupConfiguration():Unit = {
+    val maxQual = spark.conf.get(InternalParams.maxBaseQualityValue, DEFAULT_MAX_QUAL.toString).toInt
+    Conf.maxQuality = maxQual
+    Conf.maxQualityIndex = maxQual + 1
     Conf.includeBaseQualities = qual
     if(binSize.isDefined) {
       Conf.isBinningEnabled = true
       Conf.binSize = binSize.get
-      Conf.qualityArrayLength = Math.round(QualityConstants.MAX_QUAL_IND  / Conf.binSize.toDouble).toInt + 1
+      Conf.qualityArrayLength = Math.round(Conf.maxQuality  / Conf.binSize.toDouble).toInt + 2
     } else {
       Conf.isBinningEnabled = false
-      Conf.binSize = QualityConstants.DEFAULT_BIN_SIZE
-      Conf.qualityArrayLength = QualityConstants.QUAL_ARR_SIZE
+      Conf.binSize = DEFAULT_BIN_SIZE
+      Conf.qualityArrayLength = Conf.maxQuality + 2
     }
-   new Pileup(spark).handlePileup(tableName, sampleId, refPath, output)
   }
 
 }
