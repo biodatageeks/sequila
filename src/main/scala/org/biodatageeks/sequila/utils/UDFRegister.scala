@@ -2,6 +2,7 @@ package org.biodatageeks.sequila.utils
 
 import org.apache.spark.sql.SparkSession
 import org.biodatageeks.sequila.rangejoins.methods.transformations.RangeMethods
+import org.biodatageeks.sequila.pileup.udfs.{QualityFunctions, CoverageFunctions}
 
 object UDFRegister {
 
@@ -24,6 +25,14 @@ object UDFRegister {
     spark.sqlContext.udf.register("bdg_promoters", RangeMethods.promoters _)
     spark.sqlContext.udf.register("bdg_reflect", RangeMethods.reflect _)
     spark.sqlContext.udf.register("bdg_overlaplength",RangeMethods.calcOverlap _)
+
+    spark.sqlContext.udf.register("quals_to_map", QualityFunctions.qualsToMap _)
+    spark.sqlContext.udf.register("quals_to_cov", QualityFunctions.qualsToCoverage _)
+    spark.sqlContext.udf.register("cov_equals", CoverageFunctions.isCovEqual _)
+
+
+
+
 
   }
 }

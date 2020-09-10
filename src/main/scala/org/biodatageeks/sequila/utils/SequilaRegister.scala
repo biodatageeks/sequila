@@ -37,6 +37,10 @@ object SequilaRegister {
     spark
       .sqlContext
       .setConf(InternalParams.EnableInstrumentation, "false")
+
+    UDFRegister.register(spark)
   }
+
+
 
 }

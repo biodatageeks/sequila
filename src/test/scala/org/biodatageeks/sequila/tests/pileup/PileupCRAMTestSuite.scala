@@ -1,7 +1,7 @@
 package org.biodatageeks.sequila.tests.pileup
 
 import org.apache.spark.sql.SequilaSession
-import org.biodatageeks.sequila.utils.SequilaRegister
+import org.biodatageeks.sequila.utils.{Columns, SequilaRegister}
 
 class PileupCRAMTestSuite extends PileupTestBase {
 
@@ -10,7 +10,7 @@ class PileupCRAMTestSuite extends PileupTestBase {
     SequilaRegister.register(ss)
     val query =
       s"""
-         |SELECT contig, pos_start, pos_end, ref, coverage, mapToString(alts)
+         |SELECT ${Columns.CONTIG}, ${Columns.START}, ${Columns.END}, ${Columns.REF}, ${Columns.COVERAGE},${Columns.ALTS}
          |FROM  pileup('{{tableName}}', '${sampleId}' , '$referencePath')
                  """.stripMargin
     val resultBAM = ss

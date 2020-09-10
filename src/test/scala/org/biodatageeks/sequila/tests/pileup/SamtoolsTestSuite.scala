@@ -17,7 +17,7 @@ class SamtoolsTestSuite extends PileupTestBase {
 
   val queryQual =
     s"""
-       |SELECT contig, pos_start, pos_end, ref, coverage, alts, qualMapAgg(${Columns.QUALS}) as $qualAgg
+       |SELECT contig, pos_start, pos_end, ref, coverage, alts, quals_to_map(${Columns.QUALS}) as $qualAgg
        |FROM  pileup('$tableName', '${sampleId}', '$referencePath', true)
                          """.stripMargin
 

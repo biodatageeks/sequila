@@ -10,7 +10,7 @@ class BinningTestSuite extends PileupTestBase {
 
   val qualCoverageCol = "qual_coverage"
   val covEquality = "cov_equal"
-  val qualAgg = "qualMapAgg"
+  val qualAgg = "qual_map"
 
   val binSize = 2
 
@@ -19,9 +19,9 @@ class BinningTestSuite extends PileupTestBase {
        |SELECT ${Columns.CONTIG}, ${Columns.START}, ${Columns.END},
        | ${Columns.REF}, ${Columns.COVERAGE},
        | ${Columns.ALTS}, ${Columns.QUALS},
-       | qualMapToCoverage(${Columns.QUALS}, ${Columns.COVERAGE}) as $qualCoverageCol,
-       | qualMapAgg(${Columns.QUALS}) as $qualAgg,
-       | covEquality (${Columns.COVERAGE}, qualMapToCoverage(${Columns.QUALS}, ${Columns.COVERAGE}) ) as $covEquality
+       | quals_to_cov(${Columns.QUALS}, ${Columns.COVERAGE}) as $qualCoverageCol,
+       | quals_to_map(${Columns.QUALS}) as $qualAgg,
+       | cov_equals (${Columns.COVERAGE}, ${Columns.COVERAGE}) as $covEquality
        |FROM  pileup('$tableName', '${sampleId}', '$referencePath', true, $binSize)
        |ORDER BY ${Columns.CONTIG}
                  """.stripMargin

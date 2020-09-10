@@ -59,45 +59,6 @@ class PileupTestBase extends FunSuite
          |
       """.stripMargin)
 
-    val mapToString = (map: Map[Byte, Short]) => {
-      if (map == null)
-        "null"
-      else
-        map.map({
-          case (k, v) => k.toChar -> v}).mkString.replace(" -> ", ":")
-    }
-
-    val byteToString = ((byte: Byte) => byte.toString)
-
-    val qualMapToCoverage = (map: Map[Byte, mutable.WrappedArray[Short]], cov: Short) => {
-      if (map == null) cov
-      else map.map({case (k,v) => v.sum}).sum
-    }
-
-    val qualMapAgg = (map: Map[Byte, mutable.WrappedArray[Short]]) => {
-//      val nestedMap = new mutable.HashMap[String, Short]()
-
-      if (map == null) null
-      else map.map({case (k,v) => {
-        val nestedMap = new mutable.HashMap[String, Short]()
-        for (i <- v.indices)
-          if (v(i) != 0)
-            nestedMap += (i + 33).toChar.toString -> v(i)
-        k-> nestedMap
-      }
-
-      })
-    }
-
-    val covEquality = (originalCov:Short, qualityCov:Short) => originalCov==qualityCov
-
-
-    spark.udf.register("mapToString", mapToString)
-    spark.udf.register("byteToString", byteToString)
-    spark.udf.register("qualMapToCoverage", qualMapToCoverage)
-    spark.udf.register("covEquality", covEquality)
-    spark.udf.register("qualMapAgg", qualMapAgg)
-
   }
 
 }
