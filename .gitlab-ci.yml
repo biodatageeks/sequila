@@ -1,19 +1,43 @@
 stages:
   - version
+  - build
 
 
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
   VERSION_FILE: version.sh
 
+
+
 # --------------------------------- STAGE: version ---------------------------------------------------------------------
 version:
   stage: version
-  image: mdomke/git-semver:v4.0.1
+  image:
+    name: mdomke/git-semver:v4.0.1
+    entrypoint: [""]
   script:
-    - git-semver | xargs -I {} echo "export VERSION={}" > $VERSION_FILE
+    - cd /builds/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME && git-semver | xargs -I {} echo "export VERSION={}" > $VERSION_FILE
+    - cat $VERSION_FILE
   artifacts:
     paths:
       - $VERSION_FILE
+  tags: [ docker ]
+  except: [ master ]
+
+build:
+  stage: build
+  image:
+    name: chatwork/scala-sbt:x86_64-ubuntu-jdk8u212-b03-2.11.8-1.1.0
+    entrypoint: [""]
+  variables:
+    SBT_OPTS: "-Dsbt.ivy.home=sbt-cache/ivy"
+  cache:
+    key: $CI_PROJECT_PATH
+    paths:
+      - "sbt-cache/ivy/cache"
+  before_script:
+    - source $VERSION_FILE
+  script:
+    - sbt clean package
   tags: [ docker ]
   except: [ master ]
