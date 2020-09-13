@@ -1,0 +1,19 @@
+stages:
+  - version
+
+
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+  VERSION_FILE: version.sh
+
+# --------------------------------- STAGE: version ---------------------------------------------------------------------
+version:
+  stage: version
+  image: mdomke/git-semver:v4.0.1
+  script:
+    - git-semver | xargs -I {} echo "export VERSION={}" > $VERSION_FILE
+  artifacts:
+    paths:
+      - $VERSION_FILE
+  tags: [ docker ]
+  except: [ master ]
