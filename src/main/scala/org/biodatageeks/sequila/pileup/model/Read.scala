@@ -2,9 +2,9 @@ package org.biodatageeks.sequila.pileup.model
 
 import htsjdk.samtools.{Cigar, CigarOperator, SAMRecord}
 import org.biodatageeks.sequila.pileup.MDTagParser
-import org.biodatageeks.sequila.pileup.conf.{Conf, QualityConstants}
-import org.biodatageeks.sequila.pileup.timers.PileupTimers.{AnalyzeReadsCalculateAltsParseMDTimer, AnalyzeReadsCalculateAltsTimer, AnalyzeReadsCalculateEventsTimer}
-import org.biodatageeks.sequila.pileup.timers.PileupTimers._
+import org.biodatageeks.sequila.pileup.conf.Conf
+import org.biodatageeks.sequila.pileup.conf.QualityConstants.{REF_SYMBOL, OUTER_QUAL_SIZE, QUAL_INDEX_SHIFT}
+
 import org.biodatageeks.sequila.pileup.model.Quals._
 import org.biodatageeks.sequila.pileup.model.Alts._
 
@@ -27,18 +27,14 @@ case class ExtendedReads(read: SAMRecord) {
     val start = read.getStart
     val cigar = read.getCigar
     val bQual = read.getBaseQualities
-    AnalyzeReadsCalculateEventsTimer.time {calculateEvents(contig, agg, contigMaxReadLen, start, cigar)}
-    val foundAlts = AnalyzeReadsCalculateAltsTimer.time {
-      calculateAlts(agg, agg.qualityCache, start, cigar, bQual)
-    }
+    calculateEvents(contig, agg, contigMaxReadLen, start, cigar)
+    val foundAlts = calculateAlts(agg, agg.qualityCache, start, cigar, bQual)
+
     if (Conf.includeBaseQualities) {
-      ReadQualSummaryTimer.time {
-        val start = read.getStart
-        val cigarConf = CigarDerivedConf.create(start, read.getCigar)
-        val readQualSummary = ReadQualSummary(start, read.getEnd, read.getBaseQualities, cigarConf)
-        ReadQualSummaryFillExisitingQualTimer.time {fillBaseQualitiesForExistingAlts(agg, foundAlts, readQualSummary)}
-        agg.qualityCache.addOrReplace(readQualSummary)
-      }
+      val cigarConf = CigarDerivedConf.create(start, cigar)
+      val readQualSummary = ReadQualSummary(start, read.getEnd, read.getBaseQualities, cigarConf)
+      fillBaseQualitiesForExistingAlts(agg, foundAlts, readQualSummary)
+      agg.qualityCache.addOrReplace(readQualSummary)
     }
   }
 
@@ -102,7 +98,7 @@ case class ExtendedReads(read: SAMRecord) {
   def calculateAlts(aggregate: ContigAggregate, qualityCache: QualityCache, start: Int,
                     cigar: Cigar, bQual: Array[Byte]): scala.collection.Set[Int] = {
     var position = start
-    val ops = AnalyzeReadsCalculateAltsParseMDTimer.time {MDTagParser.parseMDTag(read.getAttribute("MD").toString)}
+    val ops = MDTagParser.parseMDTag(read.getAttribute("MD").toString)
 
     var delCounter = 0
     var altsPositions = mutable.Set.empty[Int]
@@ -155,7 +151,7 @@ case class ExtendedReads(read: SAMRecord) {
       if (!readQualSummary.cigarDerivedConf.hasDel || !readQualSummary.hasDeletionOnPosition(altPosition)) {
         val relativePos = if (!readQualSummary.cigarDerivedConf.hasIndel && !readQualSummary.cigarDerivedConf.hasClip) altPosition - readQualSummary.start
         else readQualSummary.relativePosition(altPosition)
-        agg.quals.updateQuals(altPosition, QualityConstants.REF_SYMBOL, readQualSummary.qualsArray(relativePos), false, true)
+        agg.quals.updateQuals(altPosition, REF_SYMBOL, readQualSummary.qualsArray(relativePos), false, true)
       }
       ind += 1
     }
@@ -164,9 +160,9 @@ case class ExtendedReads(read: SAMRecord) {
   def fillPastQualitiesFromCache(agg: ContigAggregate, altPosition: Int, altBase: Char, altBaseQual: Byte, qualityCache: QualityCache): Unit = {
     val reads = qualityCache.getReadsOverlappingPosition(altPosition)
     val altQualArr = new Array[Short](Conf.qualityArrayLength)
-    val locusQuals = new SingleLocusQuals(QualityConstants.OUTER_QUAL_SIZE)
+    val locusQuals = new SingleLocusQuals(OUTER_QUAL_SIZE)
     agg.quals(altPosition) = locusQuals
-    locusQuals(altBase - QualityConstants.QUAL_INDEX_SHIFT) = altQualArr
+    locusQuals(altBase - QUAL_INDEX_SHIFT) = altQualArr
 
     altQualArr(altBaseQual) = 1
     altQualArr(Conf.qualityArrayLength - 1) = altBaseQual
@@ -189,6 +185,6 @@ case class ExtendedReads(read: SAMRecord) {
        ind += 1
      }
     refQualArr(Conf.qualityArrayLength-1) = maxQual
-    locusQuals(QualityConstants.REF_SYMBOL - QualityConstants.QUAL_INDEX_SHIFT) = refQualArr
+    locusQuals(REF_SYMBOL - QUAL_INDEX_SHIFT) = refQualArr
   }
 }
