@@ -52,7 +52,7 @@ class PileupConverter (spark: SparkSession) extends Serializable {
 
 
   def generateQualityMap(rawPileup: String, qualityString: String, ref: String): mutable.Map[Byte, mutable.HashMap[String, Short]] = {
-    val cleanPileup = PileupStringUtils.removeAllMarks(rawPileup).toUpperCase()
+    val cleanPileup = PileupStringUtils.removeAllMarks(rawPileup)
     val (pileup, quality) = removeDeletedBases(cleanPileup, qualityString)
     assert (pileup.length == quality.length)
 
@@ -80,7 +80,7 @@ class PileupConverter (spark: SparkSession) extends Serializable {
       val contig = DataQualityFuncs.cleanContig(row.getString(Indices.contig))
       val position = row.getInt(Indices.position)
       val ref = row.getString(Indices.ref).toUpperCase()
-      val rawPileup = row.getString(Indices.pileupString).toUpperCase
+      val rawPileup = row.getString(Indices.pileupString)
       val qualityString = row.getString(Indices.qualityString)
 
       //FIXME - needed manual escaping in pileup file ... maybe can be done in better way...
@@ -96,7 +96,7 @@ class PileupConverter (spark: SparkSession) extends Serializable {
 
         val matches = indelPattern.findAllMatchIn(pileup)
         while (matches.hasNext) {
-          val indelSign = matches.next().toString().toUpperCase()
+          val indelSign = matches.next().toString()
           val indel = indelSign.substring(1)
           val indelLenStr = numberPattern.findFirstIn(indel).get
           val indelLen = indelLenStr.toInt
@@ -150,7 +150,6 @@ class PileupConverter (spark: SparkSession) extends Serializable {
       cov = row.getShort(Indices.cov)
       val currAlt = row.getMap[Byte, Short](Indices.altsMap)
       val currQualityMap = row.getMap[Byte, Map[String, Short]](Indices.qualsMap)
-
 
       if (prevContig.nonEmpty && prevContig != curContig) {
         if (prevAlt.nonEmpty)

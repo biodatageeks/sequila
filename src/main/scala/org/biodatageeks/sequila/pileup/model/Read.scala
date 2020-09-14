@@ -27,8 +27,9 @@ case class ExtendedReads(read: SAMRecord) {
     val start = read.getStart
     val cigar = read.getCigar
     val bQual = read.getBaseQualities
+    val isPositiveStrand = ! read.getReadNegativeStrandFlag
     calculateEvents(contig, agg, contigMaxReadLen, start, cigar)
-    val foundAlts = calculateAlts(agg, agg.qualityCache, start, cigar, bQual)
+    val foundAlts = calculateAlts(agg, agg.qualityCache, start, cigar, bQual, isPositiveStrand)
 
     if (Conf.includeBaseQualities) {
       val cigarConf = CigarDerivedConf.create(start, cigar)
@@ -96,7 +97,8 @@ case class ExtendedReads(read: SAMRecord) {
   }
 
   def calculateAlts(aggregate: ContigAggregate, qualityCache: QualityCache, start: Int,
-                    cigar: Cigar, bQual: Array[Byte]): scala.collection.Set[Int] = {
+                    cigar: Cigar, bQual: Array[Byte], 
+                    isPositiveStrand:Boolean): scala.collection.Set[Int] = {
     var position = start
     val ops = MDTagParser.parseMDTag(read.getAttribute("MD").toString)
 
@@ -116,7 +118,7 @@ case class ExtendedReads(read: SAMRecord) {
         position += 1
 
         val indexInSeq = calculatePositionInReadSeq(position - start - delCounter, cigar)
-        val altBase = read.getReadString.charAt(indexInSeq - 1)
+        val altBase = if (isPositiveStrand) read.getReadString.charAt(indexInSeq - 1).toUpper else read.getReadString.charAt(indexInSeq - 1).toLower
         val altBaseQual = if (Conf.isBinningEnabled) (bQual(indexInSeq - 1)/Conf.binSize).toByte else bQual(indexInSeq - 1)
         val altPosition = position - clipLen - 1
 
@@ -158,6 +160,7 @@ case class ExtendedReads(read: SAMRecord) {
   }
 
   def fillPastQualitiesFromCache(agg: ContigAggregate, altPosition: Int, altBase: Char, altBaseQual: Byte, qualityCache: QualityCache): Unit = {
+
     val reads = qualityCache.getReadsOverlappingPosition(altPosition)
     val altQualArr = new Array[Short](Conf.qualityArrayLength)
     val locusQuals = new SingleLocusQuals(OUTER_QUAL_SIZE)

@@ -54,7 +54,6 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
       PileupProjection.setContigMap(contigMap)
 
       part.map { agg => {
-
         var cov, ind, i = 0
         val allPos = false
         val maxLen = agg.calculateMaxLength(allPos)

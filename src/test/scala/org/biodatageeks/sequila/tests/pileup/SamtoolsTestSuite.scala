@@ -41,8 +41,8 @@ class SamtoolsTestSuite extends PileupTestBase {
     val bdgRes = ss.sql(query).orderBy("contig", "pos_start")
     val samRes = spark.createDataFrame(sam.rdd, bdgRes.schema)
 
-//    Writer.saveToFile(spark, samRes, "samRes.csv")
-//    Writer.saveToFile(spark, bdgRes, "bdgRes.csv")
+    Writer.saveToFile(spark, samRes, "samRes.csv")
+    Writer.saveToFile(spark, bdgRes, "bdgRes.csv")
     assertDataFrameEquals(samRes, bdgRes)
   }
 

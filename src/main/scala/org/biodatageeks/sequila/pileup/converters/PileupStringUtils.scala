@@ -77,6 +77,11 @@ object PileupStringUtils {
     basesCount("G") = pileup.count(_ == 'G')
     basesCount("T") = pileup.count(_ == 'T')
     basesCount("N") = pileup.count(_ == 'N')
+    basesCount("a") = pileup.count(_ == 'a')
+    basesCount("c") = pileup.count(_ == 'c')
+    basesCount("g") = pileup.count(_ == 'g')
+    basesCount("t") = pileup.count(_ == 't')
+    basesCount("n") = pileup.count(_ == 'n')
     basesCount
 
   }
