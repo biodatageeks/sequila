@@ -18,6 +18,20 @@ object QualityFunctions {
       }
       })
   }
+  def qualsToCharMap(map: Map[Byte, mutable.WrappedArray[Short]]): Map[String, mutable.HashMap[String, Short]] = {
+
+    if (map == null)
+      null
+    else
+      map.map({ case (k, v) => {
+        val nestedMap = new mutable.HashMap[String, Short]()
+        for (i <- v.indices)
+          if (v(i) != 0)
+            nestedMap += (i + 33).toChar.toString -> v(i)
+        k.toChar.toString -> nestedMap
+      }
+      })
+  }
 
   def qualsToCoverage (map: Map[Byte, mutable.WrappedArray[Short]], cov:Short): Short = {
     if (map == null)
