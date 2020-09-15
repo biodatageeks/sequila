@@ -18,5 +18,5 @@ setup(
         'Intended Audience :: Developers',
         'Programming Language :: Python :: 3.6',
     ],
-    url='https://github.com/ZSI-Bio/bdg-sequila'
+    url='https://github.com/biodatageeks/sequila'
 )
