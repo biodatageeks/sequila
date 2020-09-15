@@ -2,11 +2,11 @@ import sbtassembly.AssemblyPlugin.autoImport.ShadeRule
 
 import scala.util.Properties
 
-name := """bdg-sequila"""
+name := """sequila"""
 val DEFAULT_SPARK_2_VERSION = "2.4.3"
 lazy val sparkVersion = Properties.envOrElse("SPARK_VERSION", DEFAULT_SPARK_2_VERSION)
 
-version := s"0.6.0-spark-${sparkVersion}"
+version := s"${sys.env.getOrElse("VERSION", "0.1.0")}"
 organization := "org.biodatageeks"
 scalaVersion := "2.11.8"
 
@@ -59,15 +59,15 @@ avroSpecificScalaSource in Compile := new java.io.File("src/main/org/biodatageek
 avroSpecificScalaSource in Test := new java.io.File("src/test/org/biodatageeks/formats")
 
 
-fork := false
-fork in Test := false
-parallelExecution in Test := false
+fork := true
+fork in Test := true
+parallelExecution in Test := true
 
 javaOptions in Test ++= Seq(
   "-Dlog4j.debug=false",
   "-Dlog4j.configuration=log4j.properties")
 
-javaOptions ++= Seq("-Xms512M", "-Xmx8192M", "-XX:+CMSClassUnloadingEnabled" , "-Dlog4j.configuration=log4j.properties")
+javaOptions ++= Seq("-Xms512M", "-Xmx43192M", "-XX:+CMSClassUnloadingEnabled" , "-Dlog4j.configuration=log4j.properties")
 
 //fix for using with hdp warehouse connector
 javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint")

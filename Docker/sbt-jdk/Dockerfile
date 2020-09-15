@@ -1,0 +1,24 @@
+FROM ubuntu:bionic
+RUN apt-get update
+RUN apt-get -qq -y install \
+    curl \
+    unzip \
+    zip
+RUN rm /bin/sh && ln -s /bin/bash /bin/sh
+RUN apt-get -qq -y install curl
+RUN curl -s https://get.sdkman.io | bash
+RUN chmod a+x "$HOME/.sdkman/bin/sdkman-init.sh"
+
+ARG JAVA_VERSION=8.0.265.hs-adpt
+ARG SCALA_VERSION=2.11.12
+ARG SBT_VERSION=1.3.10
+
+RUN source "$HOME/.sdkman/bin/sdkman-init.sh" && sdk install java ${JAVA_VERSION}
+RUN source "$HOME/.sdkman/bin/sdkman-init.sh" && sdk install scala ${SCALA_VERSION}
+RUN source "$HOME/.sdkman/bin/sdkman-init.sh" && sdk install sbt ${SBT_VERSION}
+RUN source "$HOME/.sdkman/bin/sdkman-init.sh" && sdk use java ${JAVA_VERSION}
+
+ADD resources/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

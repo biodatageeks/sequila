@@ -1,0 +1,47 @@
+stages:
+  - version
+  - build
+
+
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+  VERSION_FILE: version.sh
+  GIT_DEPTH: 500
+  JDK_VERSION: 8.0.265.hs-adpt
+  SBT_VERSION: 1.3.10
+
+
+# --------------------------------- STAGE: version ---------------------------------------------------------------------
+version:
+  stage: version
+  image:
+    name: mdomke/git-semver:v4.0.1
+    entrypoint: [""]
+  script:
+    - cd /builds/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME && git-semver | xargs -I {} echo "export VERSION={}" > $VERSION_FILE
+    - cat $VERSION_FILE
+  artifacts:
+    paths:
+      - $VERSION_FILE
+  tags: [ docker ]
+  except: [ master ]
+
+build:
+  stage: build
+  image:
+    name: biodatageeks/jdk-sbt:$JDK_VERSION-$SBT_VERSION
+  variables:
+    SBT_OPTS: "-Dsbt.ivy.home=sbt-cache/ivy"
+  cache:
+    key: $CI_PROJECT_PATH
+    paths:
+      - "sbt-cache/ivy/cache"
+  before_script:
+    - source $VERSION_FILE
+  script:
+    - sbt clean package
+  artifacts:
+    paths:
+      - /builds/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/target/
+  tags: [ docker ]
+  except: [ master ]
