@@ -6,7 +6,9 @@ stages:
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
   VERSION_FILE: version.sh
-
+  GIT_DEPTH: 500
+  JDK_VERSION: 8.0.265.hs-adpt
+  SBT_VERSION: 1.3.10
 
 
 # --------------------------------- STAGE: version ---------------------------------------------------------------------
@@ -27,8 +29,7 @@ version:
 build:
   stage: build
   image:
-    name: chatwork/scala-sbt:x86_64-ubuntu-jdk8u212-b03-2.11.8-1.1.0
-    entrypoint: [""]
+    name: biodatageeks/jdk-sbt:$JDK_VERSION-$SBT_VERSION
   variables:
     SBT_OPTS: "-Dsbt.ivy.home=sbt-cache/ivy"
   cache:
@@ -39,5 +40,8 @@ build:
     - source $VERSION_FILE
   script:
     - sbt clean package
+  artifacts:
+    paths:
+      - /builds/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/target/
   tags: [ docker ]
   except: [ master ]
