@@ -67,7 +67,7 @@ javaOptions in Test ++= Seq(
   "-Dlog4j.debug=false",
   "-Dlog4j.configuration=log4j.properties")
 
-javaOptions ++= Seq("-Xms512M", "-Xmx43192M", "-XX:+CMSClassUnloadingEnabled" , "-Dlog4j.configuration=log4j.properties")
+javaOptions ++= Seq("-Xms512M", "-Xmx8192M", "-XX:+CMSClassUnloadingEnabled" , "-Dlog4j.configuration=log4j.properties")
 
 //fix for using with hdp warehouse connector
 javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint")
@@ -118,18 +118,13 @@ assemblyMergeStrategy in assembly := {
     oldStrategy(x)
 }
 
-/* only for releasing assemblies*/
-artifact in (Compile, assembly) := {
-  val art = (artifact in (Compile, assembly)).value
-  art.withClassifier(Some("assembly"))
-}
-addArtifact(artifact in (Compile, assembly), assembly)
-publishConfiguration := publishConfiguration.value.withOverwrite(true)
 credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
+publishConfiguration := publishConfiguration.value.withOverwrite(true)
 publishTo := {
-  val nexus = "http://zsibio.ii.pw.edu.pl/nexus/repository/"
-  if (isSnapshot.value)
+  if (!version.value.toLowerCase.contains("snapshot"))
+    sonatypePublishToBundle.value
+  else {
+    val nexus = "http://zsibio.ii.pw.edu.pl/nexus/repository/"
     Some("snapshots" at nexus + "maven-snapshots")
-  else
-    Some("releases" at nexus + "maven-releases")
+  }
 }
