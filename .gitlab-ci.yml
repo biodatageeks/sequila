@@ -1,7 +1,7 @@
 stages:
   - version
   - build
-
+  - release
 
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
@@ -45,3 +45,13 @@ build:
       - /builds/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/target/
   tags: [ docker ]
   except: [ master ]
+
+release:
+  stage: release
+  image:
+    name: mdomke/git-semver:v4.0.1
+    entrypoint: [""]
+  script:
+    - cd /builds/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME && git-semver -no-hash -no-pre | xargs -I {} sh -c "git tag {} && git push origin {}"
+  tags: [ docker ]
+  only: [ master ]
