@@ -24,4 +24,4 @@ developers := List(
   Developer(id="biodatageeks", name="biodatageeks", email="team@biodatageeks.org", url=url("http://biodatageeks.org/"))
 )
 
-sonatypeLogLevel := "DEBUG"
+sonatypeLogLevel := "INFO"
