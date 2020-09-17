@@ -117,6 +117,7 @@ assemblyMergeStrategy in assembly := {
     val oldStrategy = (assemblyMergeStrategy in assembly).value
     oldStrategy(x)
 }
+useGpgPinentry := true
 
 credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
 publishConfiguration := publishConfiguration.value.withOverwrite(true)

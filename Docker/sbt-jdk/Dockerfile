@@ -21,4 +21,7 @@ RUN source "$HOME/.sdkman/bin/sdkman-init.sh" && sdk use java ${JAVA_VERSION}
 ADD resources/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
+RUN apt update  &&  apt install gnupg -y
+RUN mkdir -p /root/gpg
+
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
