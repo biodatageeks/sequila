@@ -23,5 +23,10 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 
 RUN apt update  &&  apt install gnupg -y
 RUN mkdir -p /root/gpg
+RUN mkdir -p /root/.gnupg
+RUN echo -e "\nyes\n" > /root/.gnupg/gpg.conf
+RUN echo use-agent >> /root/.gnupg/gpg.conf
+RUN echo pinentry-mode loopback >> /root/.gnupg/gpg.conf
+RUN echo allow-loopback-pinentry >> /root/.gnupg/gpg-agent.conf
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
