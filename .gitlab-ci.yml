@@ -1,9 +1,11 @@
 stages:
   - version
-  - test
-  - build
-  - publish
-  - release
+#  - test
+#  - build
+#  - publish
+#  - release
+  - doc-build
+  - doc-serve
 
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
@@ -11,6 +13,8 @@ variables:
   GIT_DEPTH: 500
   JDK_VERSION: 8.0.265.hs-adpt
   SBT_VERSION: 1.3.10
+  SPHINX_VERSION: 3.2.1
+  DOCKER_VERSION: 19.03.12
 
 
 # --------------------------------- STAGE: version ---------------------------------------------------------------------
@@ -45,85 +49,106 @@ version-tag:
   except:
     - branches
 
-test:
-  stage: test
-  image:
-    name: biodatageeks/jdk-sbt:$JDK_VERSION-$SBT_VERSION
-  variables:
-    SBT_OPTS: "-Dsbt.ivy.home=sbt-cache/ivy"
-  cache:
-    key: $CI_PROJECT_PATH
-    paths:
-      - "sbt-cache/ivy/cache"
-  before_script:
-    - source $VERSION_FILE
-  script:
-    - sbt clean test
-  except: [ master ]
-  tags: [ docker ]
+#test:
+#  stage: test
+#  image:
+#    name: biodatageeks/jdk-sbt:$JDK_VERSION-$SBT_VERSION
+#  variables:
+#    SBT_OPTS: "-Dsbt.ivy.home=sbt-cache/ivy"
+#  cache:
+#    key: $CI_PROJECT_PATH
+#    paths:
+#      - "sbt-cache/ivy/cache"
+#  before_script:
+#    - source $VERSION_FILE
+#  script:
+#    - sbt clean test
+#  except: [ master ]
+#  tags: [ docker ]
+#
+#build:
+#  stage: build
+#  image:
+#    name: biodatageeks/jdk-sbt:$JDK_VERSION-$SBT_VERSION
+#  variables:
+#    SBT_OPTS: "-Dsbt.ivy.home=sbt-cache/ivy"
+#  cache:
+#    key: $CI_PROJECT_PATH
+#    paths:
+#      - "sbt-cache/ivy/cache"
+#  before_script:
+#    - source $VERSION_FILE
+#  script:
+#    - sbt clean package
+#  artifacts:
+#    paths:
+#      - /builds/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/target/
+#  tags: [ docker ]
+#  except: [ master ]
+#
+#publish:
+#  stage: publish
+#  image:
+#    name: biodatageeks/jdk-sbt:$JDK_VERSION-$SBT_VERSION
+#  variables:
+#    SBT_OPTS: "-Dsbt.ivy.home=sbt-cache/ivy"
+#  cache:
+#    key: $CI_PROJECT_PATH
+#    paths:
+#      - "sbt-cache/ivy/cache"
+#  before_script:
+#    - source $VERSION_FILE
+#  script:
+#    - ls -ltra /root/.ivy2/
+#    - sbt publish
+#  tags: [ docker ]
+#  except: [ master, tags ]
+#
+#release:
+#  stage: release
+#  image:
+#    name: biodatageeks/jdk-sbt:$JDK_VERSION-$SBT_VERSION
+#  variables:
+#    SBT_OPTS: "-Dsbt.ivy.home=sbt-cache/ivy"
+#  cache:
+#    key: $CI_PROJECT_PATH
+#    paths:
+#      - "sbt-cache/ivy/cache"
+#  before_script:
+#    - source $VERSION_FILE
+#  script:
+#    - cd /builds/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME
+#    - sbt publish
+#    - find /builds/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/target/sonatype-staging/  -name "$CI_PROJECT_NAME*.jar" -o -name "$CI_PROJECT_NAME*.pom" | xargs -I {} sh -c "echo $PGP_PASSPHRASE | PASSPHRASE=$PGP_PASSPHRASE gpg --detach-sign --armor --use-agent --pinentry-mode loopback --command-fd 0 --output {}.asc {}"
+#    - sbt sonatypeBundleRelease
+#  tags: [ docker ]
+#  only:
+#    - tags
+#  except:
+#    - branches
+#  when: manual
 
-build:
-  stage: build
+doc-build:
+  stage: doc-build
   image:
-    name: biodatageeks/jdk-sbt:$JDK_VERSION-$SBT_VERSION
-  variables:
-    SBT_OPTS: "-Dsbt.ivy.home=sbt-cache/ivy"
-  cache:
-    key: $CI_PROJECT_PATH
-    paths:
-      - "sbt-cache/ivy/cache"
+    name: "sphinxdoc/sphinx:$SPHINX_VERSION"
   before_script:
-    - source $VERSION_FILE
+    - pip install -U sphinx_rtd_theme rst2pdf sphinxcontrib-github_ribbon sphinxcontrib-bibtex
   script:
-    - sbt clean package
+    - cd docs && ./docs.sh html
   artifacts:
     paths:
-      - /builds/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/target/
+      - /builds/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/docs/build/
   tags: [ docker ]
-  except: [ master ]
 
-publish:
-  stage: publish
+
+doc-serve:
+  stage: doc-serve
   image:
-    name: biodatageeks/jdk-sbt:$JDK_VERSION-$SBT_VERSION
-  variables:
-    SBT_OPTS: "-Dsbt.ivy.home=sbt-cache/ivy"
-  cache:
-    key: $CI_PROJECT_PATH
-    paths:
-      - "sbt-cache/ivy/cache"
+    name: docker:$DOCKER_VERSION
   before_script:
     - source $VERSION_FILE
   script:
-    - ls -ltra /root/.ivy2/
-    - sbt publish
+    - ./build_docs.sh
   tags: [ docker ]
-  except: [ master, tags ]
-
-release:
-  stage: release
-  image:
-    name: biodatageeks/jdk-sbt:$JDK_VERSION-$SBT_VERSION
-  variables:
-    SBT_OPTS: "-Dsbt.ivy.home=sbt-cache/ivy"
-  cache:
-    key: $CI_PROJECT_PATH
-    paths:
-      - "sbt-cache/ivy/cache"
-  before_script:
-    - source $VERSION_FILE
-  script:
-    - cd /builds/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME
-    - sbt publish
-    - find /builds/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/target/sonatype-staging/  -name "$CI_PROJECT_NAME*.jar" -o -name "$CI_PROJECT_NAME*.pom" | xargs -I {} sh -c "echo $PGP_PASSPHRASE | PASSPHRASE=$PGP_PASSPHRASE gpg --detach-sign --armor --use-agent --pinentry-mode loopback --command-fd 0 --output {}.asc {}"
-    - sbt sonatypeBundleRelease
-  tags: [ docker ]
-  only:
-    - tags
-  except:
-    - branches
-  when: manual
-
-
-
 
