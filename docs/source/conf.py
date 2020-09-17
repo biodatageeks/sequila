@@ -19,7 +19,7 @@
 
 # -- Project information -----------------------------------------------------
 
-project = u'bdg-sequila'
+project = u'sequila'
 copyright = u'2020, biodatageeks.org'
 author = u'biodatageeks.org'
 
@@ -28,7 +28,7 @@ version = u'|version|'
 # The full version, including alpha/beta/rc tags
 release = u'|version|'
 
-project_name = u'bdg-sequila'
+project_name = u'sequila'
 
 # -- General configuration ---------------------------------------------------
 
@@ -198,7 +198,7 @@ epub_exclude_files = ['search.html']
 ##github
 #pip install sphinxcontrib-github_ribbon
 
-github_ribbon_repo = 'ZSI-Bio/bdg-sequila'
+github_ribbon_repo = 'biodatageeks/sequila'
 github_ribbon_position = "right"
 github_ribbon_color ="red"
 

@@ -1,7 +1,9 @@
 stages:
   - version
+  - test
   - build
-
+  - publish
+  - release
 
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
@@ -12,19 +14,53 @@ variables:
 
 
 # --------------------------------- STAGE: version ---------------------------------------------------------------------
-version:
+version-branch:
   stage: version
   image:
     name: mdomke/git-semver:v4.0.1
     entrypoint: [""]
   script:
-    - cd /builds/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME && git-semver | xargs -I {} echo "export VERSION={}" > $VERSION_FILE
+    - cd /builds/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME && git-semver --format x.y.z+m | sed -e 's/$/-SNAPSHOT/g' | xargs -I {} echo "export VERSION={}" > $VERSION_FILE
     - cat $VERSION_FILE
   artifacts:
     paths:
       - $VERSION_FILE
   tags: [ docker ]
+  except: [ master, tags ]
+
+version-tag:
+  stage: version
+  image:
+    name: mdomke/git-semver:v4.0.1
+    entrypoint: [""]
+  script:
+    - cd /builds/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME && git-semver --no-hash --no-pre | xargs -I {} echo "export VERSION={}" > $VERSION_FILE
+    - cat $VERSION_FILE
+  artifacts:
+    paths:
+      - $VERSION_FILE
+  tags: [ docker ]
+  only:
+    - tags
+  except:
+    - branches
+
+test:
+  stage: test
+  image:
+    name: biodatageeks/jdk-sbt:$JDK_VERSION-$SBT_VERSION
+  variables:
+    SBT_OPTS: "-Dsbt.ivy.home=sbt-cache/ivy"
+  cache:
+    key: $CI_PROJECT_PATH
+    paths:
+      - "sbt-cache/ivy/cache"
+  before_script:
+    - source $VERSION_FILE
+  script:
+    - sbt clean test
   except: [ master ]
+  tags: [ docker ]
 
 build:
   stage: build
@@ -45,3 +81,46 @@ build:
       - /builds/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/target/
   tags: [ docker ]
   except: [ master ]
+
+publish:
+  stage: publish
+  image:
+    name: biodatageeks/jdk-sbt:$JDK_VERSION-$SBT_VERSION
+  variables:
+    SBT_OPTS: "-Dsbt.ivy.home=sbt-cache/ivy"
+  cache:
+    key: $CI_PROJECT_PATH
+    paths:
+      - "sbt-cache/ivy/cache"
+  before_script:
+    - source $VERSION_FILE
+  script:
+    - ls -ltra /root/.ivy2/
+    - sbt publish
+  tags: [ docker ]
+  except: [ master, tags ]
+
+release:
+  stage: release
+  image:
+    name: biodatageeks/jdk-sbt:$JDK_VERSION-$SBT_VERSION
+  variables:
+    SBT_OPTS: "-Dsbt.ivy.home=sbt-cache/ivy"
+  cache:
+    key: $CI_PROJECT_PATH
+    paths:
+      - "sbt-cache/ivy/cache"
+  before_script:
+    - source $VERSION_FILE
+  script:
+    - ls -ltra /root/.ivy2/
+    - sbt publishSigned && sbt sonatypeBundleRelase
+  tags: [ docker ]
+  only:
+    - tags
+  except:
+    - branches
+  when: manual
+
+
+
