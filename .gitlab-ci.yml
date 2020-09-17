@@ -113,8 +113,10 @@ release:
   before_script:
     - source $VERSION_FILE
   script:
-    - ls -ltra /root/.ivy2/
-    - sbt publishSigned && sbt sonatypeBundleRelase
+    - cd /builds/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME
+    - sbt publish
+    - find /builds/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/target/sonatype-staging/  -name "$CI_PROJECT_NAME*.jar" -o -name '$CI_PROJECT_NAME*.pom' | xargs -I {} sh -c "echo $PGP_PASSPHRASE | PASSPHRASE=$PGP_PASSPHRASE gpg --detach-sign --armor --use-agent --pinentry-mode loopback --command-fd 0 --output {}.asc {}"
+    - sbt sonatypeBundleUpload
   tags: [ docker ]
   only:
     - tags
