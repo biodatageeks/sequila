@@ -161,30 +161,6 @@ object Main {
 
         var cartesianTime = (end - start) / 1000
 
-        spark.experimental.extraStrategies = new NCListsJoinStrategy(spark) :: Nil
-        if (i==1 && j==1) {
-          //repeat test, because of lazy loading
-          sqlContext.sql(sqlQuery).count
-        }
-        start = System.nanoTime()
-        sqlContext.sql(sqlQuery).count
-        end = System.nanoTime()
-
-
-
-        var nclistTime = (end - start) / 1000
-
-
-        spark.experimental.extraStrategies = new IntervalTreeJoinStrategy(spark) :: Nil
-        if (i==1 && j==1) {
-          //repeat test, because of lazy loading
-          sqlContext.sql(sqlQuery).count
-        }
-        start = System.nanoTime()
-        sqlContext.sql(sqlQuery).count
-        end = System.nanoTime()
-        var intervalTime = (end - start) / 1000
-        log(j + "/" + loops + "\t" + cartesianTime + "\t" + nclistTime + "\t" + intervalTime, pw)
       }
     }
 
@@ -243,27 +219,6 @@ object Main {
         }
         var cartesianTime = (end - start) / 1000
 
-        spark.experimental.extraStrategies = new NCListsJoinStrategy(spark) :: Nil
-        start = System.nanoTime()
-        sqlContext.sql(sqlQuery).count
-        end = System.nanoTime()
-
-        if (i==1 && j==1) {
-          //repeat test, because of lazy loading
-          start = System.nanoTime()
-          sqlContext.sql(sqlQuery).count
-          end = System.nanoTime()
-        }
-
-        var nclistTime = (end - start) / 1000
-
-
-        spark.experimental.extraStrategies = new IntervalTreeJoinStrategy(spark) :: Nil
-        start = System.nanoTime()
-        sqlContext.sql(sqlQuery).count
-        end = System.nanoTime()
-        var intervalTime = (end - start) / 1000
-        log(j + "/" + loops + "\t" + cartesianTime + "\t" + nclistTime + "\t" + intervalTime, pw)
       }
     }
 
