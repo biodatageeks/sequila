@@ -20,7 +20,6 @@ package org.biodatageeks.sequila.rangejoins.common
 import java.io.PrintWriter
 import java.util.Date
 
-import org.biodatageeks.sequila.rangejoins.NCList.NCListsJoinStrategy
 import org.apache.spark.sql.types.{LongType, StructField, StructType}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{Row, SparkSession}
