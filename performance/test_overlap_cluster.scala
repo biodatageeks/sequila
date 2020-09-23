@@ -48,17 +48,6 @@ mc.runAndCollectMetrics(
 )
 
 
-/*bdg-granges - NCList*/
-import org.biodatageeks.sequila.rangejoins.NCList.NCListsJoinStrategy
-spark.experimental.extraStrategies = new NCListsJoinStrategy(spark) :: Nil
-val mc = new  MetricsCollector(spark,metricsTable)
-mc.runAndCollectMetrics(
-  "q_overlap_reads_target_adam_wgs",
-  "spark_granges_nclist_bc_int",
-  Array("reads","targets"),
-  query
-)
-
 /*genap*/
 import org.biodatageeks.sequila.rangejoins.genApp.IntervalTreeJoinStrategy
 spark.experimental.extraStrategies =  new IntervalTreeJoinStrategy(spark) :: Nil
