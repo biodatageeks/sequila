@@ -16,7 +16,6 @@ import org.bdgenomics.utils.instrumentation.{
   RecordedMetrics
 }
 import org.biodatageeks.sequila.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
-import org.biodatageeks.sequila.rangejoins.NCList.NCListsJoinStrategy
 import org.biodatageeks.sequila.rangejoins.genApp.IntervalTreeJoinStrategy
 import org.biodatageeks.sequila.utils.Columns
 import org.scalatest.{BeforeAndAfter, FunSuite}
@@ -110,10 +109,6 @@ class TSVBenchmarkTestSuite
     time(assert(spark.sqlContext.sql(query).count === 616404L))
   }
 
-  test("Join using bgd-spark-granges NCList") {
-    spark.experimental.extraStrategies = new NCListsJoinStrategy(spark) :: Nil
-    time(assert(spark.sqlContext.sql(query).count === 616404L))
-  }
 
   test("Join using builtin spark algo") {
 
