@@ -11,10 +11,12 @@ organization := "org.biodatageeks"
 scalaVersion := "2.11.8"
 
 
+val isSnapshotVersion = settingKey[Boolean]("Is snapshot")
+isSnapshotVersion := version.value.toLowerCase.contains("snapshot")
+
 val DEFAULT_HADOOP_VERSION = "2.6.5"
 
 lazy val hadoopVersion = Properties.envOrElse("SPARK_HADOOP_VERSION", DEFAULT_HADOOP_VERSION)
-
 
 dependencyOverrides += "com.google.guava" % "guava" % "15.0"
 
@@ -30,24 +32,29 @@ libraryDependencies += "org.bdgenomics.adam" %% "adam-apis-spark2" % "0.25.0"
 libraryDependencies += "org.bdgenomics.adam" %% "adam-cli-spark2" % "0.25.0"
 libraryDependencies += "org.scala-lang" % "scala-library" % "2.11.8"
 libraryDependencies += "org.rogach" %% "scallop" % "3.1.2"
-//libraryDependencies += "org.apache.logging.log4j" % "log4j-slf4j-impl" % "2.11.1"
-//libraryDependencies += "org.hammerlab.bdg-utils" %% "cli" %
 libraryDependencies += "org.bdgenomics.utils" % "utils-metrics-spark2_2.11" % "0.2.16"
 libraryDependencies += "com.github.samtools" % "htsjdk" % "2.19.0"
 libraryDependencies += "ch.cern.sparkmeasure" %% "spark-measure" % "0.13" excludeAll (ExclusionRule("org.apache.hadoop"))
 libraryDependencies += "org.broadinstitute" % "gatk-native-bindings" % "1.0.0" excludeAll (ExclusionRule("org.apache.hadoop"))
 libraryDependencies += "org.apache.logging.log4j" % "log4j-core" % "2.11.0"
 libraryDependencies += "org.apache.logging.log4j" % "log4j-api" % "2.11.0"
-libraryDependencies += "com.intel.gkl" % "gkl" % "0.8.5-1-darwin-SNAPSHOT"
-libraryDependencies += "com.intel.gkl" % "gkl" % "0.8.5-1-linux-SNAPSHOT"
 libraryDependencies += "org.hammerlab.bam" %% "load" % "1.2.0-M1"
 libraryDependencies += "de.ruedigermoeller" % "fst" % "2.57"
 libraryDependencies += "org.apache.commons" % "commons-lang3" % "3.7"
 libraryDependencies += "org.eclipse.jetty" % "jetty-servlet" % "9.3.24.v20180605"
 libraryDependencies += "org.apache.derby" % "derbyclient" % "10.14.2.0"
-libraryDependencies += "org.biodatageeks" % "bdg-performance_2.11" % "0.2-SNAPSHOT" excludeAll (ExclusionRule("org.apache.hadoop"))
 libraryDependencies += "org.disq-bio" % "disq" % "0.3.3"
 libraryDependencies += "io.projectglow" %% "glow" % "0.1.2"
+libraryDependencies += "com.intel.gkl" % "gkl" % "0.8.5-1-darwin-SNAPSHOT"
+libraryDependencies += "com.intel.gkl" % "gkl" % "0.8.5-1-linux-SNAPSHOT"
+
+val snapshotOnly = Def.setting(
+  if (isSnapshotVersion.value) {Seq("org.biodatageeks" % "bdg-performance_2.11" % "0.2-SNAPSHOT" excludeAll (ExclusionRule("org.apache.hadoop")))}
+  else Seq.empty
+)
+
+libraryDependencies ++= snapshotOnly.value
+
 
 avroSpecificSourceDirectories in Compile += (sourceDirectory in Compile).value / "avro/input"
 avroSpecificSourceDirectories in Test += (sourceDirectory in Test).value / "avro"
@@ -116,6 +123,7 @@ assemblyMergeStrategy in assembly := {
     val oldStrategy = (assemblyMergeStrategy in assembly).value
     oldStrategy(x)
 }
+
 
 credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
 publishConfiguration := publishConfiguration.value.withOverwrite(true)
