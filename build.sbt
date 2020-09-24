@@ -48,7 +48,6 @@ libraryDependencies += "org.apache.derby" % "derbyclient" % "10.14.2.0"
 libraryDependencies += "org.biodatageeks" % "bdg-performance_2.11" % "0.2-SNAPSHOT" excludeAll (ExclusionRule("org.apache.hadoop"))
 libraryDependencies += "org.disq-bio" % "disq" % "0.3.3"
 libraryDependencies += "io.projectglow" %% "glow" % "0.1.2"
-libraryDependencies += "com.github.ichoran" %% "thyme" % "0.1.2-SNAPSHOT"
 
 avroSpecificSourceDirectories in Compile += (sourceDirectory in Compile).value / "avro/input"
 avroSpecificSourceDirectories in Test += (sourceDirectory in Test).value / "avro"
