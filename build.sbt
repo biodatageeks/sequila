@@ -45,8 +45,6 @@ libraryDependencies += "org.eclipse.jetty" % "jetty-servlet" % "9.3.24.v20180605
 libraryDependencies += "org.apache.derby" % "derbyclient" % "10.14.2.0"
 libraryDependencies += "org.disq-bio" % "disq" % "0.3.3"
 libraryDependencies += "io.projectglow" %% "glow" % "0.1.2"
-libraryDependencies += "com.intel.gkl" % "gkl" % "0.8.5-1-darwin-SNAPSHOT"
-libraryDependencies += "com.intel.gkl" % "gkl" % "0.8.5-1-linux-SNAPSHOT"
 
 val snapshotOnly = Def.setting(
   if (isSnapshotVersion.value) {Seq("org.biodatageeks" % "bdg-performance_2.11" % "0.2-SNAPSHOT" excludeAll (ExclusionRule("org.apache.hadoop")))}
