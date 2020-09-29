@@ -24,7 +24,7 @@ libraryDependencies += "org.seqdoop" % "hadoop-bam" % "7.10.0"
 libraryDependencies += "org.apache.hadoop" % "hadoop-client" % hadoopVersion
 libraryDependencies +=  "org.apache.spark" % "spark-core_2.11" % sparkVersion
 libraryDependencies +=  "org.apache.spark" % "spark-sql_2.11" % sparkVersion
-libraryDependencies +=  "org.apache.spark" %% "spark-hive" % sparkVersion
+libraryDependencies +=  "org.apache.spark" %% "spark-hive" % sparkVersion excludeAll (ExclusionRule("org.apache.avro"))
 libraryDependencies +=  "org.apache.spark" %% "spark-hive-thriftserver" % "2.4.0"
 libraryDependencies += "com.holdenkarau" % "spark-testing-base_2.11" % "2.4.0_0.11.0" % "test" excludeAll ExclusionRule(organization = "javax.servlet") excludeAll (ExclusionRule("org.apache.hadoop"))
 libraryDependencies += "org.bdgenomics.adam" %% "adam-core-spark2" % "0.25.0"
