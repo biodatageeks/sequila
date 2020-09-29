@@ -53,9 +53,9 @@ You can find SeQuiLa publicly available in following repositories:
 =================   =====================================================================
 Repo                 Link
 =================   =====================================================================
-GitHub               `<https://github.com/ZSI-Bio/|project_name|>`_
-Maven(release)       `<https://zsibio.ii.pw.edu.pl/nexus/repository/maven-releases/>`_
-sparklyr-sequila     `<https://github.com/ZSI-Bio/bdg-sparklyr-sequila/>`_
+GitHub               `<https://github.com/biodatageeks/|project_name|>`_
+Maven(release)       `<https://search.maven.org/search?q=sequila>`_
+pysequila            `<https://github.com/biodatageeks/pysequila/>`_
 Docker Hub           `<https://hub.docker.com/r/biodatageeks/|project_name|/>`_
 =================   =====================================================================
 

@@ -20,7 +20,7 @@ project_name=`grep 'name :=' ../build.sbt | sed  's|name := \"\"\"||g' | sed 's|
 echo Project name is $project_name
 
 # extract version
-version=`grep 'version :=' ../build.sbt | sed  's|version := \"||g' | sed 's|\"||g'`
+version=$VERSION
 echo Version is $version
 
 # substitute
