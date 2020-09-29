@@ -141,7 +141,7 @@ doc-build:
     paths:
       - /builds/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/docs/build/
   tags: [ docker ]
-
+  except: [ master]
 
 doc-serve:
   stage: doc-serve
@@ -152,4 +152,5 @@ doc-serve:
   script:
     - ./build_docs.sh
   tags: [ docker ]
+  except: [ master]
 
