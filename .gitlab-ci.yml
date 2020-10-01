@@ -15,6 +15,9 @@ variables:
   SBT_VERSION: 1.3.10
   SPHINX_VERSION: 3.2.1
   DOCKER_VERSION: 19.03.12
+  SCALA_MAJOR_VERSION: 2
+  SCALA_MINOR_VERSION: 11
+  GKL_VERSION: 0.8.5-1
 
 
 # --------------------------------- STAGE: version ---------------------------------------------------------------------
@@ -80,9 +83,12 @@ build:
     - source $VERSION_FILE
   script:
     - sbt clean package
+    - ./merge_jars.sh
+      /builds/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/lib/gkl-$GKL_VERSION-darwin-SNAPSHOT.jar
+      /builds/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/target/scala-$SCALA_MAJOR_VERSION.$SCALA_MINOR_VERSION/sequila_$SCALA_MAJOR_VERSION.$SCALA_MINOR_VERSION-$VERSION.jar
   artifacts:
     paths:
-      - /builds/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/target/
+      - /builds/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/target/scala-$SCALA_MAJOR_VERSION.$SCALA_MINOR_VERSION/
   tags: [ docker ]
   except: [ master ]
 
@@ -100,6 +106,9 @@ publish:
     - source $VERSION_FILE
   script:
     - ls -ltra /root/.ivy2/
+    - mv /builds/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/target/scala-$SCALA_MAJOR_VERSION.$SCALA_MINOR_VERSION/sequila*jar /tmp
+    - sbt publishLocal
+    - mv /tmp/sequila*jar /builds/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/target/scala-$SCALA_MAJOR_VERSION.$SCALA_MINOR_VERSION/
     - sbt publish
   tags: [ docker ]
   except: [ master, tags ]
@@ -118,7 +127,9 @@ release:
     - source $VERSION_FILE
   script:
     - cd /builds/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME
+    - mv /builds/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/target/scala-$SCALA_MAJOR_VERSION.$SCALA_MINOR_VERSION/sequila*jar /tmp
     - sbt publish
+    - mv /tmp/sequila*jar /builds/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/target/scala-$SCALA_MAJOR_VERSION.$SCALA_MINOR_VERSION/
     - find /builds/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/target/sonatype-staging/  -name "$CI_PROJECT_NAME*.jar" -o -name "$CI_PROJECT_NAME*.pom" | xargs -I {} sh -c "echo $PGP_PASSPHRASE | PASSPHRASE=$PGP_PASSPHRASE gpg --detach-sign --armor --use-agent --pinentry-mode loopback --command-fd 0 --output {}.asc {}"
     - sbt sonatypeBundleRelease
   tags: [ docker ]
