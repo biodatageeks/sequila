@@ -3,7 +3,7 @@ import sbtassembly.AssemblyPlugin.autoImport.ShadeRule
 import scala.util.Properties
 
 name := """sequila"""
-val DEFAULT_SPARK_2_VERSION = "2.4.3"
+val DEFAULT_SPARK_2_VERSION = "2.4.0.3.1.2.8-3"
 lazy val sparkVersion = Properties.envOrElse("SPARK_VERSION", DEFAULT_SPARK_2_VERSION)
 
 version := s"${sys.env.getOrElse("VERSION", "0.1.0")}"
@@ -104,6 +104,7 @@ assemblyMergeStrategy in assembly := {
   case PathList("shadeio", xs@_*) => MergeStrategy.first
   case PathList("au", xs@_*) => MergeStrategy.first
   case PathList("htsjdk", xs@_*) => MergeStrategy.first
+  case PathList("jersey", xs@_*) => MergeStrategy.first
   case ("META-INF/org/apache/logging/log4j/core/config/plugins/Log4j2Plugins.dat") => MergeStrategy.first
   case ("images/ant_logo_large.gif") => MergeStrategy.first
   case "overview.html" => MergeStrategy.rename
