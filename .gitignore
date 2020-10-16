@@ -11,7 +11,9 @@ build/
 
 source_v/
 
-*.csv
+samRes.csv
+bdgResFullSplit.csv
+bdgRes.csv
 
 ${seq.metastore.dir}
 
