@@ -32,7 +32,7 @@ class SamtoolsTestSuite extends PileupTestBase {
     val converter = new PileupConverter(spark)
     val sam = converter
       .transformSamtoolsResult(df)
-      .select(Columns.CONTIG, Columns.START, Columns.END,Columns.REF,  Columns.COVERAGE,Columns.ALTS)
+      .select(Columns.CONTIG, Columns.START, Columns.END,Columns.REF,  Columns.COVERAGE, Columns.ALTS)
       .orderBy("contig", "pos_start")
 
     val ss = SequilaSession(spark)
@@ -41,8 +41,8 @@ class SamtoolsTestSuite extends PileupTestBase {
     val bdgRes = ss.sql(query).orderBy("contig", "pos_start")
     val samRes = spark.createDataFrame(sam.rdd, bdgRes.schema)
 
-    Writer.saveToFile(spark, samRes, "samRes.csv")
-    Writer.saveToFile(spark, bdgRes, "bdgRes.csv")
+//    Writer.saveToFile(spark, samRes, "samRes.csv")
+//    Writer.saveToFile(spark, bdgRes, "bdgRes.csv")
     assertDataFrameEquals(samRes, bdgRes)
   }
 
@@ -92,6 +92,9 @@ class SamtoolsTestSuite extends PileupTestBase {
 
     val bdgRes = ss.sql(queryQual).orderBy("contig", "pos_start")
     val samRes = spark.createDataFrame(sam.rdd, bdgRes.schema)
+
+    samRes.printSchema()
+    bdgRes.printSchema()
 
     assertDataFrameEquals(samRes, bdgRes)
   }
