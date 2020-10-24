@@ -459,7 +459,7 @@ For calculating the coverage the following commands have been used:
     ss.sql("""
     CREATE TABLE IF NOT EXISTS reads_exome USING org.biodatageeks.sequila.datasources.BAM.BAMDataSource OPTIONS(path '/data/samples/NA12878/WES/NA12878*.bam')""")
     spark.time{
-    ss.sql(s"SELECT * FROM bdg_coverage('reads_exome','NA12878', 'blocks')").write.format("parquet").save("/data/samples/NA12878/output_tmp/wes_1_9.parquet")}
+    ss.sql(s"SELECT * FROM coverage('reads_exome','NA12878', 'blocks')").write.format("parquet").save("/data/samples/NA12878/output_tmp/wes_1_9.parquet")}
 
     /* WGS -bases-blocks*/
     import org.apache.spark.sql.SequilaSession
@@ -472,7 +472,7 @@ For calculating the coverage the following commands have been used:
     ss.sql("""
     CREATE TABLE IF NOT EXISTS reads_genome USING org.biodatageeks.sequila.datasources.BAM.BAMDataSource OPTIONS(path '/data/samples/NA12878/NA12878*.bam')""")
     spark.time{
-    ss.sql(s"SELECT * FROM bdg_coverage('reads_genome','NA12878', 'blocks')").write.format("parquet").save("/data/samples/NA12878/output_tmp/wgs_1_1.parquet")}
+    ss.sql(s"SELECT * FROM coverage('reads_genome','NA12878', 'blocks')").write.format("parquet").save("/data/samples/NA12878/output_tmp/wgs_1_1.parquet")}
 
     /*windows - 500*/
     import org.apache.spark.sql.SequilaSession
@@ -485,7 +485,7 @@ For calculating the coverage the following commands have been used:
   ss.sql("""
     CREATE TABLE IF NOT EXISTS reads_exome USING org.biodatageeks.sequila.datasources.BAM.BAMDataSource OPTIONS(path '/tmp/data/exome/*.bam')""")
     spark.time{
-    ss.sql(s"SELECT * FROM bdg_coverage('reads_exome','NA12878', 'blocks', '500')").write.format("parquet").save("/tmp/data/32MB_w500_3.parquet") }
+    ss.sql(s"SELECT * FROM coverage('reads_exome','NA12878', 'blocks', '500')").write.format("parquet").save("/tmp/data/32MB_w500_3.parquet") }
 
     /* long reads */
     ss.sql("""
@@ -493,7 +493,7 @@ For calculating the coverage the following commands have been used:
       USING org.biodatageeks.sequila.datasources.BAM.BAMDataSource
       OPTIONS(path '/data/granges/nanopore/guppy.bam')""")
 
-    ss.sql(s"SELECT contigName, start, end, coverage FROM bdg_coverage('qreads','NA12878', 'blocks')").write.mode("overwrite").option("delimiter", "\t").csv("/data/granges/nanopore/guppy_cov.bed")}
+    ss.sql(s"SELECT contigName, start, end, coverage FROM coverage('qreads','NA12878', 'blocks')").write.mode("overwrite").option("delimiter", "\t").csv("/data/granges/nanopore/guppy_cov.bed")}
 
 
 
@@ -600,7 +600,7 @@ as the data cannot be written in distributed fashion. Equally, due to the fact t
     SequilaRegister.register(ss)
     ss.sqlContext.setConf("spark.biodatageeks.bam.useGKLInflate","true")
     ss.sql("""CREATE TABLE IF NOT EXISTS reads_exome USING org.biodatageeks.sequila.datasources.BAM.BAMDataSource OPTIONS(path '/data/exome/NA12878.*.bam')""")
-    spark.time { ss.sql(s"SELECT * FROM bdg_coverage('reads_exome','NA12878', 'blocks')")
+    spark.time { ss.sql(s"SELECT * FROM coverage('reads_exome','NA12878', 'blocks')")
             .coalesce(1)
             .write.mode("overwrite")
             .option("delimiter", "\t")

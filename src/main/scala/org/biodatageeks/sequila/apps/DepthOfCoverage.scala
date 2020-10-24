@@ -53,7 +53,7 @@ object DepthOfCoverage {
     val sample = ss.sql(s"SELECT DISTINCT (${Columns.SAMPLE}) from reads_tmp").first().get(0)
 
 
-    val query = "SELECT * FROM bdg_coverage('reads_tmp', '%s', '%s')".format(sample, runConf.format())
+    val query = "SELECT * FROM coverage('reads_tmp', '%s', '%s')".format(sample, runConf.format())
 
     ss.sql(query)
       .orderBy(Columns.CONTIG,"start")

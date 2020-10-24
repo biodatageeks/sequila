@@ -201,10 +201,10 @@ It returns range with start and end fields. A sample query using the reflect fun
        """.stripMargin 
    
    
-bdg_coverage
+coverage
 ************
 
-bdg_coverage is a function that calculates depth of coverage for specified sample. It can return results in blocks (which is default, more efficient behaviour), with per base granularity or calculate avarage coverage in fixed length window 
+coverage is a function that calculates depth of coverage for specified sample. It can return results in blocks (which is default, more efficient behaviour), with per base granularity or calculate avarage coverage in fixed length window 
 
 
 .. code-block:: scala
@@ -225,7 +225,7 @@ bdg_coverage is a function that calculates depth of coverage for specified sampl
 
   //CALCULATE COVERAGE - BLOCKS RESULT
   
-  ss.sql(s"SELECT * FROM bdg_coverage('${tableNameBAM}','NA12878.chr21', 'blocks')").show(5)
+  ss.sql(s"SELECT * FROM coverage('${tableNameBAM}','NA12878.chr21', 'blocks')").show(5)
   
           +----------+-----+---+--------+
           |contigName|start|end|coverage|
@@ -240,7 +240,7 @@ bdg_coverage is a function that calculates depth of coverage for specified sampl
   
   //CALCULATE COVERAGE - BASES RESULT
   
-  ss.sql(s"SELECT contigName, start, coverage FROM bdg_coverage('${tableNameBAM}','NA12878.chr21', 'bases')").show(5)
+  ss.sql(s"SELECT contigName, start, coverage FROM coverage('${tableNameBAM}','NA12878.chr21', 'bases')").show(5)
   
           +----------+-----+--------+
           |contigName|start|coverage|
@@ -254,7 +254,7 @@ bdg_coverage is a function that calculates depth of coverage for specified sampl
   
   //CALCULATE COVERAGE - FIXED LENGTH WINDOWS 
   
-  ss.sql(s"SELECT * FROM bdg_coverage('${tableNameBAM}','NA12878.chr21', 'blocks', 100)").show(5)
+  ss.sql(s"SELECT * FROM coverage('${tableNameBAM}','NA12878.chr21', 'blocks', 100)").show(5)
           +----------+-----+---+--------+
           |contigName|start|end|coverage|
           +----------+-----+---+--------+
@@ -266,7 +266,7 @@ bdg_coverage is a function that calculates depth of coverage for specified sampl
           |      chr1|  300|399|    1.82|
           +----------+-----+---+--------+
 
-Parameters for bdg_coverage functions:
+Parameters for coverage functions:
 resultType - blocks or bases (blocks by default)
 target - size of fixed-length windows
 ShowAllPositions - true/false. When set to true returns all positions in contig.

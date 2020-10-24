@@ -377,7 +377,7 @@ Coverage information can be exported to standard BED format. Actually, calculate
          |OPTIONS(path "/data/input/multisample/*.bam")
          |
       """.stripMargin)
-    val cov = ss.sql("SELECT * FROM bdg_coverage('${tableNameBAM}','NA12878', 'blocks')")
+    val cov = ss.sql("SELECT * FROM coverage('${tableNameBAM}','NA12878', 'blocks')")
     cov.coalesce(1).write.mode("overwrite").option("delimiter", "\t").csv("/data/output/cov.bed")
 
 

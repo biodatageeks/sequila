@@ -59,8 +59,8 @@ ss.sqlContext.setConf("spark.biodatageeks.bam.predicatePushdown","true")
 val queries = Array(
   BDGQuery("bdg_seq_count_NA12878",s"SELECT COUNT(*) FROM ${bamTable} WHERE ${Columns.SAMPLE}='NA12878'"),
   BDGQuery("bdg_seq_filter_NA12878",s"SELECT COUNT(*) FROM ${bamTable} WHERE ${Columns.SAMPLE}='NA12878' and ${Columns.CONTIG}='8' AND ${Columns.START}>100000 AND ${Columns.END}<110000"),
-  BDGQuery("bdg_cov_count_NA12878_BAM",s"SELECT COUNT(*) FROM bdg_coverage ('${bamTable}','NA12878', 'blocks')"),
-  BDGQuery("bdg_cov_count_NA12878_CRAM",s"SELECT COUNT(*) FROM bdg_coverage ('${cramTable}','NA12878', 'blocks')"),
+  BDGQuery("bdg_cov_count_NA12878_BAM",s"SELECT COUNT(*) FROM coverage ('${bamTable}','NA12878', 'blocks')"),
+  BDGQuery("bdg_cov_count_NA12878_CRAM",s"SELECT COUNT(*) FROM coverage ('${cramTable}','NA12878', 'blocks')"),
   BDGQuery("bdg_seq_int_join_NA12878",
     s"""
       |SELECT targets.${Columns.CONTIG},targets.${Columns.START},targets.${Columns.END},count(*) FROM ${bamTable} JOIN targets
@@ -72,9 +72,9 @@ val queries = Array(
       |     )
       |     GROUP BY targets.${Columns.CONTIG},targets.${Columns.START},targets.${Columns.END}
     """.stripMargin),
-  BDGQuery("bdg_cov_window_fix_length_500_count_NA12878_BAM",s"SELECT COUNT(*) FROM bdg_coverage ('${bamTable}','NA12878', 'bases','500')"),
-  BDGQuery("bdg_cov_window_fix_length_500_count_NA12878_CRAM",s"SELECT COUNT(*) FROM bdg_coverage ('${cramTable}','NA12878', 'bases','500')"),
-  BDGQuery("bdg_cov_bases_NA12878_BAM",s"SELECT COUNT(*) FROM bdg_coverage ('${bamTable}','NA12878', 'bases')")
+  BDGQuery("bdg_cov_window_fix_length_500_count_NA12878_BAM",s"SELECT COUNT(*) FROM coverage ('${bamTable}','NA12878', 'bases','500')"),
+  BDGQuery("bdg_cov_window_fix_length_500_count_NA12878_CRAM",s"SELECT COUNT(*) FROM coverage ('${cramTable}','NA12878', 'bases','500')"),
+  BDGQuery("bdg_cov_bases_NA12878_BAM",s"SELECT COUNT(*) FROM coverage ('${bamTable}','NA12878', 'bases')")
 //  BDGQuery("bdg_pileup_cov_only_NA12878",s"SELECT COUNT(*) FROM pileup ('${bamMdTable}')")
 
 )

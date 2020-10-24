@@ -7,10 +7,10 @@ Depth of coverage analyses
 Operations
 ############
 
-bdg_coverage - Calculate depth of coverage
+coverage - Calculate depth of coverage
 -------------------------------------------
 
-bdg_coverage is a table-valued function that calculates depth of coverage for specified sample. It operates on a table containg aligned reads. 
+coverage is a table-valued function that calculates depth of coverage for specified sample. It operates on a table containg aligned reads.
 
 .. seealso::
    
@@ -44,7 +44,7 @@ Below you can find end-to-end code snippet from BAM file to calculating coverage
 
   //calculate coverage - example for blocks coverage
   
-  ss.sql(s"SELECT * FROM bdg_coverage('${tableNameBAM}','NA12878.chr21', 'blocks')").show(5)
+  ss.sql(s"SELECT * FROM coverage('${tableNameBAM}','NA12878.chr21', 'blocks')").show(5)
   
           +----------+-----+---+--------+
           |contigName|start|end|coverage|
@@ -59,7 +59,7 @@ Below you can find end-to-end code snippet from BAM file to calculating coverage
   
   //calculate coverage - example for per-base coverage
   
-  ss.sql(s"SELECT contigName, start, coverage FROM bdg_coverage('${tableNameBAM}','NA12878.chr21', 'bases')").show(5)
+  ss.sql(s"SELECT contigName, start, coverage FROM coverage('${tableNameBAM}','NA12878.chr21', 'bases')").show(5)
   
           +----------+-----+--------+
           |contigName|start|coverage|
@@ -73,7 +73,7 @@ Below you can find end-to-end code snippet from BAM file to calculating coverage
   
   //calculate coverage - example for fixed-lenght windows coverage
   
-  ss.sql(s"SELECT * FROM bdg_coverage('${tableNameBAM}','NA12878.chr21', 'blocks', 100)").show(5)
+  ss.sql(s"SELECT * FROM coverage('${tableNameBAM}','NA12878.chr21', 'blocks', 100)").show(5)
           +----------+-----+---+--------+
           |contigName|start|end|coverage|
           +----------+-----+---+--------+
@@ -89,7 +89,7 @@ Below you can find end-to-end code snippet from BAM file to calculating coverage
 
 Functional Parameters
 ######################
-bdg_coverage function takes four parameters. First one is table name (with aligned reads), second one is sample identifier. The remaining two are described below.
+coverage function takes four parameters. First one is table name (with aligned reads), second one is sample identifier. The remaining two are described below.
 
 
 result - choose coverage result type
@@ -99,9 +99,9 @@ The result type determines the output of the algorithm. It can take two values: 
 .. code-block:: scala
 
    //calculate coverage - example for blocks coverage
-  ss.sql(s"SELECT * FROM bdg_coverage('${tableNameBAM}','NA12878.chr21', 'blocks')")
+  ss.sql(s"SELECT * FROM coverage('${tableNameBAM}','NA12878.chr21', 'blocks')")
   //calculate coverage - example for bases coverage
-  ss.sql(s"SELECT * FROM bdg_coverage('${tableNameBAM}','NA12878.chr21', 'bases')")
+  ss.sql(s"SELECT * FROM coverage('${tableNameBAM}','NA12878.chr21', 'bases')")
 
 
 target - choose target
@@ -111,9 +111,9 @@ The ``target`` parameter is optional and if it used it means that fixed-lenght w
 .. code-block:: scala
 
    //calculate coverage - example for fixed-lenght windows coverage (length = 100)
-  ss.sql(s"SELECT * FROM bdg_coverage('${tableNameBAM}','NA12878.chr21', 'blocks', 100)")
+  ss.sql(s"SELECT * FROM coverage('${tableNameBAM}','NA12878.chr21', 'blocks', 100)")
   //calculate coverage - example for fixed-lenght windows coverage (length = 500)
-  ss.sql(s"SELECT * FROM bdg_coverage('${tableNameBAM}','NA12878.chr21', 'bases', 500)")
+  ss.sql(s"SELECT * FROM coverage('${tableNameBAM}','NA12878.chr21', 'bases', 500)")
 
 
 Configuration Parameters
@@ -128,10 +128,10 @@ This boolean configuration parameter determines whether all positions should be 
     //assuming that ss is the registered SeQuiLa session
     // this should be performed before calculating coverage - set to true
     ss.sqlContext.setConf(BDGInternalParams.ShowAllPositions,"true")
-    ss.sql(s"SELECT * FROM bdg_coverage('${tableNameBAM}','NA12878.chr21', 'blocks')")
+    ss.sql(s"SELECT * FROM coverage('${tableNameBAM}','NA12878.chr21', 'blocks')")
 	// parameter can be reverted back to false
     ss.sqlContext.setConf(BDGInternalParams.ShowAllPositions,"false")
-    ss.sql(s"SELECT * FROM bdg_coverage('${tableNameBAM}','NA12878.chr21', 'blocks')")
+    ss.sql(s"SELECT * FROM coverage('${tableNameBAM}','NA12878.chr21', 'blocks')")
 
 
 
@@ -144,10 +144,10 @@ This parameters is used to filter out reads used for coverage calculations. The 
     //assuming that ss is the registered SeQuiLa session
     // this should be performed before calculating coverage - set to desired filterflag
     ss.sqlContext.setConf(BDGInternalParams.filterReadsByFlag,1792)
-    ss.sql(s"SELECT * FROM bdg_coverage('${tableNameBAM}','NA12878.chr21', 'blocks')")
+    ss.sql(s"SELECT * FROM coverage('${tableNameBAM}','NA12878.chr21', 'blocks')")
 	// parameter can be reverted back to default
     ss.sqlContext.setConf(BDGInternalParams.filterReadsByFlag,1796)
-    ss.sql(s"SELECT * FROM bdg_coverage('${tableNameBAM}','NA12878.chr21', 'blocks')")
+    ss.sql(s"SELECT * FROM coverage('${tableNameBAM}','NA12878.chr21', 'blocks')")
 
 
 InputSplitSize - determine partitions size 

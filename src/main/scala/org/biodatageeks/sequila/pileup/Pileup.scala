@@ -58,8 +58,8 @@ class Pileup[T<:BDGAlignInputFormat](spark:SparkSession)(implicit c: ClassTag[T]
             .get(CRAMBDGInputFormat.REFERENCE_SOURCE_PATH_PROPERTY)
            readBAMFile(spark.sqlContext, samplePathTemplate.replace("{{fileExtension}}", "cram"), Some(refPath))
         }
-        else throw new Exception("Only BAM and CRAM file formats are supported in bdg_coverage.")
-      case None => throw new Exception("Wrong file extension - only BAM and CRAM file formats are supported in bdg_coverage.")
+        else throw new Exception("Only BAM and CRAM file formats are supported in coverage.")
+      case None => throw new Exception("Wrong file extension - only BAM and CRAM file formats are supported in coverage.")
     }
   }
 }
