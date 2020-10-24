@@ -103,7 +103,7 @@ object ResolveTableValuedFunctionsSeq extends Rule[LogicalPlan] {
       }
     ),
 
-    "bdg_coverage" -> Map(
+    "coverage" -> Map(
       /* coverage(tableName) */
       tvf("table" -> StringType, "sampleId" -> StringType, "result" -> StringType)
       { case Seq(table: Any,sampleId:Any, result:Any) =>
@@ -199,7 +199,7 @@ case class BDGCoverage(tableName:String, sampleId:String, result: String, target
 
   def toSQL(): String = {
 
-    s"SELECT contigName,start,end,coverage AS `${output.head.name}` FROM bdg_coverage('$tableName')"
+    s"SELECT contigName,start,end,coverage AS `${output.head.name}` FROM coverage('$tableName')"
   }
 
   override def newInstance(): BDGCoverage = copy(output = output.map(_.newInstance()))

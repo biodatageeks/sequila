@@ -45,7 +45,7 @@ class LongReadsTestSuite
     SequilaRegister.register(session2)
     val query =
       s"""SELECT ${Columns.CONTIG}, ${Columns.START}, ${Columns.COVERAGE}
-        FROM bdg_coverage('$tableNameBAM','nanopore_guppy_slice','bases')
+        FROM coverage('$tableNameBAM','nanopore_guppy_slice','bases')
         order by ${Columns.CONTIG},${Columns.START},${Columns.END}
         """.stripMargin
     val covMultiPartitionDF = session2.sql(query)

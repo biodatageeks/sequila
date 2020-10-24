@@ -22,7 +22,7 @@ SeQuiLa is an ANSI-SQL compliant solution for efficient genomic intervals queryi
 
 * SeQuiLa is elastic:
 
-   - growing catalogue of utility functions and operations including: `featureCounts`, `countOverlaps` and `bdg_coverage`
+   - growing catalogue of utility functions and operations including: `featureCounts`, `countOverlaps` and `coverage`
    - standard SQL DML/DDL like SPJG (select, predicate, join, group by), CTaS (create table as select), IaS (insert table as select) for easy BAM files manipulation
    - exposed parameters for further performance tuning
    - integration with third-party tools through SparkSQL Thrift JDBC driver
@@ -92,7 +92,7 @@ Docker Hub           `<https://hub.docker.com/r/biodatageeks/|project_name|/>`_
 0.4
 
  - completely rewritten R support as a sparklyr extension
- - experimental support for efficient coverage computation for BAMDatasource exposed as a table-valued function (bdg_coverage)
+ - experimental support for efficient coverage computation for BAMDatasource exposed as a table-valued function (coverage)
  - sample pruning mechanism for queries accessing only subset of samples from a table (BAMDatasource)
  - a new JDBC interface based on SequilaThriftServer
 

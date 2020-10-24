@@ -31,20 +31,20 @@ object CovRun {
 
     spark.time {
       ss.sql(
-        s"""SELECT * FROM bdg_coverage('${tableNameBAM}','NA12878.chr','bdg')
+        s"""SELECT * FROM coverage('${tableNameBAM}','NA12878.chr','bdg')
          """.stripMargin).count
     }
 
 //    spark.time {
 //      ss.sql(
-//        s"""SELECT * FROM bdg_coverage('${tableNameBAM}','NA12878.chr','bdg')
+//        s"""SELECT * FROM coverage('${tableNameBAM}','NA12878.chr','bdg')
 //          | WHERE start >=   25109993
 //         """.stripMargin).show(20)
 //    }
 
 //    spark.time {
 //      ss.sql(
-//        s"""SELECT * FROM bdg_coverage('${tableNameBAM}','NA12878.chr','mosdepth')
+//        s"""SELECT * FROM coverage('${tableNameBAM}','NA12878.chr','mosdepth')
 //           | WHERE start >=   25109993
 //         """.stripMargin).show(20)
 //    }

@@ -1,0 +1,3 @@
+@HD	VN:1.6
+@SQ	SN:chr1	LN:9957	M5:fd588cb0fd2e0a5e7c30c63a6c8dca16	UR:file:/Users/mwiewior/research/git/bdg-sequila/src/test/resources/multichrom/mdbam/NA12878.multichrom.fasta
+@SQ	SN:chrM	LN:16564	M5:ad9f46014e33b47055f43b1b9abf2b9d	UR:file:/Users/mwiewior/research/git/bdg-sequila/src/test/resources/multichrom/mdbam/NA12878.multichrom.fasta

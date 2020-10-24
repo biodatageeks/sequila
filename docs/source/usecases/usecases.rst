@@ -754,7 +754,7 @@ Generating coverage statistics for exons with the average depth-of-coverage > 20
 
     /*Calculate per-base coverage for sample NA12878*/
     ss.sql("""CREATE TABLE IF NOT EXISTS reads_exome USING org.biodatageeks.sequila.datasources.BAM.BAMDataSource OPTIONS(path '/data/sequila_test/*.bam')""")
-    val coverage_bases = ss.sql(s" SELECT * FROM bdg_coverage('reads_exome','NA12878', 'bases')") 
+    val coverage_bases = ss.sql(s" SELECT * FROM coverage('reads_exome','NA12878', 'bases')") 
     coverage_bases.registerTempTable( "coverage_bases")
 
     /*Read BED file with exon definitions*/
@@ -823,8 +823,8 @@ Nanopore long reads from WGS analyses
 
   /*Albacore base caller*/
   spark.time{
-  ss.sql(s"SELECT * FROM bdg_coverage('reads_nanopore','NA12878-Albacore2.1.sorted', 'blocks')").write.format("parquet").save("/tmp/NA12878-Albacore2.1.sorted.parquet")}
+  ss.sql(s"SELECT * FROM coverage('reads_nanopore','NA12878-Albacore2.1.sorted', 'blocks')").write.format("parquet").save("/tmp/NA12878-Albacore2.1.sorted.parquet")}
 
   /*guppy base caller*/
   spark.time{
-  ss.sql(s"SELECT * FROM bdg_coverage('reads_nanopore','rel5-guppy-0.3.0-chunk10k.sorted', 'blocks')").write.format("parquet").save("/tmp/rel5-guppy-0.3.0-chunk10k.sorted.parquet")}
+  ss.sql(s"SELECT * FROM coverage('reads_nanopore','rel5-guppy-0.3.0-chunk10k.sorted', 'blocks')").write.format("parquet").save("/tmp/rel5-guppy-0.3.0-chunk10k.sorted.parquet")}

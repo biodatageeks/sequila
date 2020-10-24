@@ -81,7 +81,7 @@ class CoverageTestSuite
 
    */
 
-  test("BAM - bdg_coverage - windows") {
+  test("BAM - coverage - windows") {
 
     spark.sqlContext.setConf(InternalParams.InputSplitSize, splitSize)
 
@@ -92,7 +92,7 @@ class CoverageTestSuite
       spark.sqlContext.setConf(InternalParams.IOReadAlignmentMethod, m)
       val windowLength = 100
       val bdg = session.sql(
-        s"SELECT * FROM bdg_coverage('$tableNameMultiBAM','NA12878', 'blocks', '$windowLength')")
+        s"SELECT * FROM coverage('$tableNameMultiBAM','NA12878', 'blocks', '$windowLength')")
       assert(bdg.count == 267)
       assert(bdg.first().getInt(1) % windowLength == 0) // check for fixed window start position
       assert(bdg.first().getInt(2) % windowLength == windowLength - 1) // // check for fixed window end position
@@ -130,7 +130,7 @@ class CoverageTestSuite
     }
   }
 
-  test("BAM - bdg_coverage - blocks - allPositions") {
+  test("BAM - coverage - blocks - allPositions") {
     spark.sqlContext.setConf(InternalParams.InputSplitSize, splitSize)
 
     val session: SparkSession = SequilaSession(spark)
@@ -142,7 +142,7 @@ class CoverageTestSuite
       session.sqlContext.setConf(InternalParams.ShowAllPositions, "true")
 
       val bdg = session.sql(
-        s"SELECT * FROM bdg_coverage('${tableNameMultiBAM}','NA12878', 'blocks')")
+        s"SELECT * FROM coverage('${tableNameMultiBAM}','NA12878', 'blocks')")
 
       assert(bdg.count() == 12865)
       assert(bdg.filter("coverage== 0").count == 29) // count check fo zero coverage elements
@@ -201,7 +201,7 @@ class CoverageTestSuite
     }
   }
 
-  test("BAM - bdg_coverage - blocks notAllPositions") {
+  test("BAM - coverage - blocks notAllPositions") {
     spark.sqlContext.setConf(InternalParams.InputSplitSize, splitSize)
     val session: SparkSession = SequilaSession(spark)
     SequilaRegister.register(session)
@@ -212,7 +212,7 @@ class CoverageTestSuite
       spark.sqlContext.setConf(InternalParams.IOReadAlignmentMethod, m)
 
       val bdg = session.sql(
-        s"SELECT *  FROM bdg_coverage('${tableNameMultiBAM}','NA12878', 'blocks')")
+        s"SELECT *  FROM coverage('${tableNameMultiBAM}','NA12878', 'blocks')")
 
       assert(bdg.count() == 12836) // total count check // old value before zero_elements fix
       assert(bdg.filter("coverage== 0").count == 0)
@@ -271,7 +271,7 @@ class CoverageTestSuite
     }
   }
 
-  test("BAM - bdg_coverage - bases - notAllPositions") {
+  test("BAM - coverage - bases - notAllPositions") {
     spark.sqlContext.setConf(InternalParams.InputSplitSize, splitSize)
     val session: SparkSession = SequilaSession(spark)
     SequilaRegister.register(session)
@@ -280,7 +280,7 @@ class CoverageTestSuite
     alignReadMethods.foreach { m =>
       spark.sqlContext.setConf(InternalParams.IOReadAlignmentMethod, m)
       val bdg = session.sql(
-        s"SELECT ${Columns.CONTIG}, ${Columns.START}, ${Columns.END}, ${Columns.COVERAGE} FROM bdg_coverage('${tableNameMultiBAM}','NA12878', 'bases')")
+        s"SELECT ${Columns.CONTIG}, ${Columns.START}, ${Columns.END}, ${Columns.COVERAGE} FROM coverage('${tableNameMultiBAM}','NA12878', 'bases')")
 
       assert(bdg.count() == 24898) // total count check // was 26598
       assert(bdg.filter(s"${Columns.COVERAGE}== 0").count == 0) // total count of zero coverage elements should be zero
@@ -342,27 +342,27 @@ class CoverageTestSuite
 
   }
 
-  test("CRAM - bdg_coverage - show") {
+  test("CRAM - coverage - show") {
     val session: SparkSession = SequilaSession(spark)
     SequilaRegister.register(session)
 
     alignReadMethods.foreach { m =>
       spark.sqlContext.setConf(InternalParams.IOReadAlignmentMethod, m)
       val bdg = session.sql(
-        s"SELECT * FROM bdg_coverage('${tableNameCRAM}','test', 'blocks') ")
+        s"SELECT * FROM coverage('${tableNameCRAM}','test', 'blocks') ")
 
       assert(bdg.count() == 49)
       assert(bdg.where(s"${Columns.START} == 107").first().getShort(3) == 459)
     }
   }
 
-  test("BAM - bdg_coverage - wrong param, Exception should be thrown") {
+  test("BAM - coverage - wrong param, Exception should be thrown") {
     val session: SparkSession = SequilaSession(spark)
     SequilaRegister.register(session)
 
     assertThrows[Exception](session
       .sql(
-        s"SELECT * FROM bdg_coverage('${tableNameMultiBAM}','NA12878', 'babara')")
+        s"SELECT * FROM coverage('${tableNameMultiBAM}','NA12878', 'babara')")
       .show())
 
   }

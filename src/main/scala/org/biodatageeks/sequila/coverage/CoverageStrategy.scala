@@ -76,8 +76,8 @@ case class BDGCoveragePlan [T<:BDGAlignInputFormat](plan: LogicalPlan, spark: Sp
       case Some(f) =>
         if (f == InputDataType.BAMInputDataType) "bam"
         else if (f == InputDataType.CRAMInputDataType) "cram"
-        else throw new Exception("Only BAM and CRAM file formats are supported in bdg_coverage.")
-      case None => throw new Exception("Wrong file extension - only BAM and CRAM file formats are supported in bdg_coverage.")
+        else throw new Exception("Only BAM and CRAM file formats are supported in coverage.")
+      case None => throw new Exception("Wrong file extension - only BAM and CRAM file formats are supported in coverage.")
     }
     val samplePath = (sampleTable
       .location.toString

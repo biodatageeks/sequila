@@ -119,7 +119,7 @@ Firstly, we provide a tabular view on the input data, through custom SQL-like da
 
     -- calculate coverage on read_set
     SELECT contig, start, end, coverage
-    FROM bdg_coverage('read_set','sample1','blocks')
+    FROM coverage('read_set','sample1','blocks')
     WHERE contig='chr3'
 
 

@@ -261,7 +261,7 @@ Afterwards you can proceed with e.g. depth of coverage calculations
 
   //calculate coverage - example for blocks coverage
   
-  ss.sql(s"SELECT * FROM bdg_coverage('${tableNameBAM}','NA12878.chr21', 'blocks')").show(5)
+  ss.sql(s"SELECT * FROM coverage('${tableNameBAM}','NA12878.chr21', 'blocks')").show(5)
   
           +----------+-----+---+--------+
           |contigName|start|end|coverage|
@@ -374,7 +374,7 @@ Once the spark-shell with SeQuiLa extension has been startup you can  import nec
 
   //calculate coverage - example for blocks coverage
   
-  ss.sql(s"SELECT * FROM bdg_coverage('${tableNameBAM}','NA12878.chr21', 'blocks')").show(5)
+  ss.sql(s"SELECT * FROM coverage('${tableNameBAM}','NA12878.chr21', 'blocks')").show(5)
   
           +----------+-----+---+--------+
           |contigName|start|end|coverage|
