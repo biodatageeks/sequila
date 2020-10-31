@@ -48,6 +48,11 @@ case class PileupPlan [T<:BDGAlignInputFormat](plan:LogicalPlan, spark:SparkSess
 
   override protected def doExecute(): RDD[InternalRow] = {
     val conf = setupPileupConfiguration()
+    spark
+      .sparkContext
+      .getPersistentRDDs
+      .filter(t=> t._2.name==InternalParams.RDDEventsName)
+      .foreach(_._2.unpersist())
     new Pileup(spark).handlePileup(tableName, sampleId, refPath, output, conf)
   }
 
