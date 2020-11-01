@@ -1,7 +1,9 @@
 package org.biodatageeks.sequila.pileup.model
 
+import org.apache.spark.broadcast.Broadcast
 import org.biodatageeks.sequila.pileup.conf.{Conf, QualityConstants}
 import org.biodatageeks.sequila.utils.FastMath
+
 import scala.collection.mutable
 
 object Quals {
@@ -23,11 +25,11 @@ object Quals {
         else x.zipAll(y, 0.toShort, 0.toShort).map(a => (a._1 + a._2).toShort)
       }}
 
-    def trim: SingleLocusQuals = {
+    def trim(conf: Broadcast[Conf]): SingleLocusQuals = {
       arr.map({ array =>
         if (array != null) {
           val maxIndex = array.last
-          if (maxIndex < Conf.maxQuality)
+          if (maxIndex < conf.value.maxQuality)
             array.take(maxIndex + 1)
           else
             array.dropRight(1) // remove maxQuality from array
@@ -36,9 +38,9 @@ object Quals {
       })
     }
 
-    def addQualityForAlt(alt: Char, quality: Byte, updateMax: Boolean): Unit = {
-      val qualityIndex = if (Conf.isBinningEnabled) (quality / Conf.binSize).toShort else quality
-      val arrSize = Conf.qualityArrayLength
+    def addQualityForAlt(alt: Char, quality: Byte, updateMax: Boolean, conf: Broadcast[Conf]): Unit = {
+      val qualityIndex = if (conf.value.isBinningEnabled) (quality / conf.value.binSize).toShort else quality
+      val arrSize = conf.value.qualityArrayLength
       val altArrIndex = alt - QualityConstants.QUAL_INDEX_SHIFT
 
       if (arr(altArrIndex) == null) {
@@ -71,16 +73,18 @@ object Quals {
     def ++(that: Quals.MultiLociQuals): Quals.MultiLociQuals = (map ++ that)
 
 
-    def trim: MultiLociQuals = map.map({ case (k, v) => k -> v.trim})
+    def trim(conf: Broadcast[Conf]): MultiLociQuals = map.map({ case (k, v) => k -> v.trim(conf)})
 
     @inline
-    def updateQuals(position: Int, alt: Char, quality: Byte, firstUpdate: Boolean = false, updateMax: Boolean = false): Unit = {
+    def updateQuals(position: Int, alt: Char, quality: Byte, firstUpdate: Boolean = false,
+                    updateMax: Boolean = false,
+                    conf: Broadcast[Conf]): Unit = {
       if (!firstUpdate || map.contains(position)) {
-        map(position).addQualityForAlt(alt, quality, updateMax)
+        map(position).addQualityForAlt(alt, quality, updateMax, conf)
       }
       else {
         val singleLocusQualMap = new SingleLocusQuals(QualityConstants.OUTER_QUAL_SIZE)
-        singleLocusQualMap.addQualityForAlt(alt, quality, updateMax)
+        singleLocusQualMap.addQualityForAlt(alt, quality, updateMax, conf)
         map.update(position, singleLocusQualMap)
       }
     }

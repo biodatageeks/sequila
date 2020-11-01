@@ -27,6 +27,9 @@ class BinningTestSuite extends PileupTestBase {
                  """.stripMargin
 
   test("Simple Quals lookup Single partition") {
+    val conf = new Conf
+    conf.isBinningEnabled = true
+    conf.binSize = binSize
     val ss = SequilaSession(spark)
     SequilaRegister.register(ss)
     ss.sparkContext.setLogLevel("ERROR")
@@ -36,11 +39,14 @@ class BinningTestSuite extends PileupTestBase {
     val equals = result.select(covEquality).distinct()
     assert(equals.count()==1)
     assert(equals.head.getBoolean(0))
-    assert(Conf.isBinningEnabled)
-    assert(Conf.binSize == binSize )
+    assert(conf.isBinningEnabled)
+    assert(conf.binSize == binSize )
   }
 
   test("Simple Quals lookup Multiple partitions") {
+    val conf = new Conf
+    conf.isBinningEnabled = true
+    conf.binSize = binSize
     spark.sqlContext.setConf(InternalParams.InputSplitSize, splitSize)
     val ss = SequilaSession(spark)
     SequilaRegister.register(ss)
@@ -52,7 +58,7 @@ class BinningTestSuite extends PileupTestBase {
     val equals = result.select(covEquality).distinct()
     assert(equals.count()==1)
     assert(equals.head.getBoolean(0))
-    assert(Conf.isBinningEnabled)
-    assert(Conf.binSize == binSize )
+    assert(conf.isBinningEnabled)
+    assert(conf.binSize == binSize )
   }
 }
