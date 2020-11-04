@@ -39,7 +39,7 @@ object PileupMethods {
 
     //FIXME: Add automatic unpersist
     val aggregates = ContigAggrTimer.time {alignmentsInstr.assembleContigAggregates(conf).persist(storageLevel) }
-    aggregates.setName(InternalParams.RDDEventsName)
+    aggregates.setName(InternalParams.RDDPileupEventsName)
     val accumulator = AccumulatorTimer.time {aggregates.accumulateTails(spark)}
 
     val broadcast = BroadcastTimer.time{

@@ -51,7 +51,7 @@ case class PileupPlan [T<:BDGAlignInputFormat](plan:LogicalPlan, spark:SparkSess
     spark
       .sparkContext
       .getPersistentRDDs
-      .filter(t=> t._2.name==InternalParams.RDDEventsName)
+      .filter(t=> t._2.name==InternalParams.RDDPileupEventsName)
       .foreach(_._2.unpersist())
     new Pileup(spark).handlePileup(tableName, sampleId, refPath, output, conf)
   }
