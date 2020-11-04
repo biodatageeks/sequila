@@ -35,6 +35,15 @@ class PileupStrategy (spark:SparkSession) extends Strategy with Serializable {
   }
 }
 
+object PileupPlan extends Serializable {
+  def clearCache(sparkSession: SparkSession) = {
+    sparkSession
+      .sparkContext
+      .getPersistentRDDs
+      .filter(t=> t._2.name==InternalParams.RDDPileupEventsName)
+      .foreach(_._2.unpersist())
+  }
+}
 case class PileupPlan [T<:BDGAlignInputFormat](plan:LogicalPlan, spark:SparkSession,
                                                tableName:String,
                                                sampleId:String,
@@ -48,13 +57,10 @@ case class PileupPlan [T<:BDGAlignInputFormat](plan:LogicalPlan, spark:SparkSess
 
   override protected def doExecute(): RDD[InternalRow] = {
     val conf = setupPileupConfiguration()
-    spark
-      .sparkContext
-      .getPersistentRDDs
-      .filter(t=> t._2.name==InternalParams.RDDPileupEventsName)
-      .foreach(_._2.unpersist())
+    PileupPlan.clearCache(spark)
     new Pileup(spark).handlePileup(tableName, sampleId, refPath, output, conf)
   }
+
 
   private def setupPileupConfiguration(): Conf = {
     val conf = new Conf

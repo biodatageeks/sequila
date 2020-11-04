@@ -2,6 +2,7 @@ package org.biodatageeks.sequila.tests.pileup
 
 import org.apache.spark.sql.{DataFrame, SequilaSession}
 import org.apache.spark.storage.StorageLevel
+import org.biodatageeks.sequila.pileup.PileupPlan
 import org.biodatageeks.sequila.utils.{Columns, InternalParams, SequilaRegister}
 
 class PileupTestSuite extends PileupTestBase {
@@ -37,6 +38,28 @@ class PileupTestSuite extends PileupTestBase {
 //    result.where(s"${Columns.CONTIG}='MT' and ${Columns.START} >= 7 and ${Columns.START} <= 50").show(20)
     performAssertions(result)
 
+
+  }
+
+  test("Pileup unpersist"){
+    val ss = SequilaSession(spark)
+    SequilaRegister.register(ss)
+    val result = ss.sql(pileupQuery)
+    result.count
+
+    val eventCacheNameBefore = spark
+      .sparkContext
+      .getPersistentRDDs
+      .filter(t=> t._2.name==InternalParams.RDDPileupEventsName)
+
+    PileupPlan.clearCache(spark)
+
+    val eventCacheNameAfter = spark
+      .sparkContext
+      .getPersistentRDDs
+      .filter(t=> t._2.name==InternalParams.RDDPileupEventsName)
+
+     assert(eventCacheNameBefore.size > 0 && eventCacheNameAfter.size ==0 )
 
   }
 
