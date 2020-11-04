@@ -47,24 +47,26 @@ case class PileupPlan [T<:BDGAlignInputFormat](plan:LogicalPlan, spark:SparkSess
   override def children: Seq[SparkPlan] = Nil
 
   override protected def doExecute(): RDD[InternalRow] = {
-    setupPileupConfiguration()
-    new Pileup(spark).handlePileup(tableName, sampleId, refPath, output)
+    val conf = setupPileupConfiguration()
+    new Pileup(spark).handlePileup(tableName, sampleId, refPath, output, conf)
   }
 
-  private def setupPileupConfiguration():Unit = {
+  private def setupPileupConfiguration(): Conf = {
+    val conf = new Conf
     val maxQual = spark.conf.get(InternalParams.maxBaseQualityValue, DEFAULT_MAX_QUAL.toString).toInt
-    Conf.maxQuality = maxQual
-    Conf.maxQualityIndex = maxQual + 1
-    Conf.includeBaseQualities = qual
+    conf.maxQuality = maxQual
+    conf.maxQualityIndex = maxQual + 1
+    conf.includeBaseQualities = qual
     if(binSize.isDefined) {
-      Conf.isBinningEnabled = true
-      Conf.binSize = binSize.get
-      Conf.qualityArrayLength = Math.round(Conf.maxQuality  / Conf.binSize.toDouble).toInt + 2
+      conf.isBinningEnabled = true
+      conf.binSize = binSize.get
+      conf.qualityArrayLength = Math.round(conf.maxQuality  / conf.binSize.toDouble).toInt + 2
     } else {
-      Conf.isBinningEnabled = false
-      Conf.binSize = DEFAULT_BIN_SIZE
-      Conf.qualityArrayLength = Conf.maxQuality + 2
+      conf.isBinningEnabled = false
+      conf.binSize = DEFAULT_BIN_SIZE
+      conf.qualityArrayLength = conf.maxQuality + 2
     }
+    conf
   }
 
 }

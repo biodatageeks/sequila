@@ -23,6 +23,7 @@ class BaseQualityTestSuite extends PileupTestBase {
                  """.stripMargin
   
   test("Simple Quals lookup Single partition") {
+    val conf = new Conf
     val ss = SequilaSession(spark)
     SequilaRegister.register(ss)
     ss.sparkContext.setLogLevel("ERROR")
@@ -34,10 +35,11 @@ class BaseQualityTestSuite extends PileupTestBase {
 
     assert(equals.count()==1)
     assert(equals.head.getBoolean(0))
-    assert(!Conf.isBinningEnabled)
+    assert(!conf.isBinningEnabled)
   }
 
   test("Simple Quals lookup Multiple partitions") {
+    val conf = new Conf
     spark.sqlContext.setConf(InternalParams.InputSplitSize, splitSize)
     val ss = SequilaSession(spark)
     SequilaRegister.register(ss)
@@ -52,6 +54,6 @@ class BaseQualityTestSuite extends PileupTestBase {
 
     assert(equals.count()==1)
     assert(equals.head.getBoolean(0))
-    assert(!Conf.isBinningEnabled)
+    assert(!conf.isBinningEnabled)
   }
 }

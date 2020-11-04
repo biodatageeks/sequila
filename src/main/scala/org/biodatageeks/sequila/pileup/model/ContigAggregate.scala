@@ -28,7 +28,8 @@ case class ContigAggregate(
                             maxPosition: Int = 0,
                             shrinkedEventsArraySize: Int = 0,
                             maxSeqLen:Int = 0,
-                            qualityCache: QualityCache
+                            qualityCache: QualityCache,
+                            conf: Broadcast[Conf]
                                 ) {
 
   val altsKeyCache  = mutable.TreeSet.empty[Int]
@@ -38,7 +39,7 @@ case class ContigAggregate(
   def getPileupUpdate:PileupUpdate = new PileupUpdate(ArrayBuffer(getTail), ArrayBuffer(getRange))
   def getAltPositionsForRange(start: Int, end: Int): SortedSet[Int] = altsKeyCache.range(start,end+1)
   def addToCache(readQualSummary: ReadQualSummary):Unit = qualityCache.addOrReplace(readQualSummary)
-  def trimQuals: MultiLociQuals = if(quals != null) quals.trim else null
+  def trimQuals: MultiLociQuals = if(quals != null) quals.trim(conf) else null
 
   def calculateMaxLength(allPositions: Boolean): Int = {
     if (! allPositions)
@@ -56,13 +57,13 @@ case class ContigAggregate(
 
   def updateAlts(pos: Int, alt: Char): Unit = {
     alts.updateAlts(pos, alt)
-    if(Conf.includeBaseQualities) {
+    if(conf.value.includeBaseQualities) {
       altsKeyCache.add(pos)
     }
   }
 
   def updateQuals(pos: Int, alt: Char, quality: Byte, firstUpdate: Boolean = false, updateMax:Boolean = true): Unit = {
-      quals.updateQuals(pos, alt,quality, firstUpdate, updateMax)
+      quals.updateQuals(pos, alt,quality, firstUpdate, updateMax, conf)
   }
 
   def getTail:Tail ={
@@ -73,14 +74,14 @@ case class ContigAggregate(
         events.takeRight(maxSeqLen)
     }
     val tailAlts = TailAltsTimer.time {alts.filter(_._1 >= tailStartIndex)}
-    val tailQuals = if (Conf.includeBaseQualities) quals.filter(_._1 >= tailStartIndex) else null
+    val tailQuals = if (conf.value.includeBaseQualities) quals.filter(_._1 >= tailStartIndex) else null
     val cumSum = FastMath.sumShort(events)
     TailEdgeTimer.time {broadcast.Tail(contig, startPosition, tailStartIndex, tailCov, tailAlts, tailQuals,cumSum, qualityCache)}
   }
 
   def calculateAdjustedQuals(upd: PartitionCorrections): MultiLociQuals = {
-    if (Conf.includeBaseQualities) {
-      calculateCompleteQuals(upd)
+    if (conf.value.includeBaseQualities) {
+      calculateCompleteQuals(upd, conf)
     } else
       new MultiLociQuals()
   }
@@ -94,7 +95,7 @@ case class ContigAggregate(
     val newQuals = CalculateQualsTimer.time {calculateAdjustedQuals(upd)}
 
     val shrinkedEventsSize = ShrinkArrayTimer.time { calculateShrinkedEventsSize(shrink, adjustedEvents) }
-    ContigAggregate(contig, contigLen, adjustedEvents, adjustedAlts, newQuals, startPosition, maxPosition, shrinkedEventsSize, maxSeqLen, null)
+    ContigAggregate(contig, contigLen, adjustedEvents, adjustedAlts, newQuals, startPosition, maxPosition, shrinkedEventsSize, maxSeqLen, null, conf)
   }
 
   private def calculateAdjustedEvents(upd: PartitionCorrections): Array[Short] = {
@@ -148,7 +149,7 @@ case class ContigAggregate(
               val reads = correction.qualityCache.getReadsOverlappingPosition(pos)
               for (read <- reads) {
                 val qual = read.qualsArray(read.relativePosition(pos))
-                adjustedQuals.updateQuals(pos, QualityConstants.REF_SYMBOL, qual, firstUpdate = false, updateMax = false)
+                adjustedQuals.updateQuals(pos, QualityConstants.REF_SYMBOL, qual, firstUpdate = false, updateMax = false, conf)
               }
             }
             adjustedQuals
@@ -161,7 +162,9 @@ case class ContigAggregate(
 
   }
 
-  def fillQualityForLowerAlts(upd: PartitionCorrections, qualsInterim: MultiLociQuals, blacklist: scala.collection.Set[Int]): MultiLociQuals ={
+  def fillQualityForLowerAlts(upd: PartitionCorrections, qualsInterim: MultiLociQuals,
+                              blacklist: scala.collection.Set[Int],
+                             conf: Broadcast[Conf]): MultiLociQuals ={
 
     upd.get((contig, startPosition)) match { // check if there is a value for contigName and minPos in upd, returning array of coverage and cumSum to update current contigRange
       case Some(correction) =>
@@ -173,7 +176,7 @@ case class ContigAggregate(
               val reads = qualityCache.getReadsOverlappingPositionInHeader(pos) //FIXME
               for (read <- reads) {
                 val qual = read.qualsArray(read.relativePosition(pos))
-                qualsInterim.updateQuals(pos, QualityConstants.REF_SYMBOL, qual, firstUpdate = false, updateMax = false)
+                qualsInterim.updateQuals(pos, QualityConstants.REF_SYMBOL, qual, firstUpdate = false, updateMax = false, conf)
               }
             }
             qualsInterim
@@ -184,7 +187,7 @@ case class ContigAggregate(
     }
   }
 
-  private def calculateCompleteQuals(upd:PartitionCorrections): MultiLociQuals ={
+  private def calculateCompleteQuals(upd:PartitionCorrections, conf: Broadcast[Conf]): MultiLociQuals ={
 
     val adjustedQuals = upd.get((contig, startPosition)) match { // check if there is a value for contigName and minPos in upd, returning array of coverage and cumSum to update current contigRange
       case Some(correction) =>
@@ -198,7 +201,7 @@ case class ContigAggregate(
     val concordantAlts = quals.keySet.intersect(upd.getAlts(contig,startPosition).keySet)
 
     val qualsInterim = FillQualityForHigherAltsTimer.time{ fillQualityForHigherAlts(upd, adjustedQuals, concordantAlts)}
-    val completeQuals = FillQualityForLowerAltsTimer.time {fillQualityForLowerAlts(upd, qualsInterim, concordantAlts)}
+    val completeQuals = FillQualityForLowerAltsTimer.time {fillQualityForLowerAlts(upd, qualsInterim, concordantAlts, conf)}
     completeQuals
   }
 

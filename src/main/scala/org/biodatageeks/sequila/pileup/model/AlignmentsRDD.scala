@@ -9,6 +9,7 @@ import org.biodatageeks.sequila.utils.{DataQualityFuncs, FastMath}
 
 import scala.collection.{JavaConverters, mutable}
 import ReadOperations.implicits._
+import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.util.SizeEstimator
 import org.slf4j.{Logger, LoggerFactory}
 import org.biodatageeks.sequila.pileup.conf.{Conf, QualityConstants}
@@ -29,7 +30,7 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
     *
     * @return distributed collection of PileupRecords
     */
-  def assembleContigAggregates: RDD[ContigAggregate] = {
+  def assembleContigAggregates(conf: Broadcast[Conf]): RDD[ContigAggregate] = {
     val contigLenMap = InitContigLengthsTimer.time  {
       initContigLengths(this.rdd.first())
     }
@@ -55,12 +56,12 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
 
           if (!aggMap.contains(contig))
             HandleFirstContingTimer.time {
-              handleFirstReadForContigInPartition(read, contig, contigLenMap, contigMaxReadLen, aggMap)
+              handleFirstReadForContigInPartition(read, contig, contigLenMap, contigMaxReadLen, aggMap, conf)
               contigAggregate = AggMapLookupTimer.time {aggMap(contig) }
             }
-          AnalyzeReadsTimer.time {read.analyzeRead(contig, contigAggregate, contigMaxReadLen)}
+          AnalyzeReadsTimer.time {read.analyzeRead(contig, contigAggregate, contigMaxReadLen, conf)}
         }
-        val aggregates = PrepareOutupTimer.time {prepareOutputAggregates(aggMap, contigMaxReadLen).toIterator}
+        val aggregates = PrepareOutupTimer.time {prepareOutputAggregates(aggMap, contigMaxReadLen, conf).toIterator}
         aggregates
       }
     }
@@ -75,7 +76,8 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
     * @param cigarMap mapper between contig and max length of cigar in given
     * @return
     */
-  def prepareOutputAggregates(aggMap: mutable.HashMap[String, ContigAggregate], cigarMap: mutable.HashMap[String, Int]): Array[ContigAggregate] = {
+  def prepareOutputAggregates(aggMap: mutable.HashMap[String, ContigAggregate], cigarMap: mutable.HashMap[String, Int],
+                             conf: Broadcast[Conf]): Array[ContigAggregate] = {
     val output = new Array[ContigAggregate](aggMap.size)
     var i = 0
     val iter = aggMap.toIterator
@@ -95,7 +97,9 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
         contigEventAgg.startPosition + maxIndex,
         0,
         cigarMap(contig),
-        contigEventAgg.qualityCache)
+        contigEventAgg.qualityCache,
+        conf
+      )
 //      val coef = 1048576.0
 //      val aggSize = SizeEstimator.estimate(agg)/coef
 //      val altsSize = SizeEstimator.estimate(agg.alts)/coef
@@ -117,7 +121,8 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
 
   private def handleFirstReadForContigInPartition(read: SAMRecord, contig: String, contigLenMap: Map[String, Int],
                                                   contigMaxReadLen: mutable.HashMap[String, Int],
-                                                  aggMap: mutable.HashMap[String, ContigAggregate]
+                                                  aggMap: mutable.HashMap[String, ContigAggregate],
+                                                 conf: Broadcast[Conf]
                                                   ):Unit = {
     val contigLen = contigLenMap(contig)
     val arrayLen = contigLen - read.getStart + 10
@@ -127,10 +132,11 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
       contigLen = contigLen,
       events = new Array[Short](arrayLen),
       alts = new MultiLociAlts(),
-      quals = if(Conf.includeBaseQualities ) new MultiLociQuals() else null,
+      quals = if(conf.value.includeBaseQualities ) new MultiLociQuals() else null,
       startPosition = read.getStart,
       maxPosition = contigLen - 1,
-      qualityCache =  if(Conf.includeBaseQualities ) new QualityCache(QualityConstants.CACHE_SIZE) else null)
+      qualityCache =  if(conf.value.includeBaseQualities ) new QualityCache(QualityConstants.CACHE_SIZE) else null,
+      conf = conf )
 
     aggMap += contig -> contigEventAggregate
     contigMaxReadLen += contig -> 0

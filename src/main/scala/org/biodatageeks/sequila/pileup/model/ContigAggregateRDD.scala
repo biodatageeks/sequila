@@ -46,7 +46,7 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
     this.rdd map { agg =>  agg.getAdjustedAggregate(b)}
   }
 
-  def toPileup(refPath: String ) : RDD[InternalRow] = {
+  def toPileup(refPath: String, conf: Broadcast[Conf] ) : RDD[InternalRow] = {
 
     this.rdd.mapPartitions { part =>
       val reference = new Reference(refPath)
@@ -65,7 +65,7 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
         while (i < agg.shrinkedEventsArraySize) {
           cov += agg.events(i)
           if (prev.hasAlt) {
-            addBaseRecord(result, ind, agg, bases, i, prev)
+            addBaseRecord(result, ind, agg, bases, i, prev, conf)
             ind += 1;
             prev.reset(i)
             if (agg.hasAltOnPosition(i+startPosition))
@@ -105,17 +105,17 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
   private def isEndOfZeroCoverageRegion(cov: Int, prevCov: Int, i: Int) = cov != 0 && prevCov == 0 && i > 0
 
   private def addBaseRecord(result:Array[InternalRow], ind:Int,
-                    agg:ContigAggregate, bases:String, i:Int, prev:BlockProperties) {
+                    agg:ContigAggregate, bases:String, i:Int, prev:BlockProperties, conf: Broadcast[Conf]) {
     val posStart, posEnd = i+agg.startPosition-1
     val ref = bases.substring(prev.pos, i)
     val altsCount = prev.alt.derivedAltsNumber
-    val qualsMap = prepareOutputQualMap(agg, posStart, ref, prev.cov.toShort)
+    val qualsMap = prepareOutputQualMap(agg, posStart, ref, prev.cov.toShort, conf)
     result(ind) = PileupProjection.convertToRow(agg.contig, posStart, posEnd, ref, prev.cov.toShort, (prev.cov-altsCount).toShort,altsCount, prev.alt.toMap, qualsMap)
     prev.alt.clear()
   }
 
-  private def prepareOutputQualMap(agg: ContigAggregate, posStart: Int, ref:String, cov: Short): Map[Byte, Array[Short]] = {
-    if (!Conf.includeBaseQualities)
+  private def prepareOutputQualMap(agg: ContigAggregate, posStart: Int, ref:String, cov: Short, conf: Broadcast[Conf]): Map[Byte, Array[Short]] = {
+    if (!conf.value.includeBaseQualities)
       return null
 
     val qualsMap = agg.quals(posStart)
