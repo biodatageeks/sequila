@@ -1,7 +1,7 @@
 package org.biodatageeks.sequila.tests.pileup.converters
 
 import org.apache.spark.sql.SequilaSession
-import org.biodatageeks.sequila.pileup.converters.PileupConverter
+import org.biodatageeks.sequila.pileup.converters.SamToBlocksConverter
 import org.biodatageeks.sequila.tests.pileup.{PileupTestBase, Writer}
 import org.biodatageeks.sequila.utils.{Columns, InternalParams, SequilaRegister}
 

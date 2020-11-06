@@ -8,18 +8,7 @@ import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
 
-class PileupConverter (spark: SparkSession) extends Serializable {
-
-  private object Indices {
-    val contig = 0
-    val position = 1
-    val ref = 2
-    val cov = 3
-    val pileupString = 4
-    val qualityString = 5
-    val altsMap = 6
-    val qualsMap = 7
-  }
+class SamToBlocksConverter(spark: SparkSession) extends Serializable {
 
   val rawPileupCol = "raw_pileup"
   val rawQualityCol = "raw_quality"
@@ -77,11 +66,11 @@ class PileupConverter (spark: SparkSession) extends Serializable {
     val delContext = new DelContext()
 //
     val dataMapped = df.map(row => {
-      val contig = DataQualityFuncs.cleanContig(row.getString(Indices.contig))
-      val position = row.getInt(Indices.position)
-      val ref = row.getString(Indices.ref).toUpperCase()
-      val rawPileup = row.getString(Indices.pileupString)
-      val qualityString = row.getString(Indices.qualityString)
+      val contig = DataQualityFuncs.cleanContig(row.getString(SamtoolsIndices.contig))
+      val position = row.getInt(SamtoolsIndices.position)
+      val ref = row.getString(SamtoolsIndices.ref).toUpperCase()
+      val rawPileup = row.getString(SamtoolsIndices.pileupString)
+      val qualityString = row.getString(SamtoolsIndices.qualityString)
 
       //FIXME - needed manual escaping in pileup file ... maybe can be done in better way...
      val properQualityString = StringUtils.replace(qualityString,"\\\"", "\"")
@@ -119,7 +108,7 @@ class PileupConverter (spark: SparkSession) extends Serializable {
       }
 
       val diff = delContext.getDelTransferForLocus(contig, position)
-      val cov = (row.getShort(Indices.cov) - diff).toShort
+      val cov = (row.getShort(SamtoolsIndices.cov) - diff).toShort
 
       val qMap = if (map.nonEmpty) generateQualityMap(rawPileup,properQualityString, ref ) else null
 
@@ -144,12 +133,12 @@ class PileupConverter (spark: SparkSession) extends Serializable {
 
 
     for (row <- dataRdd.collect()) {
-      curContig = row.getString(Indices.contig)
-      curPosition = row.getInt(Indices.position)
-      curBase = row.getString(Indices.ref)
-      cov = row.getShort(Indices.cov)
-      val currAlt = row.getMap[Byte, Short](Indices.altsMap)
-      val currQualityMap = row.getMap[Byte, Map[String, Short]](Indices.qualsMap)
+      curContig = row.getString(SamtoolsIndices.contig)
+      curPosition = row.getInt(SamtoolsIndices.position)
+      curBase = row.getString(SamtoolsIndices.ref)
+      cov = row.getShort(SamtoolsIndices.cov)
+      val currAlt = row.getMap[Byte, Short](SamtoolsIndices.altsMap)
+      val currQualityMap = row.getMap[Byte, Map[String, Short]](SamtoolsIndices.qualsMap)
 
       if (prevContig.nonEmpty && prevContig != curContig) {
         if (prevAlt.nonEmpty)

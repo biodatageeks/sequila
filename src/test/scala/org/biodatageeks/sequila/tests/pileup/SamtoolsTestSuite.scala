@@ -1,7 +1,7 @@
 package org.biodatageeks.sequila.tests.pileup
 
 import org.apache.spark.sql._
-import org.biodatageeks.sequila.pileup.converters.PileupConverter
+import org.biodatageeks.sequila.pileup.converters.SamToBlocksConverter
 import org.biodatageeks.sequila.utils.{Columns, InternalParams, SequilaRegister}
 
 
@@ -29,7 +29,7 @@ class SamtoolsTestSuite extends PileupTestBase {
       .schema(schema)
       .load(samResPath)
 
-    val converter = new PileupConverter(spark)
+    val converter = new SamToBlocksConverter(spark)
     val sam = converter
       .transformSamtoolsResult(df)
       .select(Columns.CONTIG, Columns.START, Columns.END,Columns.REF,  Columns.COVERAGE, Columns.ALTS)
@@ -53,7 +53,7 @@ class SamtoolsTestSuite extends PileupTestBase {
       .schema(schema)
       .load(samResPath)
 
-    val converter = new PileupConverter(spark)
+    val converter = new SamToBlocksConverter(spark)
     val sam = converter
       .transformSamtoolsResult(df)
       .select(Columns.CONTIG, Columns.START, Columns.END,Columns.REF, Columns.COVERAGE,Columns.ALTS)
@@ -82,7 +82,7 @@ class SamtoolsTestSuite extends PileupTestBase {
       .schema(schema)
       .load(samResPath)
 
-    val converter = new PileupConverter(spark)
+    val converter = new SamToBlocksConverter(spark)
     val sam = converter
       .transformSamtoolsResult(df)
       .orderBy("contig", "pos_start")
@@ -107,7 +107,7 @@ class SamtoolsTestSuite extends PileupTestBase {
       .schema(schema)
       .load(samResPath)
 
-    val converter = new PileupConverter(spark)
+    val converter = new SamToBlocksConverter(spark)
     val sam = converter
       .transformSamtoolsResult(df)
       .orderBy("contig", "pos_start")
