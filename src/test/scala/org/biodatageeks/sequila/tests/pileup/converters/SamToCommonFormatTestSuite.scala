@@ -1,6 +1,6 @@
 package org.biodatageeks.sequila.tests.pileup.converters
 
-import org.biodatageeks.sequila.pileup.converters.{SamtoolsConverter, SamToCommonFormatConverter}
+import org.biodatageeks.sequila.pileup.converters.SamtoolsConverter
 import org.biodatageeks.sequila.tests.pileup.PileupTestBase
 
 class SamToCommonFormatTestSuite extends PileupTestBase {
@@ -19,7 +19,5 @@ class SamToCommonFormatTestSuite extends PileupTestBase {
     commonDf.show(20)
 
   }
-
-
 
 }
