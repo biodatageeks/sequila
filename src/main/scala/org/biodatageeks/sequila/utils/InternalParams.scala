@@ -17,6 +17,7 @@ object InternalParams {
   final val filterReadsByFlag = "spark.biodatageeks.coverage.filterFlag"
 
   final val RDDEventsName = "spark.biodatageeks.events"
+  final val RDDPileupEventsName = "spark.biodatageeks.pileup.events"
 
   final val InputSplitSize = "spark.biodatageeks.bam.splitSize"
 
