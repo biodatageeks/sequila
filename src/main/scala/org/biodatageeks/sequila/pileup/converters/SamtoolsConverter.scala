@@ -2,22 +2,35 @@ package org.biodatageeks.sequila.pileup.converters
 
 import org.apache.commons.lang.StringUtils
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.biodatageeks.sequila.utils.{Columns, DataQualityFuncs}
+import org.biodatageeks.sequila.utils.{Columns, DataQualityFuncs, UDFRegister}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
 
-class SamToBlocksConverter(spark: SparkSession) extends Serializable {
+class SamtoolsConverter(spark: SparkSession) extends Serializable {
 
   val rawPileupCol = "raw_pileup"
   val rawQualityCol = "raw_quality"
 
 
-  def transformSamtoolsResult (df:DataFrame): DataFrame = {
-    val dfMap = generateAltMap(df)
+  def transformSamToBlocks(df:DataFrame, caseSensitive: Boolean): DataFrame = {
+    val dfMap = generateAltsQuals(df, caseSensitive)
     val dfBlocks = generateCompressedOutput(dfMap)
     dfBlocks
+  }
+
+  /** return data in common format. Case insensitive. Bases represented as strings.
+   * Using UDFs for transformations.
+   *  */
+  def transformSamToCommonFormat(df:DataFrame, caseSensitive:Boolean): DataFrame = {
+    import org.apache.spark.sql.functions._
+    UDFRegister.register(spark)
+    val dfMap = generateAltsQuals(df, caseSensitive)
+    val dfStringMap = dfMap
+      .withColumn(s"${Columns.ALTS}", expr(s"alts_to_char(${Columns.ALTS})"))
+      .withColumn(s"${Columns.QUALS}", expr(s"quals_to_char(${Columns.QUALS})"))
+    dfStringMap
   }
 
   def removeDeletedBases(pileup: String, quality:String): (String, String) = {
@@ -60,7 +73,13 @@ class SamToBlocksConverter(spark: SparkSession) extends Serializable {
     res
   }
 
-  def generateAltMap(df: DataFrame):DataFrame = {
+  /**
+   * Generates alts map in sequila format (base (as byte) -> count (as short))
+   * @param df
+   * @param caseSensitive
+   * @return
+   */
+  def generateAltsQuals(df: DataFrame, caseSensitive: Boolean):DataFrame = {
     import spark.implicits._
 
     val delContext = new DelContext()
@@ -69,7 +88,10 @@ class SamToBlocksConverter(spark: SparkSession) extends Serializable {
       val contig = DataQualityFuncs.cleanContig(row.getString(SamtoolsIndices.contig))
       val position = row.getInt(SamtoolsIndices.position)
       val ref = row.getString(SamtoolsIndices.ref).toUpperCase()
-      val rawPileup = row.getString(SamtoolsIndices.pileupString)
+      val rawPileup = if (caseSensitive)
+        row.getString(SamtoolsIndices.pileupString)
+      else
+        row.getString(SamtoolsIndices.pileupString).toUpperCase()
       val qualityString = row.getString(SamtoolsIndices.qualityString)
 
       //FIXME - needed manual escaping in pileup file ... maybe can be done in better way...

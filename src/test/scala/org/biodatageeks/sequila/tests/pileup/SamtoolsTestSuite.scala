@@ -1,7 +1,7 @@
 package org.biodatageeks.sequila.tests.pileup
 
 import org.apache.spark.sql._
-import org.biodatageeks.sequila.pileup.converters.SamToBlocksConverter
+import org.biodatageeks.sequila.pileup.converters.SamtoolsConverter
 import org.biodatageeks.sequila.utils.{Columns, InternalParams, SequilaRegister}
 
 
@@ -29,9 +29,9 @@ class SamtoolsTestSuite extends PileupTestBase {
       .schema(schema)
       .load(samResPath)
 
-    val converter = new SamToBlocksConverter(spark)
+    val converter = new SamtoolsConverter(spark)
     val sam = converter
-      .transformSamtoolsResult(df)
+      .transformSamToBlocks(df, caseSensitive = true)
       .select(Columns.CONTIG, Columns.START, Columns.END,Columns.REF,  Columns.COVERAGE, Columns.ALTS)
       .orderBy("contig", "pos_start")
 
@@ -53,9 +53,9 @@ class SamtoolsTestSuite extends PileupTestBase {
       .schema(schema)
       .load(samResPath)
 
-    val converter = new SamToBlocksConverter(spark)
+    val converter = new SamtoolsConverter(spark)
     val sam = converter
-      .transformSamtoolsResult(df)
+      .transformSamToBlocks(df, caseSensitive = true)
       .select(Columns.CONTIG, Columns.START, Columns.END,Columns.REF, Columns.COVERAGE,Columns.ALTS)
       .orderBy("contig", "pos_start")
 
@@ -82,9 +82,9 @@ class SamtoolsTestSuite extends PileupTestBase {
       .schema(schema)
       .load(samResPath)
 
-    val converter = new SamToBlocksConverter(spark)
+    val converter = new SamtoolsConverter(spark)
     val sam = converter
-      .transformSamtoolsResult(df)
+      .transformSamToBlocks(df, caseSensitive = true)
       .orderBy("contig", "pos_start")
 
     val ss = SequilaSession(spark)
@@ -107,9 +107,9 @@ class SamtoolsTestSuite extends PileupTestBase {
       .schema(schema)
       .load(samResPath)
 
-    val converter = new SamToBlocksConverter(spark)
+    val converter = new SamtoolsConverter(spark)
     val sam = converter
-      .transformSamtoolsResult(df)
+      .transformSamToBlocks(df, caseSensitive = true)
       .orderBy("contig", "pos_start")
 
     spark.sqlContext.setConf(InternalParams.InputSplitSize, splitSize)

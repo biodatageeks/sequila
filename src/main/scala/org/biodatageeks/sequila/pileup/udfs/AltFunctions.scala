@@ -10,7 +10,6 @@ object AltFunctions {
     map.map({ case (k, v) =>
       k.toChar.toString -> v
     })
-
   }
 
 }

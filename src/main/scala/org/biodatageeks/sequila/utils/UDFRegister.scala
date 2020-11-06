@@ -33,7 +33,9 @@ object UDFRegister {
     spark.sqlContext.udf.register("cov_equals", CoverageFunctions.isCovEqual _)
 
 
-    spark.sqlContext.udf.register("to_char", AltFunctions.byteToString _)
+    spark.sqlContext.udf.register("alts_to_char", AltFunctions.byteToString _)
+    spark.sqlContext.udf.register("quals_to_char", QualityFunctions.byteToString _)
+
 
 
 

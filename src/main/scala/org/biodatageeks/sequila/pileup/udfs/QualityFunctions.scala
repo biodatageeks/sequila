@@ -40,6 +40,13 @@ object QualityFunctions {
       map.map({case (k,v) => v.sum}).sum
   }
 
+  def byteToString(map: Map[Byte, Map[String, Short]]): Map[String, Map[String, Short]] = {
+    if (map == null)
+      return null
 
+    map.map({ case (k, v) =>
+      k.toChar.toString -> v
+    })
+  }
 
 }
