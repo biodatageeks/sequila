@@ -15,12 +15,16 @@ object PileupProjection {
   private val baseByteMap = new mutable.HashMap[Char, Array[Byte]]()
   """
     |A
+    |B
     |C
     |G
+    |K
     |M
     |N
     |R
     |T
+    |Y
+    |W
     |a
     |c
     |g
