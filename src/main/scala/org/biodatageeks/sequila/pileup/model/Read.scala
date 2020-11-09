@@ -7,7 +7,7 @@ import org.biodatageeks.sequila.pileup.conf.Conf
 import org.biodatageeks.sequila.pileup.conf.QualityConstants.{OUTER_QUAL_SIZE, QUAL_INDEX_SHIFT, REF_SYMBOL}
 import org.biodatageeks.sequila.pileup.model.Quals._
 import org.biodatageeks.sequila.pileup.model.Alts._
-import org.biodatageeks.sequila.pileup.timers.PileupTimers.AnalyzeReadscalculatePositionInReadSeq
+import org.biodatageeks.sequila.pileup.timers.PileupTimers.{AnalyzeReadsCalculateAltsLoopTimer, AnalyzeReadscalculatePositionInReadSeq}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -29,7 +29,7 @@ case class ExtendedReads(read: SAMRecord) {
                  ): Unit = {
     val start = read.getStart
     val cigar = read.getCigar
-    val bQual = read.getBaseQualities
+    val bQual = if (conf.value.includeBaseQualities) read.getBaseQualities else null
     val isPositiveStrand = ! read.getReadNegativeStrandFlag
     calculateEvents(contig, agg, contigMaxReadLen, start, cigar)
     val foundAlts = calculateAlts(agg, agg.qualityCache, start, cigar, bQual, isPositiveStrand, conf)
@@ -145,9 +145,11 @@ case class ExtendedReads(read: SAMRecord) {
     val clipLen =
       if (cigar.getCigarElement(0).getOperator == CigarOperator.SOFT_CLIP)
         cigar.getCigarElement(0).getLength else 0
-
+    val readString = read.getReadString
     position += clipLen
+    val zeroByte = 0.toByte
 
+    AnalyzeReadsCalculateAltsLoopTimer.time {
     for (mdtag <- ops) {
       if (mdtag.isDeletion) {
         delCounter += 1
@@ -155,9 +157,17 @@ case class ExtendedReads(read: SAMRecord) {
       } else if (mdtag.base != 'S') {
         position += 1
 
-        val indexInSeq = AnalyzeReadscalculatePositionInReadSeq.time { calculatePositionInReadSeq(position - start - delCounter, insertions) }
-        val altBase = if (isPositiveStrand) read.getReadString.charAt(indexInSeq - 1).toUpper else read.getReadString.charAt(indexInSeq - 1).toLower
-        val altBaseQual = if (conf.value.isBinningEnabled) (bQual(indexInSeq - 1)/conf.value.binSize).toByte else bQual(indexInSeq - 1)
+        val indexInSeq = AnalyzeReadscalculatePositionInReadSeq.time {
+          calculatePositionInReadSeq(position - start - delCounter, insertions)
+        }
+        val altBase = if (isPositiveStrand) readString.charAt(indexInSeq - 1).toUpper else readString.charAt(indexInSeq - 1).toLower
+        val altBaseQual = {
+          if (bQual == null) zeroByte
+          else if (conf.value.isBinningEnabled)
+            (bQual(indexInSeq - 1) / conf.value.binSize).toByte
+          else
+            bQual(indexInSeq - 1)
+        }
         val altPosition = position - clipLen - 1
 
         if (conf.value.includeBaseQualities) {
@@ -174,6 +184,7 @@ case class ExtendedReads(read: SAMRecord) {
       else if (mdtag.base == 'S')
         position += mdtag.length
     }
+  }
     altsPositions
   }
 
