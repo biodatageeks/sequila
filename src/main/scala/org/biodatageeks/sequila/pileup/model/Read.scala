@@ -7,8 +7,10 @@ import org.biodatageeks.sequila.pileup.conf.Conf
 import org.biodatageeks.sequila.pileup.conf.QualityConstants.{OUTER_QUAL_SIZE, QUAL_INDEX_SHIFT, REF_SYMBOL}
 import org.biodatageeks.sequila.pileup.model.Quals._
 import org.biodatageeks.sequila.pileup.model.Alts._
+import org.biodatageeks.sequila.pileup.timers.PileupTimers.AnalyzeReadscalculatePositionInReadSeq
 
 import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
 
 object ReadOperations {
 
@@ -74,27 +76,62 @@ case class ExtendedReads(read: SAMRecord) {
   }
 
 
-  def calculatePositionInReadSeq(mdPosition: Int, cigar: Cigar): Int = {
-    if (!cigar.containsOperator(CigarOperator.INSERTION))
-      return mdPosition
+//  def calculatePositionInReadSeq(mdPosition: Int, cigar: Cigar): Int = {
+//    if (!cigar.containsOperator(CigarOperator.INSERTION))
+//      return mdPosition
+//
+//    var numInsertions = 0
+//    val cigarIterator = cigar.iterator()
+//    var position = 0
+//
+//    while (cigarIterator.hasNext) {
+//      if (position > mdPosition + numInsertions)
+//        return mdPosition + numInsertions
+//      val cigarElement = cigarIterator.next()
+//      val cigarOpLength = cigarElement.getLength
+//      val cigarOp = cigarElement.getOperator
+//
+//      if (cigarOp == CigarOperator.INSERTION)
+//        numInsertions += cigarOpLength
+//      else if (cigarOp != CigarOperator.HARD_CLIP)
+//        position = position + cigarOpLength
+//    }
+//    mdPosition + numInsertions
+//  }
 
-    var numInsertions = 0
+  def calculatePositionInReadSeq(mdPosition: Int, insertions: Array[Int]): Int = {
+    if (insertions.isEmpty)
+      mdPosition
+    else {
+      var numInsertions = 0
+      var position = 0
+      for (i <- insertions){
+        position = i
+        val posWithIns = mdPosition + numInsertions
+        if (position > posWithIns)
+          return posWithIns
+        else
+          numInsertions += 1
+      }
+      mdPosition + numInsertions
+    }
+  }
+  def calculateInsertions(cigar: Cigar): Array[Int] = {
+    val insertions = new ArrayBuffer[Int]()
     val cigarIterator = cigar.iterator()
     var position = 0
 
     while (cigarIterator.hasNext) {
-      if (position > mdPosition + numInsertions)
-        return mdPosition + numInsertions
       val cigarElement = cigarIterator.next()
       val cigarOpLength = cigarElement.getLength
       val cigarOp = cigarElement.getOperator
 
       if (cigarOp == CigarOperator.INSERTION)
-        numInsertions += cigarOpLength
+        insertions.append(position)
       else if (cigarOp != CigarOperator.HARD_CLIP)
         position = position + cigarOpLength
     }
-    mdPosition + numInsertions
+    insertions.toArray
   }
 
   def calculateAlts(aggregate: ContigAggregate, qualityCache: QualityCache, start: Int,
@@ -102,7 +139,7 @@ case class ExtendedReads(read: SAMRecord) {
                     isPositiveStrand:Boolean, conf: Broadcast[Conf]): scala.collection.Set[Int] = {
     var position = start
     val ops = MDTagParser.parseMDTag(read.getAttribute("MD").toString)
-
+    val insertions = calculateInsertions(cigar)
     var delCounter = 0
     var altsPositions = mutable.Set.empty[Int]
     val clipLen =
@@ -118,7 +155,7 @@ case class ExtendedReads(read: SAMRecord) {
       } else if (mdtag.base != 'S') {
         position += 1
 
-        val indexInSeq = calculatePositionInReadSeq(position - start - delCounter, cigar)
+        val indexInSeq = AnalyzeReadscalculatePositionInReadSeq.time { calculatePositionInReadSeq(position - start - delCounter, insertions) }
         val altBase = if (isPositiveStrand) read.getReadString.charAt(indexInSeq - 1).toUpper else read.getReadString.charAt(indexInSeq - 1).toLower
         val altBaseQual = if (conf.value.isBinningEnabled) (bQual(indexInSeq - 1)/conf.value.binSize).toByte else bQual(indexInSeq - 1)
         val altPosition = position - clipLen - 1

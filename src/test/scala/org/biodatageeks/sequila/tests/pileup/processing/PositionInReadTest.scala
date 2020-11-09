@@ -15,10 +15,12 @@ class PositionInReadTest extends FunSuite{
     val cElement3 = new CigarElement(23, CigarOperator.M)
     val c = new Cigar(seqAsJavaList(List(cElement1,cElement2,cElement3)))
 
+
     val testRead = ExtendedReads(null)
-    val ind = testRead.calculatePositionInReadSeq(10,c)
+    val insertions = testRead.calculateInsertions(c)
+    val ind = testRead.calculatePositionInReadSeq(10,insertions)
     assert(ind==11)
-    val ind2 = testRead.calculatePositionInReadSeq(20,c)
+    val ind2 = testRead.calculatePositionInReadSeq(20,insertions)
     assert(ind2==21)
   }
 
@@ -30,9 +32,10 @@ class PositionInReadTest extends FunSuite{
     val c = new Cigar(seqAsJavaList(List(cElement1,cElement2,cElement3)))
 
     val testRead = ExtendedReads(null)
-    val ind = testRead.calculatePositionInReadSeq(10,c)
+    val insertions = testRead.calculateInsertions(c)
+    val ind = testRead.calculatePositionInReadSeq(10,insertions)
     assert(ind==10)
-    val ind2 = testRead.calculatePositionInReadSeq(23,c)
+    val ind2 = testRead.calculatePositionInReadSeq(23,insertions)
     assert(ind2==23)
   }
 
@@ -45,9 +48,10 @@ class PositionInReadTest extends FunSuite{
     print (c.getReadLength)
 
     val testRead = ExtendedReads(null)
-    val ind = testRead.calculatePositionInReadSeq(10,c)
+    val insertions = testRead.calculateInsertions(c)
+    val ind = testRead.calculatePositionInReadSeq(10,insertions)
     assert(ind==11)
-    val ind2 = testRead.calculatePositionInReadSeq(23,c)
+    val ind2 = testRead.calculatePositionInReadSeq(23,insertions)
     assert(ind2==24)
   }
 
