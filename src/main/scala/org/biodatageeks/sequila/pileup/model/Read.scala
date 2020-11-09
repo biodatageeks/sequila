@@ -89,10 +89,10 @@ case class ExtendedReads(read: SAMRecord) {
       val cigarOpLength = cigarElement.getLength
       val cigarOp = cigarElement.getOperator
 
-      if (cigarOp == CigarOperator.INSERTION) {
+      if (cigarOp == CigarOperator.INSERTION)
         numInsertions += cigarOpLength
-      }
-      position = position + cigarOpLength
+      else if (cigarOp != CigarOperator.HARD_CLIP)
+        position = position + cigarOpLength
     }
     mdPosition + numInsertions
   }
