@@ -7,10 +7,12 @@ import org.biodatageeks.sequila.pileup.conf.Conf
 import org.biodatageeks.sequila.pileup.conf.QualityConstants.{OUTER_QUAL_SIZE, QUAL_INDEX_SHIFT, REF_SYMBOL}
 import org.biodatageeks.sequila.pileup.model.Quals._
 import org.biodatageeks.sequila.pileup.model.Alts._
-import org.biodatageeks.sequila.pileup.timers.PileupTimers.{AnalyzeReadsCalculateAltsLoopTimer, AnalyzeReadscalculatePositionInReadSeq}
+import org.biodatageeks.sequila.pileup.timers.PileupTimers.{AnalyzeReadsCalculateAltsLoopTimer, AnalyzeReadsCalculateQualsUpdateAltsTimer, AnalyzeReadscalculatePositionInReadSeq}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
+
+case class PositionInReadState(position: Int, numInsertions: Int)
 
 object ReadOperations {
 
@@ -98,22 +100,23 @@ case class ExtendedReads(read: SAMRecord) {
 //    }
 //    mdPosition + numInsertions
 //  }
-
-  def calculatePositionInReadSeq(mdPosition: Int, insertions: Array[Int]): Int = {
+  def calculatePositionInReadSeq(mdPosition: Int, insertions: Array[Int], positionInReadState: PositionInReadState): PositionInReadState = {
     if (insertions.isEmpty)
-      mdPosition
+      PositionInReadState(mdPosition, 0)
     else {
-      var numInsertions = 0
+      var numInsertions = positionInReadState.numInsertions
       var position = 0
-      for (i <- insertions){
-        position = i
+      var idx = positionInReadState.numInsertions
+      while (idx < insertions.length ){
+        position = insertions(idx)
         val posWithIns = mdPosition + numInsertions
         if (position > posWithIns)
-          return posWithIns
+          return PositionInReadState(posWithIns, numInsertions)
         else
           numInsertions += 1
+        idx += 1
       }
-      mdPosition + numInsertions
+      PositionInReadState(mdPosition + numInsertions, numInsertions)
     }
   }
   def calculateInsertions(cigar: Cigar): Array[Int] = {
@@ -148,6 +151,7 @@ case class ExtendedReads(read: SAMRecord) {
     val readString = read.getReadString
     position += clipLen
     val zeroByte = 0.toByte
+    var positionInReadState = PositionInReadState(0, 0)
 
     AnalyzeReadsCalculateAltsLoopTimer.time {
     for (mdtag <- ops) {
@@ -158,7 +162,13 @@ case class ExtendedReads(read: SAMRecord) {
         position += 1
 
         val indexInSeq = AnalyzeReadscalculatePositionInReadSeq.time {
-          calculatePositionInReadSeq(position - start - delCounter, insertions)
+          val pos = position - start - delCounter
+          if(insertions.isEmpty)
+            pos
+          else {
+            positionInReadState = calculatePositionInReadSeq(pos, insertions, positionInReadState)
+            positionInReadState.position
+          }
         }
         val altBase = if (isPositiveStrand) readString.charAt(indexInSeq - 1).toUpper else readString.charAt(indexInSeq - 1).toLower
         val altBaseQual = {
@@ -176,7 +186,7 @@ case class ExtendedReads(read: SAMRecord) {
           else
             aggregate.quals.updateQuals(altPosition, altBase, altBaseQual, firstUpdate = true, updateMax = true, conf)
         }
-        aggregate.alts.updateAlts(altPosition, altBase)
+        AnalyzeReadsCalculateQualsUpdateAltsTimer.time { aggregate.alts.updateAlts(altPosition, altBase) }
         if (conf.value.includeBaseQualities)
           aggregate.altsKeyCache.add(altPosition)
         altsPositions += altPosition

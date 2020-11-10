@@ -1,7 +1,7 @@
 package org.biodatageeks.sequila.tests.pileup.processing
 
 import htsjdk.samtools.{Cigar, CigarElement, CigarOperator}
-import org.biodatageeks.sequila.pileup.model.ExtendedReads
+import org.biodatageeks.sequila.pileup.model.{ExtendedReads, PositionInReadState}
 import org.scalatest.FunSuite
 
 import scala.collection.JavaConversions.seqAsJavaList
@@ -18,9 +18,10 @@ class PositionInReadTest extends FunSuite{
 
     val testRead = ExtendedReads(null)
     val insertions = testRead.calculateInsertions(c)
-    val ind = testRead.calculatePositionInReadSeq(10,insertions)
+    val posisitonState = PositionInReadState(0,0)
+    val ind = testRead.calculatePositionInReadSeq(10, insertions, posisitonState).position
     assert(ind==11)
-    val ind2 = testRead.calculatePositionInReadSeq(20,insertions)
+    val ind2 = testRead.calculatePositionInReadSeq(20,insertions, posisitonState).position
     assert(ind2==21)
   }
 
@@ -33,9 +34,10 @@ class PositionInReadTest extends FunSuite{
 
     val testRead = ExtendedReads(null)
     val insertions = testRead.calculateInsertions(c)
-    val ind = testRead.calculatePositionInReadSeq(10,insertions)
+    val posisitonState = PositionInReadState(0,0)
+    val ind = testRead.calculatePositionInReadSeq(10, insertions, posisitonState).position
     assert(ind==10)
-    val ind2 = testRead.calculatePositionInReadSeq(23,insertions)
+    val ind2 = testRead.calculatePositionInReadSeq(23, insertions, posisitonState).position
     assert(ind2==23)
   }
 
@@ -49,9 +51,10 @@ class PositionInReadTest extends FunSuite{
 
     val testRead = ExtendedReads(null)
     val insertions = testRead.calculateInsertions(c)
-    val ind = testRead.calculatePositionInReadSeq(10,insertions)
+    val posisitonState = PositionInReadState(0,0)
+    val ind = testRead.calculatePositionInReadSeq(10,insertions, posisitonState).position
     assert(ind==11)
-    val ind2 = testRead.calculatePositionInReadSeq(23,insertions)
+    val ind2 = testRead.calculatePositionInReadSeq(23,insertions, posisitonState).position
     assert(ind2==24)
   }
 
