@@ -25,6 +25,12 @@ class PileupTestBase extends FunSuite
   val tableName = "reads_bam"
   val tableNameCRAM = "reads_cram"
 
+
+  val sampleLongReadsId = "rel5-guppy-0.3.0-chunk10k.chr1"
+  val referenceLongReadsPath: String = getClass.getResource(s"/long_reads/${sampleLongReadsId}.fasta").getPath
+  val bamLongReadsPath: String = getClass.getResource(s"/long_reads/${sampleLongReadsId}.bam").getPath
+  val tableNameLongReads = "reads_long"
+
   val schema: StructType = StructType(
     List(
       StructField("contig", StringType, nullable = true),
@@ -56,6 +62,16 @@ class PileupTestBase extends FunSuite
          |CREATE TABLE $tableNameCRAM
          |USING org.biodatageeks.sequila.datasources.BAM.CRAMDataSource
          |OPTIONS(path "$cramPath", refPath "$referencePath" )
+         |
+      """.stripMargin)
+
+
+    spark.sql(s"DROP TABLE IF EXISTS $tableNameLongReads")
+    spark.sql(
+      s"""
+         |CREATE TABLE $tableNameLongReads
+         |USING org.biodatageeks.sequila.datasources.BAM.BAMDataSource
+         |OPTIONS(path "$bamLongReadsPath", refPath "$referenceLongReadsPath" )
          |
       """.stripMargin)
 
