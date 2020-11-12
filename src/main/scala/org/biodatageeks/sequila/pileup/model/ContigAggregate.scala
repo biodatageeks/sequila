@@ -90,6 +90,7 @@ case class ContigAggregate(
     val upd: PartitionCorrections = b.value.corrections
     val shrink:PartitionShrinks = b.value.shrinks
 
+
     val adjustedEvents = CalculateEventsTimer.time { calculateAdjustedEvents(upd) }
     val adjustedAlts = CalculateAltsTimer.time{ calculateAdjustedAlts(upd) }
     val newQuals = CalculateQualsTimer.time {calculateAdjustedQuals(upd)}
@@ -188,6 +189,7 @@ case class ContigAggregate(
   }
 
   private def calculateCompleteQuals(upd:PartitionCorrections, conf: Broadcast[Conf]): MultiLociQuals ={
+
 
     val adjustedQuals = upd.get((contig, startPosition)) match { // check if there is a value for contigName and minPos in upd, returning array of coverage and cumSum to update current contigRange
       case Some(correction) =>
