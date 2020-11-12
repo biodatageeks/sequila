@@ -51,6 +51,34 @@ class RelativePositionTestSuite extends FunSuite{
 
   }
 
+  test("relative test #3") {
+
+    val cElement1 = new CigarElement(20, CigarOperator.M)
+    val cElement2 = new CigarElement(4, CigarOperator.I)
+    val cElement3 = new CigarElement(4, CigarOperator.M)
+    val cElement4 = new CigarElement(4, CigarOperator.I)
+    val cElement5 = new CigarElement(33, CigarOperator.M)
+    val cElement6 = new CigarElement(1, CigarOperator.D)
+    val cElement7 = new CigarElement(6, CigarOperator.M)
+    val cElement8 = new CigarElement(1, CigarOperator.I)
+    val cElement9 = new CigarElement(29, CigarOperator.M)
+
+    val c = new Cigar(seqAsJavaList(List(cElement1,cElement2,cElement3, cElement4,cElement5,cElement6,cElement7, cElement8,cElement9 )))
+    val len = c.getReadLength
+    val conf = CigarDerivedConf.create(813652, c)
+    val rs = ReadQualSummary(813652, 813744, new Array[Byte](len), conf)
+
+//    assert(len==101)
+//    assert(conf.hasDel)
+//    assert (rs.relativePosition(813652) ==0)
+//    assert (rs.relativePosition(813671) ==19) // 20th base match -> 19th index
+    assert (rs.relativePosition(813672) ==19+4)
+//    assert(rs.getBaseQualityForPosition(220108224)==0)
+//    assert(rs.getBaseQualityForPosition(220108325)==0)
+//    assertThrows[java.lang.ArrayIndexOutOfBoundsException](rs.getBaseQualityForPosition(220108326))
+
+  }
+
 }
 
 
