@@ -14,7 +14,26 @@ case class CigarDerivedConf(
                              hasDel: Boolean,
                              leftClipLength: Int,
                              indelPositions: InDelPositions = null
-                           )
+                           ) {
+  def getInsertOffsetForPosition(position:Int): Int = {
+    val pos = position + leftClipLength
+    val filtered = indelPositions
+      .insertPositions
+      .filter{case (start,len) => (pos >= start )}.toList
+    val lengths = filtered.map(_._2)
+    val lenSum = lengths.sum
+    lenSum
+  }
+  def getDelOffsetForPosition(position:Int): Int = {
+    val pos = position + leftClipLength
+    val filtered = indelPositions
+      .delPositions
+      .filter{case (start,end) => (pos >= end || (pos >=start && pos<=end))}
+    val lengths = filtered.map{case(start,end)=> end-start}
+    val lenSum = lengths.sum
+    lenSum
+  }
+}
 
 object CigarDerivedConf {
   def create(start: Int, cigar:Cigar) ={
@@ -45,14 +64,16 @@ object CigarDerivedConf {
           delPositions.add((eventStart,eventEnd))
           //fillPositionSet(eventStart, eventEnd, delPositions)
         else if (cigarOperator == CigarOperator.INSERTION){
-          insertPositions.add((eventStart,eventEnd))
+          insertPositions.add((eventStart, cigarOperatorLen))
          //fillPositionSet(eventStart, eventEnd, insertPositions)
         }
       }
-      positionFromCigar += cigarOperatorLen
+      if (cigarOperator != CigarOperator.INSERTION)
+        positionFromCigar += cigarOperatorLen
    }
    InDelPositions(delPositions, insertPositions)
   }
+
 
   private def fillPositionSet(start:Int, end: Int, set: mutable.LinkedHashSet[Int]): mutable.LinkedHashSet[Int] = {
     var i = start

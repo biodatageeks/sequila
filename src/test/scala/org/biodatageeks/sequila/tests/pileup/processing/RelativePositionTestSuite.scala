@@ -68,12 +68,17 @@ class RelativePositionTestSuite extends FunSuite{
     val conf = CigarDerivedConf.create(813652, c)
     val rs = ReadQualSummary(813652, 813744, new Array[Byte](len), conf)
 
-//    assert(len==101)
-//    assert(conf.hasDel)
-//    assert (rs.relativePosition(813652) ==0)
-//    assert (rs.relativePosition(813671) ==19) // 20th base match -> 19th index
-    assert (rs.relativePosition(813672) ==19+4)
-//    assert(rs.getBaseQualityForPosition(220108224)==0)
+    assert(len==101)
+    assert(conf.hasDel)
+    assert (rs.relativePosition(813652) ==0)
+    assert (rs.relativePosition(813671) ==19) // 20th base match -> 19th index
+    assert (rs.relativePosition(813672) ==19+4+1) // first insert
+    assert (rs.relativePosition(813673) ==19+4+1+1)
+    assert (rs.relativePosition(813675) ==19+4+1+1+2)
+    assert (rs.relativePosition(813676) ==19+4+1+1+2+4+1) // second insert
+    assert(rs.relativePosition(813744) == 100) // last index from ref
+
+    //    assert(rs.getBaseQualityForPosition(220108224)==0)
 //    assert(rs.getBaseQualityForPosition(220108325)==0)
 //    assertThrows[java.lang.ArrayIndexOutOfBoundsException](rs.getBaseQualityForPosition(220108326))
 
