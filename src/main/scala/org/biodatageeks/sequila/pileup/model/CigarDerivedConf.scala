@@ -5,8 +5,8 @@ import htsjdk.samtools.{Cigar, CigarOperator}
 import scala.collection.mutable
 
 case class InDelPositions(
-                           delPositions: mutable.LinkedHashSet[Int],
-                           insertPositions: mutable.LinkedHashSet[Int]
+                           delPositions: mutable.LinkedHashSet[(Int, Int)],
+                           insertPositions: mutable.LinkedHashSet[(Int,Int)]
                          )
 case class CigarDerivedConf(
                              hasClip: Boolean,
@@ -30,8 +30,8 @@ object CigarDerivedConf {
 
 
   private def getIndelPostions(start: Int, cigar:Cigar): InDelPositions = {
-    val delPositions = new mutable.LinkedHashSet[Int]()
-    val insertPositions  = new mutable.LinkedHashSet[Int]()
+    val delPositions = new mutable.LinkedHashSet[(Int, Int)]()
+    val insertPositions  = new mutable.LinkedHashSet[(Int,Int)]()
     val cigarIterator = cigar.iterator()
     var positionFromCigar = start
     while (cigarIterator.hasNext) {
@@ -42,9 +42,11 @@ object CigarDerivedConf {
         val eventStart = positionFromCigar
         val eventEnd = positionFromCigar + cigarOperatorLen
         if (cigarOperator == CigarOperator.DELETION)
-          fillPositionSet(eventStart, eventEnd, delPositions)
+          delPositions.add((eventStart,eventEnd))
+          //fillPositionSet(eventStart, eventEnd, delPositions)
         else if (cigarOperator == CigarOperator.INSERTION){
-         fillPositionSet(eventStart, eventEnd, insertPositions)
+          insertPositions.add((eventStart,eventEnd))
+         //fillPositionSet(eventStart, eventEnd, insertPositions)
         }
       }
       positionFromCigar += cigarOperatorLen
