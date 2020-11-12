@@ -68,7 +68,11 @@ object Correction {
           else
             correction.quals.get
           val newCumSum = (correction.cumulativeSum - FastMath.sumShort(overlap.events.takeRight(overlapLen)) ).toShort
-          val newCache = correction.qualityCache ++ overlap.cache
+
+          val newCache = if (correction.qualityCache != null)
+            correction.qualityCache ++ overlap.cache
+          else
+            correction.qualityCache
 
           val newCorrection = Correction(Some(newArrEvents), Some(newAlts), Some(newQuals), newCumSum, newCache)
 
