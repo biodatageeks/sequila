@@ -37,7 +37,7 @@ case class ReadQualSummary (start: Int, end: Int,
     else {
       cigarDerivedConf
         .indelPositions
-        .delPositions.exists { case (start, end) => pos >= start && pos <= end }
+        .delPositions.exists { case (start, end) => pos >= start && pos < end }
     }
   }
 }

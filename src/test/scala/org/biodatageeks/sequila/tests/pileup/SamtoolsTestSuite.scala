@@ -93,9 +93,6 @@ class SamtoolsTestSuite extends PileupTestBase {
     val bdgRes = ss.sql(queryQual).orderBy("contig", "pos_start")
     val samRes = spark.createDataFrame(sam.rdd, bdgRes.schema)
 
-
-//    bdgRes.where("pos_start = 7856").show(truncate = false)
-
     assertDataFrameEquals(samRes, bdgRes)
   }
 
