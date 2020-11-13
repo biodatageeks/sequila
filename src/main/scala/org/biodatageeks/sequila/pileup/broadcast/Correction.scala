@@ -58,9 +58,21 @@ object Correction {
         case Some(correction) => {
           val newArrEvents = correction.events.get.zipAll(arrEvents, 0.toShort, 0.toShort).map { case (x, y) => (x + y).toShort }
           val newAlts = (correction.alts.get ++ overlap.alts)
-          val newQuals = (correction.quals.get ++ overlap.quals)
+
+          // new quals should take pileup conf into account.
+          // Current interpretation :
+          // if there is already null in quals -> pileup is without BQ, quals should remain null
+          // otherwise -> merge quals
+          val newQuals = if (correction.quals.get != null)
+            (correction.quals.get ++ overlap.quals)
+          else
+            correction.quals.get
           val newCumSum = (correction.cumulativeSum - FastMath.sumShort(overlap.events.takeRight(overlapLen)) ).toShort
-          val newCache = correction.qualityCache ++ overlap.cache
+
+          val newCache = if (correction.qualityCache != null)
+            correction.qualityCache ++ overlap.cache
+          else
+            correction.qualityCache
 
           val newCorrection = Correction(Some(newArrEvents), Some(newAlts), Some(newQuals), newCumSum, newCache)
 
