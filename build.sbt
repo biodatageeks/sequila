@@ -1,3 +1,4 @@
+import sbt.ExclusionRule
 import sbtassembly.AssemblyPlugin.autoImport.ShadeRule
 
 import scala.util.Properties
@@ -43,9 +44,10 @@ libraryDependencies += "de.ruedigermoeller" % "fst" % "2.57"
 libraryDependencies += "org.apache.commons" % "commons-lang3" % "3.7"
 libraryDependencies += "org.eclipse.jetty" % "jetty-servlet" % "9.3.24.v20180605"
 libraryDependencies += "org.apache.derby" % "derbyclient" % "10.14.2.0"
-libraryDependencies += "org.disq-bio" % "disq" % "0.3.3"
+libraryDependencies += "org.disq-bio" % "disq" % "0.3.6"
 libraryDependencies += "io.projectglow" %% "glow" % "0.1.2"
 libraryDependencies += "com.intel.gkl" % "gkl" % "0.8.6"
+libraryDependencies += "org.broadinstitute" % "gatk" % "4.1.3.0" excludeAll (ExclusionRule("org.bdgenomics.adam") ) excludeAll (ExclusionRule("org.apache.spark") )  excludeAll (ExclusionRule("org.apache.hadoop") )
 
 val snapshotOnly = Def.setting(
   if (isSnapshotVersion.value) {Seq("org.biodatageeks" % "bdg-performance_2.11" % "0.2-SNAPSHOT" excludeAll (ExclusionRule("org.apache.hadoop")))}
@@ -64,15 +66,15 @@ avroSpecificScalaSource in Compile := new java.io.File("src/main/org/biodatageek
 avroSpecificScalaSource in Test := new java.io.File("src/test/org/biodatageeks/formats")
 
 
-fork := true
-fork in Test := true
-parallelExecution in Test := true
+fork := false
+fork in Test := false
+parallelExecution in Test := false
 
 javaOptions in Test ++= Seq(
   "-Dlog4j.debug=false",
   "-Dlog4j.configuration=log4j.properties")
 
-javaOptions ++= Seq("-Xms512M", "-Xmx8192M", "-XX:+CMSClassUnloadingEnabled" , "-Dlog4j.configuration=log4j.properties")
+javaOptions ++= Seq("-Xms512M", "-Xmx48192M", "-XX:+CMSClassUnloadingEnabled" , "-Dlog4j.configuration=log4j.properties")
 
 //fix for using with hdp warehouse connector
 javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint")
@@ -86,7 +88,8 @@ resolvers ++= Seq(
   "spring" at "http://repo.spring.io/libs-milestone/",
   "Cloudera" at "https://repository.cloudera.com/content/repositories/releases/",
   "Hortonworks" at "http://repo.hortonworks.com/content/repositories/releases/",
-  "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
+  "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
+  "komiya" at "http://dl.bintray.com/komiya-atsushi/maven"
 
 )
 
