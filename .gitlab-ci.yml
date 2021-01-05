@@ -144,7 +144,7 @@ doc-build:
   image:
     name: "sphinxdoc/sphinx:$SPHINX_VERSION"
   before_script:
-    - pip install -U sphinx_rtd_theme rst2pdf sphinxcontrib-github_ribbon sphinxcontrib-bibtex
+    - pip install -U sphinx_rtd_theme rst2pdf sphinxcontrib-github_ribbon "sphinxcontrib-bibtex<2.0.0"
     - source $VERSION_FILE
   script:
     - cd docs && ./docs.sh html
