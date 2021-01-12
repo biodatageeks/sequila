@@ -34,7 +34,7 @@ class VCFDataSourceTestSuite
         .first()
         .getString(0) === "20")
 
-    assert(spark.sql(query).count() === 7L)
+    assert(spark.sql(query).count() === 5L) // multiallelics not splitted to biallelics
 
   }
 

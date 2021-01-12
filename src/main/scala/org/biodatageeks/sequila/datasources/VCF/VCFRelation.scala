@@ -25,7 +25,6 @@ class VCFRelation(path: String,
   lazy val inputDf: DataFrame = spark
     .read
     .format("vcf")
-    .option("splitToBiallelic", "true")
     .load(path)
   lazy val dfNormalized = {
     normalization_mode match {
