@@ -44,7 +44,7 @@ libraryDependencies += "org.apache.commons" % "commons-lang3" % "3.7"
 libraryDependencies += "org.eclipse.jetty" % "jetty-servlet" % "9.3.24.v20180605"
 libraryDependencies += "org.apache.derby" % "derbyclient" % "10.14.2.0"
 libraryDependencies += "org.disq-bio" % "disq" % "0.3.3"
-libraryDependencies += "io.projectglow" %% "glow" % "0.1.2"
+libraryDependencies += "io.projectglow" %% "glow-spark2" % "0.6.0"
 libraryDependencies += "com.intel.gkl" % "gkl" % "0.8.6"
 
 val snapshotOnly = Def.setting(
