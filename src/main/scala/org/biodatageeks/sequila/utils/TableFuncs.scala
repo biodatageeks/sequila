@@ -1,6 +1,6 @@
 package org.biodatageeks.sequila.utils
 
-import org.apache.hadoop.fs.FileSystem
+import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.sql.SparkSession
 
 object TableFuncs{
@@ -21,7 +21,12 @@ object TableFuncs{
   }
 
   def getExactSamplePath(spark: SparkSession, path:String) = {
-    val fs = FileSystem.get(spark.sparkContext.hadoopConfiguration)
+    val fs = if(path.toLowerCase.startsWith("hdfs"))
+      FileSystem.get(spark.sparkContext.hadoopConfiguration)
+    else {
+      new Path(path)
+        .getFileSystem(spark.sparkContext.hadoopConfiguration)
+    }
     val statuses = fs.globStatus(new org.apache.hadoop.fs.Path(path))
     statuses.head.getPath.toString
   }
@@ -32,9 +37,13 @@ object TableFuncs{
   }
 
   def getAllSamples(spark: SparkSession, path:String) = {
-    val fs = FileSystem.get(spark.sparkContext.hadoopConfiguration)
+    val fs = if(path.toLowerCase.startsWith("hdfs"))
+      FileSystem.get(spark.sparkContext.hadoopConfiguration)
+    else {
+      new Path(path)
+        .getFileSystem(spark.sparkContext.hadoopConfiguration)
+    }
     val statuses = fs.globStatus(new org.apache.hadoop.fs.Path(path))
-    //println(statuses.length)
     statuses
       .map(_.getPath.toString.split('/').takeRight(1).head.split('.').take(1).head)
   }
