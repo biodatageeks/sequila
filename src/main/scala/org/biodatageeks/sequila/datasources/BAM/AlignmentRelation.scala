@@ -98,14 +98,6 @@ trait BDGAlignFileReaderWriter [T <: BDGAlignInputFormat]{
           .newAPIHadoopFile[LongWritable, SAMRecordWritable, T](path)
           .map(r => r._2.get())
       }
-      case "sparkbam" => {
-        import spark_bam._, hammerlab.path._
-        val bamPath = Path(resolvedPath)
-        spark
-          .sparkContext
-          .loadReads(bamPath)
-      }
-
       case "disq" => {
         import org.disq_bio.disq.HtsjdkReadsRddStorage
 

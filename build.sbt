@@ -3,18 +3,18 @@ import sbtassembly.AssemblyPlugin.autoImport.ShadeRule
 import scala.util.Properties
 
 name := """sequila"""
-val DEFAULT_SPARK_2_VERSION = "2.4.3"
-lazy val sparkVersion = Properties.envOrElse("SPARK_VERSION", DEFAULT_SPARK_2_VERSION)
+val DEFAULT_SPARK_3_VERSION = "3.0.1"
+lazy val sparkVersion = Properties.envOrElse("SPARK_VERSION", DEFAULT_SPARK_3_VERSION)
 
 version := s"${sys.env.getOrElse("VERSION", "0.1.0")}"
 organization := "org.biodatageeks"
-scalaVersion := "2.11.8"
+scalaVersion := "2.12.8"
 
 
 val isSnapshotVersion = settingKey[Boolean]("Is snapshot")
 isSnapshotVersion := version.value.toLowerCase.contains("snapshot")
 
-val DEFAULT_HADOOP_VERSION = "2.6.5"
+val DEFAULT_HADOOP_VERSION = "3.1.0"
 
 lazy val hadoopVersion = Properties.envOrElse("SPARK_HADOOP_VERSION", DEFAULT_HADOOP_VERSION)
 
@@ -22,29 +22,28 @@ dependencyOverrides += "com.google.guava" % "guava" % "15.0"
 
 libraryDependencies += "org.seqdoop" % "hadoop-bam" % "7.10.0"
 libraryDependencies += "org.apache.hadoop" % "hadoop-client" % hadoopVersion
-libraryDependencies +=  "org.apache.spark" % "spark-core_2.11" % sparkVersion
-libraryDependencies +=  "org.apache.spark" % "spark-sql_2.11" % sparkVersion
+libraryDependencies +=  "org.apache.spark" %% "spark-core" % sparkVersion
+libraryDependencies +=  "org.apache.spark" %% "spark-sql" % sparkVersion
 libraryDependencies +=  "org.apache.spark" %% "spark-hive" % sparkVersion excludeAll (ExclusionRule("org.apache.avro"))
-libraryDependencies +=  "org.apache.spark" %% "spark-hive-thriftserver" % "2.4.0" excludeAll (ExclusionRule("org.apache.avro"))
-libraryDependencies += "com.holdenkarau" % "spark-testing-base_2.11" % "2.4.0_0.11.0" % "test" excludeAll ExclusionRule(organization = "javax.servlet") excludeAll (ExclusionRule("org.apache.hadoop"))
-libraryDependencies += "org.bdgenomics.adam" %% "adam-core-spark2" % "0.25.0"
-libraryDependencies += "org.bdgenomics.adam" %% "adam-apis-spark2" % "0.25.0"
-libraryDependencies += "org.bdgenomics.adam" %% "adam-cli-spark2" % "0.25.0"
-libraryDependencies += "org.scala-lang" % "scala-library" % "2.11.8"
+libraryDependencies +=  "org.apache.spark" %% "spark-hive-thriftserver" % "3.0.1" excludeAll (ExclusionRule("org.apache.avro"))
+libraryDependencies += "com.holdenkarau" %% "spark-testing-base" % "3.0.1_1.0.0" % "test" excludeAll ExclusionRule(organization = "javax.servlet") excludeAll (ExclusionRule("org.apache.hadoop"))
+libraryDependencies += "org.bdgenomics.adam" %% "adam-core-spark3" % "0.33.0"
+libraryDependencies += "org.bdgenomics.adam" %% "adam-apis-spark3" % "0.33.0"
+libraryDependencies += "org.bdgenomics.adam" %% "adam-cli-spark3" % "0.33.0"
+libraryDependencies += "org.scala-lang" % "scala-library" % scalaVersion.value
 libraryDependencies += "org.rogach" %% "scallop" % "3.1.2"
-libraryDependencies += "org.bdgenomics.utils" % "utils-metrics-spark2_2.11" % "0.2.16"
+libraryDependencies += "org.bdgenomics.utils" %% "utils-metrics-spark2" % "0.2.16"
 libraryDependencies += "com.github.samtools" % "htsjdk" % "2.19.0"
-libraryDependencies += "ch.cern.sparkmeasure" %% "spark-measure" % "0.13" excludeAll (ExclusionRule("org.apache.hadoop"))
+libraryDependencies += "ch.cern.sparkmeasure" %% "spark-measure" % "0.17" excludeAll (ExclusionRule("org.apache.hadoop"))
 libraryDependencies += "org.broadinstitute" % "gatk-native-bindings" % "1.0.0" excludeAll (ExclusionRule("org.apache.hadoop"))
 libraryDependencies += "org.apache.logging.log4j" % "log4j-core" % "2.11.0"
 libraryDependencies += "org.apache.logging.log4j" % "log4j-api" % "2.11.0"
-libraryDependencies += "org.hammerlab.bam" %% "load" % "1.2.0-M1"
 libraryDependencies += "de.ruedigermoeller" % "fst" % "2.57"
 libraryDependencies += "org.apache.commons" % "commons-lang3" % "3.7"
 libraryDependencies += "org.eclipse.jetty" % "jetty-servlet" % "9.3.24.v20180605"
 libraryDependencies += "org.apache.derby" % "derbyclient" % "10.14.2.0"
-libraryDependencies += "org.disq-bio" % "disq" % "0.3.3"
-libraryDependencies += "io.projectglow" %% "glow-spark2" % "0.6.0"
+libraryDependencies += "org.disq-bio" % "disq" % "0.3.6"
+libraryDependencies += "io.projectglow" %% "glow-spark3" % "0.6.0"
 libraryDependencies += "com.intel.gkl" % "gkl" % "0.8.6"
 
 val snapshotOnly = Def.setting(
