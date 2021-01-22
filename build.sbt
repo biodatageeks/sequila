@@ -80,11 +80,11 @@ outputStrategy := Some(StdoutOutput)
 
 
 resolvers ++= Seq(
-  "zsibio-snapshots" at "http://zsibio.ii.pw.edu.pl/nexus/repository/maven-snapshots/",
+  "zsibio-snapshots" at "https://zsibio.ii.pw.edu.pl/nexus/repository/maven-snapshots/",
   "Job Server Bintray" at "https://dl.bintray.com/spark-jobserver/maven",
-  "spring" at "http://repo.spring.io/libs-milestone/",
+  "spring" at "https://repo.spring.io/libs-milestone/",
   "Cloudera" at "https://repository.cloudera.com/content/repositories/releases/",
-  "Hortonworks" at "http://repo.hortonworks.com/content/repositories/releases/",
+  "Hortonworks" at "https://repo.hortonworks.com/content/repositories/releases/",
   "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
 
 )
