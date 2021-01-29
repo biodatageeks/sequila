@@ -3,7 +3,6 @@ package org.biodatageeks.sequila.apps
 import java.io.{OutputStreamWriter, PrintWriter}
 
 import org.apache.spark.sql.{SequilaSession, SparkSession}
-import org.bdgenomics.utils.instrumentation.{Metrics, MetricsListener, RecordedMetrics}
 import org.biodatageeks.sequila.utils.{InternalParams, SequilaRegister}
 
 object PileupApp extends App{
@@ -52,11 +51,11 @@ object PileupApp extends App{
 //    ss
 //      .sqlContext
 //      .setConf(InternalParams.EnableInstrumentation, "true")
-    Metrics.initialize(ss.sparkContext)
-    val metricsListener = new MetricsListener(new RecordedMetrics())
-    ss
-      .sparkContext
-      .addSparkListener(metricsListener)
+//    Metrics.initialize(ss.sparkContext)
+//    val metricsListener = new MetricsListener(new RecordedMetrics())
+//    ss
+//      .sparkContext
+//      .addSparkListener(metricsListener)
 //    val results = ss.sql(query)
 //    ss.time{
 //      results.show()
@@ -69,9 +68,9 @@ object PileupApp extends App{
     ss.time{
       resultsQual.show()
     }
-    val writerQual = new PrintWriter(new OutputStreamWriter(System.out, "UTF-8"))
-    Metrics.print(writerQual, Some(metricsListener.metrics.sparkMetrics.stageTimes))
-    writerQual.close()
+//    val writerQual = new PrintWriter(new OutputStreamWriter(System.out, "UTF-8"))
+//    Metrics.print(writerQual, Some(metricsListener.metrics.sparkMetrics.stageTimes))
+//    writerQual.close()
 
     ss.stop()
   }

@@ -13,7 +13,7 @@ object ExtractRangeJoinKeys extends Logging with  PredicateHelper {
   type ReturnType =
     (JoinType, Seq[Expression], LogicalPlan, LogicalPlan)
   def unapply(plan: LogicalPlan): Option[ReturnType] = plan match {
-    case join @ Join(left, right, joinType, condition) =>
+    case join @ Join(left, right, joinType, condition, hint) =>
       logDebug(s"Considering join on: $condition")
       val predicates = condition.map(splitConjunctivePredicates).getOrElse(Nil)
       /* Look for expressions a < b and c < d where a,b and c,d belong to the same LogicalPlan

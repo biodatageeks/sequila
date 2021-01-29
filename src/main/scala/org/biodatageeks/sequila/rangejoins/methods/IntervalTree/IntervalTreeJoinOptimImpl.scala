@@ -22,10 +22,7 @@ package org.biodatageeks.sequila.rangejoins.IntervalTree
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.catalyst.InternalRow
-import org.bdgenomics.utils.instrumentation.Metrics
-import org.bdgenomics.utils.instrumentation.{MetricsListener, RecordedMetrics}
-import org.apache.spark.rdd.MetricsContext._
-import org.biodatageeks.sequila.rangejoins.common.performance.timers.IntervalTreeTimer._
+
 
 import scala.collection.JavaConversions._
 import htsjdk.samtools.util.IntervalTree
@@ -64,25 +61,21 @@ object IntervalTreeJoinOptimImpl extends Serializable {
 
       val localIntervals =
         rdd1
-        .instrument()
         .map(r=>IntervalWithRow(r.start,r.end,r.row.copy()) )
         .collect()
-      val intervalTree = IntervalTreeHTSBuild.time {
+      val intervalTree = {
         val tree = new IntervalTreeHTS[InternalRow]()
         localIntervals
           .foreach(r => tree.put(r.start, r.end, r.row))
         sc.broadcast(tree)
       }
       val kvrdd2 = rdd2
-        .instrument()
         .mapPartitions(p => {
           p.map(r => {
-            IntervalTreeHTSLookup.time {
               val record =
                 intervalTree.value.overlappers(r.start, r.end)
               record
                 .flatMap(k => (k.getValue.map(s=>(s,r.row))) )
-            }
           })
         })
         .flatMap(r => r)
@@ -92,7 +85,6 @@ object IntervalTreeJoinOptimImpl extends Serializable {
 
       val intervalsWithId =
         rdd1
-        .instrument()
         .zipWithIndex()
 
       val localIntervals =
@@ -101,23 +93,19 @@ object IntervalTreeJoinOptimImpl extends Serializable {
         .collect()
 
       /* Create and broadcast an interval tree */
-      val intervalTree = IntervalTreeHTSBuild.time {
+      val intervalTree = {
         val tree = new IntervalTreeHTS[Long]()
         localIntervals
           .foreach(r => tree.put(r._1._1,r._1._2,r._2))
         sc.broadcast(tree)
       }
       val kvrdd2: RDD[(Long, Iterable[InternalRow])] = rdd2
-        .instrument()
         .mapPartitions(p => {
           p.map(r => {
-            IntervalTreeHTSLookup.time {
-
-              val record =
+             val record =
                 intervalTree.value.overlappers(r.start, r.end)
               record
                 .flatMap(k => (k.getValue.map(s=>(s,Iterable(r.row)))) )
-            }
           })
         })
         .flatMap(r => r)

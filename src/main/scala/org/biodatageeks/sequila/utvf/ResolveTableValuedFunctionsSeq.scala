@@ -209,7 +209,7 @@ case class BDGCoverage(tableName:String, sampleId:String, result: String, target
     Statistics( sizeInBytes = sizeInBytes )
   }
 
-  override def simpleString: String = {
+  override def toString: String = {
     s"BDGCoverage ('$tableName')"
   }
 }
@@ -254,7 +254,7 @@ case class PileupTemplate(tableName: String, sampleId: String, refPath: String, 
       FROM pileup('$tableName')"""
   }
 
-  override def simpleString: String = {
+  override def toString: String = {
     s"PileupFunction ('$tableName')"
   }
 }

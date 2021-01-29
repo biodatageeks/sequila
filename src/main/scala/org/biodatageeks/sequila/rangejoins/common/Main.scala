@@ -24,10 +24,10 @@ import org.apache.spark.sql.types.{LongType, StructField, StructType}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{Row, SparkSession}
 import org.bdgenomics.adam.rdd.ADAMContext._
-import org.bdgenomics.adam.rdd.read.AlignmentRecordRDD
-import org.bdgenomics.formats.avro.AlignmentRecord
+import org.bdgenomics.adam.rdd.read.AlignmentDataset
+import org.bdgenomics.formats.avro.Alignment
 import org.bdgenomics.formats.avro.Feature
-import org.bdgenomics.adam.rdd.feature.FeatureRDD
+import org.bdgenomics.adam.rdd.feature.FeatureDataset
 import org.apache.spark.sql.types._
 
 import scala.util.Random
@@ -104,11 +104,11 @@ object Main {
     Random.setSeed(4242)
 
 
-    var features: FeatureRDD = sc.loadFeatures(featuresFilePath)
-    var alignments: AlignmentRecordRDD = sc.loadAlignments(alignmentsFilePath)
+    var features: FeatureDataset = sc.loadFeatures(featuresFilePath)
+    var alignments: AlignmentDataset = sc.loadAlignments(alignmentsFilePath)
 
     var featuresRdd: RDD[Feature] = features.rdd
-    var alignmentsRdd: RDD[AlignmentRecord] = alignments.rdd
+    var alignmentsRdd: RDD[Alignment] = alignments.rdd
     //get only interesting columns
 
     val fRdd = featuresRdd.map(rec => Row(rec.getStart().toInt, rec.getEnd().toInt));

@@ -7,7 +7,6 @@ import org.apache.spark.sql.catalyst.InternalRow
 import org.biodatageeks.sequila.pileup.broadcast.{FullCorrections, PileupAccumulator, PileupUpdate, Range, Tail}
 import org.biodatageeks.sequila.pileup.conf.{Conf, QualityConstants}
 import org.biodatageeks.sequila.pileup.serializers.PileupProjection
-import org.biodatageeks.sequila.pileup.timers.PileupTimers.{AccumulatorAddTimer, AccumulatorAllocTimer, AccumulatorNestedTimer, AccumulatorRegisterTimer, PileupUpdateCreationTimer}
 import org.biodatageeks.sequila.pileup.model.Alts._
 import org.biodatageeks.sequila.pileup.model.Quals._
 import org.slf4j.{Logger, LoggerFactory}
@@ -30,13 +29,14 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
     */
 
   def accumulateTails( spark:SparkSession): PileupAccumulator = {
-    val accumulator = AccumulatorAllocTimer.time {new PileupAccumulator(new PileupUpdate(new ArrayBuffer[Tail](), new ArrayBuffer[Range]())) }
-    AccumulatorRegisterTimer.time {spark.sparkContext.register(accumulator) }
+    val accumulator = new PileupAccumulator(new PileupUpdate(new ArrayBuffer[Tail](), new ArrayBuffer[Range]()))
+    spark.sparkContext.register(accumulator)
 
     this.rdd foreach {
-      agg => {AccumulatorNestedTimer.time {
-        val pu = PileupUpdateCreationTimer.time {agg.getPileupUpdate}
-        AccumulatorAddTimer.time {accumulator.add(pu)}}}
+      agg => {
+        val pu = agg.getPileupUpdate
+        accumulator.add(pu)
+      }
     }
     accumulator
   }

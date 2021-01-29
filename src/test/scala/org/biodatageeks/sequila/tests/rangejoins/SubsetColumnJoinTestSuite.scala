@@ -10,11 +10,7 @@ import org.apache.spark.sql.types.{
   StructField,
   StructType
 }
-import org.bdgenomics.utils.instrumentation.{
-  Metrics,
-  MetricsListener,
-  RecordedMetrics
-}
+
 import org.biodatageeks.sequila.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
 import org.biodatageeks.sequila.utils.Columns
 import org.scalatest.{BeforeAndAfter, FunSuite}
@@ -26,8 +22,6 @@ class SubsetColumnJoinTestSuite
     with DataFrameSuiteBase
     with BeforeAndAfter {
 
-  val metricsListener = new MetricsListener(new RecordedMetrics())
-  val writer = new PrintWriter(new OutputStreamWriter(System.out))
 
   before {
     spark.experimental.extraStrategies = new IntervalTreeJoinStrategyOptim(
@@ -79,8 +73,6 @@ class SubsetColumnJoinTestSuite
     val ds2 = spark.sqlContext.createDataFrame(rdd2, schema2)
     ds2.createOrReplaceTempView("annotation_temp")
 
-    Metrics.initialize(sc)
-    sc.addSparkListener(metricsListener)
 
   }
 
@@ -105,12 +97,5 @@ class SubsetColumnJoinTestSuite
 
   }
 
-  after {
-
-    Metrics.print(writer, Some(metricsListener.metrics.sparkMetrics.stageTimes))
-    writer.flush()
-    Metrics.stopRecording()
-
-  }
 
 }

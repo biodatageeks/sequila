@@ -14,21 +14,17 @@ import org.biodatageeks.sequila.coverage.CoverageStrategy
 
 
 case class SequilaSession(sparkSession: SparkSession) extends SparkSession(sparkSession.sparkContext) {
-  @transient val sequilaAnalyzer = new SeQuiLaAnalyzer(sparkSession.sessionState.catalog,sparkSession.sessionState.conf)
+  @transient val sequilaAnalyzer = new SeQuiLaAnalyzer(sparkSession.sessionState.catalogManager,sparkSession.sessionState.conf)
   def executePlan(plan:LogicalPlan) =  new QueryExecution(sparkSession,sequilaAnalyzer.execute(plan))
   @transient override lazy val sessionState = SequilaSessionState(sparkSession,sequilaAnalyzer,executePlan)
-
-  //new rules
-//  sequilaAnalyzer.sequilaOptmazationRules = Seq(
-//    new BAMCTASOptimizationRule(sparkSession),
-//    new BAMIASOptimizationRule(sparkSession)
-//  )
 
 
 }
 
+
 case class SequilaSessionState(sparkSession: SparkSession, customAnalyzer: Analyzer, executePlan: LogicalPlan => QueryExecution)
-  extends SessionState(sparkSession.sharedState,
+  extends SessionState(
+    sparkSession.sharedState,
     sparkSession.sessionState.conf,
     sparkSession.sessionState.experimentalMethods,
     sparkSession.sessionState.functionRegistry,
@@ -38,11 +34,14 @@ case class SequilaSessionState(sparkSession: SparkSession, customAnalyzer: Analy
     () =>customAnalyzer,
     () =>sparkSession.sessionState.optimizer,
     sparkSession.sessionState.planner,
-    sparkSession.sessionState.streamingQueryManager,
+    () => sparkSession.sessionState.streamingQueryManager,
     sparkSession.sessionState.listenerManager,
     () =>sparkSession.sessionState.resourceLoader,
     executePlan,
-    (sparkSession:SparkSession,sessionState: SessionState) => sessionState.clone(sparkSession)){
+    (sparkSession:SparkSession,sessionState: SessionState) => sessionState.clone(sparkSession),
+    sparkSession.sessionState.columnarRules,
+    sparkSession.sessionState.queryStagePrepRules
+  ){
 }
 
 

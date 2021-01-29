@@ -10,11 +10,7 @@ import org.apache.spark.sql.types.{
   StructField,
   StructType
 }
-import org.bdgenomics.utils.instrumentation.{
-  Metrics,
-  MetricsListener,
-  RecordedMetrics
-}
+
 import org.biodatageeks.sequila.rangejoins.genApp.IntervalTreeJoinStrategy
 import org.scalatest.{BeforeAndAfter, FunSuite}
 
@@ -47,14 +43,10 @@ class IntervalTreeGenAppTestSuite
         StructField("start1", IntegerType),
         StructField("end1", IntegerType)))
 
-  val metricsListener = new MetricsListener(new RecordedMetrics())
-  val writer = new PrintWriter(new OutputStreamWriter(System.out))
+
 
   before {
     spark.experimental.extraStrategies = new IntervalTreeJoinStrategy(spark) :: Nil
-    Metrics.initialize(sc)
-
-    sc.addSparkListener(metricsListener)
 
     val rdd1 = sc
       .parallelize(
@@ -233,9 +225,4 @@ class IntervalTreeGenAppTestSuite
     )
   }
 
-  after {
-    Metrics.print(writer, Some(metricsListener.metrics.sparkMetrics.stageTimes))
-    writer.flush()
-    Metrics.stopRecording()
-  }
 }

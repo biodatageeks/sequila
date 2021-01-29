@@ -10,11 +10,7 @@ import org.apache.spark.sql.types.{
   StructField,
   StructType
 }
-import org.bdgenomics.utils.instrumentation.{
-  Metrics,
-  MetricsListener,
-  RecordedMetrics
-}
+
 import org.biodatageeks.sequila.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
 import org.scalatest.{BeforeAndAfter, FunSuite}
 
@@ -28,13 +24,11 @@ class JoinOrderTestSuite
     Seq(StructField("chr", StringType),
         StructField("start", IntegerType),
         StructField("end", IntegerType)))
-  val metricsListener = new MetricsListener(new RecordedMetrics())
-  val writer = new PrintWriter(new OutputStreamWriter(System.out))
   before {
     System.setSecurityManager(null)
     spark.experimental.extraStrategies = new IntervalTreeJoinStrategyOptim(
       spark) :: Nil
-    Metrics.initialize(sc)
+
     val rdd1 = sc
       .textFile(getClass.getResource("/refFlat.txt.bz2").getPath)
       .map(r => r.split('\t'))
@@ -86,10 +80,5 @@ class JoinOrderTestSuite
        """.stripMargin
     assert(spark.sql(query).count === 616404L)
 
-  }
-  after {
-    Metrics.print(writer, Some(metricsListener.metrics.sparkMetrics.stageTimes))
-    writer.flush()
-    Metrics.stopRecording()
   }
 }

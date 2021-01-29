@@ -10,11 +10,7 @@ import org.apache.spark.sql.types.{
   StructField,
   StructType
 }
-import org.bdgenomics.utils.instrumentation.{
-  Metrics,
-  MetricsListener,
-  RecordedMetrics
-}
+
 import org.biodatageeks.sequila.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
 import org.biodatageeks.sequila.rangejoins.genApp.IntervalTreeJoinStrategy
 import org.biodatageeks.sequila.utils.Columns
@@ -46,9 +42,6 @@ class TSVBenchmarkTestSuite
       | AND
       | CAST(snp.${Columns.START} AS INTEGER)<=CAST(ref.${Columns.END} AS INTEGER)
 )""".stripMargin
-
-  val metricsListener = new MetricsListener(new RecordedMetrics())
-  val writer = new PrintWriter(new OutputStreamWriter(System.out))
 
   before {
     System.setSecurityManager(null)
@@ -87,10 +80,6 @@ class TSVBenchmarkTestSuite
     snp.cache().count
     snp.createOrReplaceTempView("snp")
 
-    Metrics.initialize(sc)
-
-    sc.addSparkListener(metricsListener)
-
   }
 
   test("Join using bgd-spark-granges - broadcast") {
@@ -122,10 +111,4 @@ class TSVBenchmarkTestSuite
     time(assert(spark.sqlContext.sql(query).count === 616404L))
   }
 
-  after {
-    //Metrics.print(writer, Some(metricsListener.metrics.sparkMetrics.stageTimes))
-    writer.flush()
-    Metrics.stopRecording()
-
-  }
 }

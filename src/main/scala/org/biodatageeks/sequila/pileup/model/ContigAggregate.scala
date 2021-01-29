@@ -6,7 +6,6 @@ import org.biodatageeks.sequila.pileup.broadcast.Correction.PartitionCorrections
 import org.biodatageeks.sequila.pileup.broadcast.Shrink.PartitionShrinks
 import org.biodatageeks.sequila.pileup.broadcast.{FullCorrections, PileupUpdate, Tail}
 import org.biodatageeks.sequila.pileup.conf.{Conf, QualityConstants}
-import org.biodatageeks.sequila.pileup.timers.PileupTimers.{CalculateAltsTimer, CalculateEventsTimer, CalculateQualsTimer, FillQualityForHigherAltsTimer, FillQualityForLowerAltsTimer, ShrinkArrayTimer, TailAltsTimer, TailCovTimer, TailEdgeTimer}
 import org.biodatageeks.sequila.utils.FastMath
 
 import org.biodatageeks.sequila.pileup.model.Alts._
@@ -68,15 +67,15 @@ case class ContigAggregate(
 
   def getTail:Tail ={
     val tailStartIndex = maxPosition - maxSeqLen
-    val tailCov = TailCovTimer.time {
+    val tailCov =
       if(maxSeqLen ==  events.length ) events
       else
         events.takeRight(maxSeqLen)
-    }
-    val tailAlts = TailAltsTimer.time {alts.filter(_._1 >= tailStartIndex)}
+
+    val tailAlts = alts.filter(_._1 >= tailStartIndex)
     val tailQuals = if (conf.value.includeBaseQualities) quals.filter(_._1 >= tailStartIndex) else null
     val cumSum = FastMath.sumShort(events)
-    TailEdgeTimer.time {broadcast.Tail(contig, startPosition, tailStartIndex, tailCov, tailAlts, tailQuals,cumSum, qualityCache)}
+    broadcast.Tail(contig, startPosition, tailStartIndex, tailCov, tailAlts, tailQuals,cumSum, qualityCache)
   }
 
   def calculateAdjustedQuals(upd: PartitionCorrections): MultiLociQuals = {
@@ -90,11 +89,11 @@ case class ContigAggregate(
     val upd: PartitionCorrections = b.value.corrections
     val shrink:PartitionShrinks = b.value.shrinks
 
-    val adjustedEvents = CalculateEventsTimer.time { calculateAdjustedEvents(upd) }
-    val adjustedAlts = CalculateAltsTimer.time{ calculateAdjustedAlts(upd) }
-    val newQuals = CalculateQualsTimer.time {calculateAdjustedQuals(upd)}
+    val adjustedEvents = calculateAdjustedEvents(upd)
+    val adjustedAlts = calculateAdjustedAlts(upd)
+    val newQuals = calculateAdjustedQuals(upd)
 
-    val shrinkedEventsSize = ShrinkArrayTimer.time { calculateShrinkedEventsSize(shrink, adjustedEvents) }
+    val shrinkedEventsSize = calculateShrinkedEventsSize(shrink, adjustedEvents)
     ContigAggregate(contig, contigLen, adjustedEvents, adjustedAlts, newQuals, startPosition, maxPosition, shrinkedEventsSize, maxSeqLen, null, conf)
   }
 
@@ -200,8 +199,8 @@ case class ContigAggregate(
 
     val concordantAlts = quals.keySet.intersect(upd.getAlts(contig,startPosition).keySet)
 
-    val qualsInterim = FillQualityForHigherAltsTimer.time{ fillQualityForHigherAlts(upd, adjustedQuals, concordantAlts)}
-    val completeQuals = FillQualityForLowerAltsTimer.time {fillQualityForLowerAlts(upd, qualsInterim, concordantAlts, conf)}
+    val qualsInterim = fillQualityForHigherAlts(upd, adjustedQuals, concordantAlts)
+    val completeQuals = fillQualityForLowerAlts(upd, qualsInterim, concordantAlts, conf)
     completeQuals
   }
 

@@ -32,7 +32,6 @@ libraryDependencies += "org.bdgenomics.adam" %% "adam-apis-spark3" % "0.33.0"
 libraryDependencies += "org.bdgenomics.adam" %% "adam-cli-spark3" % "0.33.0"
 libraryDependencies += "org.scala-lang" % "scala-library" % scalaVersion.value
 libraryDependencies += "org.rogach" %% "scallop" % "3.1.2"
-libraryDependencies += "org.bdgenomics.utils" %% "utils-metrics-spark2" % "0.2.16"
 libraryDependencies += "com.github.samtools" % "htsjdk" % "2.19.0"
 libraryDependencies += "ch.cern.sparkmeasure" %% "spark-measure" % "0.17" excludeAll (ExclusionRule("org.apache.hadoop"))
 libraryDependencies += "org.broadinstitute" % "gatk-native-bindings" % "1.0.0" excludeAll (ExclusionRule("org.apache.hadoop"))
@@ -128,7 +127,7 @@ publishTo := {
   if (!version.value.toLowerCase.contains("snapshot"))
     sonatypePublishToBundle.value
   else {
-    val nexus = "http://zsibio.ii.pw.edu.pl/nexus/repository/"
+    val nexus = "https://zsibio.ii.pw.edu.pl/nexus/repository/"
     Some("snapshots" at nexus + "maven-snapshots")
   }
 }
