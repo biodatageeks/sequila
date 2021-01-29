@@ -59,6 +59,7 @@ case class BDGCoveragePlan [T<:BDGAlignInputFormat](plan: LogicalPlan, spark: Sp
   extends SparkPlan with Serializable  with BDGAlignFileReaderWriter [T]{
 
 
+  override protected def otherCopyArgs: Seq[AnyRef] = Seq(c)
   def doExecute(): org.apache.spark.rdd.RDD[InternalRow] = {
 
 
