@@ -45,13 +45,6 @@ libraryDependencies += "org.disq-bio" % "disq" % "0.3.3"  //FIXME: migration to 
 libraryDependencies += "io.projectglow" %% "glow-spark3" % "0.6.0" excludeAll (ExclusionRule("com.github.samtools")) //FIXME:: remove togehter with disq
 libraryDependencies += "com.intel.gkl" % "gkl" % "0.8.6"
 
-val snapshotOnly = Def.setting(
-  if (isSnapshotVersion.value) {Seq("org.biodatageeks" % "bdg-performance_2.11" % "0.2-SNAPSHOT" excludeAll (ExclusionRule("org.apache.hadoop")))}
-  else Seq.empty
-)
-
-libraryDependencies ++= snapshotOnly.value
-
 
 avroSpecificSourceDirectories in Compile += (sourceDirectory in Compile).value / "avro/input"
 avroSpecificSourceDirectories in Test += (sourceDirectory in Test).value / "avro"
