@@ -212,9 +212,9 @@ trait BDGAlignFileReaderWriter [T <: BDGAlignInputFormat]{
         val tagFieldName = tagField.name.toString.replaceFirst("tag_", "").toUpperCase
         val tagFieldType = tagField.typeSignature.resultType
         tagFieldType match {
-          case t if t =:= typeOf[Option[Long]]  => {val v = r.getUnsignedIntegerAttribute(tagFieldName);if(v == null) None else Some (v)}
-          case t if t =:= typeOf[Option[Int]]  => {val v = r.getIntegerAttribute(tagFieldName);if(v == null) None else Some (v)}
-          case t if t =:= typeOf[Option[String]] => {val v = r.getStringAttribute(tagFieldName);if(v == null) None else Some (v)}
+          case t if t =:= typeOf[Option[Long]]  => {val v = r.getUnsignedIntegerAttribute(tagFieldName); v }
+          case t if t =:= typeOf[Option[Int]]  => {val v = r.getIntegerAttribute(tagFieldName); v }
+          case t if t =:= typeOf[Option[String]] => {val v = r.getStringAttribute(tagFieldName); v}
           case _ => throw new Exception (s"Cannot process ${tagFieldName} with type: ${tagFieldType}.")
         }
       }
