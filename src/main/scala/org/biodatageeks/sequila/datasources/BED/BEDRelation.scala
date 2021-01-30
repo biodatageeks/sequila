@@ -6,6 +6,7 @@ import org.apache.spark.sql.{Encoders, Row, SQLContext, SparkSession}
 import org.apache.spark.sql.sources.{BaseRelation, Filter, PrunedFilteredScan}
 import org.biodatageeks.sequila.utils.{Columns, DataQualityFuncs}
 
+
 class BEDRelation(path: String)(@transient val sqlContext: SQLContext)
   extends BaseRelation
     with PrunedFilteredScan
