@@ -24,8 +24,6 @@ dependencyOverrides += "com.google.guava" % "guava" % "15.0"
 libraryDependencies += "org.apache.hadoop" % "hadoop-client" % hadoopVersion
 libraryDependencies += "org.apache.spark" %% "spark-core" % sparkVersion
 libraryDependencies += "org.apache.spark" %% "spark-sql" % sparkVersion
-libraryDependencies += "org.apache.spark" %% "spark-hive" % sparkVersion excludeAll (ExclusionRule("org.apache.avro"))
-libraryDependencies += "org.apache.spark" %% "spark-hive-thriftserver" % sparkVersion excludeAll (ExclusionRule("org.apache.avro"))
 libraryDependencies += "com.holdenkarau" %% "spark-testing-base" % "3.0.1_1.0.0" % "test" excludeAll ExclusionRule(organization = "javax.servlet") excludeAll (ExclusionRule("org.apache.hadoop"))
 libraryDependencies += "org.bdgenomics.adam" %% "adam-core-spark3" % "0.33.0" excludeAll (ExclusionRule("org.seqdoop"))
 libraryDependencies += "org.bdgenomics.adam" %% "adam-apis-spark3" % "0.33.0" excludeAll (ExclusionRule("org.seqdoop"))
