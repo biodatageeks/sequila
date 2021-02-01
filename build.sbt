@@ -14,25 +14,23 @@ scalaVersion := "2.12.8"
 val isSnapshotVersion = settingKey[Boolean]("Is snapshot")
 isSnapshotVersion := version.value.toLowerCase.contains("snapshot")
 
-val DEFAULT_HADOOP_VERSION = "3.1.0"
+val DEFAULT_HADOOP_VERSION = "2.7.4"
 
 lazy val hadoopVersion = Properties.envOrElse("SPARK_HADOOP_VERSION", DEFAULT_HADOOP_VERSION)
 
 dependencyOverrides += "com.google.guava" % "guava" % "15.0"
 
-libraryDependencies += "org.seqdoop" % "hadoop-bam" % "7.10.0"
+//removing hadoop-bam to used a patched one with support for htsjdk 2.22
 libraryDependencies += "org.apache.hadoop" % "hadoop-client" % hadoopVersion
-libraryDependencies +=  "org.apache.spark" %% "spark-core" % sparkVersion
-libraryDependencies +=  "org.apache.spark" %% "spark-sql" % sparkVersion
-libraryDependencies +=  "org.apache.spark" %% "spark-hive" % sparkVersion excludeAll (ExclusionRule("org.apache.avro"))
-libraryDependencies +=  "org.apache.spark" %% "spark-hive-thriftserver" % "3.0.1" excludeAll (ExclusionRule("org.apache.avro"))
+libraryDependencies += "org.apache.spark" %% "spark-core" % sparkVersion
+libraryDependencies += "org.apache.spark" %% "spark-sql" % sparkVersion
 libraryDependencies += "com.holdenkarau" %% "spark-testing-base" % "3.0.1_1.0.0" % "test" excludeAll ExclusionRule(organization = "javax.servlet") excludeAll (ExclusionRule("org.apache.hadoop"))
-libraryDependencies += "org.bdgenomics.adam" %% "adam-core-spark3" % "0.33.0"
-libraryDependencies += "org.bdgenomics.adam" %% "adam-apis-spark3" % "0.33.0"
-libraryDependencies += "org.bdgenomics.adam" %% "adam-cli-spark3" % "0.33.0"
+libraryDependencies += "org.bdgenomics.adam" %% "adam-core-spark3" % "0.33.0" excludeAll (ExclusionRule("org.seqdoop"))
+libraryDependencies += "org.bdgenomics.adam" %% "adam-apis-spark3" % "0.33.0" excludeAll (ExclusionRule("org.seqdoop"))
+libraryDependencies += "org.bdgenomics.adam" %% "adam-cli-spark3" % "0.33.0" excludeAll (ExclusionRule("org.seqdoop"))
 libraryDependencies += "org.scala-lang" % "scala-library" % scalaVersion.value
 libraryDependencies += "org.rogach" %% "scallop" % "3.1.2"
-libraryDependencies += "com.github.samtools" % "htsjdk" % "2.19.0" //FIXME:: bump togehter with disq
+libraryDependencies += "com.github.samtools" % "htsjdk" % "2.22.0"
 libraryDependencies += "ch.cern.sparkmeasure" %% "spark-measure" % "0.17" excludeAll (ExclusionRule("org.apache.hadoop"))
 libraryDependencies += "org.broadinstitute" % "gatk-native-bindings" % "1.0.0" excludeAll (ExclusionRule("org.apache.hadoop"))
 libraryDependencies += "org.apache.logging.log4j" % "log4j-core" % "2.11.0"
@@ -41,8 +39,8 @@ libraryDependencies += "de.ruedigermoeller" % "fst" % "2.57"
 libraryDependencies += "org.apache.commons" % "commons-lang3" % "3.7"
 libraryDependencies += "org.eclipse.jetty" % "jetty-servlet" % "9.3.24.v20180605"
 libraryDependencies += "org.apache.derby" % "derbyclient" % "10.14.2.0"
-libraryDependencies += "org.disq-bio" % "disq" % "0.3.3"  //FIXME: migration to disq (CRAM API changed a lot starting from htsjdk 2.21)
-libraryDependencies += "io.projectglow" %% "glow-spark3" % "0.6.0" excludeAll (ExclusionRule("com.github.samtools")) //FIXME:: remove togehter with disq
+libraryDependencies += "org.disq-bio" % "disq" % "0.3.6"
+libraryDependencies += "io.projectglow" %% "glow-spark3" % "0.6.0" excludeAll (ExclusionRule("com.github.samtools")) excludeAll (ExclusionRule("org.seqdoop")) //FIXME:: remove togehter with disq
 libraryDependencies += "com.intel.gkl" % "gkl" % "0.8.6"
 
 
@@ -78,12 +76,11 @@ resolvers ++= Seq(
   "Cloudera" at "https://repository.cloudera.com/content/repositories/releases/",
   "Hortonworks" at "https://repo.hortonworks.com/content/repositories/releases/",
   "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
-
 )
 
 //fix for hdtsdjk patch in hadoop-bam and disq
 assemblyShadeRules in assembly := Seq(
-  ShadeRule.rename("htsjdk.samtools.SAMRecordHelper" -> "htsjdk.samtools.SAMRecordHelperDisq").inLibrary("org.disq-bio" % "disq" % "0.3.3"),
+  ShadeRule.rename("htsjdk.samtools.SAMRecordHelper" -> "htsjdk.samtools.SAMRecordHelperDisq").inLibrary("org.disq-bio" % "disq" % "0.3.6"),
   ShadeRule.rename("htsjdk.samtools.SAMRecordHelper" -> "htsjdk.samtools.SAMRecordHelperHadoopBAM").inLibrary("org.seqdoop" % "hadoop-bam" % "7.10.0").inProject
 )
 
