@@ -5,7 +5,6 @@ import java.io.{OutputStreamWriter, PrintWriter}
 import com.holdenkarau.spark.testing.{DataFrameSuiteBase, SharedSparkContext}
 import org.apache.spark.sql.SequilaSession
 import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
-import org.bdgenomics.utils.instrumentation.{Metrics, MetricsListener, RecordedMetrics}
 import org.biodatageeks.sequila.apps.FeatureCounts.Region
 import org.biodatageeks.sequila.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
 import org.biodatageeks.sequila.utils.Columns
@@ -19,13 +18,11 @@ class MultisampleBAMTestSuite
     with SharedSparkContext {
 
   val bamPath: String = getClass.getResource("/multisample").getPath + "/*.bam"
-  val metricsListener = new MetricsListener(new RecordedMetrics())
-  val writer = new PrintWriter(new OutputStreamWriter(System.out))
+
   val tableNameBAM = "reads"
 
   before {
-    Metrics.initialize(sc)
-    sc.addSparkListener(metricsListener)
+
     spark.experimental.extraStrategies = new IntervalTreeJoinStrategyOptim(
       spark) :: Nil
     spark.sql(s"DROP TABLE IF EXISTS $tableNameBAM")

@@ -8,12 +8,15 @@ class GenomicIntervalTVFTestSuite  extends  BAMBaseTestSuite {
 
 
 test("Test bdg_grange TVF"){
+
   val  ss = SequilaSession(spark)
   SequilaRegister.register(ss)
+  ss.sparkContext.setLogLevel("WARN")
+
   val query =
     s"""
        |SELECT count(*)
-       |FROM  $tableNameBAM r JOIN (SELECT * FROM bdg_grange('1',34,110)) as gi
+       |FROM  $tableNameBAM AS r JOIN (SELECT * FROM bdg_grange('1',34,110)) as gi
        |ON (r.${Columns.CONTIG} = gi.${Columns.CONTIG}
        |AND gi.${Columns.END} >= r.${Columns.START}
        |AND gi.${Columns.START} <= r.${Columns.END}
@@ -21,6 +24,7 @@ test("Test bdg_grange TVF"){
        |
        """.stripMargin
 
+  ss.sql(query).explain(true)
   assert(ss
     .sql(query)
         .first()

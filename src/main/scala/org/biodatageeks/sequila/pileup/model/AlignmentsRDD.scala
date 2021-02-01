@@ -4,7 +4,6 @@ import java.util
 
 import htsjdk.samtools.SAMRecord
 import org.apache.spark.rdd.RDD
-import org.biodatageeks.sequila.pileup.timers.PileupTimers.{AggMapLookupTimer, AnalyzeReadsTimer, BAMReadTimer, DQTimerTimer, HandleFirstContingTimer, InitContigLengthsTimer, MapPartitionTimer, PrepareOutupTimer}
 import org.biodatageeks.sequila.utils.{DataQualityFuncs, FastMath}
 
 import scala.collection.{JavaConverters, mutable}
@@ -31,9 +30,8 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
     * @return distributed collection of PileupRecords
     */
   def assembleContigAggregates(conf: Broadcast[Conf]): RDD[ContigAggregate] = {
-    val contigLenMap = InitContigLengthsTimer.time  {
-      initContigLengths(this.rdd.first())
-    }
+    val contigLenMap = initContigLengths(this.rdd.first())
+
     this.rdd.mapPartitions { partition =>
 //      println(s"Creating aggregates from alignments")
 
@@ -41,10 +39,9 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
       val contigMaxReadLen = new mutable.HashMap[String, Int]()
       var contigIter, contigCleanIter  = ""
       var contigAggregate: ContigAggregate = null
-      MapPartitionTimer.time {
         while (partition.hasNext) {
-          val read = BAMReadTimer.time {partition.next()}
-          val contig = DQTimerTimer.time {
+          val read = partition.next()
+          val contig =
             if(read.getContig == contigIter)
               contigCleanIter
             else {
@@ -52,18 +49,17 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
               contigCleanIter =  DataQualityFuncs.cleanContig(contigIter)
               contigCleanIter
             }
-          }
 
           if (!aggMap.contains(contig))
-            HandleFirstContingTimer.time {
+
               handleFirstReadForContigInPartition(read, contig, contigLenMap, contigMaxReadLen, aggMap, conf)
-              contigAggregate = AggMapLookupTimer.time {aggMap(contig) }
-            }
-          AnalyzeReadsTimer.time {read.analyzeRead(contig, contigAggregate, contigMaxReadLen, conf)}
+              contigAggregate = aggMap(contig)
+
+          read.analyzeRead(contig, contigAggregate, contigMaxReadLen, conf)
         }
-        val aggregates = PrepareOutupTimer.time {prepareOutputAggregates(aggMap, contigMaxReadLen, conf).toIterator}
+        val aggregates = prepareOutputAggregates(aggMap, contigMaxReadLen, conf).toIterator
         aggregates
-      }
+
     }
   }
 

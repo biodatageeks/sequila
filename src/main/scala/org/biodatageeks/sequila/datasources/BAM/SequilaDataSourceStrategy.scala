@@ -13,6 +13,7 @@ import org.apache.spark.sql.execution.{RowDataSourceScanExec, SparkPlan}
 import org.apache.spark.sql.execution.datasources.DataSourceStrategy.selectFilters
 import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql._
+import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.sources._
 import org.apache.spark.sql.types.{StringType, StructType}
 import org.apache.spark.unsafe.types.UTF8String
@@ -233,7 +234,11 @@ case class SequilaDataSourceStrategy(spark: SparkSession) extends Strategy with 
                                    output: Seq[Attribute],
                                    rdd: RDD[Row]): RDD[InternalRow] = {
     if (relation.relation.needConversion) {
-      execution.RDDConversions.rowToRowRdd(rdd, output.map(_.dataType))
+
+      val toRow = RowEncoder(StructType.fromAttributes(output)).createSerializer()
+      rdd.mapPartitions { iterator =>
+        iterator.map(toRow)
+      }
     } else {
       rdd.asInstanceOf[RDD[InternalRow]]
     }

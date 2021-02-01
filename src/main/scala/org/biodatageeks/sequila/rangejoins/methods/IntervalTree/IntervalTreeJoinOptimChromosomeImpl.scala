@@ -28,12 +28,10 @@ package org.biodatageeks.sequila.rangejoins.methods.IntervalTree
 
 import org.apache.log4j.Logger
 import org.apache.spark.SparkContext
-import org.apache.spark.rdd.MetricsContext._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.InternalRow
 import org.biodatageeks.sequila.rangejoins.IntervalTree.Interval
-import org.biodatageeks.sequila.rangejoins.common.performance.timers.IntervalTreeTimer._
 import org.biodatageeks.sequila.rangejoins.optimizer.{JoinOptimizerChromosome, RangeJoinMethod}
 
 import scala.collection.JavaConversions._
@@ -80,24 +78,20 @@ object IntervalTreeJoinOptimChromosomeImpl extends Serializable {
       val localIntervals = {
         if (maxGap != 0)
           rdd1
-            .instrument()
             .map(r => (r._1, Interval(r._2.start - maxGap, r._2.end + maxGap), r._3.copy()))
         else
           rdd1
-            .instrument()
             .map(r => (r._1, Interval(r._2.start, r._2.end), r._3.copy()))
       }
         .collect()
 
-  val intervalTree = IntervalTreeHTSBuild.time {
+  val intervalTree = {
     val tree = new IntervalTreeHTSChromosome[InternalRow](localIntervals)
     spark.sparkContext.broadcast(tree)
   }
     val joinedRDD = rdd2
-      .instrument()
         .mapPartitions(p=> {
           p.map(r=> {
-            IntervalTreeHTSLookup.time {
                 intervalTree.value.getIntervalTreeByChromosome(r._1) match {
                   case Some(t) => {
                     val record = t.overlappers(r._2.start, r._2.end)
@@ -111,7 +105,7 @@ object IntervalTreeJoinOptimChromosomeImpl extends Serializable {
                   }
                   case _ => Iterator.empty
                 }
-            }
+
           })
         })
       .flatMap(r => r)
@@ -122,7 +116,6 @@ object IntervalTreeJoinOptimChromosomeImpl extends Serializable {
 
       val intervalsWithId =
         rdd1
-        .instrument()
         .zipWithIndex()
 
 
@@ -132,15 +125,13 @@ object IntervalTreeJoinOptimChromosomeImpl extends Serializable {
         .collect()
 
       /* Create and broadcast an interval tree */
-      val intervalTree = IntervalTreeHTSBuild.time {
+      val intervalTree = {
         val tree = new IntervalTreeHTSChromosome[Long](localIntervals)
         spark.sparkContext.broadcast(tree)
       }
       val kvrdd2 = rdd2
-        .instrument()
         .mapPartitions(p => {
           p.map(r => {
-            IntervalTreeHTSLookup.time {
                 intervalTree.value.getIntervalTreeByChromosome(r._1) match {
                   case Some(t) =>{
                     val record = t.overlappers(r._2.start, r._2.end)
@@ -154,7 +145,6 @@ object IntervalTreeJoinOptimChromosomeImpl extends Serializable {
                   }
                   case _ => Iterator.empty
                 }
-            }
           })
         }).flatMap(r=>r)
       val intRDD = intervalsWithId.map(r=>(r._2,r._1._3.copy()))

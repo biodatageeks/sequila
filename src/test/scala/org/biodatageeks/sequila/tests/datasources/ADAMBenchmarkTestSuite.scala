@@ -3,11 +3,7 @@ package org.biodatageeks.sequila.tests.datasources
 import java.io.{OutputStreamWriter, PrintWriter}
 
 import com.holdenkarau.spark.testing.{DataFrameSuiteBase, SharedSparkContext}
-import org.bdgenomics.utils.instrumentation.{
-  Metrics,
-  MetricsListener,
-  RecordedMetrics
-}
+
 import org.biodatageeks.sequila.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
 import org.biodatageeks.sequila.rangejoins.genApp.IntervalTreeJoinStrategy
 import org.biodatageeks.sequila.utils.Columns
@@ -35,8 +31,6 @@ class ADAMBenchmarkTestSuite
      |)
      """.stripMargin
 
-  val metricsListener = new MetricsListener(new RecordedMetrics())
-  val writer = new PrintWriter(new OutputStreamWriter(System.out))
 
   before {
     System.setSecurityManager(null)
@@ -67,9 +61,6 @@ class ADAMBenchmarkTestSuite
       """.stripMargin)
 
     spark.sql(s"""select * from $tableSnp limit 1""").show()
-    Metrics.initialize(sc)
-
-    sc.addSparkListener(metricsListener)
 
   }
 
@@ -120,11 +111,4 @@ class ADAMBenchmarkTestSuite
     time(assert(spark.sqlContext.sql(query).count === 616404L))
   }
 
-  after {
-
-    //Metrics.print(writer, Some(metricsListener.metrics.sparkMetrics.stageTimes))
-    writer.flush()
-    Metrics.stopRecording()
-
-  }
 }

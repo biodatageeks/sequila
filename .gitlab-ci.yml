@@ -16,8 +16,9 @@ variables:
   SPHINX_VERSION: 3.2.1
   DOCKER_VERSION: 19.03.12
   SCALA_MAJOR_VERSION: 2
-  SCALA_MINOR_VERSION: 11
+  SCALA_MINOR_VERSION: 12
   GKL_VERSION: 0.8.5-1
+  HADOOP_BAM_VERSION: 8.0.0-SNAPSHOT
 
 
 # --------------------------------- STAGE: version ---------------------------------------------------------------------
@@ -86,6 +87,10 @@ build:
     - ./merge_jars.sh
       /builds/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/lib/gkl-$GKL_VERSION-darwin-SNAPSHOT.jar
       /builds/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/target/scala-$SCALA_MAJOR_VERSION.$SCALA_MINOR_VERSION/sequila_$SCALA_MAJOR_VERSION.$SCALA_MINOR_VERSION-$VERSION.jar
+    - ./merge_jars.sh
+      /builds/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/lib/hadoop-bam-$HADOOP_BAM_VERSION.jar
+      /builds/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/target/scala-$SCALA_MAJOR_VERSION.$SCALA_MINOR_VERSION/sequila_$SCALA_MAJOR_VERSION.$SCALA_MINOR_VERSION-$VERSION.jar
+
   artifacts:
     paths:
       - /builds/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/target/scala-$SCALA_MAJOR_VERSION.$SCALA_MINOR_VERSION/

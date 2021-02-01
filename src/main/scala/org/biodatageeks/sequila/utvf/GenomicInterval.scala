@@ -21,7 +21,7 @@ case class GenomicInterval(
     Statistics( sizeInBytes = sizeInBytes )
   }
 
-  override def simpleString: String = {
+  override def toString: String = {
     s"GenomicInterval ($contig, $start, $end)"
   }
 

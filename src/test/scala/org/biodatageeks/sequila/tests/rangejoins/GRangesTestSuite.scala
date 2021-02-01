@@ -4,11 +4,7 @@ import java.io.{OutputStreamWriter, PrintWriter}
 
 import com.holdenkarau.spark.testing.{DataFrameSuiteBase, SharedSparkContext}
 import org.apache.spark.sql.{Row, SequilaSession}
-import org.bdgenomics.utils.instrumentation.{
-  Metrics,
-  MetricsListener,
-  RecordedMetrics
-}
+
 import org.biodatageeks.sequila.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
 import org.biodatageeks.sequila.utils.{
   Columns,
@@ -26,15 +22,11 @@ class GRangesTestSuite
     with Interval {
 
   var ss: SequilaSession = _
-  val metricsListener = new MetricsListener(new RecordedMetrics())
-  val writer = new PrintWriter(new OutputStreamWriter(System.out))
   before {
     ss = SequilaSession(spark)
     SequilaRegister.register(ss)
     UDFRegister.register(ss)
     System.setSecurityManager(null)
-    Metrics.initialize(sc)
-    sc.addSparkListener(metricsListener)
     val rdd1 = ss.sparkContext
       .textFile(getClass.getResource("/refFlat.txt.bz2").getPath)
       .map(r => r.split('\t'))
@@ -412,11 +404,4 @@ class GRangesTestSuite
         .get(0) === 14127)
   }
 
-  after {
-
-    Metrics.print(writer, Some(metricsListener.metrics.sparkMetrics.stageTimes))
-    writer.flush()
-    Metrics.stopRecording()
-
-  }
 }

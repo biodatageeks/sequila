@@ -4,7 +4,6 @@ import java.io.{OutputStreamWriter, PrintWriter}
 
 import com.holdenkarau.spark.testing.{DataFrameSuiteBase, SharedSparkContext}
 import org.apache.spark.sql.{SequilaSession, SparkSession}
-import org.bdgenomics.utils.instrumentation.{Metrics, MetricsListener, RecordedMetrics}
 import org.biodatageeks.sequila.coverage.CoverageStrategy
 import org.biodatageeks.sequila.utils.{Columns, InternalParams, SequilaRegister}
 import org.scalatest.{BeforeAndAfter, FunSuite}
@@ -19,8 +18,6 @@ class CoverageTestSuite
   val bamMultiPath: String =
     getClass.getResource("/multichrom/bam/NA12878.multichrom.bam").getPath
   val adamPath: String = getClass.getResource("/NA12878.slice.adam").getPath
-  val metricsListener = new MetricsListener(new RecordedMetrics())
-  val writer = new PrintWriter(new OutputStreamWriter(System.out))
   val cramPath: String = getClass.getResource("/cram/test.cram").getPath
   val refPath: String = getClass.getResource("/cram/test.fa").getPath
   val tableNameBAM = "reads"
@@ -33,8 +30,6 @@ class CoverageTestSuite
 
   before {
 
-    Metrics.initialize(sc)
-    sc.addSparkListener(metricsListener)
     System.setSecurityManager(null)
     spark.sql(s"DROP TABLE IF EXISTS $tableNameBAM")
     spark.sql(s"""
@@ -367,12 +362,5 @@ class CoverageTestSuite
 
   }
 
-  after {
-
-    Metrics.print(writer, Some(metricsListener.metrics.sparkMetrics.stageTimes))
-    writer.flush()
-    Metrics.stopRecording()
-
-  }
 
 }

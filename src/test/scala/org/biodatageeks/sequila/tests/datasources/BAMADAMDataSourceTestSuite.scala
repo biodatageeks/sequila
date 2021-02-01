@@ -4,7 +4,6 @@ import java.io.{OutputStreamWriter, PrintWriter}
 
 import com.holdenkarau.spark.testing.{DataFrameSuiteBase, SharedSparkContext}
 import org.apache.log4j.Logger
-import org.bdgenomics.utils.instrumentation.{Metrics, MetricsListener, RecordedMetrics}
 import org.biodatageeks.sequila.apps.FeatureCounts.Region
 import org.biodatageeks.sequila.utils.Columns
 import org.scalatest.{BeforeAndAfter, FunSuite}
@@ -20,15 +19,12 @@ class BAMADAMDataSourceTestSuite
   val adamPath: String = getClass.getResource("/NA12878.slice.adam").getPath
   val cramPath: String = getClass.getResource("/NA12878.slice.cram").getPath
   val refPath: String = getClass.getResource("/NA12878.slice.fasta").getPath
-  val metricsListener = new MetricsListener(new RecordedMetrics())
-  val writer = new PrintWriter(new OutputStreamWriter(System.out))
   val tableNameBAM = "reads"
   val tableNameADAM = "readsADAM"
   val tableNameCRAM = "readsCRAM"
   before {
 
-    Metrics.initialize(sc)
-    sc.addSparkListener(metricsListener)
+
     spark.sql(s"DROP TABLE IF EXISTS $tableNameBAM")
     spark.sql(s"""
          |CREATE TABLE $tableNameBAM
@@ -151,12 +147,6 @@ class BAMADAMDataSourceTestSuite
     spark
       .sql(s"SELECT ${Columns.SEQUENCE} FROM $tableNameBAM limit 5")
       .show()
-  }
-
-  after {
-    spark.sql(s"DROP TABLE IF EXISTS  $tableNameBAM")
-    writer.flush()
-    Metrics.stopRecording()
   }
 
 }

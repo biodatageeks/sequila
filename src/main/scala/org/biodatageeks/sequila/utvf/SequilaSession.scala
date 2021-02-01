@@ -14,21 +14,18 @@ import org.biodatageeks.sequila.coverage.CoverageStrategy
 
 
 case class SequilaSession(sparkSession: SparkSession) extends SparkSession(sparkSession.sparkContext) {
-  @transient val sequilaAnalyzer = new SeQuiLaAnalyzer(sparkSession.sessionState.catalog,sparkSession.sessionState.conf)
-  def executePlan(plan:LogicalPlan) =  new QueryExecution(sparkSession,sequilaAnalyzer.execute(plan))
-  @transient override lazy val sessionState = SequilaSessionState(sparkSession,sequilaAnalyzer,executePlan)
-
-  //new rules
-//  sequilaAnalyzer.sequilaOptmazationRules = Seq(
-//    new BAMCTASOptimizationRule(sparkSession),
-//    new BAMIASOptimizationRule(sparkSession)
-//  )
+  @transient val analyzer = new SeQuiLaAnalyzer(
+      sparkSession)
+  def executePlan(plan:LogicalPlan) =  new QueryExecution(sparkSession,analyzer.execute(plan))
+  @transient override lazy val sessionState = SequilaSessionState(sparkSession,analyzer,executePlan)
 
 
 }
 
+
 case class SequilaSessionState(sparkSession: SparkSession, customAnalyzer: Analyzer, executePlan: LogicalPlan => QueryExecution)
-  extends SessionState(sparkSession.sharedState,
+  extends SessionState(
+    sparkSession.sharedState,
     sparkSession.sessionState.conf,
     sparkSession.sessionState.experimentalMethods,
     sparkSession.sessionState.functionRegistry,
@@ -38,34 +35,12 @@ case class SequilaSessionState(sparkSession: SparkSession, customAnalyzer: Analy
     () =>customAnalyzer,
     () =>sparkSession.sessionState.optimizer,
     sparkSession.sessionState.planner,
-    sparkSession.sessionState.streamingQueryManager,
+    () => sparkSession.sessionState.streamingQueryManager,
     sparkSession.sessionState.listenerManager,
     () =>sparkSession.sessionState.resourceLoader,
     executePlan,
-    (sparkSession:SparkSession,sessionState: SessionState) => sessionState.clone(sparkSession)){
-}
-
-
-
-object UTVFRegister {
-
-  def main(args: Array[String]): Unit = {
-
-    System.setSecurityManager(null)
-    type ExtensionsBuilder = SparkSessionExtensions => Unit
-   // val f: ExtensionsBuilder = { e => e.injectResolutionRule(ResolveTableValuedFunctionsSeq) }
-    val spark = SparkSession.builder()
-      .master("local[1]")
-     // .withExtensions(f)
-      .getOrCreate()
-//
-//    spark
-//      .sql("select * from range(1,2)")
-//        .explain(true
-
-    //val context: SparkContext = new SparkContext(conf)
-    val session: SparkSession = SequilaSession(spark)
-    session.experimental.extraStrategies = new CoverageStrategy(session) :: Nil
-  }
-
+    (sparkSession:SparkSession,sessionState: SessionState) => sessionState.clone(sparkSession),
+    sparkSession.sessionState.columnarRules,
+    sparkSession.sessionState.queryStagePrepRules
+  ){
 }

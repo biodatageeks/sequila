@@ -53,6 +53,8 @@ case class PileupPlan [T<:BDGAlignInputFormat](plan:LogicalPlan, spark:SparkSess
                                                output:Seq[Attribute])(implicit c: ClassTag[T])
   extends SparkPlan with Serializable  with BDGAlignFileReaderWriter [T]{
 
+  override protected def otherCopyArgs: Seq[AnyRef] = Seq(c)
+
   override def children: Seq[SparkPlan] = Nil
 
   override protected def doExecute(): RDD[InternalRow] = {
