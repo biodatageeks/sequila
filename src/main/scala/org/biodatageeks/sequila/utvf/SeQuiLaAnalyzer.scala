@@ -4,11 +4,12 @@ import org.apache.spark.sql.{ResolveTableValuedFunctionsSeq, SparkSession}
 import org.apache.spark.sql.catalyst.catalog.SessionCatalog
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.catalyst.rules.Rule
-import org.apache.spark.sql.connector.catalog.CatalogManager
-import org.apache.spark.sql.execution.datasources.FindDataSourceTable
-import org.apache.spark.sql.internal.SQLConf
+import org.apache.spark.sql.execution.aggregate.ResolveEncodersInScalaAgg
+import org.apache.spark.sql.execution.analysis.DetectAmbiguousSelfJoin
+import org.apache.spark.sql.execution.command.CommandCheck
+import org.apache.spark.sql.execution.datasources.v2.TableCapabilityCheck
+import org.apache.spark.sql.execution.datasources.{DataSourceAnalysis, FallBackFileSourceV2, FindDataSourceTable, HiveOnlyCheck, PreReadCheck, PreWriteCheck, PreprocessTableCreation, PreprocessTableInsertion, ResolveSQLOnFile}
 
-import scala.util.Random
 
 
 class SeQuiLaAnalyzer(session: SparkSession) extends
@@ -16,10 +17,31 @@ class SeQuiLaAnalyzer(session: SparkSession) extends
     session.sessionState.conf,
     session.sessionState.conf.optimizerMaxIterations){
 
-  override val extendedResolutionRules: Seq[Rule[LogicalPlan]] =
-    new FindDataSourceTable(session) +: session.extensions.buildResolutionRules(session)
-
   val conf = session.sessionState.conf
+  val catalog = session.sessionState.catalog
+  override val extendedResolutionRules: Seq[Rule[LogicalPlan]] =
+    new FindDataSourceTable(session) +:
+    new ResolveSQLOnFile(session) +:
+    new FallBackFileSourceV2(session) +:
+      new ResolveSessionCatalog(
+        catalogManager, conf, catalog.isTempView, catalog.isTempFunction) +:
+    ResolveEncodersInScalaAgg+: session.extensions.buildResolutionRules(session)
+
+
+  override val postHocResolutionRules: Seq[Rule[LogicalPlan]] =
+    new DetectAmbiguousSelfJoin(conf) +:
+      PreprocessTableCreation(session) +:
+      PreprocessTableInsertion(conf) +:
+      DataSourceAnalysis(conf) +: session.extensions.buildPostHocResolutionRules(session)
+
+  override val extendedCheckRules: Seq[LogicalPlan => Unit] =
+    PreWriteCheck +:
+      PreReadCheck +:
+      HiveOnlyCheck +:
+      TableCapabilityCheck +:
+      CommandCheck(conf) +: session.extensions.buildCheckRules(session)
+
+
   private val v1SessionCatalog: SessionCatalog = catalogManager.v1SessionCatalog
 
 
