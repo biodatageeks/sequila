@@ -4,9 +4,7 @@ package org.apache.spark.sql
 import org.apache.spark.sql.catalyst.analysis.{Analyzer, SeQuiLaAnalyzer}
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.execution.QueryExecution
-//import org.apache.spark.sql.execution.command.{BAMCTASOptimizationRule, BAMIASOptimizationRule}
 import org.apache.spark.sql.internal.SessionState
-import org.biodatageeks.sequila.coverage.CoverageStrategy
 
 
 
