@@ -135,6 +135,8 @@ release:
     - mv /builds/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/target/scala-$SCALA_MAJOR_VERSION.$SCALA_MINOR_VERSION/sequila*jar /tmp
     - sbt publish
     - mv /tmp/sequila*jar /builds/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/target/sonatype-staging/$VERSION/org/$CI_PROJECT_NAMESPACE/${CI_PROJECT_NAME}_${SCALA_MAJOR_VERSION}.${SCALA_MINOR_VERSION}/$VERSION/
+    - find /builds/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/target/sonatype-staging/  -name "$CI_PROJECT_NAME*.jar" -o -name "$CI_PROJECT_NAME*.pom" | xargs -I {} sh -c "echo $PGP_PASSPHRASE | sha1sum > {}.sha1 {}"
+    - find /builds/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/target/sonatype-staging/  -name "$CI_PROJECT_NAME*.jar" -o -name "$CI_PROJECT_NAME*.pom" | xargs -I {} sh -c "md5sum > {}.md5 {}"
     - find /builds/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/target/sonatype-staging/  -name "$CI_PROJECT_NAME*.jar" -o -name "$CI_PROJECT_NAME*.pom" | xargs -I {} sh -c "echo $PGP_PASSPHRASE | PASSPHRASE=$PGP_PASSPHRASE gpg --detach-sign --armor --use-agent --pinentry-mode loopback --command-fd 0 --output {}.asc {}"
     - sbt sonatypeBundleRelease
   tags: [ docker ]
