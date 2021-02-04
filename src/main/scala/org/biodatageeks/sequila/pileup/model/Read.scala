@@ -89,10 +89,10 @@ case class ExtendedReads(read: SAMRecord) {
       val cigarOpLength = cigarElement.getLength
       val cigarOp = cigarElement.getOperator
 
-      if (cigarOp == CigarOperator.INSERTION) {
+      if (cigarOp == CigarOperator.INSERTION)
         numInsertions += cigarOpLength
-      }
-      position = position + cigarOpLength
+      else if (cigarOp != CigarOperator.HARD_CLIP)
+        position = position + cigarOpLength
     }
     mdPosition + numInsertions
   }
@@ -106,7 +106,7 @@ case class ExtendedReads(read: SAMRecord) {
     var delCounter = 0
     var altsPositions = mutable.Set.empty[Int]
     val clipLen =
-      if (cigar.getCigarElement(0).getOperator.isClipping)
+      if (cigar.getCigarElement(0).getOperator == CigarOperator.SOFT_CLIP)
         cigar.getCigarElement(0).getLength else 0
 
     position += clipLen
