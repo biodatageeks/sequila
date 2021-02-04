@@ -16,20 +16,17 @@ case class ReadQualSummary (start: Int, end: Int,
   def overlapsPosition(pos: Int): Boolean = !hasDeletionOnPosition(pos) && start <= pos && end >= pos
 
   @inline
-  def relativePosition(absPosition: Int): Int = absPosition - start + inDelEventsOffset(absPosition) + cigarDerivedConf.leftClipLength
+  def relativePosition(absPosition: Int): Int = {
+    absPosition - start + inDelEventsOffset(absPosition) + cigarDerivedConf.leftClipLength
+
+  }
 
   @inline
   private def inDelEventsOffset(pos: Int): Int = {
     if (!cigarDerivedConf.hasIndel)
       return 0
-    cigarDerivedConf
-      .indelPositions
-      .insertPositions
-      .count(_ <= pos + cigarDerivedConf.leftClipLength) -
-      cigarDerivedConf
-      .indelPositions
-      .delPositions
-      .count(_ <= pos + cigarDerivedConf.leftClipLength)
+    cigarDerivedConf.getInsertOffsetForPosition(pos)- cigarDerivedConf.getDelOffsetForPosition(pos)
+
 
   }
 
@@ -40,7 +37,7 @@ case class ReadQualSummary (start: Int, end: Int,
     else {
       cigarDerivedConf
         .indelPositions
-        .delPositions.contains(pos)
+        .delPositions.exists { case (start, end) => pos >= start && pos < end }
     }
   }
 }
