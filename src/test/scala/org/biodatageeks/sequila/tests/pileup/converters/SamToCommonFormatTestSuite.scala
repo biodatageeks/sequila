@@ -1,6 +1,6 @@
 package org.biodatageeks.sequila.tests.pileup.converters
 
-import org.biodatageeks.sequila.pileup.converters.SamtoolsConverter
+import org.biodatageeks.sequila.pileup.converters.{SamtoolsConverter, SamtoolsSchema}
 import org.biodatageeks.sequila.tests.pileup.PileupTestBase
 
 class SamToCommonFormatTestSuite extends PileupTestBase {
@@ -11,7 +11,7 @@ class SamToCommonFormatTestSuite extends PileupTestBase {
     val df = spark.read
       .format("csv")
       .option("delimiter", "\t")
-      .schema(schema)
+      .schema(SamtoolsSchema.schema)
       .load(samPath)
 
     val converter = new SamtoolsConverter(spark)

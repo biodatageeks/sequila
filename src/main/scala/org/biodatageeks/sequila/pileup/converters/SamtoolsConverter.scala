@@ -85,14 +85,14 @@ class SamtoolsConverter(spark: SparkSession) extends Serializable {
     val delContext = new DelContext()
 //
     val dataMapped = df.map(row => {
-      val contig = DataQualityFuncs.cleanContig(row.getString(SamtoolsIndices.contig))
-      val position = row.getInt(SamtoolsIndices.position)
-      val ref = row.getString(SamtoolsIndices.ref).toUpperCase()
+      val contig = DataQualityFuncs.cleanContig(row.getString(SamtoolsSchema.contig))
+      val position = row.getInt(SamtoolsSchema.position)
+      val ref = row.getString(SamtoolsSchema.ref).toUpperCase()
       val rawPileup = if (caseSensitive)
-        row.getString(SamtoolsIndices.pileupString)
+        row.getString(SamtoolsSchema.pileupString)
       else
-        row.getString(SamtoolsIndices.pileupString).toUpperCase()
-      val qualityString = row.getString(SamtoolsIndices.qualityString)
+        row.getString(SamtoolsSchema.pileupString).toUpperCase()
+      val qualityString = row.getString(SamtoolsSchema.qualityString)
 
       //FIXME - needed manual escaping in pileup file ... maybe can be done in better way...
      val properQualityString = StringUtils.replace(qualityString,"\\\"", "\"")
@@ -130,7 +130,7 @@ class SamtoolsConverter(spark: SparkSession) extends Serializable {
       }
 
       val diff = delContext.getDelTransferForLocus(contig, position)
-      val cov = (row.getShort(SamtoolsIndices.cov) - diff).toShort
+      val cov = (row.getShort(SamtoolsSchema.cov) - diff).toShort
 
       val qMap = if (map.nonEmpty) generateQualityMap(rawPileup,properQualityString, ref ) else null
 
@@ -155,12 +155,12 @@ class SamtoolsConverter(spark: SparkSession) extends Serializable {
 
 
     for (row <- dataRdd.collect()) {
-      curContig = row.getString(SamtoolsIndices.contig)
-      curPosition = row.getInt(SamtoolsIndices.position)
-      curBase = row.getString(SamtoolsIndices.ref)
-      cov = row.getShort(SamtoolsIndices.cov)
-      val currAlt = row.getMap[Byte, Short](SamtoolsIndices.altsMap)
-      val currQualityMap = row.getMap[Byte, Map[String, Short]](SamtoolsIndices.qualsMap)
+      curContig = row.getString(SamtoolsSchema.contig)
+      curPosition = row.getInt(SamtoolsSchema.position)
+      curBase = row.getString(SamtoolsSchema.ref)
+      cov = row.getShort(SamtoolsSchema.cov)
+      val currAlt = row.getMap[Byte, Short](SamtoolsSchema.altsMap)
+      val currQualityMap = row.getMap[Byte, Map[String, Short]](SamtoolsSchema.qualsMap)
 
       if (prevContig.nonEmpty && prevContig != curContig) {
         if (prevAlt.nonEmpty)

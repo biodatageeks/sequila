@@ -25,16 +25,6 @@ class PileupTestBase extends FunSuite
   val tableName = "reads_bam"
   val tableNameCRAM = "reads_cram"
 
-  val schema: StructType = StructType(
-    List(
-      StructField("contig", StringType, nullable = true),
-      StructField("position", IntegerType, nullable = true),
-      StructField("reference", StringType, nullable = true),
-      StructField("coverage", ShortType, nullable = true),
-      StructField("pileup", StringType, nullable = true),
-      StructField("quality", StringType, nullable = true)
-    )
-  )
   before {
     System.setProperty("spark.kryo.registrator", "org.biodatageeks.sequila.pileup.serializers.CustomKryoRegistrator")
     spark.sqlContext.setConf(InternalParams.SerializationMode, StorageLevel.DISK_ONLY.toString())
