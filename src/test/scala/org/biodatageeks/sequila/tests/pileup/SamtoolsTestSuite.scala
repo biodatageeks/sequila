@@ -26,6 +26,7 @@ class SamtoolsTestSuite extends PileupTestBase {
     val df = spark.read
       .format("csv")
       .option("delimiter", "\t")
+      .option("quote", "\u0000")
       .schema(SamtoolsSchema.schema)
       .load(samResPath)
 
@@ -52,6 +53,7 @@ class SamtoolsTestSuite extends PileupTestBase {
     val df = spark.read
       .format("csv")
       .option("delimiter", "\t")
+      .option("quote", "\u0000")
       .schema(SamtoolsSchema.schema)
       .load(samResPath)
 
@@ -80,6 +82,7 @@ class SamtoolsTestSuite extends PileupTestBase {
     val df = spark.read
       .format("csv")
       .option("delimiter", "\t")
+      .option("quote", "\u0000")
       .schema(SamtoolsSchema.schema)
       .load(samResPath)
 
@@ -105,6 +108,7 @@ class SamtoolsTestSuite extends PileupTestBase {
     val df = spark.read
       .format("csv")
       .option("delimiter", "\t")
+      .option("quote", "\u0000")
       .schema(SamtoolsSchema.schema)
       .load(samResPath)
 

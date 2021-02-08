@@ -56,7 +56,7 @@ class SamtoolsConverter(spark: SparkSession) extends Serializable {
   def generateQualityMap(rawPileup: String, qualityString: String, ref: String, contig: String, position:Int): mutable.Map[Byte, mutable.HashMap[String, Short]] = {
     val cleanPileup = PileupStringUtils.removeAllMarks(rawPileup)
     val (pileup, quality) = removeDeletedBases(cleanPileup, qualityString)
-    assert (pileup.length == quality.length, s"Pilep and quality string lenght mismach at $contig:$position")
+    assert (pileup.length == quality.length, s"Pilep and quality string length mismach at $contig:$position")
 
     val refPileup = pileup.replace(PileupStringUtils.refMatchPlusStrand, ref.charAt(0)).replace(PileupStringUtils.refMatchMinuStrand, ref.charAt(0))
     val res = new mutable.HashMap[Byte, mutable.HashMap[String, Short]]

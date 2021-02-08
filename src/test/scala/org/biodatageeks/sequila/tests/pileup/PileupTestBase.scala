@@ -18,7 +18,7 @@ class PileupTestBase extends FunSuite
   with SharedSparkContext{
 
   val sampleId = "NA12878.multichrom.md"
-  val samResPath: String = getClass.getResource("/multichrom/mdbam/samtools_x_esc.pileup").getPath
+  val samResPath: String = getClass.getResource("/multichrom/mdbam/samtools_x.pileup").getPath
   val referencePath: String = getClass.getResource("/reference/Homo_sapiens_assembly18_chr1_chrM.small.fasta").getPath
   val bamPath: String = getClass.getResource(s"/multichrom/mdbam/${sampleId}.bam").getPath
   val cramPath : String = getClass.getResource(s"/multichrom/mdcram/${sampleId}.cram").getPath
