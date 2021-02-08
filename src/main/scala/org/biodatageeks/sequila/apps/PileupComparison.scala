@@ -7,14 +7,17 @@ import org.biodatageeks.sequila.utils.{Columns, SequilaRegister}
 
 object PileupComparison extends App{
   override def main(args: Array[String]): Unit = {
-    if (args.isEmpty)
-      throw new RuntimeException("Please supply input arguments")
+    checkArgs(args)
 
-    val files = args.zip(args.tail)
-
+    val files = combineFileWithFomat(args)
     val ss = createSparkSession()
+
     val commonFormat = files.map(file =>(file._2, convert(ss, file._1, file._2.toLowerCase())))
 
+  }
+
+  private def combineFileWithFomat(args: Array[String]): Array[(String, String)] = {
+    args.zip(args.tail)
   }
 
   def convertSamtoolsFile(ss: SequilaSession, file: String): DataFrame = {
@@ -68,5 +71,18 @@ object PileupComparison extends App{
     SequilaRegister.register(ss)
     spark.sparkContext.setLogLevel("INFO")
     ss
+  }
+
+  private def checkArgs (args: Array[String]): Unit = {
+    val minArgs = 4
+    if (args.isEmpty)
+      throw new RuntimeException("Please supply input arguments")
+
+    if (args.length < minArgs)
+      throw new RuntimeException("Provide at least two  files for comparison")
+
+    if ((args.length%2) != 0)
+      throw new RuntimeException("Each file needs format specification (sam, or sequila or gatk)")
+
   }
 }
