@@ -53,10 +53,10 @@ class SamtoolsConverter(spark: SparkSession) extends Serializable {
   }
 
 
-  def generateQualityMap(rawPileup: String, qualityString: String, ref: String): mutable.Map[Byte, mutable.HashMap[String, Short]] = {
+  def generateQualityMap(rawPileup: String, qualityString: String, ref: String, contig: String, position:Int): mutable.Map[Byte, mutable.HashMap[String, Short]] = {
     val cleanPileup = PileupStringUtils.removeAllMarks(rawPileup)
     val (pileup, quality) = removeDeletedBases(cleanPileup, qualityString)
-    assert (pileup.length == quality.length)
+    assert (pileup.length == quality.length, s"Pilep and quality string lenght mismach at $contig:$position")
 
     val refPileup = pileup.replace(PileupStringUtils.refMatchPlusStrand, ref.charAt(0)).replace(PileupStringUtils.refMatchMinuStrand, ref.charAt(0))
     val res = new mutable.HashMap[Byte, mutable.HashMap[String, Short]]
@@ -94,8 +94,7 @@ class SamtoolsConverter(spark: SparkSession) extends Serializable {
         row.getString(SamtoolsSchema.pileupString).toUpperCase()
       val qualityString = row.getString(SamtoolsSchema.qualityString)
 
-      //FIXME - needed manual escaping in pileup file ... maybe can be done in better way...
-     val properQualityString = StringUtils.replace(qualityString,"\\\"", "\"")
+//     val properQualityString = StringUtils.replace(qualityString,"\\\"", "\"")
 
       val pileup = PileupStringUtils.removeStartAndEndMarks(rawPileup)
       val basesCount = PileupStringUtils.getBaseCountMap(pileup)
@@ -132,7 +131,7 @@ class SamtoolsConverter(spark: SparkSession) extends Serializable {
       val diff = delContext.getDelTransferForLocus(contig, position)
       val cov = (row.getShort(SamtoolsSchema.cov) - diff).toShort
 
-      val qMap = if (map.nonEmpty) generateQualityMap(rawPileup,properQualityString, ref ) else null
+      val qMap = if (map.nonEmpty) generateQualityMap(rawPileup,qualityString, ref, contig, position ) else null
 
       (contig, position, ref , cov, rawPileup, qualityString, if (map.nonEmpty) map else null, qMap)
     })

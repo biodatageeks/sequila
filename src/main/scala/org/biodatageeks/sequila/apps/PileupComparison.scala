@@ -17,13 +17,14 @@ object PileupComparison extends App with SequilaApp {
   }
 
   private def combineFileWithFomat(args: Array[String]): Array[(String, String)] = {
-    args.zip(args.tail)
+    args.grouped(2).toArray.map{case Array(a,b) => (a,b)}
   }
 
   def convertSamtoolsFile(ss: SequilaSession, file: String): DataFrame = {
     val df = ss.read
       .format("csv")
       .option("delimiter", "\t")
+      .option("quote", "\u0000")
       .schema(SamtoolsSchema.schema)
       .load(file)
 
@@ -32,7 +33,10 @@ object PileupComparison extends App with SequilaApp {
       .transformSamToBlocks(df, caseSensitive = true)
       .select(Columns.CONTIG, Columns.START, Columns.END,Columns.REF,  Columns.COVERAGE, Columns.ALTS)
       .orderBy("contig", "pos_start")
-    ss.createDataFrame(sam.rdd, CommonPileupFormat.schema)
+    val convertedSam = ss.createDataFrame(sam.rdd, CommonPileupFormat.schema)
+    convertedSam.printSchema()
+    convertedSam.show(10)
+    convertedSam
   }
 
   def convertSequilaFile(ss: SequilaSession, file: String): DataFrame = {
