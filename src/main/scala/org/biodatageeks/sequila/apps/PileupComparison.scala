@@ -5,12 +5,12 @@ import org.biodatageeks.sequila.pileup.converters.{CommonPileupFormat, SamtoolsC
 import org.biodatageeks.sequila.utils.{Columns, SequilaRegister}
 
 
-object PileupComparison extends App{
+object PileupComparison extends App with SequilaApp {
   override def main(args: Array[String]): Unit = {
     checkArgs(args)
 
     val files = combineFileWithFomat(args)
-    val ss = createSparkSession()
+    val ss = createSequilaSession()
 
     val commonFormat = files.map(file =>(file._2, convert(ss, file._1, file._2.toLowerCase())))
 
@@ -58,20 +58,7 @@ object PileupComparison extends App{
       case "gatk" => throw new NoSuchMethodException  ("GATK is not supported yet ")
     }
   }
-  def createSparkSession (): SequilaSession = {
-    System.setProperty("spark.kryo.registrator", "org.biodatageeks.sequila.pileup.serializers.CustomKryoRegistrator")
-    val spark = SparkSession
-      .builder()
-      .master("local[1]")
-      .config("spark.driver.memory","4g")
-      .config( "spark.serializer", "org.apache.spark.serializer.KryoSerializer" )
-      .getOrCreate()
 
-    val ss = SequilaSession(spark)
-    SequilaRegister.register(ss)
-    spark.sparkContext.setLogLevel("INFO")
-    ss
-  }
 
   private def checkArgs (args: Array[String]): Unit = {
     val minArgs = 4

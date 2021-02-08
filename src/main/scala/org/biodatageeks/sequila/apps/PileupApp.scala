@@ -5,21 +5,11 @@ import java.io.{OutputStreamWriter, PrintWriter}
 import org.apache.spark.sql.{SequilaSession, SparkSession}
 import org.biodatageeks.sequila.utils.{InternalParams, SequilaRegister}
 
-object PileupApp extends App{
+object PileupApp extends App with SequilaApp {
   override def main(args: Array[String]): Unit = {
 
     System.setProperty("spark.kryo.registrator", "org.biodatageeks.sequila.pileup.serializers.CustomKryoRegistrator")
-    val spark = SparkSession
-      .builder()
-      .master("local[1]")
-      .config("spark.driver.memory","4g")
-      .config( "spark.serializer", "org.apache.spark.serializer.KryoSerializer" )
-      .enableHiveSupport()
-      .getOrCreate()
-
-    val ss = SequilaSession(spark)
-    SequilaRegister.register(ss)
-    spark.sparkContext.setLogLevel("INFO")
+    val ss = createSequilaSession()
 
     val bamPath = "/Users/aga/NA12878.chr20.md.bam"
     val referencePath = "/Users/aga/Homo_sapiens_assembly18_chr20.fasta"
