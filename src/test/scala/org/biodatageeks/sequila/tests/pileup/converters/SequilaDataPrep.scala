@@ -45,7 +45,7 @@ class SequilaDataPrep extends PileupTestBase {
 
     val bdgRes = ss.sql(queryQual).orderBy("contig", "pos_start")
 
-    Writer.saveToFileWithQuals(ss, bdgRes, "sequilaQualsBlocks.csv")
+    Writer.saveToCsvFileWithQuals(ss, bdgRes, "sequilaQualsBlocks.csv")
   }
 
 }

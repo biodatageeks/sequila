@@ -38,22 +38,22 @@ object PileupComparison extends App with SequilaApp {
   def convertSequilaFile(ss: SequilaSession, file: String): DataFrame = {
     val df = ss.read
       .format("csv")
-      .option("delimiter", "\t")
-      .schema(CommonPileupFormat.schema)
+      .schema(CommonPileupFormat.fileSchema)
       .load(file)
+    df.printSchema()
+    df.show(10)
     df
   }
 
   def convert(ss:SequilaSession, file: String, format:String): Dataset[Row] = {
     format match {
       case "sam" | "samtools" => {
-        println ("Converting samtools result " + file)
+        println (s"Samtools format on file $file")
         convertSamtoolsFile(ss, file)
       }
       case "sequila" => {
-        println ("seq " + file)
+        println (s"Sequila format on file $file")
         convertSequilaFile(ss,file)
-        ss.emptyDataFrame
       }
       case "gatk" => throw new NoSuchMethodException  ("GATK is not supported yet ")
     }

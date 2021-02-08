@@ -16,7 +16,7 @@ object Writer {
 
 
 
-  def saveToFile(spark: SparkSession, res: Dataset[Row], path: String) = {
+  def saveToCsvFile(spark: SparkSession, res: Dataset[Row], path: String) = {
     spark.udf.register("mapToString", mapToString)
     val ind = res.columns.indexOf({Columns.ALTS})
     val outputColumns =  res.columns
@@ -30,7 +30,7 @@ object Writer {
       .csv(path)
   }
 
-  def saveToFileWithQuals(spark: SparkSession, res: Dataset[Row], path: String) = {
+  def saveToCsvFileWithQuals(spark: SparkSession, res: Dataset[Row], path: String) = {
     val outputColumns =  res.columns
 
     res
@@ -40,4 +40,5 @@ object Writer {
       .mode(SaveMode.Overwrite)
       .csv(path)
   }
+
 }
