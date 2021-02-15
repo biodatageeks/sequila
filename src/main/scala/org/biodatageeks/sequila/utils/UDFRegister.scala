@@ -36,8 +36,7 @@ object UDFRegister {
     spark.sqlContext.udf.register("alts_to_char", AltFunctions.byteToString _)
     spark.sqlContext.udf.register("quals_to_char", QualityFunctions.byteToString _)
 
-
-
+    spark.sqlContext.udf.register("altmap_to_str", AltFunctions.altMapToString _)
 
   }
 }

@@ -12,4 +12,12 @@ object AltFunctions {
     })
   }
 
+  def altMapToString (map: Map[Any, Any]) : String = {
+    if (map == null)
+      return null
+    map.map({
+      case (k, v) => k.toString -> v
+    }).toSeq.sortBy(_._1).mkString.replace(" -> ", ":")
+  }
+
 }

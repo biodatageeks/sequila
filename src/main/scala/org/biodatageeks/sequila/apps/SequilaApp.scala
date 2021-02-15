@@ -10,12 +10,11 @@ trait SequilaApp {
       .builder()
       .master("local[1]")
       .config("spark.driver.memory","4g")
-      .config( "spark.serializer", "org.apache.spark.serializer.KryoSerializer" )
       .getOrCreate()
 
     val ss = SequilaSession(spark)
     SequilaRegister.register(ss)
-    spark.sparkContext.setLogLevel("INFO")
+    spark.sparkContext.setLogLevel("WARN")
     ss
   }
 }

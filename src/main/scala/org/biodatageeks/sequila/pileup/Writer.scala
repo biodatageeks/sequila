@@ -1,4 +1,4 @@
-package org.biodatageeks.sequila.tests.pileup
+package org.biodatageeks.sequila.pileup
 
 import org.apache.spark.sql.{Dataset, Row, SaveMode, SparkSession}
 import org.biodatageeks.sequila.utils.Columns

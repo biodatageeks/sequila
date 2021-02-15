@@ -1,18 +1,19 @@
 package org.biodatageeks.sequila.apps
 
-import org.apache.spark.sql.{DataFrame, Dataset, Row, SequilaSession, SparkSession}
+import org.apache.spark.sql.{DataFrame, Dataset, Row, SequilaSession}
 import org.biodatageeks.sequila.pileup.converters.{CommonPileupFormat, SamtoolsConverter, SamtoolsSchema}
-import org.biodatageeks.sequila.utils.{Columns, SequilaRegister}
+import org.biodatageeks.sequila.utils.Columns
 
 
 object PileupComparison extends App with SequilaApp {
+
   override def main(args: Array[String]): Unit = {
     checkArgs(args)
 
     val files = combineFileWithFomat(args)
     val ss = createSequilaSession()
 
-    val commonFormat = files.map(file =>(file._2, convert(ss, file._1, file._2.toLowerCase())))
+    val dfByFormat = files.map(file =>(file._2, convert(ss, file._1, file._2.toLowerCase())))
 
   }
 
@@ -21,6 +22,7 @@ object PileupComparison extends App with SequilaApp {
   }
 
   def convertSamtoolsFile(ss: SequilaSession, file: String): DataFrame = {
+
     val df = ss.read
       .format("csv")
       .option("delimiter", "\t")
@@ -31,12 +33,26 @@ object PileupComparison extends App with SequilaApp {
     val converter = new SamtoolsConverter(ss)
     val sam = converter
       .transformSamToBlocks(df, caseSensitive = true)
-      .select(Columns.CONTIG, Columns.START, Columns.END,Columns.REF,  Columns.COVERAGE, Columns.ALTS)
       .orderBy("contig", "pos_start")
-    val convertedSam = ss.createDataFrame(sam.rdd, CommonPileupFormat.schema)
+
+    val convertedSam = mapColumnsAsStrings(sam)
+    println("SAMTOOLS")
     convertedSam.printSchema()
     convertedSam.show(10)
     convertedSam
+  }
+
+  private def mapColumnsAsStrings(df: DataFrame): DataFrame = {
+    val indA = df.columns.indexOf({Columns.ALTS})
+    val indQ = df.columns.indexOf({Columns.QUALS})
+
+    val outputColumns =  df.columns
+    outputColumns(indA) = s"CAST (alts_to_char(${Columns.ALTS}) as String) as ${Columns.ALTS}"
+    outputColumns(indQ) = s"CAST (quals_to_char(${Columns.QUALS}) as String) as ${Columns.QUALS}"
+
+    val convertedDf = df.selectExpr(outputColumns: _*)
+    convertedDf
+
   }
 
   def convertSequilaFile(ss: SequilaSession, file: String): DataFrame = {
@@ -44,9 +60,12 @@ object PileupComparison extends App with SequilaApp {
       .format("csv")
       .schema(CommonPileupFormat.fileSchema)
       .load(file)
-    df.printSchema()
-    df.show(10)
-    df
+
+    val convertedDf = mapColumnsAsStrings(df)
+    println ("SEQUILA FORMAT:")
+    convertedDf.printSchema()
+    convertedDf.show(10)
+    convertedDf
   }
 
   def convert(ss:SequilaSession, file: String, format:String): Dataset[Row] = {
@@ -74,6 +93,5 @@ object PileupComparison extends App with SequilaApp {
 
     if ((args.length%2) != 0)
       throw new RuntimeException("Each file needs format specification (sam, or sequila or gatk)")
-
   }
 }

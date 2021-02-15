@@ -1,8 +1,9 @@
 package org.biodatageeks.sequila.tests.pileup.converters
 
 import org.apache.spark.sql.SequilaSession
+import org.biodatageeks.sequila.pileup.Writer
 import org.biodatageeks.sequila.pileup.converters.SamtoolsConverter
-import org.biodatageeks.sequila.tests.pileup.{PileupTestBase, Writer}
+import org.biodatageeks.sequila.tests.pileup.PileupTestBase
 import org.biodatageeks.sequila.utils.{Columns, InternalParams, SequilaRegister}
 
 import scala.collection.immutable.ListMap
