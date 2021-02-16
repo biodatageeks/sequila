@@ -71,14 +71,10 @@ object PileupComparison extends App with SequilaApp with DatasetComparer {
       .schema(CommonPileupFormat.fileSchema)
       .load(file)
 
+    println ("SEQUILA FORMAT:")
     df.printSchema()
+    df.show(10)
     df
-
-//    val convertedDf = mapColumnsAsStrings(df)
-//    println ("SEQUILA FORMAT:")
-//    convertedDf.printSchema()
-//    convertedDf.show(10)
-//    convertedDf
   }
 
   def convert(ss:SequilaSession, file: String, format:String): Dataset[Row] = {
