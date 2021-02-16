@@ -13,7 +13,6 @@ class SamtoolsConverter(spark: SparkSession) extends Serializable {
   val rawPileupCol = "raw_pileup"
   val rawQualityCol = "raw_quality"
 
-
   def transformSamToBlocks(df:DataFrame, caseSensitive: Boolean): DataFrame = {
     val dfMap = generateAltsQuals(df, caseSensitive)
     val dfBlocks = generateCompressedOutput(dfMap)
@@ -69,7 +68,6 @@ class SamtoolsConverter(spark: SparkSession) extends Serializable {
       baseMap.update(qualityChar.toString, (baseQualCount+1).toShort)
       res.update(pileupChar.toByte, baseMap)
     }
-
     res
   }
 
@@ -83,7 +81,7 @@ class SamtoolsConverter(spark: SparkSession) extends Serializable {
     import spark.implicits._
 
     val delContext = new DelContext()
-//
+
     val dataMapped = df.map(row => {
       val contig = DataQualityFuncs.cleanContig(row.getString(SamtoolsSchema.contig))
       val position = row.getInt(SamtoolsSchema.position)
@@ -181,7 +179,7 @@ class SamtoolsConverter(spark: SparkSession) extends Serializable {
             arr.append((prevContig, positionStart + i, positionStart + i -1, buffer.toString(), prevCov.toShort, prevAlt.toMap,prevQual.toMap))
           else
             arr.append((prevContig, positionStart + i - blockLength, positionStart + i -1, buffer.toString(), prevCov.toShort,null,null))
-          if (currAlt !=null) {
+          if (currAlt != null) {
             currAlt.foreach { case (k, v) => prevAlt(k) = v } // prevalt equals curAlt
             currQualityMap.foreach { case (k, v) => prevQual(k) = v }
           }

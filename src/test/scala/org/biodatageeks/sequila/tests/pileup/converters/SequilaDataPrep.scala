@@ -12,7 +12,7 @@ class SequilaDataPrep extends PileupTestBase {
 
   val queryQual =
     s"""
-       |SELECT contig, pos_start, pos_end, ref, coverage, CAST (alts_to_char(${Columns.ALTS}) as String) as ${Columns.ALTS} , CAST (to_charmap(${Columns.QUALS}) as String) as ${Columns.QUALS}
+       |SELECT contig, pos_start, pos_end, ref, coverage, altmap_to_str(alts_to_char(${Columns.ALTS})) as ${Columns.ALTS} , qualsmap_to_str(to_charmap(${Columns.QUALS})) as ${Columns.QUALS}
        |FROM  pileup('$tableName', '${sampleId}', '$referencePath', true)
                          """.stripMargin
 

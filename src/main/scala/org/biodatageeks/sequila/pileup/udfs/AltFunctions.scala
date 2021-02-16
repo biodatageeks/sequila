@@ -17,7 +17,7 @@ object AltFunctions {
       return null
     map.map({
       case (k, v) => k.toString -> v
-    }).toSeq.sortBy(_._1).mkString.replace(" -> ", ":")
+    }).toSeq.sortBy(_._1).mkString
   }
 
 }

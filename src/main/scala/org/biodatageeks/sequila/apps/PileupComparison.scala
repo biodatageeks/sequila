@@ -56,8 +56,8 @@ object PileupComparison extends App with SequilaApp with DatasetComparer {
     val indQ = df.columns.indexOf({Columns.QUALS})
 
     val outputColumns =  df.columns
-    outputColumns(indA) = s"CAST (alts_to_char(${Columns.ALTS}) as String) as ${Columns.ALTS}"
-    outputColumns(indQ) = s"CAST (quals_to_char(${Columns.QUALS}) as String) as ${Columns.QUALS}"
+    outputColumns(indA) = s"altmap_to_str(alts_to_char(${Columns.ALTS})) as ${Columns.ALTS}"
+    outputColumns(indQ) = s"qualsmap_to_str(quals_to_char(${Columns.QUALS})) as ${Columns.QUALS}"
 
     val convertedDf = df.selectExpr(outputColumns: _*)
     convertedDf

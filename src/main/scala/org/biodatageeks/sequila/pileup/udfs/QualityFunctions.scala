@@ -49,11 +49,11 @@ object QualityFunctions {
     })
   }
 
-  def altMapToString (map: Map[Any, Any]) : String = {
+  def qualsMapToString (map: Map[String, Map[String,Short]]) : String = {
     if (map == null)
       return null
     map.map({
-      case (k, v) => k.toString -> v
-    }).toSeq.sortBy(_._1).mkString.replace(" -> ", ":")
+      case (k, v) => k -> v.toSeq.sortBy(_._1)
+    }).toSeq.sortBy(_._1).mkString.replaceAll("Vector", "")
   }
 }
