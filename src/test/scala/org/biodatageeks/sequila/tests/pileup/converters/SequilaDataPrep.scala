@@ -6,7 +6,6 @@ import org.biodatageeks.sequila.pileup.converters.SamtoolsConverter
 import org.biodatageeks.sequila.tests.pileup.PileupTestBase
 import org.biodatageeks.sequila.utils.{Columns, InternalParams, SequilaRegister}
 
-import scala.collection.immutable.ListMap
 
 
 class SequilaDataPrep extends PileupTestBase {

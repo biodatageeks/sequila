@@ -1,19 +1,29 @@
 package org.biodatageeks.sequila.apps
 
+import com.github.mrpowers.spark.fast.tests.DatasetComparer
 import org.apache.spark.sql.{DataFrame, Dataset, Row, SequilaSession}
 import org.biodatageeks.sequila.pileup.converters.{CommonPileupFormat, SamtoolsConverter, SamtoolsSchema}
 import org.biodatageeks.sequila.utils.Columns
 
 
-object PileupComparison extends App with SequilaApp {
+object PileupComparison extends App with SequilaApp with DatasetComparer {
 
   override def main(args: Array[String]): Unit = {
     checkArgs(args)
-
-    val files = combineFileWithFomat(args)
     val ss = createSequilaSession()
+    val files = combineFileWithFomat(args)
 
     val dfByFormat = files.map(file =>(file._2, convert(ss, file._1, file._2.toLowerCase())))
+    val dfByFormatCombinations = dfByFormat.combinations(2)
+    for (pair <- dfByFormatCombinations) {
+      try {
+        assertLargeDatasetEquality(pair(0)._2, pair(1)._2)
+        println(s"${pair(0)._1} equal to ${pair(1)._1}")
+
+      } catch {
+        case e: Exception => println(s"${pair(0)._1} not equal to ${pair(1)._1} \n ${e.getLocalizedMessage}")
+      }
+    }
 
   }
 
@@ -61,11 +71,14 @@ object PileupComparison extends App with SequilaApp {
       .schema(CommonPileupFormat.fileSchema)
       .load(file)
 
-    val convertedDf = mapColumnsAsStrings(df)
-    println ("SEQUILA FORMAT:")
-    convertedDf.printSchema()
-    convertedDf.show(10)
-    convertedDf
+    df.printSchema()
+    df
+
+//    val convertedDf = mapColumnsAsStrings(df)
+//    println ("SEQUILA FORMAT:")
+//    convertedDf.printSchema()
+//    convertedDf.show(10)
+//    convertedDf
   }
 
   def convert(ss:SequilaSession, file: String, format:String): Dataset[Row] = {
