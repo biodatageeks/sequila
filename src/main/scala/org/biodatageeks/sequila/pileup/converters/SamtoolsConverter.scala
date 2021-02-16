@@ -1,6 +1,6 @@
 package org.biodatageeks.sequila.pileup.converters
 
-import org.apache.commons.lang.StringUtils
+import com.github.mrpowers.spark.daria.sql.SparkSessionExt._
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.biodatageeks.sequila.utils.{Columns, DataQualityFuncs, UDFRegister}
 
@@ -228,7 +228,7 @@ class SamtoolsConverter(spark: SparkSession) extends Serializable {
 
       i += 1; rowCounter +=1
     }
-    arr.toDF(Columns.CONTIG, Columns.START, Columns.END, Columns.REF, Columns.COVERAGE, Columns.ALTS, "quals")
+    spark.createDF(arr.toList, CommonPileupFormat.schemaQualsMap.fields.toList)
   }
 
 }

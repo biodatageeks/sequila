@@ -19,7 +19,6 @@ object PileupComparison extends App with SequilaApp with DatasetComparer {
       try {
         assertLargeDatasetEquality(pair(0)._2, pair(1)._2)
         println(s"${pair(0)._1} equal to ${pair(1)._1}")
-
       } catch {
         case e: Exception => println(s"${pair(0)._1} not equal to ${pair(1)._1} \n ${e.getLocalizedMessage}")
       }

@@ -25,6 +25,7 @@ libraryDependencies += "org.apache.hadoop" % "hadoop-client" % hadoopVersion
 libraryDependencies += "org.apache.spark" %% "spark-core" % sparkVersion
 libraryDependencies += "org.apache.spark" %% "spark-sql" % sparkVersion
 libraryDependencies += "com.github.mrpowers" %% "spark-fast-tests" % "0.21.3"
+libraryDependencies += "com.github.mrpowers" %% "spark-daria" % "0.38.2"
 libraryDependencies += "com.holdenkarau" %% "spark-testing-base" % "3.0.1_1.0.0" % "test" excludeAll ExclusionRule(organization = "javax.servlet") excludeAll (ExclusionRule("org.apache.hadoop"))
 libraryDependencies += "org.bdgenomics.adam" %% "adam-core-spark3" % "0.33.0" excludeAll (ExclusionRule("org.seqdoop"))
 libraryDependencies += "org.bdgenomics.adam" %% "adam-apis-spark3" % "0.33.0" excludeAll (ExclusionRule("org.seqdoop"))
