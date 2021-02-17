@@ -10,7 +10,6 @@ object GatkSchema {
   val pileupString = 4
   val altsMap = 5
 
-
   val schema: StructType = StructType(
     List(
       StructField("contig", StringType, nullable = true),

@@ -12,13 +12,11 @@ class GatkConverter(spark: SparkSession) extends Serializable {
     val dfMap = generateAltsQuals(df, caseSensitive)
     val dfStringMap = dfMap
       .withColumn(s"${Columns.ALTS}", expr(s"alts_to_char(${Columns.ALTS})"))
-      .withColumn(s"${Columns.QUALS}", expr(s"quals_to_char(${Columns.QUALS})"))
     dfStringMap
   }
 
   def generateAltsQuals(df: DataFrame, caseSensitive: Boolean):DataFrame = {
     import spark.implicits._
-//    val delContext = new DelContext()
 
     val dataMapped = df.map(row => {
       val contig = DataQualityFuncs.cleanContig(row.getString(GatkSchema.contig))
@@ -36,9 +34,9 @@ class GatkConverter(spark: SparkSession) extends Serializable {
         if (v != 0)
           map += (k.charAt(0).toByte) -> (v.toShort)
       }
-//      val diff = delContext.getDelTransferForLocus(contig, position)
-      val cov = row.getShort(GatkSchema.cov)
-      (contig, position, ref , cov, pileup, if (map.nonEmpty) map else null)
+
+      val cov = pileup.length
+      (contig, position, ref , cov, if (map.nonEmpty) map else null, null)
 
     })
     dataMapped.toDF(Columns.CONTIG, Columns.START, Columns.REF, Columns.COVERAGE, Columns.ALTS, Columns.QUALS)

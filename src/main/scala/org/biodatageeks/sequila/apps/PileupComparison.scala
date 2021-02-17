@@ -2,7 +2,7 @@ package org.biodatageeks.sequila.apps
 
 import com.github.mrpowers.spark.fast.tests.DatasetComparer
 import org.apache.spark.sql.{DataFrame, Dataset, Row, SequilaSession}
-import org.biodatageeks.sequila.pileup.converters.{CommonPileupFormat, GatkSchema, SamtoolsConverter, SamtoolsSchema}
+import org.biodatageeks.sequila.pileup.converters.{CommonPileupFormat, GatkConverter, GatkSchema, SamtoolsConverter, SamtoolsSchema}
 import org.biodatageeks.sequila.utils.Columns
 
 
@@ -23,7 +23,6 @@ object PileupComparison extends App with SequilaApp with DatasetComparer {
         case e: Exception => println(s"${pair(0)._1} not equal to ${pair(1)._1} \n ${e.getLocalizedMessage}")
       }
     }
-
   }
 
   private def combineFileWithFomat(args: Array[String]): Array[(String, String)] = {
@@ -83,10 +82,16 @@ object PileupComparison extends App with SequilaApp with DatasetComparer {
       .schema(GatkSchema.schema)
       .load(file)
 
-    println ("GATK FORMAT:")
-    df.printSchema()
     df.show(10)
-    df
+
+    println ("GATK FORMAT:")
+    val converter = new GatkConverter(ss)
+    val convertedGatk = converter
+      .transformToCommonFormat(df, caseSensitive = true)
+      .orderBy("contig", "pos_start")
+    convertedGatk.printSchema()
+    convertedGatk.show(10)
+    convertedGatk
   }
 
   def convert(ss:SequilaSession, file: String, format:String): Dataset[Row] = {
