@@ -2,7 +2,7 @@ package org.biodatageeks.sequila.apps
 
 import com.github.mrpowers.spark.fast.tests.DatasetComparer
 import org.apache.spark.sql.{DataFrame, Dataset, Row, SequilaSession}
-import org.biodatageeks.sequila.pileup.converters.{CommonPileupFormat, SamtoolsConverter, SamtoolsSchema}
+import org.biodatageeks.sequila.pileup.converters.{CommonPileupFormat, GatkSchema, SamtoolsConverter, SamtoolsSchema}
 import org.biodatageeks.sequila.utils.Columns
 
 
@@ -76,6 +76,19 @@ object PileupComparison extends App with SequilaApp with DatasetComparer {
     df
   }
 
+  def convertGatkFile(ss: SequilaSession, file: String): DataFrame = {
+    val df = ss.read
+      .format("csv")
+      .option("delimiter", " ")
+      .schema(GatkSchema.schema)
+      .load(file)
+
+    println ("GATK FORMAT:")
+    df.printSchema()
+    df.show(10)
+    df
+  }
+
   def convert(ss:SequilaSession, file: String, format:String): Dataset[Row] = {
     format match {
       case "sam" | "samtools" => {
@@ -86,7 +99,10 @@ object PileupComparison extends App with SequilaApp with DatasetComparer {
         println (s"Sequila format on file $file")
         convertSequilaFile(ss,file)
       }
-      case "gatk" => throw new NoSuchMethodException  ("GATK is not supported yet ")
+      case "gatk" => {
+        println (s"gatk format on file $file")
+        convertGatkFile(ss, file)
+      }
     }
   }
 
