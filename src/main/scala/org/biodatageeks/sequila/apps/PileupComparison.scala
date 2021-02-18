@@ -89,9 +89,14 @@ object PileupComparison extends App with SequilaApp with DatasetComparer {
     val convertedGatk = converter
       .transformToCommonFormat(df, caseSensitive = true)
       .orderBy("contig", "pos_start")
+
     convertedGatk.printSchema()
-    convertedGatk.show(10)
-    convertedGatk
+
+    val finalGatk = mapColumnsAsStrings(convertedGatk)
+
+    finalGatk.printSchema()
+    finalGatk.show(10)
+    finalGatk
   }
 
   def convert(ss:SequilaSession, file: String, format:String): Dataset[Row] = {
