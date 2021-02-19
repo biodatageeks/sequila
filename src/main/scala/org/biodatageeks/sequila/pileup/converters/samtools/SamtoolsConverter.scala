@@ -1,7 +1,8 @@
-package org.biodatageeks.sequila.pileup.converters
+package org.biodatageeks.sequila.pileup.converters.samtools
 
 import com.github.mrpowers.spark.daria.sql.SparkSessionExt._
 import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.biodatageeks.sequila.pileup.converters.{CommonPileupFormat, DelContext, DelTransfer, PileupStringUtils}
 import org.biodatageeks.sequila.utils.{Columns, DataQualityFuncs, UDFRegister}
 
 import scala.collection.mutable
@@ -132,7 +133,6 @@ class SamtoolsConverter(spark: SparkSession) extends Serializable {
   }
 
   def generateCompressedOutput(df: DataFrame):DataFrame = {
-    import spark.implicits._
     val dataRdd = df.rdd
     var blockLength, i, cov, prevCov = 0
     val prevAlt = mutable.Map.empty[Byte, Short]

@@ -1,6 +1,7 @@
 package org.biodatageeks.sequila.tests.pileup.converters
 
-import org.biodatageeks.sequila.pileup.converters.{SamtoolsConverter, SamtoolsSchema}
+import org.biodatageeks.sequila.pileup.converters.samtools.SamtoolsConverter
+import org.biodatageeks.sequila.pileup.converters.samtools.{SamtoolsConverter, SamtoolsSchema}
 import org.biodatageeks.sequila.tests.pileup.PileupTestBase
 
 class SamToCommonFormatTestSuite extends PileupTestBase {
