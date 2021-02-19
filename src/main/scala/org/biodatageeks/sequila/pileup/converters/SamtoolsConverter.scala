@@ -23,13 +23,10 @@ class SamtoolsConverter(spark: SparkSession) extends Serializable {
    * Using UDFs for transformations.
    *  */
   def transformToCommonFormat(df:DataFrame, caseSensitive:Boolean): DataFrame = {
-    import org.apache.spark.sql.functions._
     UDFRegister.register(spark)
     val dfMap = generateAltsQuals(df, caseSensitive)
-    val dfStringMap = dfMap
-      .withColumn(s"${Columns.ALTS}", expr(s"alts_to_char(${Columns.ALTS})"))
-      .withColumn(s"${Columns.QUALS}", expr(s"quals_to_char(${Columns.QUALS})"))
-    dfStringMap
+    val dfOut = dfMap.select(Columns.CONTIG, Columns.START, Columns.START, Columns.REF, Columns.COVERAGE, Columns.ALTS, Columns.QUALS)
+    spark.createDataFrame(dfOut.rdd, CommonPileupFormat.schemaQualsMap)
   }
 
   def removeDeletedBases(pileup: String, quality:String): (String, String) = {
@@ -92,8 +89,6 @@ class SamtoolsConverter(spark: SparkSession) extends Serializable {
         row.getString(SamtoolsSchema.pileupString).toUpperCase()
       val qualityString = row.getString(SamtoolsSchema.qualityString)
 
-//     val properQualityString = StringUtils.replace(qualityString,"\\\"", "\"")
-
       val pileup = PileupStringUtils.removeStartAndEndMarks(rawPileup)
       val basesCount = PileupStringUtils.getBaseCountMap(pileup)
       val map = mutable.Map.empty[Byte, Short]
@@ -133,7 +128,7 @@ class SamtoolsConverter(spark: SparkSession) extends Serializable {
 
       (contig, position, ref , cov, rawPileup, qualityString, if (map.nonEmpty) map else null, qMap)
     })
-    dataMapped.toDF(Columns.CONTIG, Columns.START, Columns.REF, Columns.COVERAGE, rawPileupCol, rawQualityCol, Columns.ALTS, "quals")
+    dataMapped.toDF(Columns.CONTIG, Columns.START, Columns.REF, Columns.COVERAGE, rawPileupCol, rawQualityCol, Columns.ALTS, Columns.QUALS)
   }
 
   def generateCompressedOutput(df: DataFrame):DataFrame = {

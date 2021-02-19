@@ -40,7 +40,7 @@ object PileupComparison extends App with SequilaApp with DatasetComparer {
 
     val converter = new SamtoolsConverter(ss)
     val sam = converter
-      .transformSamToBlocks(df, caseSensitive = true)
+      .transformToCommonFormat(df, caseSensitive = true)
       .orderBy("contig", "pos_start")
 
     val convertedSam = mapColumnsAsStrings(sam)

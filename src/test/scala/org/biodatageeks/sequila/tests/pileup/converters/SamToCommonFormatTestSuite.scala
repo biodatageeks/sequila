@@ -17,7 +17,5 @@ class SamToCommonFormatTestSuite extends PileupTestBase {
     val converter = new SamtoolsConverter(spark)
     val commonDf = converter.transformToCommonFormat(df, false)
     commonDf.show(20)
-
   }
-
 }
