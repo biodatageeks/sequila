@@ -1,7 +1,6 @@
 package org.biodatageeks.sequila.tests.pileup
 
 import org.apache.spark.sql._
-import org.biodatageeks.sequila.pileup.converters.SamtoolsConverter
 import org.biodatageeks.sequila.pileup.converters.samtools.{SamtoolsConverter, SamtoolsSchema}
 import org.biodatageeks.sequila.utils.{Columns, InternalParams, SequilaRegister}
 
