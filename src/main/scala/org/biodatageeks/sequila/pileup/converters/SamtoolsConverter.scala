@@ -22,7 +22,7 @@ class SamtoolsConverter(spark: SparkSession) extends Serializable {
   /** return data in common format. Case insensitive. Bases represented as strings.
    * Using UDFs for transformations.
    *  */
-  def transformSamToCommonFormat(df:DataFrame, caseSensitive:Boolean): DataFrame = {
+  def transformToCommonFormat(df:DataFrame, caseSensitive:Boolean): DataFrame = {
     import org.apache.spark.sql.functions._
     UDFRegister.register(spark)
     val dfMap = generateAltsQuals(df, caseSensitive)
