@@ -1,6 +1,6 @@
-package org.biodatageeks.sequila.pileup.converters
+package org.biodatageeks.sequila.pileup.converters.samtools
 
-import org.apache.spark.sql.types.{IntegerType, ShortType, StringType, StructField, StructType}
+import org.apache.spark.sql.types._
 
 object SamtoolsSchema {
     val contig = 0

@@ -1,6 +1,6 @@
-package org.biodatageeks.sequila.pileup.converters
+package org.biodatageeks.sequila.pileup.converters.gatk
 
-import org.apache.spark.sql.types.{IntegerType, ShortType, StringType, StructField, StructType}
+import org.apache.spark.sql.types._
 
 object GatkSchema {
   val contig = 0

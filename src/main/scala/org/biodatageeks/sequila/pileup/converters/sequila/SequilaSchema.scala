@@ -1,4 +1,4 @@
-package org.biodatageeks.sequila.pileup.converters
+package org.biodatageeks.sequila.pileup.converters.sequila
 
 object SequilaSchema {
   val contig = 0

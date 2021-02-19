@@ -1,12 +1,11 @@
-package org.biodatageeks.sequila.pileup.converters
+package org.biodatageeks.sequila.pileup.converters.gatk
 
-import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import com.github.mrpowers.spark.daria.sql.SparkSessionExt._
-import org.apache.spark.rdd.RDD
-import org.biodatageeks.sequila.utils.{Columns, DataQualityFuncs, UDFRegister}
+import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.biodatageeks.sequila.pileup.converters.{CommonPileupFormat, PileupStringUtils}
+import org.biodatageeks.sequila.utils.{DataQualityFuncs, UDFRegister}
 
 import scala.collection.mutable
-import org.apache.spark.sql.functions._
 
 class GatkConverter(spark: SparkSession) extends Serializable {
 

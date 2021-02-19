@@ -1,12 +1,13 @@
-package org.biodatageeks.sequila.pileup.converters
+package org.biodatageeks.sequila.pileup.converters.sequila
 
-import org.apache.spark.sql.{DataFrame, SparkSession}
 import com.github.mrpowers.spark.daria.sql.SparkSessionExt._
+import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.biodatageeks.sequila.pileup.converters.CommonPileupFormat
 
 
 class SequilaConverter (spark: SparkSession) extends Serializable {
 
-  def generatePerBaseOutput(df: DataFrame, caseSensitive: Boolean) = {
+  def generatePerBaseOutput(df: DataFrame, caseSensitive: Boolean): DataFrame = {
 
     val perBase = df.rdd.flatMap { r => {
         val chr = r.getString(SequilaSchema.contig)

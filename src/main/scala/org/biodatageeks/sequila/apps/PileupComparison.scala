@@ -2,7 +2,10 @@ package org.biodatageeks.sequila.apps
 
 import com.github.mrpowers.spark.fast.tests.DatasetComparer
 import org.apache.spark.sql.{DataFrame, Dataset, Row, SequilaSession}
-import org.biodatageeks.sequila.pileup.converters.{CommonPileupFormat, GatkConverter, GatkSchema, SamtoolsConverter, SamtoolsSchema, SequilaConverter}
+import org.biodatageeks.sequila.pileup.converters.gatk.{GatkConverter, GatkSchema}
+import org.biodatageeks.sequila.pileup.converters.samtools.{SamtoolsConverter, SamtoolsSchema}
+import org.biodatageeks.sequila.pileup.converters.CommonPileupFormat
+import org.biodatageeks.sequila.pileup.converters.sequila.SequilaConverter
 import org.biodatageeks.sequila.utils.Columns
 
 
