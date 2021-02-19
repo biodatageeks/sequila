@@ -2,7 +2,7 @@ package org.biodatageeks.sequila.apps
 
 import com.github.mrpowers.spark.fast.tests.DatasetComparer
 import org.apache.spark.sql.{DataFrame, Dataset, Row, SequilaSession}
-import org.biodatageeks.sequila.pileup.converters.{CommonPileupFormat, GatkConverter, GatkSchema, SamtoolsConverter, SamtoolsSchema}
+import org.biodatageeks.sequila.pileup.converters.{CommonPileupFormat, GatkConverter, GatkSchema, SamtoolsConverter, SamtoolsSchema, SequilaConverter}
 import org.biodatageeks.sequila.utils.Columns
 
 
@@ -69,10 +69,13 @@ object PileupComparison extends App with SequilaApp with DatasetComparer {
       .schema(CommonPileupFormat.fileSchema)
       .load(file)
 
+    val sequilaConverter = new SequilaConverter(ss)
+    val converted = sequilaConverter.transformToCommonFormat(df, true)
+
     println ("SEQUILA FORMAT:")
-    df.printSchema()
-    df.show(10)
-    df
+    converted.printSchema()
+    converted.show(10)
+    converted
   }
 
   def convertGatkFile(ss: SequilaSession, file: String): DataFrame = {
@@ -82,18 +85,15 @@ object PileupComparison extends App with SequilaApp with DatasetComparer {
       .schema(GatkSchema.schema)
       .load(file)
 
-    df.show(10)
-
-    println ("GATK FORMAT:")
     val converter = new GatkConverter(ss)
     val convertedGatk = converter
       .transformToCommonFormat(df, caseSensitive = true)
       .orderBy("contig", "pos_start")
 
-    convertedGatk.printSchema()
 
     val finalGatk = mapColumnsAsStrings(convertedGatk)
 
+    println ("GATK FORMAT:")
     finalGatk.printSchema()
     finalGatk.show(10)
     finalGatk
@@ -115,7 +115,6 @@ object PileupComparison extends App with SequilaApp with DatasetComparer {
       }
     }
   }
-
 
   private def checkArgs (args: Array[String]): Unit = {
     val minArgs = 4
