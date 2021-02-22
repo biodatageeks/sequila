@@ -6,6 +6,7 @@ import org.biodatageeks.sequila.pileup.converters.common.CommonPileupFormat
 import org.biodatageeks.sequila.pileup.converters.gatk.{GatkConverter, GatkSchema}
 import org.biodatageeks.sequila.pileup.converters.samtools.{SamtoolsConverter, SamtoolsSchema}
 import org.biodatageeks.sequila.pileup.converters.sequila.SequilaConverter
+import scala.collection.mutable
 
 
 object PileupComparison extends App with SequilaApp with DatasetComparer {
@@ -16,15 +17,28 @@ object PileupComparison extends App with SequilaApp with DatasetComparer {
     val files = combineFileWithFomat(args)
 
     val dfByFormat = files.map(file =>(file._2, convert(ss, file._1, file._2.toLowerCase())))
-    val dfByFormatCombinations = dfByFormat.combinations(2)
+    val res = crossCompare(dfByFormat)
+    printResults(res)
+  }
+
+  def printResults (res: Map[(String, String), (Int,String)]): Unit = {
+    res.foreach(x =>
+      println ((if (x._2._1 != 0) Console.RED else Console.GREEN) + s">> ${x._1._1.toUpperCase()} with ${x._1._2.toUpperCase()}: result: ${x._2._2}"))
+  }
+
+  def crossCompare (pileupList: Array [(String, Dataset[Row])]): Map[(String, String), (Int,String)] = {
+
+    val result = new mutable.HashMap[(String, String), (Int, String)]
+    val dfByFormatCombinations = pileupList.combinations(2)
     for (pair <- dfByFormatCombinations) {
       try {
         assertLargeDatasetEquality(pair(0)._2, pair(1)._2)
-        println(s"${pair(0)._1} equal to ${pair(1)._1}")
+        result += (pair(0)._1, pair(1)._1) -> (0, "EQUAL")
       } catch {
-        case e: Exception => println(s"${pair(0)._1} not equal to ${pair(1)._1} \n ${e.getLocalizedMessage}")
+        case e: Exception => result += (pair(0)._1, pair(1)._1) ->  (1, s"NOT EQUAL ${e.getLocalizedMessage}")
       }
     }
+    result.toMap
   }
 
   private def combineFileWithFomat(args: Array[String]): Array[(String, String)] = {
