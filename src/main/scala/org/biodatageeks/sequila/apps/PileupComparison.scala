@@ -2,11 +2,10 @@ package org.biodatageeks.sequila.apps
 
 import com.github.mrpowers.spark.fast.tests.DatasetComparer
 import org.apache.spark.sql.{DataFrame, Dataset, Row, SequilaSession}
+import org.biodatageeks.sequila.pileup.converters.common.CommonPileupFormat
 import org.biodatageeks.sequila.pileup.converters.gatk.{GatkConverter, GatkSchema}
 import org.biodatageeks.sequila.pileup.converters.samtools.{SamtoolsConverter, SamtoolsSchema}
-import org.biodatageeks.sequila.pileup.converters.CommonPileupFormat
 import org.biodatageeks.sequila.pileup.converters.sequila.SequilaConverter
-import org.biodatageeks.sequila.utils.Columns
 
 
 object PileupComparison extends App with SequilaApp with DatasetComparer {
@@ -44,27 +43,13 @@ object PileupComparison extends App with SequilaApp with DatasetComparer {
     val converter = new SamtoolsConverter(ss)
     val sam = converter
       .transformToCommonFormat(df, caseSensitive = true)
-      .orderBy("contig", "pos_start")
 
-    val convertedSam = mapColumnsAsStrings(sam)
     println("SAMTOOLS")
-    convertedSam.printSchema()
-    convertedSam.show(10)
-    convertedSam
+    sam.printSchema()
+    sam.show(10)
+    sam
   }
 
-  private def mapColumnsAsStrings(df: DataFrame): DataFrame = {
-    val indA = df.columns.indexOf({Columns.ALTS})
-    val indQ = df.columns.indexOf({Columns.QUALS})
-
-    val outputColumns =  df.columns
-    outputColumns(indA) = s"altmap_to_str(alts_to_char(${Columns.ALTS})) as ${Columns.ALTS}"
-    outputColumns(indQ) = s"qualsmap_to_str(quals_to_char(${Columns.QUALS})) as ${Columns.QUALS}"
-
-    val convertedDf = df.selectExpr(outputColumns: _*)
-    convertedDf
-
-  }
 
   def convertSequilaFile(ss: SequilaSession, file: String): DataFrame = {
     val df = ss.read
@@ -91,15 +76,11 @@ object PileupComparison extends App with SequilaApp with DatasetComparer {
     val converter = new GatkConverter(ss)
     val convertedGatk = converter
       .transformToCommonFormat(df, caseSensitive = true)
-      .orderBy("contig", "pos_start")
-
-
-    val finalGatk = mapColumnsAsStrings(convertedGatk)
 
     println ("GATK FORMAT:")
-    finalGatk.printSchema()
-    finalGatk.show(10)
-    finalGatk
+    convertedGatk.printSchema()
+    convertedGatk.show(10)
+    convertedGatk
   }
 
   def convert(ss:SequilaSession, file: String, format:String): Dataset[Row] = {

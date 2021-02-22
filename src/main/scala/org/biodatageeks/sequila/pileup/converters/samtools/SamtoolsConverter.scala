@@ -2,23 +2,17 @@ package org.biodatageeks.sequila.pileup.converters.samtools
 
 import com.github.mrpowers.spark.daria.sql.SparkSessionExt._
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.biodatageeks.sequila.pileup.converters.{CommonPileupFormat, DelContext, DelTransfer, PileupStringUtils}
+import org.biodatageeks.sequila.pileup.converters.common.{CommonPileupFormat, PileupConverter}
 import org.biodatageeks.sequila.utils.{Columns, DataQualityFuncs, UDFRegister}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
 
-class SamtoolsConverter(spark: SparkSession) extends Serializable {
+class SamtoolsConverter(spark: SparkSession) extends Serializable with PileupConverter{
 
   val rawPileupCol = "raw_pileup"
   val rawQualityCol = "raw_quality"
-
-  def transformSamToBlocks(df:DataFrame, caseSensitive: Boolean): DataFrame = {
-    val dfMap = generateAltsQuals(df, caseSensitive)
-    val dfBlocks = generateCompressedOutput(dfMap)
-    dfBlocks
-  }
 
   /** return data in common format. Case insensitive. Bases represented as strings.
    * Using UDFs for transformations.
@@ -27,7 +21,15 @@ class SamtoolsConverter(spark: SparkSession) extends Serializable {
     UDFRegister.register(spark)
     val dfMap = generateAltsQuals(df, caseSensitive)
     val dfOut = dfMap.select(Columns.CONTIG, Columns.START, Columns.START, Columns.REF, Columns.COVERAGE, Columns.ALTS, Columns.QUALS)
-    spark.createDataFrame(dfOut.rdd, CommonPileupFormat.schemaQualsMap)
+    val convertedDf = spark.createDataFrame(dfOut.rdd, CommonPileupFormat.schemaQualsMap)
+    val dfString = mapColumnsAsStrings(convertedDf)
+    dfString.orderBy(Columns.CONTIG, Columns.START)
+  }
+
+  def transformToBlocks(df:DataFrame, caseSensitive: Boolean): DataFrame = {
+    val dfMap = generateAltsQuals(df, caseSensitive)
+    val dfBlocks = generateCompressedOutput(dfMap)
+    dfBlocks
   }
 
   def removeDeletedBases(pileup: String, quality:String): (String, String) = {
@@ -45,7 +47,6 @@ class SamtoolsConverter(spark: SparkSession) extends Serializable {
       }
       i += 1
     }
-
     (pilBuf.toString, qualBuf.toString)
   }
 
@@ -53,7 +54,7 @@ class SamtoolsConverter(spark: SparkSession) extends Serializable {
   def generateQualityMap(rawPileup: String, qualityString: String, ref: String, contig: String, position:Int): mutable.Map[Byte, mutable.HashMap[String, Short]] = {
     val cleanPileup = PileupStringUtils.removeAllMarks(rawPileup)
     val (pileup, quality) = removeDeletedBases(cleanPileup, qualityString)
-    assert (pileup.length == quality.length, s"Pilep and quality string length mismach at $contig:$position")
+    assert (pileup.length == quality.length, s"Pilep and quality string length mismatch at $contig:$position")
 
     val refPileup = pileup.replace(PileupStringUtils.refMatchPlusStrand, ref.charAt(0)).replace(PileupStringUtils.refMatchMinuStrand, ref.charAt(0))
     val res = new mutable.HashMap[Byte, mutable.HashMap[String, Short]]

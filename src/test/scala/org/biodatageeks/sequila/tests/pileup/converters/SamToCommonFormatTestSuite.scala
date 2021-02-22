@@ -12,6 +12,7 @@ class SamToCommonFormatTestSuite extends PileupTestBase {
     val df = spark.read
       .format("csv")
       .option("delimiter", "\t")
+      .option("quote", "\u0000")
       .schema(SamtoolsSchema.schema)
       .load(samPath)
 

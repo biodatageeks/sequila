@@ -2,16 +2,18 @@ package org.biodatageeks.sequila.pileup.converters.gatk
 
 import com.github.mrpowers.spark.daria.sql.SparkSessionExt._
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.biodatageeks.sequila.pileup.converters.{CommonPileupFormat, PileupStringUtils}
-import org.biodatageeks.sequila.utils.{DataQualityFuncs, UDFRegister}
+import org.biodatageeks.sequila.pileup.converters.common.{CommonPileupFormat, PileupConverter}
+import org.biodatageeks.sequila.pileup.converters.samtools.PileupStringUtils
+import org.biodatageeks.sequila.utils.{Columns, DataQualityFuncs}
 
 import scala.collection.mutable
 
-class GatkConverter(spark: SparkSession) extends Serializable {
+class GatkConverter(spark: SparkSession) extends Serializable with PileupConverter {
 
   def transformToCommonFormat(df:DataFrame, caseSensitive:Boolean): DataFrame = {
     val dfMap = generateAltsQuals(df, caseSensitive)
-    dfMap
+    val dfString = mapColumnsAsStrings(dfMap)
+    dfString.orderBy(Columns.CONTIG, Columns.START)
   }
 
   def generateAltsQuals(df: DataFrame, caseSensitive: Boolean):DataFrame = {
@@ -40,5 +42,4 @@ class GatkConverter(spark: SparkSession) extends Serializable {
     })
     spark.createDF(dataMapped.collect().toList, CommonPileupFormat.schemaQualsMap.fields.toList )
   }
-
 }

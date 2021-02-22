@@ -1,6 +1,6 @@
-package org.biodatageeks.sequila.pileup.converters
+package org.biodatageeks.sequila.pileup.converters.common
 
-import org.apache.spark.sql.types.{ArrayType, ByteType, IntegerType, MapType, ShortType, StringType, StructField, StructType}
+import org.apache.spark.sql.types._
 import org.biodatageeks.sequila.utils.Columns
 
 object CommonPileupFormat {

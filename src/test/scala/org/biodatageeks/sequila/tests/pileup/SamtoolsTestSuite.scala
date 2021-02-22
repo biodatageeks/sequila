@@ -32,7 +32,7 @@ class SamtoolsTestSuite extends PileupTestBase {
 
     val converter = new SamtoolsConverter(spark)
     val sam = converter
-      .transformSamToBlocks(df, caseSensitive = true)
+      .transformToBlocks(df, caseSensitive = true)
       .select(Columns.CONTIG, Columns.START, Columns.END,Columns.REF,  Columns.COVERAGE, Columns.ALTS)
       .orderBy("contig", "pos_start")
 
@@ -59,7 +59,7 @@ class SamtoolsTestSuite extends PileupTestBase {
 
     val converter = new SamtoolsConverter(spark)
     val sam = converter
-      .transformSamToBlocks(df, caseSensitive = true)
+      .transformToBlocks(df, caseSensitive = true)
       .select(Columns.CONTIG, Columns.START, Columns.END,Columns.REF, Columns.COVERAGE,Columns.ALTS)
       .orderBy("contig", "pos_start")
 
@@ -88,7 +88,7 @@ class SamtoolsTestSuite extends PileupTestBase {
 
     val converter = new SamtoolsConverter(spark)
     val sam = converter
-      .transformSamToBlocks(df, caseSensitive = true)
+      .transformToBlocks(df, caseSensitive = true)
       .orderBy("contig", "pos_start")
 
     val ss = SequilaSession(spark)
@@ -114,7 +114,7 @@ class SamtoolsTestSuite extends PileupTestBase {
 
     val converter = new SamtoolsConverter(spark)
     val sam = converter
-      .transformSamToBlocks(df, caseSensitive = true)
+      .transformToBlocks(df, caseSensitive = true)
       .orderBy("contig", "pos_start")
 
     spark.sqlContext.setConf(InternalParams.InputSplitSize, splitSize)
