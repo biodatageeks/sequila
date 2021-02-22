@@ -10,7 +10,6 @@ import scala.collection.mutable
 class GatkConverter(spark: SparkSession) extends Serializable {
 
   def transformToCommonFormat(df:DataFrame, caseSensitive:Boolean): DataFrame = {
-    UDFRegister.register(spark)
     val dfMap = generateAltsQuals(df, caseSensitive)
     dfMap
   }
@@ -40,7 +39,6 @@ class GatkConverter(spark: SparkSession) extends Serializable {
 
     })
     spark.createDF(dataMapped.collect().toList, CommonPileupFormat.schemaQualsMap.fields.toList )
-
   }
 
 }

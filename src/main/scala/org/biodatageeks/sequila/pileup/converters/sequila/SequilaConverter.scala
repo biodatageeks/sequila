@@ -7,8 +7,12 @@ import org.biodatageeks.sequila.pileup.converters.CommonPileupFormat
 
 class SequilaConverter (spark: SparkSession) extends Serializable {
 
-  def generatePerBaseOutput(df: DataFrame, caseSensitive: Boolean): DataFrame = {
+  def transformToCommonFormat(df:DataFrame, caseSensitive:Boolean): DataFrame = {
+    val dfMap = generatePerBaseOutput(df, caseSensitive)
+    dfMap
+  }
 
+  def generatePerBaseOutput(df: DataFrame, caseSensitive: Boolean): DataFrame = {
     val perBase = df.rdd.flatMap { r => {
         val chr = r.getString(SequilaSchema.contig)
         val start = r.getInt(SequilaSchema.position_start)
@@ -34,8 +38,5 @@ class SequilaConverter (spark: SparkSession) extends Serializable {
     spark.createDF(perBase.collect().toList, CommonPileupFormat.fileSchema.fields.toList )
   }
 
-  def transformToCommonFormat(df:DataFrame, caseSensitive:Boolean): DataFrame = {
-    val dfMap = generatePerBaseOutput(df, caseSensitive)
-    dfMap
-  }
+
 }
