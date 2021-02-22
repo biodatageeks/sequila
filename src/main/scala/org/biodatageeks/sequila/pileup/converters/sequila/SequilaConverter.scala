@@ -36,6 +36,6 @@ class SequilaConverter (spark: SparkSession) extends Serializable {
         array
       }
       }
-    spark.createDF(perBase.collect().toList, CommonPileupFormat.fileSchema.fields.toList )
+    spark.createDF(perBase.collect().toList, CommonPileupFormat.schemaAltsQualsString.fields.toList )
   }
 }

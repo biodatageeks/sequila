@@ -40,6 +40,6 @@ class GatkConverter(spark: SparkSession) extends Serializable with PileupConvert
       (contig, position, position, ref , cov, if (map.nonEmpty) map else null, null)
 
     })
-    spark.createDF(dataMapped.collect().toList, CommonPileupFormat.schemaQualsMap.fields.toList )
+    spark.createDF(dataMapped.collect().toList, CommonPileupFormat.schemaAltsQualsMap.fields.toList )
   }
 }

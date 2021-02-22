@@ -54,7 +54,7 @@ object PileupComparison extends App with SequilaApp with DatasetComparer {
   def convertSequilaFile(ss: SequilaSession, file: String): DataFrame = {
     val df = ss.read
       .format("csv")
-      .schema(CommonPileupFormat.fileSchema)
+      .schema(CommonPileupFormat.schemaAltsQualsString)
       .load(file)
 
     val sequilaConverter = new SequilaConverter(ss)

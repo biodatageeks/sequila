@@ -21,7 +21,7 @@ class SamtoolsConverter(spark: SparkSession) extends Serializable with PileupCon
     UDFRegister.register(spark)
     val dfMap = generateAltsQuals(df, caseSensitive)
     val dfOut = dfMap.select(Columns.CONTIG, Columns.START, Columns.START, Columns.REF, Columns.COVERAGE, Columns.ALTS, Columns.QUALS)
-    val convertedDf = spark.createDataFrame(dfOut.rdd, CommonPileupFormat.schemaQualsMap)
+    val convertedDf = spark.createDataFrame(dfOut.rdd, CommonPileupFormat.schemaAltsQualsMap)
     val dfString = mapColumnsAsStrings(convertedDf)
     dfString.orderBy(Columns.CONTIG, Columns.START)
   }
@@ -222,7 +222,7 @@ class SamtoolsConverter(spark: SparkSession) extends Serializable with PileupCon
 
       i += 1; rowCounter +=1
     }
-    spark.createDF(arr.toList, CommonPileupFormat.schemaQualsMap.fields.toList)
+    spark.createDF(arr.toList, CommonPileupFormat.schemaAltsQualsMap.fields.toList)
   }
 
 }
