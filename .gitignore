@@ -22,3 +22,5 @@ ${seq.metastore.dir}
 .ipynb_checkpoints
 __pycache__
 venv/
+
+*_out.csv/

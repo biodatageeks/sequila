@@ -1,10 +1,14 @@
 package org.biodatageeks.sequila.apps
 
+import java.io.File
+
 import com.github.mrpowers.spark.fast.tests.DatasetComparer
 import org.apache.spark.sql.{DataFrame, Dataset, Row, SequilaSession}
+import org.biodatageeks.sequila.pileup.PileupWriter
 import org.biodatageeks.sequila.pileup.converters.gatk.GatkConverter
 import org.biodatageeks.sequila.pileup.converters.samtools.SamtoolsConverter
 import org.biodatageeks.sequila.pileup.converters.sequila.SequilaConverter
+
 import scala.collection.mutable
 
 
@@ -15,7 +19,7 @@ object PileupComparison extends App with SequilaApp with DatasetComparer {
     val ss = createSequilaSession()
     val files = combineFileWithFomat(args)
 
-    val dfByFormat = files.map(file =>(file._2, convert(ss, file._1, file._2.toLowerCase())))
+    val dfByFormat = files.map(file =>(file._2, convert(ss, file._1, file._2.toLowerCase(), save = true) ))
     val res = crossCompare(dfByFormat)
     printResults(res)
   }
@@ -38,17 +42,25 @@ object PileupComparison extends App with SequilaApp with DatasetComparer {
     args.grouped(2).toArray.map{case Array(a,b) => (a,b)}
   }
 
-  def convert(ss:SequilaSession, file: String, format:String): Dataset[Row] = {
+  def convert(ss:SequilaSession, file: String, format:String, save:Boolean=false): Dataset[Row] = {
     val df = format match {
       case "sam" | "samtools" => new SamtoolsConverter(ss).transform(file)
       case "sequila" => new SequilaConverter(ss).transform(file)
       case "gatk" => new GatkConverter(ss).transform(file)
     }
+    if (save) {
+      val outName = prepareOutFilename(file, format)
+      PileupWriter.save(df,outName)
+    }
     printDf(df, format)
     df
   }
 
-  private def checkArgs (args: Array[String]): Unit = {
+  private def prepareOutFilename(file: String, format: String):String = {
+    s"${new File(file).getParent}/${format}_out.csv"
+  }
+
+  private def checkArgs(args: Array[String]): Unit = {
     val minArgs = 4
     if (args.isEmpty)
       throw new RuntimeException("Please supply input arguments")
