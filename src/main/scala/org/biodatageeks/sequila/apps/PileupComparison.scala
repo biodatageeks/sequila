@@ -2,9 +2,8 @@ package org.biodatageeks.sequila.apps
 
 import com.github.mrpowers.spark.fast.tests.DatasetComparer
 import org.apache.spark.sql.{DataFrame, Dataset, Row, SequilaSession}
-import org.biodatageeks.sequila.pileup.converters.common.CommonPileupFormat
-import org.biodatageeks.sequila.pileup.converters.gatk.{GatkConverter, GatkSchema}
-import org.biodatageeks.sequila.pileup.converters.samtools.{SamtoolsConverter, SamtoolsSchema}
+import org.biodatageeks.sequila.pileup.converters.gatk.GatkConverter
+import org.biodatageeks.sequila.pileup.converters.samtools.SamtoolsConverter
 import org.biodatageeks.sequila.pileup.converters.sequila.SequilaConverter
 import scala.collection.mutable
 
@@ -21,13 +20,7 @@ object PileupComparison extends App with SequilaApp with DatasetComparer {
     printResults(res)
   }
 
-  def printResults (res: Map[(String, String), (Int,String)]): Unit = {
-    res.foreach(x =>
-      println ((if (x._2._1 != 0) Console.RED else Console.GREEN) + s">> ${x._1._1.toUpperCase()} with ${x._1._2.toUpperCase()}: result: ${x._2._2}"))
-  }
-
   def crossCompare (pileupList: Array [(String, Dataset[Row])]): Map[(String, String), (Int,String)] = {
-
     val result = new mutable.HashMap[(String, String), (Int, String)]
     val dfByFormatCombinations = pileupList.combinations(2)
     for (pair <- dfByFormatCombinations) {
@@ -45,73 +38,14 @@ object PileupComparison extends App with SequilaApp with DatasetComparer {
     args.grouped(2).toArray.map{case Array(a,b) => (a,b)}
   }
 
-  def convertSamtoolsFile(ss: SequilaSession, file: String): DataFrame = {
-
-    val df = ss.read
-      .format("csv")
-      .option("delimiter", "\t")
-      .option("quote", "\u0000")
-      .schema(SamtoolsSchema.schema)
-      .load(file)
-
-    val converter = new SamtoolsConverter(ss)
-    val sam = converter
-      .transformToCommonFormat(df, caseSensitive = true)
-
-    println("SAMTOOLS")
-    sam.printSchema()
-    sam.show(10)
-    sam
-  }
-
-
-  def convertSequilaFile(ss: SequilaSession, file: String): DataFrame = {
-    val df = ss.read
-      .format("csv")
-      .schema(CommonPileupFormat.schemaAltsQualsString)
-      .load(file)
-
-    val sequilaConverter = new SequilaConverter(ss)
-    val converted = sequilaConverter.transformToCommonFormat(df, true)
-
-    println ("SEQUILA FORMAT:")
-    converted.printSchema()
-    converted.show(10)
-    converted
-  }
-
-  def convertGatkFile(ss: SequilaSession, file: String): DataFrame = {
-    val df = ss.read
-      .format("csv")
-      .option("delimiter", " ")
-      .schema(GatkSchema.schema)
-      .load(file)
-
-    val converter = new GatkConverter(ss)
-    val convertedGatk = converter
-      .transformToCommonFormat(df, caseSensitive = true)
-
-    println ("GATK FORMAT:")
-    convertedGatk.printSchema()
-    convertedGatk.show(10)
-    convertedGatk
-  }
-
   def convert(ss:SequilaSession, file: String, format:String): Dataset[Row] = {
-    format match {
-      case "sam" | "samtools" => {
-        println (s"Samtools format on file $file")
-        convertSamtoolsFile(ss, file)
-      }
-      case "sequila" => {
-        println (s"Sequila format on file $file")
-        convertSequilaFile(ss,file)
-      }
-      case "gatk" => {
-        println (s"gatk format on file $file")
-        convertGatkFile(ss, file)
-      }
+    val df = format match {
+      case "sam" | "samtools" => new SamtoolsConverter(ss).transform(file)
+      case "sequila" => new SequilaConverter(ss).transform(file)
+      case "gatk" => new GatkConverter(ss).transform(file)
     }
+    printDf(df, format)
+    df
   }
 
   private def checkArgs (args: Array[String]): Unit = {
@@ -124,5 +58,16 @@ object PileupComparison extends App with SequilaApp with DatasetComparer {
 
     if ((args.length%2) != 0)
       throw new RuntimeException("Each file needs format specification (sam, or sequila or gatk)")
+  }
+
+  private def printResults (res: Map[(String, String), (Int,String)]): Unit = {
+    res.foreach(x =>
+      println ((if (x._2._1 != 0) Console.RED else Console.GREEN) + s">> ${x._1._1.toUpperCase()} with ${x._1._2.toUpperCase()}: result: ${x._2._2}"))
+  }
+
+  private def printDf(df: DataFrame, format: String): Unit = {
+    println(format)
+    df.printSchema()
+    df.show(10)
   }
 }

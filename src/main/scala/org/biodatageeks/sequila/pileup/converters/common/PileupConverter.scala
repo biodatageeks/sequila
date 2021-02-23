@@ -4,13 +4,21 @@ import org.apache.spark.sql.DataFrame
 import org.biodatageeks.sequila.utils.Columns
 
 trait PileupConverter {
+
+  /**
+   * Loads data from input path and transforms to common format
+   * @param path
+   * @return
+   */
+  def transform (path: String): DataFrame
+
   /**
    * Transforms input DF to common format (per-base output and string values for alts and quals)
    * @param df
    * @param caseSensitive
    * @return
    */
-  def transformToCommonFormat(df:DataFrame, caseSensitive:Boolean): DataFrame
+  def toCommonFormat(df:DataFrame, caseSensitive:Boolean): DataFrame
 
   /**
    * Transforms map fields into properly formatted and ordered string fields using UDFs

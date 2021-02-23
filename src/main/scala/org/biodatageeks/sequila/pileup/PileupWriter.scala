@@ -3,7 +3,7 @@ package org.biodatageeks.sequila.pileup
 import org.apache.spark.sql.{Dataset, Row, SaveMode, SparkSession}
 import org.biodatageeks.sequila.utils.Columns
 
-object Writer {
+object PileupWriter {
 
   val mapToString = (map: Map[Byte, Short]) => {
     if (map == null)

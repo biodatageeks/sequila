@@ -2,13 +2,19 @@ package org.biodatageeks.sequila.pileup.converters.sequila
 
 import com.github.mrpowers.spark.daria.sql.SparkSessionExt._
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.biodatageeks.sequila.pileup.converters.common.CommonPileupFormat
+import org.biodatageeks.sequila.pileup.PileupReader
+import org.biodatageeks.sequila.pileup.converters.common.{CommonPileupFormat, PileupConverter}
 import org.biodatageeks.sequila.utils.Columns
 
 
-class SequilaConverter (spark: SparkSession) extends Serializable {
+class SequilaConverter (spark: SparkSession) extends Serializable with PileupConverter {
 
-  def transformToCommonFormat(df:DataFrame, caseSensitive:Boolean): DataFrame = {
+  override def transform(path: String): DataFrame = {
+    val df = PileupReader.load(spark, path, CommonPileupFormat.schemaAltsQualsString)
+    toCommonFormat(df, caseSensitive = true)
+  }
+
+  def toCommonFormat(df:DataFrame, caseSensitive:Boolean): DataFrame = {
     val dfMap = generatePerBaseOutput(df, caseSensitive)
     dfMap.orderBy(Columns.CONTIG, Columns.START)
   }
@@ -38,4 +44,5 @@ class SequilaConverter (spark: SparkSession) extends Serializable {
       }
     spark.createDF(perBase.collect().toList, CommonPileupFormat.schemaAltsQualsString.fields.toList )
   }
+
 }

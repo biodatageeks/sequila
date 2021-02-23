@@ -2,6 +2,7 @@ package org.biodatageeks.sequila.pileup.converters.gatk
 
 import com.github.mrpowers.spark.daria.sql.SparkSessionExt._
 import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.biodatageeks.sequila.pileup.PileupReader
 import org.biodatageeks.sequila.pileup.converters.common.{CommonPileupFormat, PileupConverter}
 import org.biodatageeks.sequila.pileup.converters.samtools.PileupStringUtils
 import org.biodatageeks.sequila.utils.{Columns, DataQualityFuncs}
@@ -10,7 +11,11 @@ import scala.collection.mutable
 
 class GatkConverter(spark: SparkSession) extends Serializable with PileupConverter {
 
-  def transformToCommonFormat(df:DataFrame, caseSensitive:Boolean): DataFrame = {
+  override def transform(path: String): DataFrame = {
+    val df = PileupReader.load(spark, path, GatkSchema.schema, delimiter = " ")
+    toCommonFormat(df, caseSensitive = true )
+  }
+  def toCommonFormat(df:DataFrame, caseSensitive:Boolean): DataFrame = {
     val dfMap = generateAltsQuals(df, caseSensitive)
     val dfString = mapColumnsAsStrings(dfMap)
     dfString.orderBy(Columns.CONTIG, Columns.START)

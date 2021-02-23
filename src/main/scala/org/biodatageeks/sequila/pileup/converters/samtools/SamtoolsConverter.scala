@@ -2,6 +2,7 @@ package org.biodatageeks.sequila.pileup.converters.samtools
 
 import com.github.mrpowers.spark.daria.sql.SparkSessionExt._
 import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.biodatageeks.sequila.pileup.PileupReader
 import org.biodatageeks.sequila.pileup.converters.common.{CommonPileupFormat, PileupConverter}
 import org.biodatageeks.sequila.utils.{Columns, DataQualityFuncs, UDFRegister}
 
@@ -9,15 +10,20 @@ import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
 
-class SamtoolsConverter(spark: SparkSession) extends Serializable with PileupConverter{
+class SamtoolsConverter(spark: SparkSession) extends Serializable with PileupConverter {
 
   val rawPileupCol = "raw_pileup"
   val rawQualityCol = "raw_quality"
 
+  def transform (path: String): DataFrame = {
+    val df = PileupReader.load(spark, path, SamtoolsSchema.schema, delimiter = "\t", quote = "\u0000")
+    toCommonFormat(df, caseSensitive = true)
+  }
+
   /** return data in common format. Case insensitive. Bases represented as strings.
    * Using UDFs for transformations.
    *  */
-  def transformToCommonFormat(df:DataFrame, caseSensitive:Boolean): DataFrame = {
+  def toCommonFormat(df:DataFrame, caseSensitive:Boolean): DataFrame = {
     UDFRegister.register(spark)
     val dfMap = generateAltsQuals(df, caseSensitive)
     val dfOut = dfMap.select(Columns.CONTIG, Columns.START, Columns.START, Columns.REF, Columns.COVERAGE, Columns.ALTS, Columns.QUALS)
