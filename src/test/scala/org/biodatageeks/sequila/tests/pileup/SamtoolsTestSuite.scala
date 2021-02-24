@@ -1,7 +1,7 @@
 package org.biodatageeks.sequila.tests.pileup
 
 import org.apache.spark.sql._
-import org.biodatageeks.sequila.pileup.PileupWriter
+import org.biodatageeks.sequila.pileup.{PileupReader, PileupWriter}
 import org.biodatageeks.sequila.pileup.converters.samtools.{SamtoolsConverter, SamtoolsSchema}
 import org.biodatageeks.sequila.utils.{Columns, InternalParams, SequilaRegister}
 
@@ -24,12 +24,7 @@ class SamtoolsTestSuite extends PileupTestBase {
 
 
   test("alts: one partition") {
-    val df = spark.read
-      .format("csv")
-      .option("delimiter", "\t")
-      .option("quote", "\u0000")
-      .schema(SamtoolsSchema.schema)
-      .load(samResPath)
+    val df = PileupReader.load(spark, samResPath, SamtoolsSchema.schema, delimiter = "\t", quote = "\u0000")
 
     val converter = new SamtoolsConverter(spark)
     val sam = converter
@@ -49,12 +44,7 @@ class SamtoolsTestSuite extends PileupTestBase {
   }
 
   test("alts: many partitions") {
-    val df = spark.read
-      .format("csv")
-      .option("delimiter", "\t")
-      .option("quote", "\u0000")
-      .schema(SamtoolsSchema.schema)
-      .load(samResPath)
+    val df = PileupReader.load(spark, samResPath, SamtoolsSchema.schema, delimiter = "\t", quote = "\u0000")
 
     val converter = new SamtoolsConverter(spark)
     val sam = converter
@@ -74,12 +64,7 @@ class SamtoolsTestSuite extends PileupTestBase {
 
 
   test("alts,quals: one partition") {
-    val df = spark.read
-      .format("csv")
-      .option("delimiter", "\t")
-      .option("quote", "\u0000")
-      .schema(SamtoolsSchema.schema)
-      .load(samResPath)
+    val df = PileupReader.load(spark, samResPath, SamtoolsSchema.schema, delimiter = "\t", quote = "\u0000")
 
     val converter = new SamtoolsConverter(spark)
     val sam = converter
@@ -97,12 +82,7 @@ class SamtoolsTestSuite extends PileupTestBase {
 
 
   test("alts,quals: many partitions ") {
-    val df = spark.read
-      .format("csv")
-      .option("delimiter", "\t")
-      .option("quote", "\u0000")
-      .schema(SamtoolsSchema.schema)
-      .load(samResPath)
+    val df = PileupReader.load(spark, samResPath, SamtoolsSchema.schema, delimiter = "\t", quote = "\u0000")
 
     val converter = new SamtoolsConverter(spark)
     val sam = converter
