@@ -5,8 +5,6 @@ import org.biodatageeks.sequila.pileup.PileupWriter
 import org.biodatageeks.sequila.tests.pileup.PileupTestBase
 import org.biodatageeks.sequila.utils.{Columns, SequilaRegister}
 
-
-
 class SequilaDataPrep extends PileupTestBase {
 
 
@@ -18,13 +16,12 @@ class SequilaDataPrep extends PileupTestBase {
 
 
   test("alts,quals: one partition") {
-
     val ss = SequilaSession(spark)
     SequilaRegister.register(ss)
 
     val bdgRes = ss.sql(queryQual).orderBy("contig", "pos_start")
     bdgRes.show(10)
-    PileupWriter.saveToCsvFileWithQuals(ss, bdgRes, "sequilaQualsBlocks.csv")
+    PileupWriter.save(bdgRes, "sequilaQualsBlocks.csv")
   }
 
 }

@@ -1,6 +1,7 @@
 package org.biodatageeks.sequila.tests.pileup
 
 import org.apache.spark.sql._
+import org.biodatageeks.sequila.pileup.PileupWriter
 import org.biodatageeks.sequila.pileup.converters.samtools.{SamtoolsConverter, SamtoolsSchema}
 import org.biodatageeks.sequila.utils.{Columns, InternalParams, SequilaRegister}
 
@@ -42,10 +43,8 @@ class SamtoolsTestSuite extends PileupTestBase {
     val bdgRes = ss.sql(query).orderBy("contig", "pos_start")
     val samRes = spark.createDataFrame(sam.rdd, bdgRes.schema)
 
-    bdgRes.printSchema()
-
-//    Writer.saveToFile(spark, samRes, "samRes.csv")
-//    Writer.saveToFile(spark, bdgRes, "bdgRes.csv")
+//    PileupWriter.save(samRes, "samRes.csv")
+//    PileupWriter.save(spark, bdgRes, "bdgRes.csv")
     assertDataFrameEquals(samRes, bdgRes)
   }
 
@@ -70,10 +69,6 @@ class SamtoolsTestSuite extends PileupTestBase {
     val bdgRes = ss.sql(query).orderBy("contig", "pos_start")
     val samRes = spark.createDataFrame(sam.rdd, bdgRes.schema)
 
-
-//    Writer.saveToFile(spark, samRes, "samRes.csv")
-//    Writer.saveToFile(spark, bdgRes, "bdgResFullSplit.csv")
-
     assertDataFrameEquals(samRes, bdgRes)
   }
 
@@ -96,9 +91,6 @@ class SamtoolsTestSuite extends PileupTestBase {
 
     val bdgRes = ss.sql(queryQual).orderBy("contig", "pos_start")
     val samRes = spark.createDataFrame(sam.rdd, bdgRes.schema)
-
-    samRes.printSchema()
-    bdgRes.printSchema()
 
     assertDataFrameEquals(samRes, bdgRes)
   }

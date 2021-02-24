@@ -1,50 +1,30 @@
 package org.biodatageeks.sequila.pileup
 
-import org.apache.spark.sql.{DataFrame, Dataset, Row, SaveMode, SparkSession}
-import org.biodatageeks.sequila.utils.Columns
+import org.apache.spark.sql.{DataFrame, SaveMode}
 
 object PileupWriter {
 
-  val mapToString = (map: Map[Byte, Short]) => {
-    if (map == null)
-      "null"
-    else
-      map.map({
-        case (k, v) => k.toChar -> v
-      }).toSeq.sortBy(_._1).mkString.replace(" -> ", ":")
-  }
-
   def save (df: DataFrame, path: String): Unit = {
+    if (!df.schema.fields.exists(p=>p.dataType.typeName.contains("map")))
+      saveSpecificColumns(df, df.columns, path)
+    else {
+      val outputColumns = castMapFieldsToString(df)
+      saveSpecificColumns(df, outputColumns, path)
+    }
+  }
+
+  private def castMapFieldsToString(df: DataFrame): Array[String] = {
+    val outputColumns = df.columns
+    df.schema.fields.zipWithIndex.foreach { case (col, ind) => if (col.dataType.typeName.contains("map")) outputColumns(ind) = s"cast(${col.name} as string)" }
+    outputColumns
+  }
+
+  private def saveSpecificColumns(df: DataFrame, columns: Array[String], path: String): Unit = {
     df
+      .selectExpr(columns: _*)
       .coalesce(1)
       .write
       .mode(SaveMode.Overwrite)
       .csv(path)
   }
-
-  def saveToCsvFile(spark: SparkSession, res: Dataset[Row], path: String): Unit = {
-    spark.udf.register("mapToString", mapToString)
-    val ind = res.columns.indexOf({Columns.ALTS})
-    val outputColumns =  res.columns
-    outputColumns(ind) = s"mapToString(${Columns.ALTS})"
-
-    res
-      .selectExpr(outputColumns: _*)
-      .coalesce(1)
-      .write
-      .mode(SaveMode.Overwrite)
-      .csv(path)
-  }
-
-  def saveToCsvFileWithQuals(spark: SparkSession, res: Dataset[Row], path: String): Unit = {
-    val outputColumns =  res.columns
-
-    res
-      .selectExpr(outputColumns: _*)
-      .coalesce(1)
-      .write
-      .mode(SaveMode.Overwrite)
-      .csv(path)
-  }
-
 }
