@@ -5,6 +5,7 @@ import java.io.File
 import com.github.mrpowers.spark.fast.tests.DatasetComparer
 import org.apache.spark.sql.{DataFrame, Dataset, Row, SequilaSession}
 import org.biodatageeks.sequila.pileup.PileupWriter
+import org.biodatageeks.sequila.pileup.converters.common.PileupFormats.{SAMTOOLS_FORMAT, SAMTOOLS_FORMAT_SHORT, GATK_FORMAT, SEQUILA_FORMAT}
 import org.biodatageeks.sequila.pileup.converters.gatk.GatkConverter
 import org.biodatageeks.sequila.pileup.converters.samtools.SamtoolsConverter
 import org.biodatageeks.sequila.pileup.converters.sequila.SequilaConverter
@@ -44,9 +45,10 @@ object PileupComparison extends App with SequilaApp with DatasetComparer {
 
   def convert(ss:SequilaSession, file: String, format:String, save:Boolean=false): Dataset[Row] = {
     val df = format match {
-      case "sam" | "samtools" => new SamtoolsConverter(ss).transform(file)
-      case "sequila" => new SequilaConverter(ss).transform(file)
-      case "gatk" => new GatkConverter(ss).transform(file)
+      case SAMTOOLS_FORMAT | SAMTOOLS_FORMAT_SHORT  => new SamtoolsConverter(ss).transform(file)
+      case SEQUILA_FORMAT => new SequilaConverter(ss).transform(file)
+      case GATK_FORMAT => new GatkConverter(ss).transform(file)
+      case _ => throw new RuntimeException("Unknown file format")
     }
     if (save) {
       val outName = prepareOutFilename(file, format)
