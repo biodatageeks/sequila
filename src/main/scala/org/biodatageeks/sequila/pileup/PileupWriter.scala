@@ -5,9 +5,9 @@ import org.apache.spark.sql.{DataFrame, SaveMode}
 object PileupWriter {
 
   def save (df: DataFrame, path: String): Unit = {
-    if (!df.schema.fields.exists(p=>p.dataType.typeName.contains("map")))
+    if (!df.schema.fields.exists(p=>p.dataType.typeName.contains("map"))) {
       saveSpecificColumns(df, df.columns, path)
-    else {
+    } else {
       val outputColumns = castMapFieldsToString(df)
       saveSpecificColumns(df, outputColumns, path)
     }
@@ -15,7 +15,11 @@ object PileupWriter {
 
   private def castMapFieldsToString(df: DataFrame): Array[String] = {
     val outputColumns = df.columns
-    df.schema.fields.zipWithIndex.foreach { case (col, ind) => if (col.dataType.typeName.contains("map")) outputColumns(ind) = s"cast(${col.name} as string)" }
+    df
+      .schema
+      .fields
+      .zipWithIndex
+      .foreach { case (col, ind) => if (col.dataType.typeName.contains("map")) outputColumns(ind) = s"cast(${col.name} as string)" }
     outputColumns
   }
 

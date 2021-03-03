@@ -35,7 +35,7 @@ class SequilaConverter (spark: SparkSession) extends Serializable with PileupCon
         var position = start
 
         while (position < end) {
-          array(cnt) = (chr, position, position, ref.substring(cnt, cnt+1), cov, altsMap, qualsMap)
+          array(cnt) = (chr, position, position, ref.substring(cnt, cnt + 1), cov, altsMap, qualsMap)
           cnt +=1
           position+=1
         }

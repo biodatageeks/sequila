@@ -46,6 +46,7 @@ libraryDependencies += "io.projectglow" %% "glow-spark3" % "0.6.0" excludeAll (E
 libraryDependencies += "com.intel.gkl" % "gkl" % "0.8.6"
 
 
+
 avroSpecificSourceDirectories in Compile += (sourceDirectory in Compile).value / "avro/input"
 avroSpecificSourceDirectories in Test += (sourceDirectory in Test).value / "avro"
 sourceGenerators in Compile += (avroScalaGenerate in Compile).taskValue
@@ -112,6 +113,11 @@ assemblyMergeStrategy in assembly := {
     val oldStrategy = (assemblyMergeStrategy in assembly).value
     oldStrategy(x)
 }
+
+lazy val compileScalastyle = taskKey[Unit]("compileScalastyle")
+compileScalastyle := scalastyle.in(Compile).toTask("").value
+(compile in Compile) := ((compile in Compile) dependsOn compileScalastyle).value
+
 
 credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
 publishConfiguration := publishConfiguration.value.withOverwrite(true)

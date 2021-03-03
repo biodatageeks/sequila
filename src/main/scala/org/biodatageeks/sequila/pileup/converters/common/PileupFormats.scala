@@ -21,8 +21,4 @@ object PileupFormats {
     format == SEQUILA_FORMAT
   }
 
-  case class isSamtools(format: String) {
-
-  }
-
 }
