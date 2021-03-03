@@ -1,6 +1,7 @@
 package org.biodatageeks.sequila.pileup.converters.samtools
 
 import org.apache.spark.sql.types._
+import org.biodatageeks.sequila.utils.Columns
 
 object SamtoolsSchema {
     val contig = 0
@@ -12,14 +13,18 @@ object SamtoolsSchema {
     val altsMap = 6
     val qualsMap = 7
 
+    val pileupStringCol = "pileup"
+    val qualityStringCol = "quality"
+
+
     val schema: StructType = StructType(
         List(
-            StructField("contig", StringType, nullable = true),
-            StructField("position", IntegerType, nullable = true),
-            StructField("reference", StringType, nullable = true),
-            StructField("coverage", ShortType, nullable = true),
-            StructField("pileup", StringType, nullable = true),
-            StructField("quality", StringType, nullable = true)
+            StructField(Columns.CONTIG, StringType, nullable = true),
+            StructField(Columns.POS, IntegerType, nullable = true),
+            StructField(Columns.REF, StringType, nullable = true),
+            StructField(Columns.COVERAGE, ShortType, nullable = true),
+            StructField(pileupStringCol, StringType, nullable = true),
+            StructField(qualityStringCol, StringType, nullable = true)
         )
     )
 }

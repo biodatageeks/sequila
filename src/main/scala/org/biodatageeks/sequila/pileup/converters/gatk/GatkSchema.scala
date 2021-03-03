@@ -1,6 +1,7 @@
 package org.biodatageeks.sequila.pileup.converters.gatk
 
 import org.apache.spark.sql.types._
+import org.biodatageeks.sequila.utils.Columns
 
 object GatkSchema {
   val contig = 0
@@ -10,13 +11,15 @@ object GatkSchema {
   val pileupString = 4
   val altsMap = 5
 
+  val pileupStringCol = "pileup"
+
   val schema: StructType = StructType(
     List(
-      StructField("contig", StringType, nullable = true),
-      StructField("position", IntegerType, nullable = true),
-      StructField("reference", StringType, nullable = true),
-      StructField("coverage", ShortType, nullable = true),
-      StructField("pileup", StringType, nullable = true),
+      StructField(Columns.CONTIG, StringType, nullable = true),
+      StructField(Columns.POS, IntegerType, nullable = true),
+      StructField(Columns.REF, StringType, nullable = true),
+      StructField(Columns.COVERAGE, ShortType, nullable = true),
+      StructField(pileupStringCol, StringType, nullable = true),
     )
   )
 }
