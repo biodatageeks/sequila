@@ -114,17 +114,22 @@ assemblyMergeStrategy in assembly := {
     oldStrategy(x)
 }
 
+/* scalastyle setup */
 lazy val compileScalastyle = taskKey[Unit]("compileScalastyle")
 compileScalastyle := scalastyle.in(Compile).toTask("").value
+
+scalastyleFailOnError := false
+scalastyleFailOnWarning := falsegit stat
+
 (compile in Compile) := ((compile in Compile) dependsOn compileScalastyle).value
 
 
 credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
 publishConfiguration := publishConfiguration.value.withOverwrite(true)
 publishTo := {
-  if (!version.value.toLowerCase.contains("snapshot"))
+  if (!version.value.toLowerCase.contains("snapshot")) {
     sonatypePublishToBundle.value
-  else {
+  } else {
     val nexus = "https://zsibio.ii.pw.edu.pl/nexus/repository/"
     Some("snapshots" at nexus + "maven-snapshots")
   }
