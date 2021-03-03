@@ -119,7 +119,7 @@ lazy val compileScalastyle = taskKey[Unit]("compileScalastyle")
 compileScalastyle := scalastyle.in(Compile).toTask("").value
 
 scalastyleFailOnError := false
-scalastyleFailOnWarning := falsegit stat
+scalastyleFailOnWarning := false
 
 (compile in Compile) := ((compile in Compile) dependsOn compileScalastyle).value
 
