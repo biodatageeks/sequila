@@ -28,7 +28,7 @@ class JoinOptimizerChromosome(spark: SparkSession, rdd: RDD[(String,Interval[Int
      }
      catch {
        case e @ (_ : NoClassDefFoundError | _ : ExceptionInInitializerError ) => {
-         logger.warn("Method ObjectSizeCalculator.getObjectSize not available falling back to Spark methods")
+         logger.info("Method ObjectSizeCalculator.getObjectSize not available falling back to Spark methods")
          SizeEstimator.estimate(rdd.first()) * rddCount
        }
      }

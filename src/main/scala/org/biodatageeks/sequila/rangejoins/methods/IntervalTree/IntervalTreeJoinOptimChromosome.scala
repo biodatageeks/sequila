@@ -82,7 +82,7 @@ case class IntervalTreeJoinOptimChromosome(left: SparkPlan,
     val v2Size = if(useJoinOrder) Long.MinValue else v2.count()
 
     if ( v1Size < v2Size ) {
-      logger.warn(s"Broadcasting first table")
+      logger.info(s"Broadcasting first table")
       val v3 = IntervalTreeJoinOptimChromosomeImpl.overlapJoin(context, v1kv, v2kv,
          v1.count(), minOverlap, maxGap) //FIXME:can be further optimized!
      v3.mapPartitions(
@@ -95,7 +95,7 @@ case class IntervalTreeJoinOptimChromosome(left: SparkPlan,
 
     }
     else {
-      logger.warn(s"Broadcasting second table")
+      logger.info(s"Broadcasting second table")
       val v3 = IntervalTreeJoinOptimChromosomeImpl.overlapJoin(context, v2kv, v1kv,
          v2.count(), minOverlap, maxGap)
       v3.mapPartitions(

@@ -17,7 +17,8 @@ class BAMReaderTestSuite
 
   before {
     spark.sql(s"DROP TABLE IF EXISTS $tableNameBAM")
-    spark.sql(s"""
+    spark.sql(
+      s"""
          |CREATE TABLE $tableNameBAM
          |USING org.biodatageeks.sequila.datasources.BAM.BAMDataSource
          |OPTIONS(path "$bamPath")
@@ -30,8 +31,9 @@ class BAMReaderTestSuite
     SequilaRegister.register(ss)
     ss.sqlContext.setConf("spark.biodatageeks.bam.predicatePushdown", "false")
 
-    val query = s"""
-                       |SELECT * FROM reads WHERE ${Columns.CONTIG}='1' AND ${Columns.START}=20138
+    val query =
+      s"""
+         |SELECT * FROM reads WHERE ${Columns.CONTIG}='1' AND ${Columns.START}=20138
                      """.stripMargin
     val withoutPPDF = ss.sql(query).collect()
 
@@ -39,7 +41,7 @@ class BAMReaderTestSuite
     val withPPDF = ss.sql(query)
     assertDataFrameEquals(
       ss.createDataFrame(ss.sparkContext.parallelize(withoutPPDF),
-                         withPPDF.schema),
+        withPPDF.schema),
       withPPDF)
     spark.time {
       ss.sqlContext.setConf("spark.biodatageeks.bam.predicatePushdown", "false")
@@ -52,8 +54,9 @@ class BAMReaderTestSuite
     val ss = SequilaSession(spark)
     SequilaRegister.register(ss)
     ss.sqlContext.setConf("spark.biodatageeks.bam.predicatePushdown", "false")
-    val query = s"""
-                   |SELECT * FROM reads WHERE ${Columns.CONTIG}='1' AND ${Columns.START} >= 1996 AND ${Columns.END} <= 2071
+    val query =
+      s"""
+         |SELECT * FROM reads WHERE ${Columns.CONTIG}='1' AND ${Columns.START} >= 1996 AND ${Columns.END} <= 2071
                  """.stripMargin
     val withoutPPDF = ss.sql(query).collect()
 
@@ -61,7 +64,7 @@ class BAMReaderTestSuite
     val withPPDF = ss.sql(query)
     assertDataFrameEquals(
       ss.createDataFrame(ss.sparkContext.parallelize(withoutPPDF),
-                         withPPDF.schema),
+        withPPDF.schema),
       withPPDF)
     spark.time {
       ss.sqlContext.setConf("spark.biodatageeks.bam.predicatePushdown", "false")
@@ -70,14 +73,15 @@ class BAMReaderTestSuite
 
   }
 
-  test("Read BAM wide record"){
+  test("Read BAM wide record") {
     val ss = SequilaSession(spark)
     SequilaRegister.register(ss)
-    val df = ss.sql(s"""
-                       |SELECT * FROM $tableNameBAM
+    val df = ss.sql(
+      s"""
+         |SELECT * FROM $tableNameBAM
       """.stripMargin)
     df.printSchema()
-    df.show(1,false)
+    df.show(1, false)
 
   }
 
@@ -87,13 +91,13 @@ class BAMReaderTestSuite
     val ss = SequilaSession(spark)
     SequilaRegister.register(ss)
 
-    val a = ss.sql(s"""
-                      |SELECT * FROM $tableNameBAM
+    val a = ss.sql(
+      s"""
+         |SELECT * FROM $tableNameBAM
       """.stripMargin)
     println(s"""Partitions number: ${a.rdd.partitions.length}""")
 
   }
-
 
 
   test("Simple select over a BAM table group by") {
@@ -106,4 +110,15 @@ class BAMReaderTestSuite
         .getLong(1) === 3172)
   }
 
+  test("Read BAM file with LIMIT") {
+    val ss = SequilaSession(spark)
+    ss.sparkContext.setLogLevel("INFO")
+    SequilaRegister.register(ss)
+    val df = ss.sql(
+      s"""
+         |SELECT * FROM $tableNameBAM LIMIT 1
+      """.stripMargin)
+    df.show(1, false)
+
+  }
 }

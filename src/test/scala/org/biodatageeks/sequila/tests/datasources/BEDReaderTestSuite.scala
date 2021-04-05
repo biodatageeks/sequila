@@ -45,5 +45,16 @@ class BEDReaderTestSuite extends BEDBaseTestSuite with SharedSparkContext {
 
 
   }
+  test("Read BED file with LIMIT") {
+    val ss = SequilaSession(spark)
+    ss
+      .sparkContext
+      .setLogLevel("INFO")
+    SequilaRegister.register(ss)
+    val sqlText = s"SELECT * FROM ${tableNameBED} LIMIT 1"
+    ss
+      .sql(sqlText)
+      .show()
+  }
 
 }
