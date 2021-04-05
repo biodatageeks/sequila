@@ -51,12 +51,19 @@ case class SequilaDataSourceStrategy(spark: SparkSession) extends Strategy with 
     case limit @ LocalLimit(limitValue @ IntegerLiteral(value), prj) => {
         limit.child  match {
           case PhysicalOperation(projects, filters, l@LogicalRelation(t: PrunedFilteredScan, _, _,false)) => {
-            pruneFilterProject(
-              l,
-              projects,
-              filters,
-              (a, f) => toCatalystRDD(l, a,
-                t.asInstanceOf[BDGAlignmentRelation[BAMBDGInputFormat]].buildScanWithLimit(a.map(_.name).toArray,f, value ))) :: Nil
+            log.info("LIMIT clause detected, checking if can apply any optimizations...")
+            t match {
+              case value1: BDGAlignmentRelation[BAMBDGInputFormat] => {
+                log.info("LIMIT clause detected and BAM relation and applying optimization")
+                pruneFilterProject(
+                  l,
+                  projects,
+                  filters,
+                  (a, f) => toCatalystRDD(l, a,
+                    value1.buildScanWithLimit(a.map(_.name).toArray, f, value))) :: Nil
+              }
+              case _ => Nil
+            }
           }
           case _ => Nil
         }
