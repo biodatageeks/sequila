@@ -21,7 +21,6 @@ class IntervalTreeJoinStrategyOptim(spark: SparkSession) extends Strategy with S
       val maxGap = spark.sqlContext.getConf("spark.biodatageeks.rangejoin.maxGap","0")
       //val maxBroadcastSize = spark.sqlContext.getConf("spark.biodatageeks.rangejoin.maxBroadcastSize", (10*(1024*1024)).toString)
       val useJoinOrder = spark.sqlContext.getConf("spark.biodatageeks.rangejoin.useJoinOrder","false")
-      spark.sparkContext.setLogLevel("WARN")
       /*register functions*/
       IntervalTreeJoinOptimChromosome(planLater(left), planLater(right),
         rangeJoinKeys, spark, minOverlap.toInt, maxGap.toInt, useJoinOrder.toBoolean) :: Nil

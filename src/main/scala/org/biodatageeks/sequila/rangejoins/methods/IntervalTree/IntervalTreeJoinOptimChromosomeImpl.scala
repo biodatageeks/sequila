@@ -70,8 +70,7 @@ object IntervalTreeJoinOptimChromosomeImpl extends Serializable {
       */
 
     val optimizer = new JoinOptimizerChromosome(spark,rdd1, rdd1Count)
-    spark.sparkContext.setLogLevel("WARN")
-    logger.warn(optimizer.debugInfo )
+    logger.info(optimizer.debugInfo )
 
     if (optimizer.getRangeJoinMethod == RangeJoinMethod.JoinWithRowBroadcast) {
 

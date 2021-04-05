@@ -341,7 +341,7 @@ class BDGAlignmentRelation[T <:BDGAlignInputFormat](path:String, refPath:Option[
         }
           .mkString(",")
       }
-      if (prunedPaths != path) logger.warn(s"Partition pruning detected, reading only files for samples: ${samples.mkString(",")}")
+      if (prunedPaths != path) logger.info(s"Partition pruning detected, reading only files for samples: ${samples.mkString(",")}")
 
     //FIXME: Currently only rname with chr prefix is assumed is added in the runtime, may cause issues in BAMs with differnt prefix!
       logger.info(s"GRanges: ${gRanges.mkString(",")}, ${spark.sqlContext.getConf("spark.biodatageeks.bam.predicatePushdown", "false")}")
