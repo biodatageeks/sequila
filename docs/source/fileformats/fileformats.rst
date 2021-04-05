@@ -364,6 +364,7 @@ ADAM data source can be defined in the analogues way (just requires using org.bi
 BED
 ****
 Using BEDDataSource for reading targets in BED format.
+
 .. code-block:: scala
 
     val tableNameBED = "targets_bed"
