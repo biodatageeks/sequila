@@ -1,15 +1,15 @@
 import org.apache.spark.sql.SequilaSession
-import org.biodatageeks.sequila.utils.{SequilaRegister, UDFRegister}
+import org.biodatageeks.sequila.utils.{InternalParams, SequilaRegister, UDFRegister}
 
 /*set params*/
 
 val ss = SequilaSession(spark)
 
-ss.sqlContext.setConf("spark.biodatageeks.rangejoin.useJoinOrder","false")
-ss.sqlContext.setConf("spark.biodatageeks.rangejoin.maxBroadcastSize", (128*1024*1024).toString)
+ss.sqlContext.setConf(InternalParams.useJoinOrder,"false")
+ss.sqlContext.setConf(InternalParams.maxBroadCastSize, (128*1024*1024).toString)
 
-ss.sqlContext.setConf("spark.biodatageeks.rangejoin.minOverlap","1")
-ss.sqlContext.setConf("spark.biodatageeks.rangejoin.maxGap","0")
+ss.sqlContext.setConf(InternalParams.minOverlap,"1")
+ss.sqlContext.setConf(InternalParams.maxGap,"0")
 
 /*pp disabled by default*/
 ss.sqlContext.setConf("spark.biodatageeks.bam.predicatePushdown","false")

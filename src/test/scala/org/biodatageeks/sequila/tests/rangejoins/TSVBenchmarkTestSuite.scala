@@ -4,16 +4,10 @@ import java.io.{OutputStreamWriter, PrintWriter}
 
 import com.holdenkarau.spark.testing.{DataFrameSuiteBase, SharedSparkContext}
 import org.apache.spark.sql.Row
-import org.apache.spark.sql.types.{
-  IntegerType,
-  StringType,
-  StructField,
-  StructType
-}
-
+import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
 import org.biodatageeks.sequila.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
 import org.biodatageeks.sequila.rangejoins.genApp.IntervalTreeJoinStrategy
-import org.biodatageeks.sequila.utils.Columns
+import org.biodatageeks.sequila.utils.{Columns, InternalParams}
 import org.scalatest.{BeforeAndAfter, FunSuite}
 
 class TSVBenchmarkTestSuite
@@ -48,7 +42,7 @@ class TSVBenchmarkTestSuite
     //spark.sparkContext.setLogLevel("INFO")
     spark.experimental.extraStrategies = new IntervalTreeJoinStrategyOptim(
       spark) :: Nil
-    sqlContext.setConf("spark.biodatageeks.rangejoin.maxBroadcastSize",
+    sqlContext.setConf(InternalParams.maxBroadCastSize,
                        (100 * 1024 * 1024).toString)
     val rdd1 = sc
       .textFile(getClass.getResource("/refFlat.txt.bz2").getPath)
@@ -93,7 +87,7 @@ class TSVBenchmarkTestSuite
 
     spark.experimental.extraStrategies = new IntervalTreeJoinStrategyOptim(
       spark) :: Nil
-    sqlContext.setConf("spark.biodatageeks.rangejoin.maxBroadcastSize",
+    sqlContext.setConf(InternalParams.maxBroadCastSize,
                        (1024 * 1024).toString)
     time(assert(spark.sqlContext.sql(query).count === 616404L))
   }

@@ -3,10 +3,9 @@ package org.biodatageeks.sequila.tests.datasources
 import java.io.{OutputStreamWriter, PrintWriter}
 
 import com.holdenkarau.spark.testing.{DataFrameSuiteBase, SharedSparkContext}
-
 import org.biodatageeks.sequila.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
 import org.biodatageeks.sequila.rangejoins.genApp.IntervalTreeJoinStrategy
-import org.biodatageeks.sequila.utils.Columns
+import org.biodatageeks.sequila.utils.{Columns, InternalParams}
 import org.scalatest.{BeforeAndAfter, FunSuite}
 
 class ADAMBenchmarkTestSuite
@@ -37,7 +36,7 @@ class ADAMBenchmarkTestSuite
     //spark.sparkContext.setLogLevel("INFO")
     spark.experimental.extraStrategies = new IntervalTreeJoinStrategyOptim(
       spark) :: Nil
-    spark.sqlContext.setConf("spark.biodatageeks.rangejoin.maxBroadcastSize",
+    spark.sqlContext.setConf(InternalParams.maxBroadCastSize,
                              (5 * 1024 * 1024).toString)
 
     val tableRef = "ref"
@@ -80,7 +79,7 @@ class ADAMBenchmarkTestSuite
     val stageMetrics = ch.cern.sparkmeasure.StageMetrics(spark)
     spark.experimental.extraStrategies = new IntervalTreeJoinStrategyOptim(
       spark) :: Nil
-    sqlContext.setConf("spark.biodatageeks.rangejoin.maxBroadcastSize",
+    sqlContext.setConf(InternalParams.maxBroadCastSize,
                        (1024 * 1024).toString)
     time(
       assert(stageMetrics

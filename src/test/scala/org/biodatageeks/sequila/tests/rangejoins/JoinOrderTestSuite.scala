@@ -4,14 +4,9 @@ import java.io.{OutputStreamWriter, PrintWriter}
 
 import com.holdenkarau.spark.testing.{DataFrameSuiteBase, SharedSparkContext}
 import org.apache.spark.sql.Row
-import org.apache.spark.sql.types.{
-  IntegerType,
-  StringType,
-  StructField,
-  StructType
-}
-
+import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
 import org.biodatageeks.sequila.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
+import org.biodatageeks.sequila.utils.InternalParams
 import org.scalatest.{BeforeAndAfter, FunSuite}
 
 class JoinOrderTestSuite
@@ -58,7 +53,7 @@ class JoinOrderTestSuite
   }
 
   test("Join order - broadcasting snp table") {
-    spark.sqlContext.setConf("spark.biodatageeks.rangejoin.useJoinOrder",
+    spark.sqlContext.setConf(InternalParams.useJoinOrder,
                              "true")
     val query =
       s"""
@@ -71,7 +66,7 @@ class JoinOrderTestSuite
   }
 
   test("Join order - broadcasting ref table") {
-    spark.sqlContext.setConf("spark.biodatageeks.rangejoin.useJoinOrder",
+    spark.sqlContext.setConf(InternalParams.useJoinOrder,
                              "true")
     val query =
       s"""

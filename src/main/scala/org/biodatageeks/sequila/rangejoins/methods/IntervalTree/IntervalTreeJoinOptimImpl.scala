@@ -26,7 +26,7 @@ import org.apache.spark.sql.catalyst.InternalRow
 import scala.collection.JavaConversions._
 import htsjdk.samtools.util.IntervalTree
 import org.apache.log4j.{LogManager, Logger}
-import org.biodatageeks.sequila.rangejoins.methods.IntervalTree.IntervalTreeHTS
+import org.biodatageeks.sequila.rangejoins.methods.IntervalTree.IntervalTreeRedBlack
 import org.biodatageeks.sequila.rangejoins.optimizer.{JoinOptimizer, RangeJoinMethod}
 
 object IntervalTreeJoinOptimImpl extends Serializable {
@@ -63,7 +63,7 @@ object IntervalTreeJoinOptimImpl extends Serializable {
         .map(r=>IntervalWithRow(r.start,r.end,r.row.copy()) )
         .collect()
       val intervalTree = {
-        val tree = new IntervalTreeHTS[InternalRow]()
+        val tree = new IntervalTreeRedBlack[InternalRow]()
         localIntervals
           .foreach(r => tree.put(r.start, r.end, r.row))
         sc.broadcast(tree)
@@ -93,7 +93,7 @@ object IntervalTreeJoinOptimImpl extends Serializable {
 
       /* Create and broadcast an interval tree */
       val intervalTree = {
-        val tree = new IntervalTreeHTS[Long]()
+        val tree = new IntervalTreeRedBlack[Long]()
         localIntervals
           .foreach(r => tree.put(r._1._1,r._1._2,r._2))
         sc.broadcast(tree)

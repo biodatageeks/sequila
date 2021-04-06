@@ -10,15 +10,16 @@ import org.apache.spark.sql.catalyst.expressions.GenericInternalRow
 import org.apache.spark.util.SizeEstimator
 import org.biodatageeks.sequila.rangejoins.IntervalTree.{Interval, IntervalWithRow}
 import org.biodatageeks.sequila.rangejoins.optimizer.RangeJoinMethod.RangeJoinMethod
+import org.biodatageeks.sequila.utils.InternalParams
 
 
 class JoinOptimizerChromosome(spark: SparkSession, rdd: RDD[(String,Interval[Int],InternalRow)], rddCount : Long) {
 
   val logger =  Logger.getLogger(this.getClass.getCanonicalName)
   val maxBroadcastSize = spark.sqlContext
-    .getConf("spark.biodatageeks.rangejoin.maxBroadcastSize","0") match {
+    .getConf(InternalParams.maxBroadCastSize,"0") match {
     case "0" => 0.1*scala.math.max((spark.sparkContext.getConf.getSizeAsBytes("spark.driver.memory","0")),1024*(1024*1024)) //defaults 128MB or 0.1 * Spark Driver's memory
-    case _ => spark.sqlContext.getConf("spark.biodatageeks.rangejoin.maxBroadcastSize").toLong }
+    case _ => spark.sqlContext.getConf(InternalParams.maxBroadCastSize).toLong }
   val estBroadcastSize = estimateBroadcastSize(rdd,rddCount)
 
 
@@ -38,7 +39,7 @@ class JoinOptimizerChromosome(spark: SparkSession, rdd: RDD[(String,Interval[Int
   def debugInfo = {
     s"""
        |Broadcast structure size is ~ ${math.rint(100*estBroadcastSize/1024.0)/100} kb
-       |spark.biodatageeks.rangejoin.maxBroadcastSize is set to ${(maxBroadcastSize/1024).toInt} kb"
+       |${InternalParams.maxBroadCastSize} is set to ${(maxBroadcastSize/1024).toInt} kb"
        |Using ${getRangeJoinMethod.toString} join method
      """.stripMargin
   }

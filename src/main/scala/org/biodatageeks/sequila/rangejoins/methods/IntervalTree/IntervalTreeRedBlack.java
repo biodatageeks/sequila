@@ -45,7 +45,7 @@ import java.util.NoSuchElementException;
  *
  * @author tsharpe
  */
-public class IntervalTreeHTS<V> implements BaseIntervalHolder<V>,  Serializable
+public class IntervalTreeRedBlack<V> implements BaseIntervalHolder<V>,  Serializable
 {
     private static final long serialVersionUID = 1L;
     /**

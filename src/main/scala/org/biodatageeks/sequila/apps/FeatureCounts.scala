@@ -4,7 +4,7 @@ import htsjdk.samtools.ValidationStringency
 import org.apache.hadoop.io.LongWritable
 import org.apache.spark.sql.SparkSession
 import org.biodatageeks.sequila.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
-import org.biodatageeks.sequila.utils.Columns
+import org.biodatageeks.sequila.utils.{Columns, InternalParams}
 import org.rogach.scallop.ScallopConf
 import org.seqdoop.hadoop_bam.{BAMInputFormat, SAMRecordWritable}
 import org.seqdoop.hadoop_bam.util.SAMHeaderReader
@@ -27,8 +27,7 @@ object FeatureCounts {
       .appName("SeQuiLa-FC")
       .getOrCreate()
 
-    spark.sqlContext.setConf("spark.biodatageeks.rangejoin.useJoinOrder","true")
-    //spark.sqlContext.setConf("spark.biodatageeks.rangejoin.maxBroadcastSize", (1024).toString)
+    spark.sqlContext.setConf(InternalParams.useJoinOrder,"true")
     spark.experimental.extraStrategies = new IntervalTreeJoinStrategyOptim(spark) :: Nil
 
 

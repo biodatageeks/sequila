@@ -3,6 +3,7 @@
 import org.biodatageeks.sequila.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
 import org.biodatageeks.sequila.rangejoins.common.metrics.MetricsCollector
 import org.biodatageeks.sequila.rangejoins.methods.transformations.RangeMethods
+import org.biodatageeks.sequila.utils.InternalParams
 
 val reads = spark.read.parquet("/data/granges/NA12878.hiseq.wgs.bwa.recal.adam")
 reads.createOrReplaceTempView("reads")
@@ -42,10 +43,10 @@ val metricsTable = "granges.metrics"
 
 val minOverlap = Array(20,99)
 minOverlap.foreach(mo=> {
-  spark.sqlContext.setConf("spark.biodatageeks.rangejoin.minOverlap",s"${mo.toString}")
+  spark.sqlContext.setConf(InternalParams.minOverlap,s"${mo.toString}")
   /*bdg-spark-granges - broadcast all*/
   spark.experimental.extraStrategies = new IntervalTreeJoinStrategyOptim(spark) :: Nil
-  spark.sqlContext.setConf("spark.biodatageeks.rangejoin.maxBroadcastSize", (100 * 1024 * 1024).toString)
+  spark.sqlContext.setConf(InternalParams.maxBroadCastSize, (100 * 1024 * 1024).toString)
   val mc1 = new MetricsCollector(spark, metricsTable)
   mc1.initMetricsTable
   mc1.runAndCollectMetrics(
@@ -58,7 +59,7 @@ minOverlap.foreach(mo=> {
 
   /*bdg-spark-granges - broadcast intervals*/
   spark.experimental.extraStrategies = new IntervalTreeJoinStrategyOptim(spark) :: Nil
-  spark.sqlContext.setConf("spark.biodatageeks.rangejoin.maxBroadcastSize", (1024).toString)
+  spark.sqlContext.setConf(InternalParams.maxBroadCastSize, (1024).toString)
   val mc2 = new MetricsCollector(spark, metricsTable)
   mc2.runAndCollectMetrics(
     s"q_overlap_reads_target_adam_wgs_min${mo}_fix",
