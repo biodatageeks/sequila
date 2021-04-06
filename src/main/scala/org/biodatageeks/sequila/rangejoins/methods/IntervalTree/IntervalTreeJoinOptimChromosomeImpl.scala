@@ -85,7 +85,7 @@ object IntervalTreeJoinOptimChromosomeImpl extends Serializable {
         .collect()
 
   val intervalTree = {
-    val tree = new IntervalTreeHTSChromosome[InternalRow](localIntervals)
+    val tree = new IntervalHolderChromosome[InternalRow](localIntervals)
     spark.sparkContext.broadcast(tree)
   }
     val joinedRDD = rdd2
@@ -125,7 +125,7 @@ object IntervalTreeJoinOptimChromosomeImpl extends Serializable {
 
       /* Create and broadcast an interval tree */
       val intervalTree = {
-        val tree = new IntervalTreeHTSChromosome[Long](localIntervals)
+        val tree = new IntervalHolderChromosome[Long](localIntervals)
         spark.sparkContext.broadcast(tree)
       }
       val kvrdd2 = rdd2

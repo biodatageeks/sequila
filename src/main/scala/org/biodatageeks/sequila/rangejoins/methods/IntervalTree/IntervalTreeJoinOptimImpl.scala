@@ -23,7 +23,6 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.catalyst.InternalRow
 
-
 import scala.collection.JavaConversions._
 import htsjdk.samtools.util.IntervalTree
 import org.apache.log4j.{LogManager, Logger}
