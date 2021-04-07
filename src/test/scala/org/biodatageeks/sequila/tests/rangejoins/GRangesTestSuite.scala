@@ -4,14 +4,8 @@ import java.io.{OutputStreamWriter, PrintWriter}
 
 import com.holdenkarau.spark.testing.{DataFrameSuiteBase, SharedSparkContext}
 import org.apache.spark.sql.{Row, SequilaSession}
-
 import org.biodatageeks.sequila.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
-import org.biodatageeks.sequila.utils.{
-  Columns,
-  Interval,
-  SequilaRegister,
-  UDFRegister
-}
+import org.biodatageeks.sequila.utils.{Columns, InternalParams, Interval, SequilaRegister, UDFRegister}
 import org.scalatest.{BeforeAndAfter, FunSuite}
 
 class GRangesTestSuite
@@ -86,8 +80,8 @@ class GRangesTestSuite
          |
        """.stripMargin
 
-    ss.sqlContext.setConf("spark.biodatageeks.rangejoin.minOverlap", "1")
-    ss.sqlContext.setConf("spark.biodatageeks.rangejoin.maxGap", "0")
+    ss.sqlContext.setConf(InternalParams.minOverlap, "1")
+    ss.sqlContext.setConf(InternalParams.maxGap, "0")
     assert(ss.sql(query).count === 616404L)
   }
 
@@ -105,7 +99,7 @@ class GRangesTestSuite
          |
        """.stripMargin
 
-    ss.sqlContext.setConf("spark.biodatageeks.rangejoin.maxGap", "0")
+    ss.sqlContext.setConf(InternalParams.maxGap, "0")
     ss.sql(query).explain()
     assert(ss.sql(query).count === 7923L)
     ss.experimental.extraStrategies = new IntervalTreeJoinStrategyOptim(spark) :: Nil
@@ -122,8 +116,8 @@ class GRangesTestSuite
          |)
        """.stripMargin
 
-    ss.sqlContext.setConf("spark.biodatageeks.rangejoin.minOverlap", "10")
-    ss.sqlContext.setConf("spark.biodatageeks.rangejoin.maxGap", "0")
+    ss.sqlContext.setConf(InternalParams.minOverlap, "10")
+    ss.sqlContext.setConf(InternalParams.maxGap, "0")
     assert(ss.sql(query).count === 7923L)
   }
 
@@ -139,8 +133,8 @@ class GRangesTestSuite
          |
        """.stripMargin
 
-    ss.sqlContext.setConf("spark.biodatageeks.rangejoin.minOverlap", "1")
-    ss.sqlContext.setConf("spark.biodatageeks.rangejoin.maxGap", "10000")
+    ss.sqlContext.setConf(InternalParams.minOverlap, "1")
+    ss.sqlContext.setConf(InternalParams.maxGap, "10000")
     assert(ss.sql(query).count === 804488L)
 
   }
@@ -157,15 +151,15 @@ class GRangesTestSuite
          |) ) b
          |WHERE a.${Columns.CONTIG} = b.${Columns.CONTIG} AND a.${Columns.START}=b.${Columns.START} AND a.${Columns.END} = b.${Columns.END}
        """.stripMargin
-    ss.sqlContext.setConf("spark.biodatageeks.rangejoin.minOverlap", "1")
-    ss.sqlContext.setConf("spark.biodatageeks.rangejoin.maxGap", "0")
+    ss.sqlContext.setConf(InternalParams.minOverlap, "1")
+    ss.sqlContext.setConf(InternalParams.maxGap, "0")
     assert(ss.sql(query).count === 35941L)
   }
 
   test("Basic operation - shift") {
     //spark.sqlContext.udf.register("shift", RangeMethods.shift _)
-    ss.sqlContext.setConf("spark.biodatageeks.rangejoin.minOverlap", "1")
-    ss.sqlContext.setConf("spark.biodatageeks.rangejoin.maxGap", "0")
+    ss.sqlContext.setConf(InternalParams.minOverlap, "1")
+    ss.sqlContext.setConf(InternalParams.maxGap, "0")
 
     val query =
       s"""

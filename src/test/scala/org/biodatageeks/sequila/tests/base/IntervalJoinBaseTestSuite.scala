@@ -1,24 +1,21 @@
-package org.biodatageeks.sequila.tests.rangejoins
-
-import java.io.{OutputStreamWriter, PrintWriter}
+package org.biodatageeks.sequila.tests.base
 
 import com.holdenkarau.spark.testing.{DataFrameSuiteBase, SharedSparkContext}
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
 import org.biodatageeks.sequila.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
-import org.biodatageeks.sequila.utils.InternalParams
 import org.scalatest.{BeforeAndAfter, FunSuite}
 
-class JoinOrderTestSuite
-    extends FunSuite
-    with DataFrameSuiteBase
-    with BeforeAndAfter
-    with SharedSparkContext {
+class IntervalJoinBaseTestSuite  extends FunSuite
+  with DataFrameSuiteBase
+  with SharedSparkContext
+  with BeforeAndAfter {
 
   val schema = StructType(
     Seq(StructField("chr", StringType),
-        StructField("start", IntegerType),
-        StructField("end", IntegerType)))
+      StructField("start", IntegerType),
+      StructField("end", IntegerType)))
+
   before {
     System.setSecurityManager(null)
     spark.experimental.extraStrategies = new IntervalTreeJoinStrategyOptim(
@@ -33,7 +30,7 @@ class JoinOrderTestSuite
             r(2).toString,
             r(4).toInt,
             r(5).toInt
-        ))
+          ))
     val ref = spark.createDataFrame(rdd1, schema)
     ref.createOrReplaceTempView("ref")
 
@@ -46,34 +43,13 @@ class JoinOrderTestSuite
             r(1).toString,
             r(2).toInt,
             r(3).toInt
-        ))
+          ))
     val snp = spark
       .createDataFrame(rdd2, schema)
     snp.createOrReplaceTempView("snp")
   }
 
-  test("Join order - broadcasting snp table") {
-    spark.sqlContext.setConf(InternalParams.useJoinOrder,
-                             "true")
-    val query =
-      s"""
-         |SELECT snp.*,ref.* FROM ref JOIN snp
-         |ON (ref.chr=snp.chr AND snp.end>=ref.start AND snp.start<=ref.end)
-       """.stripMargin
-
-    assert(spark.sql(query).count === 616404L)
-
-  }
-
-  test("Join order - broadcasting ref table") {
-    spark.sqlContext.setConf(InternalParams.useJoinOrder,
-                             "true")
-    val query =
-      s"""
-         |SELECT snp.*,ref.* FROM snp JOIN ref
-         |ON (ref.chr=snp.chr AND snp.end>=ref.start AND snp.start<=ref.end)
-       """.stripMargin
-    assert(spark.sql(query).count === 616404L)
+  after{
 
   }
 }

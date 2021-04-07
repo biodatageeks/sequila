@@ -2,6 +2,7 @@
 
 import org.biodatageeks.sequila.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
 import org.biodatageeks.sequila.rangejoins.common.metrics.MetricsCollector
+import org.biodatageeks.sequila.utils.InternalParams
 
 val ref = spark.read.parquet("src/test/resources/refFlat.adam")
 ref.createOrReplaceTempView("ref")
@@ -40,7 +41,7 @@ mc.runAndCollectMetrics(
 /*bdg-spark-granges - broadcast intervals*/
 val mc = new  MetricsCollector(spark,"testMetrics")
 spark.experimental.extraStrategies = new IntervalTreeJoinStrategyOptim(spark) :: Nil
-spark.sqlContext.setConf("spark.biodatageeks.rangejoin.maxBroadcastSize", (1024*1024).toString)
+spark.sqlContext.setConf(InternalParams.maxBroadCastSize, (1024*1024).toString)
 mc.runAndCollectMetrics(
   "q_overlap_snp_ref_adam",
   "spark_granges_it_bc_int",

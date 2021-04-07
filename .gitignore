@@ -19,3 +19,6 @@ ${seq.metastore.dir}
 .ipynb_checkpoints
 __pycache__
 venv/
+
+Docker/sbt-jdk/target
+Docker/sbt-jdk/project

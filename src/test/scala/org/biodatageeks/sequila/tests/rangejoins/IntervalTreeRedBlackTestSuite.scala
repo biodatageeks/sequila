@@ -13,7 +13,7 @@ import org.apache.spark.sql.{Row, SparkSession}
 import org.biodatageeks.sequila.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
 import org.scalatest.{BeforeAndAfter, FunSuite}
 
-class IntervalTreeTestSuite
+class IntervalTreeRedBlackTestSuite
     extends FunSuite
     with DataFrameSuiteBase
     with BeforeAndAfter {

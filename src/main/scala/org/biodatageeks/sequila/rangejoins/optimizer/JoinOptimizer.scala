@@ -7,6 +7,7 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.util.SizeEstimator
 import org.biodatageeks.sequila.rangejoins.IntervalTree.IntervalWithRow
 import org.biodatageeks.sequila.rangejoins.optimizer.RangeJoinMethod.RangeJoinMethod
+import org.biodatageeks.sequila.utils.InternalParams
 
 
 class JoinOptimizer(sc: SparkContext, rdd: RDD[IntervalWithRow[Int]], rddCount : Long) {
@@ -15,7 +16,7 @@ class JoinOptimizer(sc: SparkContext, rdd: RDD[IntervalWithRow[Int]], rddCount :
 
   val maxBroadcastSize = sc
     .getConf
-    .getOption("spark.biodatageeks.rangejoin.maxBroadcastSize") match {
+    .getOption(InternalParams.maxBroadCastSize) match {
       case Some(size) => size.toLong
       case _ => 0.1*scala.math.max((sc.getConf.getSizeAsBytes("spark.driver.memory","0")).toLong,1024*(1024*1024)) //defaults 128MB or 0.1 * Spark Driver's memory
     }
@@ -38,7 +39,7 @@ class JoinOptimizer(sc: SparkContext, rdd: RDD[IntervalWithRow[Int]], rddCount :
   def debugInfo = {
     s"""
        |Broadcast structure size is ~ ${estBroadcastSize/1024} kb
-       |spark.biodatageeks.rangejoin.maxBroadcastSize is set to ${maxBroadcastSize/1024} kb"
+       |${InternalParams.maxBroadCastSize} is set to ${maxBroadcastSize/1024} kb"
        |Using ${getRangeJoinMethod.toString} join method
      """.stripMargin
   }

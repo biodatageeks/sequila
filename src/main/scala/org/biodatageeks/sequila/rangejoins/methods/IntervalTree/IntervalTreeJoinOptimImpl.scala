@@ -23,11 +23,11 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.catalyst.InternalRow
 
-
 import scala.collection.JavaConversions._
 import htsjdk.samtools.util.IntervalTree
 import org.apache.log4j.{LogManager, Logger}
-import org.biodatageeks.sequila.rangejoins.methods.IntervalTree.IntervalTreeHTS
+import org.biodatageeks.sequila.rangejoins.methods.IntervalTree.IntervalTreeRedBlack
+import org.biodatageeks.sequila.rangejoins.methods.base.BaseIntervalHolder
 import org.biodatageeks.sequila.rangejoins.optimizer.{JoinOptimizer, RangeJoinMethod}
 
 object IntervalTreeJoinOptimImpl extends Serializable {
@@ -44,7 +44,8 @@ object IntervalTreeJoinOptimImpl extends Serializable {
     */
   def overlapJoin(sc: SparkContext,
                   rdd1: RDD[(IntervalWithRow[Int])],
-                  rdd2: RDD[(IntervalWithRow[Int])], rdd1Count:Long ): RDD[(InternalRow, InternalRow)] = {
+                  rdd2: RDD[(IntervalWithRow[Int])], rdd1Count:Long ,
+                  intervalHolderClassName : String): RDD[(InternalRow, InternalRow)] = {
 
     /* Collect only Reference regions and the index of indexedRdd1 */
 
@@ -64,7 +65,8 @@ object IntervalTreeJoinOptimImpl extends Serializable {
         .map(r=>IntervalWithRow(r.start,r.end,r.row.copy()) )
         .collect()
       val intervalTree = {
-        val tree = new IntervalTreeHTS[InternalRow]()
+        val clazz = Class.forName(intervalHolderClassName)
+        val tree = clazz.getConstructor().newInstance().asInstanceOf[BaseIntervalHolder[InternalRow]]
         localIntervals
           .foreach(r => tree.put(r.start, r.end, r.row))
         sc.broadcast(tree)
@@ -94,7 +96,8 @@ object IntervalTreeJoinOptimImpl extends Serializable {
 
       /* Create and broadcast an interval tree */
       val intervalTree = {
-        val tree = new IntervalTreeHTS[Long]()
+        val clazz = Class.forName(intervalHolderClassName)
+        val tree = clazz.getConstructor().newInstance().asInstanceOf[BaseIntervalHolder[Long]]
         localIntervals
           .foreach(r => tree.put(r._1._1,r._1._2,r._2))
         sc.broadcast(tree)

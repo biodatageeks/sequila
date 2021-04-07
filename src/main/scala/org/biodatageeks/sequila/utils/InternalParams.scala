@@ -42,5 +42,11 @@ object InternalParams {
   // TODO add to documentation
   final val maxBaseQualityValue = "spark.biodatageeks.pileup.maxBaseQuality"
 
+  /*interval joins*/
+  final val useJoinOrder = "spark.biodatageeks.rangejoin.useJoinOrder"
+  final val maxBroadCastSize = "spark.biodatageeks.rangejoin.maxBroadcastSize"
+  final val maxGap = "spark.biodatageeks.rangejoin.maxGap"
+  final val minOverlap = "spark.biodatageeks.rangejoin.minOverlap"
+  final val intervalHolderClass = "spark.biodatageeks.rangejoin.intervalHolderClass"
 
 }

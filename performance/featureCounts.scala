@@ -5,6 +5,7 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.NewHadoopRDD
 import org.biodatageeks.sequila.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
 import org.biodatageeks.sequila.rangejoins.common.metrics.MetricsCollector
+import org.biodatageeks.sequila.utils.InternalParams
 import org.seqdoop.hadoop_bam.{BAMInputFormat, FileVirtualSplit, SAMRecordWritable}
 import org.seqdoop.hadoop_bam.util.SAMHeaderReader
 
@@ -32,7 +33,7 @@ val query="""    SELECT targets.contigName,targets.start,targets.end,count(*) FR
             |         GROUP BY targets.contigName,targets.start,targets.end"""
 
 
-spark.sqlContext.setConf("spark.biodatageeks.rangejoin.maxBroadcastSize", (100 *1024*1024).toString)
+spark.sqlContext.setConf(InternalParams.maxBroadCastSize, (100 *1024*1024).toString)
 val mc = new  MetricsCollector(spark,metricsTable)
 mc.initMetricsTable
 mc.runAndCollectMetrics(
