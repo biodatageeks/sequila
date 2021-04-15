@@ -7,8 +7,12 @@ import org.biodatageeks.sequila.pileup.conf.Conf
 import org.biodatageeks.sequila.pileup.conf.QualityConstants.{OUTER_QUAL_SIZE, QUAL_INDEX_SHIFT, REF_SYMBOL}
 import org.biodatageeks.sequila.pileup.model.Quals._
 import org.biodatageeks.sequila.pileup.model.Alts._
+import org.biodatageeks.sequila.pileup.timers.PileupTimers.{AnalyzeReadsCalculateAltsLoopTimer, AnalyzeReadsCalculateQualsUpdateAltsTimer, AnalyzeReadscalculatePositionInReadSeq}
 
 import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
+
+case class PositionInReadState(position: Int, numInsertions: Int)
 
 object ReadOperations {
 
@@ -27,7 +31,7 @@ case class ExtendedReads(read: SAMRecord) {
                  ): Unit = {
     val start = read.getStart
     val cigar = read.getCigar
-    val bQual = read.getBaseQualities
+    val bQual = if (conf.value.includeBaseQualities) read.getBaseQualities else null
     val isPositiveStrand = ! read.getReadNegativeStrandFlag
     calculateEvents(contig, agg, contigMaxReadLen, start, cigar)
     val foundAlts = calculateAlts(agg, agg.qualityCache, start, cigar, bQual, isPositiveStrand, conf)
@@ -74,27 +78,63 @@ case class ExtendedReads(read: SAMRecord) {
   }
 
 
-  def calculatePositionInReadSeq(mdPosition: Int, cigar: Cigar): Int = {
-    if (!cigar.containsOperator(CigarOperator.INSERTION))
-      return mdPosition
-
-    var numInsertions = 0
+//  def calculatePositionInReadSeq(mdPosition: Int, cigar: Cigar): Int = {
+//    if (!cigar.containsOperator(CigarOperator.INSERTION))
+//      return mdPosition
+//
+//    var numInsertions = 0
+//    val cigarIterator = cigar.iterator()
+//    var position = 0
+//
+//    while (cigarIterator.hasNext) {
+//      if (position > mdPosition + numInsertions)
+//        return mdPosition + numInsertions
+//      val cigarElement = cigarIterator.next()
+//      val cigarOpLength = cigarElement.getLength
+//      val cigarOp = cigarElement.getOperator
+//
+//      if (cigarOp == CigarOperator.INSERTION)
+//        numInsertions += cigarOpLength
+//      else if (cigarOp != CigarOperator.HARD_CLIP)
+//        position = position + cigarOpLength
+//    }
+//    mdPosition + numInsertions
+//  }
+  def calculatePositionInReadSeq(mdPosition: Int, insertions: Array[Int], positionInReadState: PositionInReadState): PositionInReadState = {
+    if (insertions.isEmpty)
+      PositionInReadState(mdPosition, 0)
+    else {
+      var numInsertions = positionInReadState.numInsertions
+      var position = 0
+      var idx = positionInReadState.numInsertions
+      while (idx < insertions.length ){
+        position = insertions(idx)
+        val posWithIns = mdPosition + numInsertions
+        if (position > posWithIns)
+          return PositionInReadState(posWithIns, numInsertions)
+        else
+          numInsertions += 1
+        idx += 1
+      }
+      PositionInReadState(mdPosition + numInsertions, numInsertions)
+    }
+  }
+  def calculateInsertions(cigar: Cigar): Array[Int] = {
+    val insertions = new ArrayBuffer[Int]()
     val cigarIterator = cigar.iterator()
     var position = 0
 
     while (cigarIterator.hasNext) {
-      if (position > mdPosition + numInsertions)
-        return mdPosition + numInsertions
       val cigarElement = cigarIterator.next()
       val cigarOpLength = cigarElement.getLength
       val cigarOp = cigarElement.getOperator
 
       if (cigarOp == CigarOperator.INSERTION)
-        numInsertions += cigarOpLength
+        insertions.append(position)
       else if (cigarOp != CigarOperator.HARD_CLIP)
         position = position + cigarOpLength
     }
-    mdPosition + numInsertions
+    insertions.toArray
   }
 
   def calculateAlts(aggregate: ContigAggregate, qualityCache: QualityCache, start: Int,
@@ -102,15 +142,18 @@ case class ExtendedReads(read: SAMRecord) {
                     isPositiveStrand:Boolean, conf: Broadcast[Conf]): scala.collection.Set[Int] = {
     var position = start
     val ops = MDTagParser.parseMDTag(read.getAttribute("MD").toString)
-
+    val insertions = calculateInsertions(cigar)
     var delCounter = 0
     var altsPositions = mutable.Set.empty[Int]
     val clipLen =
       if (cigar.getCigarElement(0).getOperator == CigarOperator.SOFT_CLIP)
         cigar.getCigarElement(0).getLength else 0
-
+    val readString = read.getReadString
     position += clipLen
+    val zeroByte = 0.toByte
+    var positionInReadState = PositionInReadState(0, 0)
 
+    AnalyzeReadsCalculateAltsLoopTimer.time {
     for (mdtag <- ops) {
       if (mdtag.isDeletion) {
         delCounter += 1
@@ -118,9 +161,23 @@ case class ExtendedReads(read: SAMRecord) {
       } else if (mdtag.base != 'S') {
         position += 1
 
-        val indexInSeq = calculatePositionInReadSeq(position - start - delCounter, cigar)
-        val altBase = if (isPositiveStrand) read.getReadString.charAt(indexInSeq - 1).toUpper else read.getReadString.charAt(indexInSeq - 1).toLower
-        val altBaseQual = if (conf.value.isBinningEnabled) (bQual(indexInSeq - 1)/conf.value.binSize).toByte else bQual(indexInSeq - 1)
+        val indexInSeq = AnalyzeReadscalculatePositionInReadSeq.time {
+          val pos = position - start - delCounter
+          if(insertions.isEmpty)
+            pos
+          else {
+            positionInReadState = calculatePositionInReadSeq(pos, insertions, positionInReadState)
+            positionInReadState.position
+          }
+        }
+        val altBase = if (isPositiveStrand) readString.charAt(indexInSeq - 1).toUpper else readString.charAt(indexInSeq - 1).toLower
+        val altBaseQual = {
+          if (bQual == null) zeroByte
+          else if (conf.value.isBinningEnabled)
+            (bQual(indexInSeq - 1) / conf.value.binSize).toByte
+          else
+            bQual(indexInSeq - 1)
+        }
         val altPosition = position - clipLen - 1
 
         if (conf.value.includeBaseQualities) {
@@ -129,7 +186,7 @@ case class ExtendedReads(read: SAMRecord) {
           else
             aggregate.quals.updateQuals(altPosition, altBase, altBaseQual, firstUpdate = true, updateMax = true, conf)
         }
-        aggregate.alts.updateAlts(altPosition, altBase)
+        AnalyzeReadsCalculateQualsUpdateAltsTimer.time { aggregate.alts.updateAlts(altPosition, altBase) }
         if (conf.value.includeBaseQualities)
           aggregate.altsKeyCache.add(altPosition)
         altsPositions += altPosition
@@ -137,6 +194,7 @@ case class ExtendedReads(read: SAMRecord) {
       else if (mdtag.base == 'S')
         position += mdtag.length
     }
+  }
     altsPositions
   }
 

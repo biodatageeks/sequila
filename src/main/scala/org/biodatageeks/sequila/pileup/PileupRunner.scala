@@ -3,6 +3,7 @@ package org.biodatageeks.sequila.pileup
 import java.io.{OutputStreamWriter, PrintWriter}
 
 import org.apache.spark.sql.{SequilaSession, SparkSession}
+import org.bdgenomics.utils.instrumentation.{Metrics, MetricsListener, RecordedMetrics}
 import org.biodatageeks.sequila.utils.{InternalParams, SequilaRegister}
 
 object PileupRunner {
@@ -14,8 +15,7 @@ object PileupRunner {
       .config("spark.driver.memory","48g")
       .config( "spark.serializer", "org.apache.spark.serializer.KryoSerializer" )
       .config("spark.kryo.registrator", "org.biodatageeks.sequila.pileup.serializers.CustomKryoRegistrator")
-      .config("spark.driver.maxResultSize","5g")
-      //      .config("spark.kryoserializer.buffer.max", "512m")
+//      .config("spark.kryoserializer.buffer.max", "512m")
       .enableHiveSupport()
       .getOrCreate()
 
@@ -62,8 +62,7 @@ object PileupRunner {
                  |FROM  pileup('$tableNameBAM', 'NA12878.proper.wgs.md', '${referencePath}', false)
                """.stripMargin
 
-
-    //    ss.sqlContext.setConf("spark.biodatageeks.readAligment.method", "disq")
+//    ss.sqlContext.setConf("spark.biodatageeks.readAligment.method", "disq")
     ss.sqlContext.setConf("spark.biodatageeks.bam.useGKLInflate","true")
     ss.sparkContext.setLogLevel("WARN")
     val results = ss.sql(query)
@@ -73,9 +72,7 @@ object PileupRunner {
         .write.orc("/tmp/wes_seq_pileup_2")
       //        .show()
     }
-//    val writer = new PrintWriter(new OutputStreamWriter(System.out, "UTF-8"))
-//    Metrics.print(writer, Some(metricsListener.metrics.sparkMetrics.stageTimes))
-//    writer.close()
+
 
     ss.stop()
   }
