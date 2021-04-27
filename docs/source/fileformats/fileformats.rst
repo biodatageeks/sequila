@@ -363,22 +363,21 @@ ADAM data source can be defined in the analogues way (just requires using org.bi
 
 BED
 ****
-Coverage information can be exported to standard BED format. Actually, calculated data can be stored in any kind of text file (csv, tsv etc). Example export command 
+Using BEDDataSource for reading targets in BED format.
 
 .. code-block:: scala
 
-    val tableNameADAM = "reads_adam"
+    val tableNameBED = "targets_bed"
     ss.sql("CREATE DATABASE BDGEEK")
     ss.sql("USE BDGEEK")
     ss.sql(
       s"""
-         |CREATE TABLE ${tableNameADAM}
-         |USING org.biodatageeks.sequila.datasources.ADAM.ADAMDataSource
-         |OPTIONS(path "/data/input/multisample/*.bam")
+         |CREATE TABLE ${tableNameBED}
+         |USING org.biodatageeks.sequila.datasources.BED.BEDDataSource
+         |OPTIONS(path "/data/input/bed/test.bed")
          |
       """.stripMargin)
-    val cov = ss.sql("SELECT * FROM coverage('${tableNameBAM}','NA12878', 'blocks')")
-    cov.coalesce(1).write.mode("overwrite").option("delimiter", "\t").csv("/data/output/cov.bed")
+    val targets = ss.sql(s"SELECT * FROM ${tableNameBED} LIMIT 10").show
 
 
 VCF

@@ -14,7 +14,7 @@ import org.apache.spark.sql.types.{
 import org.biodatageeks.sequila.rangejoins.genApp.IntervalTreeJoinStrategy
 import org.scalatest.{BeforeAndAfter, FunSuite}
 
-class IntervalTreeGenAppTestSuite
+class IntervalTreeRedBlackGenAppTestSuite
     extends FunSuite
     with DataFrameSuiteBase
     with BeforeAndAfter {

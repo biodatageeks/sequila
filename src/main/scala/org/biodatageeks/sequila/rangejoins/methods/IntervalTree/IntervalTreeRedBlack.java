@@ -26,6 +26,9 @@ package org.biodatageeks.sequila.rangejoins.methods.IntervalTree;
  * THE SOFTWARE.
  */
 
+import org.biodatageeks.sequila.rangejoins.methods.base.BaseIntervalHolder;
+import org.biodatageeks.sequila.rangejoins.methods.base.BaseNode;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
@@ -42,8 +45,9 @@ import java.util.NoSuchElementException;
  *
  * @author tsharpe
  */
-public class IntervalTreeHTS<V> implements Iterable<IntervalTreeHTS.Node<V>>, Serializable
+public class IntervalTreeRedBlack<V> implements BaseIntervalHolder<V>,  Serializable
 {
+    private static final long serialVersionUID = 1L;
     /**
      * Return the number of intervals in the tree.
      * @return The number of intervals.
@@ -70,6 +74,7 @@ public class IntervalTreeHTS<V> implements Iterable<IntervalTreeHTS.Node<V>>, Se
      * @return The old value associated with that interval, or the sentinel.
      */
     @SuppressWarnings("null")
+
     public V put( final int start, final int end, final V value )
     {
         if ( start > end )
@@ -346,7 +351,7 @@ public class IntervalTreeHTS<V> implements Iterable<IntervalTreeHTS.Node<V>>, Se
      * @return An iterator.
      */
     @Override
-    public Iterator<Node<V>> iterator()
+    public Iterator<BaseNode<V>> iterator()
     {
         return new FwdIterator(min());
     }
@@ -357,7 +362,7 @@ public class IntervalTreeHTS<V> implements Iterable<IntervalTreeHTS.Node<V>>, Se
      * @param end The interval's end.
      * @return An iterator.
      */
-    public Iterator<Node<V>> iterator( final int start, final int end )
+    public Iterator<BaseNode<V>> iterator( final int start, final int end )
     {
         return new FwdIterator(min(start,end));
     }
@@ -368,7 +373,7 @@ public class IntervalTreeHTS<V> implements Iterable<IntervalTreeHTS.Node<V>>, Se
      * @param end The range end.
      * @return An iterator.
      */
-    public Iterator<Node<V>> overlappers( final int start, final int end )
+    public Iterator<BaseNode<V>> overlappers( final int start, final int end )
     {
         return new OverlapIterator(start,end);
     }
@@ -441,9 +446,12 @@ public class IntervalTreeHTS<V> implements Iterable<IntervalTreeHTS.Node<V>>, Se
     private Node<V> mRoot;
     private V mSentinel;
 
-    public static class Node<V1> implements Serializable
+
+
+    public static class Node<V1> extends BaseNode<V1> implements Serializable
     {
         // bit-wise definitions from which the other constants are composed
+        private static final long serialVersionUID = 1L;
         public static final int HAS_LESSER_PART = 1;
         public static final int HAS_OVERLAPPING_PART = 2;
         public static final int HAS_GREATER_PART = 4;
@@ -1068,7 +1076,7 @@ public class IntervalTreeHTS<V> implements Iterable<IntervalTreeHTS.Node<V>>, Se
     }
 
     public class FwdIterator
-            implements Iterator<Node<V>>
+            implements Iterator<BaseNode<V>>
     {
         public FwdIterator( final Node<V> node )
         {
@@ -1163,7 +1171,7 @@ public class IntervalTreeHTS<V> implements Iterable<IntervalTreeHTS.Node<V>>, Se
     }
 
     public class OverlapIterator
-            implements Iterator<Node<V>>
+            implements Iterator<BaseNode<V>>
     {
         public OverlapIterator( final int start, final int end )
         {

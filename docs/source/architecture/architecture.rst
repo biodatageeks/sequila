@@ -93,6 +93,17 @@ If it fits into dedicated Spark Driver's memory (controlled by maxBroadcastSize 
 
     Rule-based optimizer's algorithm chooses the most efficient join strategy.
 
+Custom interval structure
+---------------
+By default SeQuiLa uses Red-Black tree with intervals implemented in `org.biodatageeks.sequila.rangejoins.methods.IntervalTree.IntervalTreeRedBlack<V>`
+class. However, it is possible to provide a custom interval structure and set it using `spark.biodatageeks.rangejoin.intervalHolderClass`
+parameter. There are 2 prerequisites:
+
+1. custom class must implement interface provided by the trait: `org.biodatageeks.sequila.rangejoins.methods.base.BaseIntervalHolder[V]`
+
+2. node class used for storing intervals must extend `org.biodatageeks.sequila.rangejoins.methods.base.BaseNode[V]`
+
+Both Scala and Java classes are supported. Please use default interval tree implementation for reference.
 
 Distributed depth of coverage
 #############################

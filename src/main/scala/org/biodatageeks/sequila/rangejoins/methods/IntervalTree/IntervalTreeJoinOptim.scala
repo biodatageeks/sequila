@@ -31,7 +31,8 @@ import org.apache.spark.sql.internal.SQLConf
 case class IntervalTreeJoinOptim(left: SparkPlan,
                                  right: SparkPlan,
                                  condition: Seq[Expression],
-                                 context: SparkSession,leftLogicalPlan: LogicalPlan, righLogicalPlan: LogicalPlan) extends BinaryExecNode {
+                                 context: SparkSession,leftLogicalPlan: LogicalPlan,
+                                 righLogicalPlan: LogicalPlan,   intervalHolderClassName : String) extends BinaryExecNode {
   def output = left.output ++ right.output
 
   lazy val (buildPlan, streamedPlan) = (left, right)
@@ -75,7 +76,7 @@ case class IntervalTreeJoinOptim(left: SparkPlan,
     else
       v2.count
     if ( v1Size <= v2Size ) {
-      val v3 = IntervalTreeJoinOptimImpl.overlapJoin(context.sparkContext, v1kv, v2kv,v1.count())
+      val v3 = IntervalTreeJoinOptimImpl.overlapJoin(context.sparkContext, v1kv, v2kv,v1.count(), intervalHolderClassName )
      v3.mapPartitions(
        p => {
          val joiner = GenerateUnsafeRowJoiner.create(left.schema, right.schema)
@@ -88,7 +89,7 @@ case class IntervalTreeJoinOptim(left: SparkPlan,
 
     }
     else {
-      val v3 = IntervalTreeJoinOptimImpl.overlapJoin(context.sparkContext, v2kv, v1kv, v2.count())
+      val v3 = IntervalTreeJoinOptimImpl.overlapJoin(context.sparkContext, v2kv, v1kv, v2.count(),  intervalHolderClassName : String)
       v3.mapPartitions(
         p => {
           val joiner = GenerateUnsafeRowJoiner.create(left.schema, right.schema)

@@ -24,3 +24,5 @@ __pycache__
 venv/
 
 *_out.csv/
+Docker/sbt-jdk/target
+Docker/sbt-jdk/project
