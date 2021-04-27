@@ -24,6 +24,8 @@ dependencyOverrides += "com.google.guava" % "guava" % "15.0"
 libraryDependencies += "org.apache.hadoop" % "hadoop-client" % hadoopVersion
 libraryDependencies += "org.apache.spark" %% "spark-core" % sparkVersion
 libraryDependencies += "org.apache.spark" %% "spark-sql" % sparkVersion
+libraryDependencies += "com.github.mrpowers" %% "spark-fast-tests" % "0.21.3"
+libraryDependencies += "com.github.mrpowers" %% "spark-daria" % "0.38.2"
 libraryDependencies += "com.holdenkarau" %% "spark-testing-base" % "3.0.1_1.0.0" % "test" excludeAll ExclusionRule(organization = "javax.servlet") excludeAll (ExclusionRule("org.apache.hadoop"))
 libraryDependencies += "org.bdgenomics.adam" %% "adam-core-spark3" % "0.33.0" excludeAll (ExclusionRule("org.seqdoop"))
 libraryDependencies += "org.bdgenomics.adam" %% "adam-apis-spark3" % "0.33.0" excludeAll (ExclusionRule("org.seqdoop"))
@@ -42,6 +44,7 @@ libraryDependencies += "org.apache.derby" % "derbyclient" % "10.14.2.0"
 libraryDependencies += "org.disq-bio" % "disq" % "0.3.6"
 libraryDependencies += "io.projectglow" %% "glow-spark3" % "0.6.0" excludeAll (ExclusionRule("com.github.samtools")) excludeAll (ExclusionRule("org.seqdoop")) //FIXME:: remove togehter with disq
 libraryDependencies += "com.intel.gkl" % "gkl" % "0.8.6"
+
 
 
 avroSpecificSourceDirectories in Compile += (sourceDirectory in Compile).value / "avro/input"
@@ -111,12 +114,22 @@ assemblyMergeStrategy in assembly := {
     oldStrategy(x)
 }
 
+/* scalastyle setup */
+lazy val compileScalastyle = taskKey[Unit]("compileScalastyle")
+compileScalastyle := scalastyle.in(Compile).toTask("").value
+
+scalastyleFailOnError := false
+scalastyleFailOnWarning := false
+
+(compile in Compile) := ((compile in Compile) dependsOn compileScalastyle).value
+
+
 credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
 publishConfiguration := publishConfiguration.value.withOverwrite(true)
 publishTo := {
-  if (!version.value.toLowerCase.contains("snapshot"))
+  if (!version.value.toLowerCase.contains("snapshot")) {
     sonatypePublishToBundle.value
-  else {
+  } else {
     val nexus = "https://zsibio.ii.pw.edu.pl/nexus/repository/"
     Some("snapshots" at nexus + "maven-snapshots")
   }

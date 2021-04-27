@@ -11,7 +11,10 @@ build/
 
 source_v/
 
-*.csv
+samRes.csv
+bdgResFullSplit.csv
+bdgRes.csv
+sequilaQualsBlocks.csv
 
 ${seq.metastore.dir}
 
@@ -20,5 +23,6 @@ ${seq.metastore.dir}
 __pycache__
 venv/
 
+*_out.csv/
 Docker/sbt-jdk/target
 Docker/sbt-jdk/project

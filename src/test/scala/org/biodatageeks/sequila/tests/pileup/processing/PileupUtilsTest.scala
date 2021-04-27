@@ -1,6 +1,6 @@
 package org.biodatageeks.sequila.tests.pileup.processing
 
-import org.biodatageeks.sequila.pileup.converters.PileupStringUtils
+import org.biodatageeks.sequila.pileup.converters.samtools.PileupStringUtils
 import org.scalatest.FunSuite
 
 class PileupUtilsTest extends FunSuite{

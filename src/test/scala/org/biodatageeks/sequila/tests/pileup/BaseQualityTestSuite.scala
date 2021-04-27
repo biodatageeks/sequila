@@ -14,7 +14,7 @@ class BaseQualityTestSuite extends PileupTestBase {
     s"""
        |SELECT ${Columns.CONTIG}, ${Columns.START}, ${Columns.END},
        | ${Columns.REF}, ${Columns.COVERAGE},
-       | to_char(${Columns.ALTS}) as alts, ${Columns.QUALS},
+       | alts_to_char(${Columns.ALTS}) as alts, ${Columns.QUALS},
        | quals_to_cov(${Columns.QUALS}, ${Columns.COVERAGE}) as $qualCoverageCol,
        | to_charmap(${Columns.QUALS}) as $qualAgg,
        | cov_equals (${Columns.COVERAGE}, ${Columns.COVERAGE} ) as $covEquality

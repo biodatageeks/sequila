@@ -1,32 +1,39 @@
-package org.biodatageeks.sequila.pileup.converters
+package org.biodatageeks.sequila.pileup.converters.samtools
 
-import org.apache.commons.lang.StringUtils
+import com.github.mrpowers.spark.daria.sql.SparkSessionExt._
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.biodatageeks.sequila.utils.{Columns, DataQualityFuncs}
+import org.biodatageeks.sequila.pileup.PileupReader
+import org.biodatageeks.sequila.pileup.converters.common.{CommonPileupFormat, PileupConverter}
+import org.biodatageeks.sequila.utils.{Columns, DataQualityFuncs, UDFRegister}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
 
-class PileupConverter (spark: SparkSession) extends Serializable {
-
-  private object Indices {
-    val contig = 0
-    val position = 1
-    val ref = 2
-    val cov = 3
-    val pileupString = 4
-    val qualityString = 5
-    val altsMap = 6
-    val qualsMap = 7
-  }
+class SamtoolsConverter(spark: SparkSession) extends Serializable with PileupConverter {
 
   val rawPileupCol = "raw_pileup"
   val rawQualityCol = "raw_quality"
 
+  def transform (path: String): DataFrame = {
+    val df = PileupReader.load(spark, path, SamtoolsSchema.schema, delimiter = "\t", quote = "\u0000")
+    toCommonFormat(df, caseSensitive = true)
+  }
 
-  def transformSamtoolsResult (df:DataFrame): DataFrame = {
-    val dfMap = generateAltMap(df)
+  /** return data in common format. Case insensitive. Bases represented as strings.
+   * Using UDFs for transformations.
+   *  */
+  def toCommonFormat(df:DataFrame, caseSensitive:Boolean): DataFrame = {
+    UDFRegister.register(spark)
+    val dfMap = generateAltsQuals(df, caseSensitive)
+    val dfOut = dfMap.select(Columns.CONTIG, Columns.START, Columns.START, Columns.REF, Columns.COVERAGE, Columns.ALTS, Columns.QUALS)
+    val convertedDf = spark.createDataFrame(dfOut.rdd, CommonPileupFormat.schemaAltsQualsMap)
+    val dfString = mapColumnsAsStrings(convertedDf)
+    dfString.orderBy(Columns.CONTIG, Columns.START)
+  }
+
+  def transformToBlocks(df:DataFrame, caseSensitive: Boolean): DataFrame = {
+    val dfMap = generateAltsQuals(df, caseSensitive)
     val dfBlocks = generateCompressedOutput(dfMap)
     dfBlocks
   }
@@ -46,15 +53,14 @@ class PileupConverter (spark: SparkSession) extends Serializable {
       }
       i += 1
     }
-
     (pilBuf.toString, qualBuf.toString)
   }
 
 
-  def generateQualityMap(rawPileup: String, qualityString: String, ref: String): mutable.Map[Byte, mutable.HashMap[String, Short]] = {
+  def generateQualityMap(rawPileup: String, qualityString: String, ref: String, contig: String, position:Int): mutable.Map[Byte, mutable.HashMap[String, Short]] = {
     val cleanPileup = PileupStringUtils.removeAllMarks(rawPileup)
     val (pileup, quality) = removeDeletedBases(cleanPileup, qualityString)
-    assert (pileup.length == quality.length)
+    assert (pileup.length == quality.length, s"Pilep and quality string length mismatch at $contig:$position")
 
     val refPileup = pileup.replace(PileupStringUtils.refMatchPlusStrand, ref.charAt(0)).replace(PileupStringUtils.refMatchMinuStrand, ref.charAt(0))
     val res = new mutable.HashMap[Byte, mutable.HashMap[String, Short]]
@@ -67,24 +73,29 @@ class PileupConverter (spark: SparkSession) extends Serializable {
       baseMap.update(qualityChar.toString, (baseQualCount+1).toShort)
       res.update(pileupChar.toByte, baseMap)
     }
-
     res
   }
 
-  def generateAltMap(df: DataFrame):DataFrame = {
+  /**
+   * Generates alts map in sequila format (base (as byte) -> count (as short))
+   * @param df
+   * @param caseSensitive
+   * @return
+   */
+  def generateAltsQuals(df: DataFrame, caseSensitive: Boolean):DataFrame = {
     import spark.implicits._
 
     val delContext = new DelContext()
-//
-    val dataMapped = df.map(row => {
-      val contig = DataQualityFuncs.cleanContig(row.getString(Indices.contig))
-      val position = row.getInt(Indices.position)
-      val ref = row.getString(Indices.ref).toUpperCase()
-      val rawPileup = row.getString(Indices.pileupString)
-      val qualityString = row.getString(Indices.qualityString)
 
-      //FIXME - needed manual escaping in pileup file ... maybe can be done in better way...
-     val properQualityString = StringUtils.replace(qualityString,"\\\"", "\"")
+    val dataMapped = df.map(row => {
+      val contig = DataQualityFuncs.cleanContig(row.getString(SamtoolsSchema.contig))
+      val position = row.getInt(SamtoolsSchema.position)
+      val ref = row.getString(SamtoolsSchema.ref).toUpperCase()
+      val rawPileup = if (caseSensitive)
+        row.getString(SamtoolsSchema.pileupString)
+      else
+        row.getString(SamtoolsSchema.pileupString).toUpperCase()
+      val qualityString = row.getString(SamtoolsSchema.qualityString)
 
       val pileup = PileupStringUtils.removeStartAndEndMarks(rawPileup)
       val basesCount = PileupStringUtils.getBaseCountMap(pileup)
@@ -119,17 +130,16 @@ class PileupConverter (spark: SparkSession) extends Serializable {
       }
 
       val diff = delContext.getDelTransferForLocus(contig, position)
-      val cov = (row.getShort(Indices.cov) - diff).toShort
+      val cov = (row.getShort(SamtoolsSchema.cov) - diff).toShort
 
-      val qMap = if (map.nonEmpty) generateQualityMap(rawPileup,properQualityString, ref ) else null
+      val qMap = if (map.nonEmpty) generateQualityMap(rawPileup,qualityString, ref, contig, position ) else null
 
       (contig, position, ref , cov, rawPileup, qualityString, if (map.nonEmpty) map else null, qMap)
     })
-    dataMapped.toDF(Columns.CONTIG, Columns.START, Columns.REF, Columns.COVERAGE, rawPileupCol, rawQualityCol, Columns.ALTS, "quals")
+    dataMapped.toDF(Columns.CONTIG, Columns.START, Columns.REF, Columns.COVERAGE, rawPileupCol, rawQualityCol, Columns.ALTS, Columns.QUALS)
   }
 
   def generateCompressedOutput(df: DataFrame):DataFrame = {
-    import spark.implicits._
     val dataRdd = df.rdd
     var blockLength, i, cov, prevCov = 0
     val prevAlt = mutable.Map.empty[Byte, Short]
@@ -144,12 +154,12 @@ class PileupConverter (spark: SparkSession) extends Serializable {
 
 
     for (row <- dataRdd.collect()) {
-      curContig = row.getString(Indices.contig)
-      curPosition = row.getInt(Indices.position)
-      curBase = row.getString(Indices.ref)
-      cov = row.getShort(Indices.cov)
-      val currAlt = row.getMap[Byte, Short](Indices.altsMap)
-      val currQualityMap = row.getMap[Byte, Map[String, Short]](Indices.qualsMap)
+      curContig = row.getString(SamtoolsSchema.contig)
+      curPosition = row.getInt(SamtoolsSchema.position)
+      curBase = row.getString(SamtoolsSchema.ref)
+      cov = row.getShort(SamtoolsSchema.cov)
+      val currAlt = row.getMap[Byte, Short](SamtoolsSchema.altsMap)
+      val currQualityMap = row.getMap[Byte, Map[String, Short]](SamtoolsSchema.qualsMap)
 
       if (prevContig.nonEmpty && prevContig != curContig) {
         if (prevAlt.nonEmpty)
@@ -171,7 +181,7 @@ class PileupConverter (spark: SparkSession) extends Serializable {
             arr.append((prevContig, positionStart + i, positionStart + i -1, buffer.toString(), prevCov.toShort, prevAlt.toMap,prevQual.toMap))
           else
             arr.append((prevContig, positionStart + i - blockLength, positionStart + i -1, buffer.toString(), prevCov.toShort,null,null))
-          if (currAlt !=null) {
+          if (currAlt != null) {
             currAlt.foreach { case (k, v) => prevAlt(k) = v } // prevalt equals curAlt
             currQualityMap.foreach { case (k, v) => prevQual(k) = v }
           }
@@ -218,7 +228,7 @@ class PileupConverter (spark: SparkSession) extends Serializable {
 
       i += 1; rowCounter +=1
     }
-    arr.toDF(Columns.CONTIG, Columns.START, Columns.END, Columns.REF, Columns.COVERAGE, Columns.ALTS, "quals")
+    spark.createDF(arr.toList, CommonPileupFormat.schemaAltsQualsMap.fields.toList)
   }
 
 }

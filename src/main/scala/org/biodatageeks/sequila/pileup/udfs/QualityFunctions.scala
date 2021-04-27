@@ -40,6 +40,20 @@ object QualityFunctions {
       map.map({case (k,v) => v.sum}).sum
   }
 
+  def byteToString(map: Map[Byte, Map[String, Short]]): Map[String, Map[String, Short]] = {
+    if (map == null)
+      return null
 
+    map.map({ case (k, v) =>
+      k.toChar.toString -> v
+    })
+  }
 
+  def qualsMapToString (map: Map[String, Map[String,Short]]) : String = {
+    if (map == null)
+      return null
+    map.map({
+      case (k, v) => k -> v.toSeq.sortBy(_._1)
+    }).toSeq.sortBy(_._1).mkString.replaceAll("Vector", "")
+  }
 }

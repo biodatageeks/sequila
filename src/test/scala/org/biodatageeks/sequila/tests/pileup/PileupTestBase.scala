@@ -18,23 +18,13 @@ class PileupTestBase extends FunSuite
   with SharedSparkContext{
 
   val sampleId = "NA12878.multichrom.md"
-  val samResPath: String = getClass.getResource("/multichrom/mdbam/samtools_x_esc.pileup").getPath
+  val samResPath: String = getClass.getResource("/multichrom/mdbam/samtools_x.pileup").getPath
   val referencePath: String = getClass.getResource("/reference/Homo_sapiens_assembly18_chr1_chrM.small.fasta").getPath
   val bamPath: String = getClass.getResource(s"/multichrom/mdbam/${sampleId}.bam").getPath
   val cramPath : String = getClass.getResource(s"/multichrom/mdcram/${sampleId}.cram").getPath
   val tableName = "reads_bam"
   val tableNameCRAM = "reads_cram"
 
-  val schema: StructType = StructType(
-    List(
-      StructField("contig", StringType, nullable = true),
-      StructField("position", IntegerType, nullable = true),
-      StructField("reference", StringType, nullable = true),
-      StructField("coverage", ShortType, nullable = true),
-      StructField("pileup", StringType, nullable = true),
-      StructField("quality", StringType, nullable = true)
-    )
-  )
   before {
     System.setProperty("spark.kryo.registrator", "org.biodatageeks.sequila.pileup.serializers.CustomKryoRegistrator")
     spark.sqlContext.setConf(InternalParams.SerializationMode, StorageLevel.DISK_ONLY.toString())

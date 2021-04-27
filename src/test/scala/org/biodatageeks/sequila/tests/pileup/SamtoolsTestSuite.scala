@@ -1,7 +1,8 @@
 package org.biodatageeks.sequila.tests.pileup
 
 import org.apache.spark.sql._
-import org.biodatageeks.sequila.pileup.converters.PileupConverter
+import org.biodatageeks.sequila.pileup.{PileupReader, PileupWriter}
+import org.biodatageeks.sequila.pileup.converters.samtools.{SamtoolsConverter, SamtoolsSchema}
 import org.biodatageeks.sequila.utils.{Columns, InternalParams, SequilaRegister}
 
 
@@ -23,16 +24,12 @@ class SamtoolsTestSuite extends PileupTestBase {
 
 
   test("alts: one partition") {
-    val df = spark.read
-      .format("csv")
-      .option("delimiter", "\t")
-      .schema(schema)
-      .load(samResPath)
+    val df = PileupReader.load(spark, samResPath, SamtoolsSchema.schema, delimiter = "\t", quote = "\u0000")
 
-    val converter = new PileupConverter(spark)
+    val converter = new SamtoolsConverter(spark)
     val sam = converter
-      .transformSamtoolsResult(df)
-      .select(Columns.CONTIG, Columns.START, Columns.END,Columns.REF,  Columns.COVERAGE,Columns.ALTS)
+      .transformToBlocks(df, caseSensitive = true)
+      .select(Columns.CONTIG, Columns.START, Columns.END,Columns.REF,  Columns.COVERAGE, Columns.ALTS)
       .orderBy("contig", "pos_start")
 
     val ss = SequilaSession(spark)
@@ -41,21 +38,17 @@ class SamtoolsTestSuite extends PileupTestBase {
     val bdgRes = ss.sql(query).orderBy("contig", "pos_start")
     val samRes = spark.createDataFrame(sam.rdd, bdgRes.schema)
 
-    Writer.saveToFile(spark, samRes, "samRes.csv")
-    Writer.saveToFile(spark, bdgRes, "bdgRes.csv")
+//    PileupWriter.save(samRes, "samRes.csv")
+//    PileupWriter.save(spark, bdgRes, "bdgRes.csv")
     assertDataFrameEquals(samRes, bdgRes)
   }
 
   test("alts: many partitions") {
-    val df = spark.read
-      .format("csv")
-      .option("delimiter", "\t")
-      .schema(schema)
-      .load(samResPath)
+    val df = PileupReader.load(spark, samResPath, SamtoolsSchema.schema, delimiter = "\t", quote = "\u0000")
 
-    val converter = new PileupConverter(spark)
+    val converter = new SamtoolsConverter(spark)
     val sam = converter
-      .transformSamtoolsResult(df)
+      .transformToBlocks(df, caseSensitive = true)
       .select(Columns.CONTIG, Columns.START, Columns.END,Columns.REF, Columns.COVERAGE,Columns.ALTS)
       .orderBy("contig", "pos_start")
 
@@ -63,28 +56,19 @@ class SamtoolsTestSuite extends PileupTestBase {
     val ss = SequilaSession(spark)
     SequilaRegister.register(ss)
 
-
     val bdgRes = ss.sql(query).orderBy("contig", "pos_start")
     val samRes = spark.createDataFrame(sam.rdd, bdgRes.schema)
-
-//    Writer.saveToFile(spark, samRes, "samRes.csv")
-//    Writer.saveToFile(spark, bdgRes, "bdgResFullSplit.csv")
-
 
     assertDataFrameEquals(samRes, bdgRes)
   }
 
 
   test("alts,quals: one partition") {
-    val df = spark.read
-      .format("csv")
-      .option("delimiter", "\t")
-      .schema(schema)
-      .load(samResPath)
+    val df = PileupReader.load(spark, samResPath, SamtoolsSchema.schema, delimiter = "\t", quote = "\u0000")
 
-    val converter = new PileupConverter(spark)
+    val converter = new SamtoolsConverter(spark)
     val sam = converter
-      .transformSamtoolsResult(df)
+      .transformToBlocks(df, caseSensitive = true)
       .orderBy("contig", "pos_start")
 
     val ss = SequilaSession(spark)
@@ -98,15 +82,11 @@ class SamtoolsTestSuite extends PileupTestBase {
 
 
   test("alts,quals: many partitions ") {
-    val df = spark.read
-      .format("csv")
-      .option("delimiter", "\t")
-      .schema(schema)
-      .load(samResPath)
+    val df = PileupReader.load(spark, samResPath, SamtoolsSchema.schema, delimiter = "\t", quote = "\u0000")
 
-    val converter = new PileupConverter(spark)
+    val converter = new SamtoolsConverter(spark)
     val sam = converter
-      .transformSamtoolsResult(df)
+      .transformToBlocks(df, caseSensitive = true)
       .orderBy("contig", "pos_start")
 
     spark.sqlContext.setConf(InternalParams.InputSplitSize, splitSize)
