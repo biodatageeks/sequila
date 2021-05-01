@@ -12,7 +12,7 @@ class IntervalHolderChromosome[T](allRegions: Array[(String,Interval[Int],T)], i
       .groupBy(_._1)
       .map(x => {
         val clazz = Class.forName(intervalHolderClassName)
-        val it = clazz.getConstructor().newInstance().asInstanceOf[BaseIntervalHolder[T]]
+        val it = clazz.newInstance().asInstanceOf[BaseIntervalHolder[T]]
         x._2.foreach { y =>
           it.put(y._2.start, y._2.end, y._3)
         }

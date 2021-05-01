@@ -99,7 +99,7 @@ By default SeQuiLa uses Red-Black tree with intervals implemented in `org.biodat
 class. However, it is possible to provide a custom interval structure and set it using `spark.biodatageeks.rangejoin.intervalHolderClass`
 parameter. There are 2 prerequisites:
 
-1. custom class must implement interface provided by the trait: `org.biodatageeks.sequila.rangejoins.methods.base.BaseIntervalHolder[V]`
+1. class must extend abstract class: `org.biodatageeks.sequila.rangejoins.methods.base.BaseIntervalHolder[V]`
 
 2. node class used for storing intervals must extend `org.biodatageeks.sequila.rangejoins.methods.base.BaseNode[V]`
 
