@@ -1,5 +1,7 @@
 package org.biodatageeks.sequila.rangejoins.methods.base
 
+import org.apache.log4j.Logger
+
 
 trait BaseIntervalHolder[V] extends java.lang.Iterable[BaseNode[V] ] with Serializable {
 
@@ -41,4 +43,11 @@ trait BaseIntervalHolder[V] extends java.lang.Iterable[BaseNode[V] ] with Serial
     * @return An iterator.
     */
   def overlappers(start: Int, end: Int): java.util.Iterator[BaseNode[V]]
+
+  /**
+    * An optional method to include any struct actions required once all items are added
+    */
+  def postConstruct : Unit = {
+
+  }
 }

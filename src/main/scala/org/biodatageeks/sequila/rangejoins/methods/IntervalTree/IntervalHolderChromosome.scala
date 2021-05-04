@@ -16,6 +16,7 @@ class IntervalHolderChromosome[T](allRegions: Array[(String,Interval[Int],T)], i
         x._2.foreach { y =>
           it.put(y._2.start, y._2.end, y._3)
         }
+        it.postConstruct
         (x._1, it)
       })
   }
