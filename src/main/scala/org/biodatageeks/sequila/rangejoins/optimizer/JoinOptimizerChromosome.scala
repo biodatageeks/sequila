@@ -25,7 +25,7 @@ class JoinOptimizerChromosome(spark: SparkSession, rdd: RDD[(String,Interval[Int
 
    private def estimateBroadcastSize(rdd: RDD[(String,Interval[Int],InternalRow)], rddCount: Long): Long = {
      try{
-       (ObjectSizeCalculator.getObjectSize(rdd.first()) * rddCount) /10
+       (ObjectSizeCalculator.getObjectSize(rdd.first()) * rddCount)
      }
      catch {
        case e @ (_ : NoClassDefFoundError | _ : ExceptionInInitializerError ) => {
@@ -38,7 +38,7 @@ class JoinOptimizerChromosome(spark: SparkSession, rdd: RDD[(String,Interval[Int
 
   def debugInfo = {
     s"""
-       |Broadcast structure size is ~ ${math.rint(100*estBroadcastSize/1024.0)/100} kb
+       |Estimated broadcast structure size is ~ ${math.rint(100*estBroadcastSize/1024.0)/100} kb
        |${InternalParams.maxBroadCastSize} is set to ${(maxBroadcastSize/1024).toInt} kb"
        |Using ${getRangeJoinMethod.toString} join method
      """.stripMargin
