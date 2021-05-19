@@ -25,7 +25,7 @@ class JoinOptimizer(sc: SparkContext, rdd: RDD[IntervalWithRow[Int]], rddCount :
 
    private def estimateBroadcastSize(rdd: RDD[IntervalWithRow[Int]], rddCount: Long): Long = {
      try{
-       (ObjectSizeCalculator.getObjectSize(rdd.first()) * rddCount) /10
+       (ObjectSizeCalculator.getObjectSize(rdd.first()) * rddCount)
      }
      catch {
        case e @ (_ : NoClassDefFoundError | _ : ExceptionInInitializerError )  => {
