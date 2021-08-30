@@ -10,12 +10,13 @@ import org.biodatageeks.sequila.datasources.BAM.BDGAlignFileReaderWriter
 import org.biodatageeks.sequila.datasources.InputDataType
 import org.biodatageeks.sequila.inputformats.BDGAlignInputFormat
 import org.biodatageeks.sequila.pileup.conf.Conf
+import org.biodatageeks.sequila.pileup.partitioning.{PartitionUtils, RangePartitionCoalescer}
 import org.biodatageeks.sequila.utils.{InternalParams, TableFuncs}
 import org.seqdoop.hadoop_bam.CRAMBDGInputFormat
 import org.slf4j.LoggerFactory
 
 import scala.reflect.ClassTag
-
+import collection.JavaConverters._
 
 class Pileup[T<:BDGAlignInputFormat](spark:SparkSession)(implicit c: ClassTag[T]) extends BDGAlignFileReaderWriter[T] {
   val logger = LoggerFactory.getLogger(this.getClass.getCanonicalName)
@@ -23,14 +24,40 @@ class Pileup[T<:BDGAlignInputFormat](spark:SparkSession)(implicit c: ClassTag[T]
   def handlePileup(tableName: String, sampleId: String, refPath:String, output: Seq[Attribute], conf: Conf): RDD[InternalRow] = {
     logger.info(s"Calculating pileup on table: $tableName")
     logger.info(s"Current configuration\n$conf")
+    spark.sqlContext.getConf(InternalParams.IOReadAlignmentMethod,"disq").toLowerCase
 
     lazy val allAlignments = readTableFile(name=tableName, sampleId)
     val bdConf = spark
       .sparkContext
       .broadcast(conf)
     val alignments = filterAlignments(allAlignments, bdConf )
-    PileupMethods.calculatePileup(alignments, spark, refPath, bdConf)
+    val repartitionedAlignments = repartitionAlignments(alignments)
+    PileupMethods.calculatePileup(repartitionedAlignments, spark, refPath, bdConf)
 
+  }
+
+  private def repartitionAlignments (alignments:RDD[SAMRecord]): RDD[SAMRecord] ={
+    val numPartitions = alignments.getNumPartitions
+    val maxEndIndex = (List.range(1, numPartitions) :+ (numPartitions-1)).map(r=> new Integer(r )).asJava
+
+    val alignments2 = alignments.coalesce(alignments.getNumPartitions,false, Some(new RangePartitionCoalescer(maxEndIndex )) )
+
+    val lowerBounds = PartitionUtils.getPartitionLowerBound(alignments) // get the start of first read in partition
+    //lowerBounds.foreach(l => println(s"Partition lower lowerBounds ${l.idx} => ${l.record.getContig},${l.record.getAlignmentStart}"))
+    val adjBounds = PartitionUtils.getAdjustedPartitionBounds(lowerBounds)
+    //adjBounds.foreach(l => println(s"Partition ${l.idx} => ${l.contigStart},${l.postStart} -- ${l.contigEnd},${l.posEnd}"))
+    val broadcastBounds = spark.sparkContext.broadcast(adjBounds)
+    val adjustedAlignments = alignments2.mapPartitionsWithIndex {
+      (i, p) => {
+        val bounds = broadcastBounds.value(i)
+        p.takeWhile(r =>
+          if (r.getReadUnmappedFlag) true
+          else if (r.getContig == bounds.contigStart && r.getAlignmentStart >= bounds.postStart && r.getAlignmentEnd <= bounds.posEnd) true
+          else
+            false)
+      }
+    }
+    adjustedAlignments
   }
 
   private def filterAlignments(alignments:RDD[SAMRecord], conf : Broadcast[Conf]): RDD[SAMRecord] = {
@@ -65,5 +92,7 @@ class Pileup[T<:BDGAlignInputFormat](spark:SparkSession)(implicit c: ClassTag[T]
         else throw new Exception("Only BAM and CRAM file formats are supported in coverage.")
       case None => throw new Exception("Wrong file extension - only BAM and CRAM file formats are supported in coverage.")
     }
+
+
   }
 }

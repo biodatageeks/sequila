@@ -26,25 +26,8 @@ object PileupMethods {
     * @return distributed collection of PileupRecords
     */
   def calculatePileup(alignments: RDD[SAMRecord], spark: SparkSession, refPath: String, conf : Broadcast[Conf]): RDD[InternalRow] = {
-
-
-
-
-    val storageLevel =
-      if (spark.sqlContext.getConf(InternalParams.SerializationMode, StorageLevel.MEMORY_AND_DISK.toString())==StorageLevel.DISK_ONLY.toString())
-        StorageLevel.DISK_ONLY
-      else StorageLevel.MEMORY_AND_DISK
-
-    //FIXME: Add automatic unpersist
-    val aggregates = alignments.assembleContigAggregates(conf).persist(storageLevel)
-    aggregates.setName(InternalParams.RDDPileupEventsName)
-    val accumulator = aggregates.accumulateTails(spark)
-
-    val broadcast =
-      spark.sparkContext.broadcast(accumulator.value().prepareCorrectionsForOverlaps())
-
-    val adjustedEvents = aggregates.adjustWithOverlaps(broadcast)
-    val pileup = adjustedEvents.toPileup(refPath, conf)
+    val aggregates = alignments.assembleContigAggregates(conf)
+    val pileup = aggregates.toPileup(refPath, conf)
     pileup
   }
 }

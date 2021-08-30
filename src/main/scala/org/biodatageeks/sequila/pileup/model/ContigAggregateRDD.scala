@@ -62,7 +62,7 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
         val startPosition = agg.startPosition
         val bases = reference.getBasesFromReference(contigMap(agg.contig), agg.startPosition, agg.startPosition + agg.events.length - 1)
 
-        while (i < agg.shrinkedEventsArraySize) {
+        while ( i < agg.events.length) { // repartition change -> no shrinking, we have to go through whole array
           cov += agg.events(i)
           if (prev.hasAlt) {
             addBaseRecord(result, ind, agg, bases, i, prev, conf)

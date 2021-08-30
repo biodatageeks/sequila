@@ -33,8 +33,6 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
     val contigLenMap = initContigLengths(this.rdd.first())
 
     this.rdd.mapPartitions { partition =>
-//      println(s"Creating aggregates from alignments")
-
       val aggMap = new mutable.HashMap[String, ContigAggregate]()
       val contigMaxReadLen = new mutable.HashMap[String, Int]()
       var contigIter, contigCleanIter  = ""
