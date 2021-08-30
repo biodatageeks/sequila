@@ -1,2 +1,5 @@
+*.fasta filter=lfs diff=lfs merge=lfs -text
+*.bam filter=lfs diff=lfs merge=lfs -text
+*.pileup filter=lfs diff=lfs merge=lfs -text
 NA12878.chr20.md.bam filter=lfs diff=lfs merge=lfs -text
 samtools_chr20_x.pileup filter=lfs diff=lfs merge=lfs -text
