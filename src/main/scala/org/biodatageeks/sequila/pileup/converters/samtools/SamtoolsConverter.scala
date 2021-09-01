@@ -90,6 +90,7 @@ class SamtoolsConverter(spark: SparkSession) extends Serializable with PileupCon
     val dataMapped = df.map(row => {
       val contig = DataQualityFuncs.cleanContig(row.getString(SamtoolsSchema.contig))
       val position = row.getInt(SamtoolsSchema.position)
+
       val ref = row.getString(SamtoolsSchema.ref).toUpperCase()
       val rawPileup = if (caseSensitive)
         row.getString(SamtoolsSchema.pileupString)
@@ -136,7 +137,9 @@ class SamtoolsConverter(spark: SparkSession) extends Serializable with PileupCon
 
       (contig, position, ref , cov, rawPileup, qualityString, if (map.nonEmpty) map else null, qMap)
     })
-    dataMapped.toDF(Columns.CONTIG, Columns.START, Columns.REF, Columns.COVERAGE, rawPileupCol, rawQualityCol, Columns.ALTS, Columns.QUALS)
+    dataMapped
+      .toDF(Columns.CONTIG, Columns.START, Columns.REF, Columns.COVERAGE, rawPileupCol, rawQualityCol, Columns.ALTS, Columns.QUALS)
+      .filter(s"${Columns.COVERAGE} != 0") // do not report zero-coverage sites
   }
 
   def generateCompressedOutput(df: DataFrame):DataFrame = {
