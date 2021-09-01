@@ -29,6 +29,7 @@ object PileupWriter {
       .coalesce(1)
       .write
       .mode(SaveMode.Overwrite)
+      .option("delimiter","|")
       .csv(path)
   }
 }
