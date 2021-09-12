@@ -1,6 +1,5 @@
 package org.biodatageeks.sequila.rangejoins.optimizer
 
-import jdk.nashorn.internal.ir.debug.ObjectSizeCalculator
 import org.apache.log4j.Logger
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -8,6 +7,7 @@ import org.apache.spark.util.SizeEstimator
 import org.biodatageeks.sequila.rangejoins.IntervalTree.IntervalWithRow
 import org.biodatageeks.sequila.rangejoins.optimizer.RangeJoinMethod.RangeJoinMethod
 import org.biodatageeks.sequila.utils.InternalParams
+import org.openjdk.jol.info.GraphLayout
 
 
 class JoinOptimizer(sc: SparkContext, rdd: RDD[IntervalWithRow[Int]], rddCount : Long) {
@@ -25,7 +25,7 @@ class JoinOptimizer(sc: SparkContext, rdd: RDD[IntervalWithRow[Int]], rddCount :
 
    private def estimateBroadcastSize(rdd: RDD[IntervalWithRow[Int]], rddCount: Long): Long = {
      try{
-       (ObjectSizeCalculator.getObjectSize(rdd.first()) * rddCount)
+       (GraphLayout.parseInstance(rdd.first()).totalSize() * rddCount)
      }
      catch {
        case e @ (_ : NoClassDefFoundError | _ : ExceptionInInitializerError )  => {

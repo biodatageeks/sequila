@@ -3,7 +3,7 @@ import sbtassembly.AssemblyPlugin.autoImport.ShadeRule
 import scala.util.Properties
 
 name := """sequila"""
-val DEFAULT_SPARK_3_VERSION = "3.0.1"
+val DEFAULT_SPARK_3_VERSION = "3.1.2"
 lazy val sparkVersion = Properties.envOrElse("SPARK_VERSION", DEFAULT_SPARK_3_VERSION)
 
 version := s"${sys.env.getOrElse("VERSION", "0.1.0")}"
@@ -26,10 +26,10 @@ libraryDependencies += "org.apache.spark" %% "spark-core" % sparkVersion
 libraryDependencies += "org.apache.spark" %% "spark-sql" % sparkVersion
 libraryDependencies += "com.github.mrpowers" %% "spark-fast-tests" % "0.21.3"
 libraryDependencies += "com.github.mrpowers" %% "spark-daria" % "0.38.2"
-libraryDependencies += "com.holdenkarau" %% "spark-testing-base" % "3.0.1_1.0.0" % "test" excludeAll ExclusionRule(organization = "javax.servlet") excludeAll (ExclusionRule("org.apache.hadoop"))
-libraryDependencies += "org.bdgenomics.adam" %% "adam-core-spark3" % "0.33.0" excludeAll (ExclusionRule("org.seqdoop"))
-libraryDependencies += "org.bdgenomics.adam" %% "adam-apis-spark3" % "0.33.0" excludeAll (ExclusionRule("org.seqdoop"))
-libraryDependencies += "org.bdgenomics.adam" %% "adam-cli-spark3" % "0.33.0" excludeAll (ExclusionRule("org.seqdoop"))
+libraryDependencies += "com.holdenkarau" %% "spark-testing-base" % "3.1.2_1.1.0" % "test" excludeAll ExclusionRule(organization = "javax.servlet") excludeAll (ExclusionRule("org.apache.hadoop"))
+libraryDependencies += "org.bdgenomics.adam" %% "adam-core-spark3" % "0.36.0" excludeAll (ExclusionRule("org.seqdoop"))
+libraryDependencies += "org.bdgenomics.adam" %% "adam-apis-spark3" % "0.36.0" excludeAll (ExclusionRule("org.seqdoop"))
+libraryDependencies += "org.bdgenomics.adam" %% "adam-cli-spark3" % "0.36.0" excludeAll (ExclusionRule("org.seqdoop"))
 libraryDependencies += "org.scala-lang" % "scala-library" % scalaVersion.value
 libraryDependencies += "org.rogach" %% "scallop" % "3.1.2"
 libraryDependencies += "com.github.samtools" % "htsjdk" % "2.22.0"
@@ -41,9 +41,11 @@ libraryDependencies += "de.ruedigermoeller" % "fst" % "2.57"
 libraryDependencies += "org.apache.commons" % "commons-lang3" % "3.7"
 libraryDependencies += "org.eclipse.jetty" % "jetty-servlet" % "9.3.24.v20180605"
 libraryDependencies += "org.apache.derby" % "derbyclient" % "10.14.2.0"
-libraryDependencies += "org.disq-bio" % "disq" % "0.3.6"
-libraryDependencies += "io.projectglow" %% "glow-spark3" % "0.6.0" excludeAll (ExclusionRule("com.github.samtools")) excludeAll (ExclusionRule("org.seqdoop")) //FIXME:: remove togehter with disq
+libraryDependencies += "org.disq-bio" % "disq" % "0.3.8"
+libraryDependencies += "io.projectglow" %% "glow-spark3" % "1.0.1" excludeAll (ExclusionRule("com.github.samtools")) excludeAll (ExclusionRule("org.seqdoop")) //FIXME:: remove togehter with disq
 libraryDependencies += "com.intel.gkl" % "gkl" % "0.8.6"
+libraryDependencies += "org.openjdk.jol" % "jol-core" % "0.16" % "provided"
+
 
 
 
@@ -67,7 +69,6 @@ javaOptions in Test ++= Seq(
 javaOptions ++= Seq("-Xms512M", "-Xmx8192M", "-XX:+CMSClassUnloadingEnabled" , "-Dlog4j.configuration=log4j.properties")
 
 //fix for using with hdp warehouse connector
-javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint")
 updateOptions := updateOptions.value.withLatestSnapshots(false)
 outputStrategy := Some(StdoutOutput)
 

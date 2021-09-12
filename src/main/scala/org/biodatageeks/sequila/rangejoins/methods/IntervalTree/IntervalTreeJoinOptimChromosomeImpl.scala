@@ -26,7 +26,8 @@
 package org.biodatageeks.sequila.rangejoins.methods.IntervalTree
 
 
-import jdk.nashorn.internal.ir.debug.ObjectSizeCalculator
+import org.openjdk.jol.info.GraphLayout
+
 import org.apache.log4j.Logger
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -89,7 +90,7 @@ object IntervalTreeJoinOptimChromosomeImpl extends Serializable {
   val intervalTree = {
     val tree = new IntervalHolderChromosome[InternalRow](localIntervals, intervalHolderClassName)
     try{
-      val treeSize = ObjectSizeCalculator.getObjectSize(tree)
+      val treeSize = GraphLayout.parseInstance(tree).totalSize()
       logger.info(s"Real broadcast size of the interval structure is ${treeSize} bytes")
     }
     catch {
