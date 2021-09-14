@@ -68,7 +68,7 @@ class Pileup[T<:BDGAlignInputFormat](spark:SparkSession)(implicit c: ClassTag[T]
     cleaned
   }
 
-  private def readTableFile(name: String, sampleId: String): RDD[SAMRecord] = {
+  def readTableFile(name: String, sampleId: String): RDD[SAMRecord] = {
     val metadata = TableFuncs.getTableMetadata(spark, name)
     val path = metadata.location.toString
 

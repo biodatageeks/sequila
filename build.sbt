@@ -116,13 +116,13 @@ assemblyMergeStrategy in assembly := {
 }
 
 /* scalastyle setup */
-lazy val compileScalastyle = taskKey[Unit]("compileScalastyle")
-compileScalastyle := scalastyle.in(Compile).toTask("").value
-
-scalastyleFailOnError := false
-scalastyleFailOnWarning := false
-
-(compile in Compile) := ((compile in Compile) dependsOn compileScalastyle).value
+//lazy val compileScalastyle = taskKey[Unit]("compileScalastyle")
+//compileScalastyle := scalastyle.in(Compile).toTask("").value
+//
+//scalastyleFailOnError := false
+//scalastyleFailOnWarning := false
+//
+//(compile in Compile) := ((compile in Compile) dependsOn compileScalastyle).value
 
 
 credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
