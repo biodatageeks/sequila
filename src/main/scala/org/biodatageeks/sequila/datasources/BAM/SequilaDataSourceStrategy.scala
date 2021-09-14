@@ -24,9 +24,13 @@ import org.seqdoop.hadoop_bam.BAMBDGInputFormat
 
 import scala.collection.mutable.ArrayBuffer
 
-case class SequilaDataSourceStrategy(spark: SparkSession) extends Strategy with Logging with CastSupport {
+case class SequilaDataSourceStrategy(spark: SparkSession) extends Strategy
+  with Logging
+  with CastSupport
+  with org.apache.spark.sql.catalyst.SQLConfHelper
+{
 
-  def conf = spark.sqlContext.conf
+  override def conf: SQLConf = spark.sqlContext.conf
   def apply(plan: LogicalPlan): Seq[execution.SparkPlan] = plan match {
 
     //optimized strategy for queries like SELECT (distinct )sampleId FROM  BDGAlignmentRelation
@@ -95,7 +99,7 @@ case class SequilaDataSourceStrategy(spark: SparkSession) extends Strategy with 
     case l @ LogicalRelation(baseRelation: TableScan, _, _,false) =>
       RowDataSourceScanExec(
         l.output,
-        l.output.indices,
+        l.output.toStructType,
         Set.empty,
         Set.empty,
         toCatalystRDD(l, baseRelation.buildScan()),
@@ -208,7 +212,7 @@ case class SequilaDataSourceStrategy(spark: SparkSession) extends Strategy with 
 
       val scan = RowDataSourceScanExec(
         projects.map(_.toAttribute),
-        projects.map(_.toAttribute).indices,
+        projects.map(_.toAttribute).toStructType,
         Set.empty,
         Set.empty,
         scanBuilder(requestedColumns, candidatePredicates, pushedFilters),
@@ -222,7 +226,7 @@ case class SequilaDataSourceStrategy(spark: SparkSession) extends Strategy with 
 
       val scan = RowDataSourceScanExec(
         requestedColumns,
-        requestedColumns.indices,
+        requestedColumns.toStructType,
         Set.empty,
         Set.empty,
         scanBuilder(requestedColumns, candidatePredicates, pushedFilters),
