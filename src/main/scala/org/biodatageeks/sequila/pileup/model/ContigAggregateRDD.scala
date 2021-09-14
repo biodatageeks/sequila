@@ -22,30 +22,6 @@ object AggregateRDDOperations {
 case class AggregateRDD(rdd: RDD[ContigAggregate]) {
   val logger: Logger = LoggerFactory.getLogger(this.getClass.getCanonicalName)
 
-  /**
-    * gathers "tails" of events array that might be overlapping with other partitions. length of tail is equal to the
-    * longest read in this aggregate
-    * @return
-    */
-
-  def accumulateTails( spark:SparkSession): PileupAccumulator = {
-    val accumulator = new PileupAccumulator(new PileupUpdate(new ArrayBuffer[Tail](), new ArrayBuffer[Range]()))
-    spark.sparkContext.register(accumulator)
-
-    this.rdd foreach {
-      agg => {
-        val pu = agg.getPileupUpdate
-        accumulator.add(pu)
-      }
-    }
-    accumulator
-  }
-
-  def adjustWithOverlaps(b: Broadcast[FullCorrections])
-  : RDD[ContigAggregate] = {
-    this.rdd map { agg =>  agg.getAdjustedAggregate(b)}
-  }
-
   def toPileup(refPath: String, conf: Broadcast[Conf] ) : RDD[InternalRow] = {
 
     this.rdd.mapPartitions { part =>
