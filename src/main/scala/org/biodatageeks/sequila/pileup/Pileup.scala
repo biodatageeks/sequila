@@ -10,7 +10,9 @@ import org.biodatageeks.sequila.datasources.BAM.BDGAlignFileReaderWriter
 import org.biodatageeks.sequila.datasources.InputDataType
 import org.biodatageeks.sequila.inputformats.BDGAlignInputFormat
 import org.biodatageeks.sequila.pileup.conf.Conf
-import org.biodatageeks.sequila.pileup.partitioning.{PartitionUtils, RangePartitionCoalescer}
+import org.biodatageeks.sequila.pileup.partitioning.{LowerPartitionBoundAlignmentRecord, PartitionUtils, RangePartitionCoalescer}
+import org.biodatageeks.sequila.rangejoins.IntervalTree.Interval
+import org.biodatageeks.sequila.rangejoins.methods.IntervalTree.{IntervalHolderChromosome, IntervalTreeRedBlack}
 import org.biodatageeks.sequila.utils.{InternalParams, TableFuncs}
 import org.seqdoop.hadoop_bam.CRAMBDGInputFormat
 import org.slf4j.LoggerFactory
@@ -18,6 +20,8 @@ import org.slf4j.LoggerFactory
 import scala.reflect.ClassTag
 import collection.JavaConverters._
 
+
+case class TruncRead(rName: String, contig: String, posStart: Int, posEnd: Int)
 class Pileup[T<:BDGAlignInputFormat](spark:SparkSession)(implicit c: ClassTag[T]) extends BDGAlignFileReaderWriter[T] {
   val logger = LoggerFactory.getLogger(this.getClass.getCanonicalName)
 
@@ -26,33 +30,57 @@ class Pileup[T<:BDGAlignInputFormat](spark:SparkSession)(implicit c: ClassTag[T]
     logger.info(s"Current configuration\n$conf")
     spark.sqlContext.getConf(InternalParams.IOReadAlignmentMethod,"disq").toLowerCase
 
-    lazy val allAlignments = readTableFile(name=tableName, sampleId)
     val bdConf = spark
       .sparkContext
       .broadcast(conf)
+    lazy val allAlignments = readTableFile(name=tableName, sampleId)
     val alignments = filterAlignments(allAlignments, bdConf )
-    val repartitionedAlignments = repartitionAlignments(alignments)
+
+    val repartitionedAlignments = repartitionAlignments(alignments, tableName, sampleId)
     PileupMethods.calculatePileup(repartitionedAlignments, spark, refPath, bdConf)
 
   }
 
-  private def repartitionAlignments (alignments:RDD[SAMRecord]): RDD[SAMRecord] ={
-    val numPartitions = alignments.getNumPartitions
-    val maxEndIndex = (List.range(1, numPartitions) :+ (numPartitions-1)).map(r=> new Integer(r )).asJava
+  private def boundsToIntervals(a: Array[LowerPartitionBoundAlignmentRecord]) = {
+    a
+      .map( r => s"${r.record.getContig}:${r.record.getStart}-${r.record.getStart}")
+      .mkString(",")
+  }
 
-    val alignments2 = alignments.coalesce(alignments.getNumPartitions,false, Some(new RangePartitionCoalescer(maxEndIndex )) )
-
+  def getPartitionBounds(alignments:RDD[SAMRecord], tableName: String, sampleId: String) = {
     val lowerBounds = PartitionUtils.getPartitionLowerBound(alignments) // get the start of first read in partition
-    //lowerBounds.foreach(l => println(s"Partition lower lowerBounds ${l.idx} => ${l.record.getContig},${l.record.getAlignmentStart}"))
-    val adjBounds = PartitionUtils.getAdjustedPartitionBounds(lowerBounds)
-    //adjBounds.foreach(l => println(s"Partition ${l.idx} => ${l.contigStart},${l.postStart} -- ${l.contigEnd},${l.posEnd}"))
+    spark
+      .sqlContext
+      .setConf(InternalParams.AlignmentIntervals, boundsToIntervals(lowerBounds))
+    logger.info(s"Getting bounds overlapping reads for intervals: ${boundsToIntervals(lowerBounds)}")
+    val boundsOverlappingReads = readTableFile(name=tableName, sampleId)
+      .collect()
+      .filter(r => r.getReadUnmappedFlag != true )
+      .map( r => (r.getContig, Interval(r.getStart, r.getEnd), TruncRead(r.getReadName, r.getContig, r.getStart, r.getEnd)) )
+    spark
+      .sqlContext
+      .setConf(InternalParams.AlignmentIntervals, "")
+    logger.info(s"Found ${boundsOverlappingReads.length} overlapping reads")
+    val tree = new IntervalHolderChromosome[TruncRead](boundsOverlappingReads, "org.biodatageeks.sequila.rangejoins.methods.IntervalTree.IntervalTreeRedBlack")
+
+    PartitionUtils.getAdjustedPartitionBounds2(lowerBounds, tree)
+  }
+
+  def repartitionAlignments (alignments:RDD[SAMRecord], tableName: String, sampleId: String): RDD[SAMRecord] = {
+    val numPartitions = alignments.getNumPartitions
+    val maxEndIndex = (List.range(1, numPartitions) :+ (numPartitions-1)).map(r=> new Integer(r )).asJava //FIXME should be calculated based on max end pos of a rightmost read in the left partition
+    val adjBounds = getPartitionBounds(alignments, tableName, sampleId)
     val broadcastBounds = spark.sparkContext.broadcast(adjBounds)
+    logger.info(s"Final partition bounds: ${adjBounds.mkString("|")}")
+    val alignments2 = alignments.coalesce(alignments.getNumPartitions,false, Some(new RangePartitionCoalescer(maxEndIndex )) )
     val adjustedAlignments = alignments2.mapPartitionsWithIndex {
       (i, p) => {
         val bounds = broadcastBounds.value(i)
         p.takeWhile(r =>
-          if (r.getReadUnmappedFlag) true
-          else if (r.getContig == bounds.contigStart && r.getAlignmentStart >= bounds.postStart && r.getAlignmentEnd <= bounds.posEnd) true
+          if (r.getReadUnmappedFlag ||
+            (r.getContig == bounds.contigStart && r.getAlignmentStart >= bounds.postStart && r.getAlignmentEnd <= bounds.posEnd
+              ) ||
+            (r.getContig == bounds.contigEnd  && r.getAlignmentEnd <= bounds.posEnd ) ) true
           else
             false)
       }
@@ -92,7 +120,5 @@ class Pileup[T<:BDGAlignInputFormat](spark:SparkSession)(implicit c: ClassTag[T]
         else throw new Exception("Only BAM and CRAM file formats are supported in coverage.")
       case None => throw new Exception("Wrong file extension - only BAM and CRAM file formats are supported in coverage.")
     }
-
-
   }
 }

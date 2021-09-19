@@ -9,25 +9,52 @@ import org.seqdoop.hadoop_bam.BAMBDGInputFormat
 
 class PartitionCoalesceTestSuite extends PileupTestBase{
 
-  test("Basic count"){
-    val splitSize = "1000000"
-    spark.sqlContext.setConf(InternalParams.InputSplitSize, splitSize)
-    spark.sparkContext.setLogLevel("ERROR")
-    val ss = SequilaSession(spark)
+  val query =
+    s"""
+       |SELECT *
+       |FROM  pileup('${tableName}', '${sampleId}', '${referencePath}', false)
+               """.stripMargin
 
-    SequilaRegister.register(ss)
-    val pileup = new Pileup[BAMBDGInputFormat](spark)
-    val allAlignments = pileup.readTableFile(name=tableName, sampleId)
-    val partLowerBounds = PartitionUtils.getPartitionLowerBound(allAlignments)
-    partLowerBounds.foreach(p => println(s"${p.idx} -> ${p.record.getReadName}") )
-    println(allAlignments.filter(_.getReadName=="61CC3AAXX100125:7:66:10690:16356").collect()(0).getEnd)
+  test("Check if last read of the partition is found correctly"){
+
     /**
       * Base Partitions bounds
       *     0 : chrM, 7 <-> chrM, 7889
-      *     1 : chrM, 7814 <-> chrM, 14322
+      *     1 : chrM, 7831 <-> chrM, 14322
       *     2 : chrM, 14247 <-> chr1, 10036
+      *
+      *     First reads of parition with id:
+      *     0 -> 61DC0AAXX100127:8:58:8295:16397
+            1 -> 61CC3AAXX100125:6:102:19312:9444
+            2 -> 61CC3AAXX100125:6:36:1256:17370
+
       */
-    //println(allAlignments.getNumPartitions)
+    val splitSize = "1000000"
+    spark.sqlContext.setConf(InternalParams.InputSplitSize, splitSize)
+//    spark.sparkContext.setLogLevel("INFO")
+    val ss = SequilaSession(spark)
+    SequilaRegister.register(ss)
+    val pileup = new Pileup[BAMBDGInputFormat](ss)
+    val allAlignments = pileup.readTableFile(name=tableName, sampleId)
+    val adjBounds = pileup.getPartitionBounds(allAlignments,tableName, sampleId)
+
+    assert(adjBounds(0).readName.get == "61CC3AAXX100125:5:66:10346:21333") //last read of partition 0
+    assert(adjBounds(1).readName.get == "61CC3AAXX100125:5:62:5183:2612") //last read of partition 1
+  }
+
+  test("Basic count"){
+    val splitSize = "1000000"
+    spark.sqlContext.setConf(InternalParams.InputSplitSize, splitSize)
+//    spark.sparkContext.setLogLevel("INFO")
+    val ss = SequilaSession(spark)
+    SequilaRegister.register(ss)
+    val pileup = new Pileup[BAMBDGInputFormat](ss)
+    val allAlignments = pileup.readTableFile(name=tableName, sampleId).filter(r => r.getReadUnmappedFlag != true)
+
+    allAlignments.foreachPartition(r => println(r.toArray.length) )
+    val repartitionedAlignments = pileup.repartitionAlignments(allAlignments, tableName, sampleId)
+    repartitionedAlignments.foreachPartition(r => println(r.toArray.length) )
+    println(repartitionedAlignments.count())
 
 
   }

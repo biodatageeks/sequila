@@ -78,7 +78,7 @@ public class IntervalTreeRedBlack<V> implements BaseIntervalHolder<V>,  Serializ
     public V put( final int start, final int end, final V value )
     {
         if ( start > end )
-            throw new IllegalArgumentException("Start cannot exceed end.");
+            throw new IllegalArgumentException("Start cannot exceed end." + start + "|" + end);
 
         V result = mSentinel;
 

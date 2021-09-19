@@ -50,22 +50,6 @@ trait BDGAlignFileReaderWriter [T <: BDGAlignInputFormat]{
         .hadoopConfiguration
         .unset("hadoopbam.bam.inflate")
 
-    confMap.get("spark.biodatageeks.bam.intervals") match {
-      case Some(s) => {
-        if(s.length > 0)
-        spark
-          .sparkContext
-          .hadoopConfiguration
-          .set("hadoopbam.bam.intervals", s"chr${s}")
-        else
-          spark
-            .sparkContext
-            .hadoopConfiguration
-            .unset("hadoopbam.bam.intervals")
-
-      }
-        case _ => None
-      }
 
     spark
       .sparkContext
@@ -76,11 +60,7 @@ trait BDGAlignFileReaderWriter [T <: BDGAlignInputFormat]{
 
     val logger =  Logger.getLogger(this.getClass.getCanonicalName)
     setLocalConf(sqlContext)
-    setConf("spark.biodatageeks.bam.intervals","") //FIXME: disabled PP
     setHadoopConf(sqlContext)
-
-
-
 
     val spark = sqlContext
       .sparkSession
@@ -93,7 +73,20 @@ trait BDGAlignFileReaderWriter [T <: BDGAlignInputFormat]{
 
     alignReadMethod match {
       case "hadoopbam" => {
-        logger.info(s"Using Intel GKL inflater: ${InternalParams.UseIntelGKL}")
+        logger.info(s"Using Intel GKL inflater: ${spark.sqlContext.getConf(InternalParams.UseIntelGKL, "false")}")
+        val intervals = spark.sqlContext.getConf(InternalParams.AlignmentIntervals,"")
+        if (intervals.length > 0){
+          logger.info(s"Doing interval queries for intervals ${intervals}")
+          spark
+            .sparkContext
+            .hadoopConfiguration
+            .set("hadoopbam.bam.intervals", intervals)
+        }
+        else
+          spark
+            .sparkContext
+            .hadoopConfiguration
+            .unset("hadoopbam.bam.intervals")
         spark.sparkContext
           .newAPIHadoopFile[LongWritable, SAMRecordWritable, T](path)
           .map(r => r._2.get())

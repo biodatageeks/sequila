@@ -14,6 +14,7 @@ object PileupRunner {
       .config("spark.driver.memory","16g")
       .config( "spark.serializer", "org.apache.spark.serializer.KryoSerializer" )
       .config("spark.kryo.registrator", "org.biodatageeks.sequila.pileup.serializers.CustomKryoRegistrator")
+//      .config("spark.kryoserializer.buffer.max", "1024m")
       .config("spark.driver.maxResultSize","5g")
       .config("spark.ui.showConsoleProgress", "true")
      // .config("spark.hadoop.mapred.max.split.size", "134217728")
@@ -26,7 +27,7 @@ object PileupRunner {
     spark.sparkContext.setLogLevel("INFO")
     //        val bamPath = "/Users/mwiewior/research/data/NA12878.chrom20.ILLUMINA.bwa.CEU.low_coverage.20121211.md.bam"
     //        val referencePath = "/Users/mwiewior/research/data/hs37d5.fa"
-            val bamPath = "/Users/mwiewior/research/data/NA12878.proper.wes.md.bam"
+            val bamPath = "/Users/mwiewior/research/data/NA12878.proper.wes.md.chr1.bam"
         val referencePath = "/Users/mwiewior/research/data/Homo_sapiens_assembly18.fasta"
 //          val bamPath = "/Users/mwiewior/research/data/WGS/NA12878.proper.wgs.md.bam"
 
@@ -61,7 +62,7 @@ object PileupRunner {
             val query =
               s"""
                  |SELECT *
-                 |FROM  pileup('$tableNameBAM', 'NA12878.proper.wes.md', '${referencePath}', true)
+                 |FROM  pileup('$tableNameBAM', 'NA12878.proper.wes.md.chr1', '${referencePath}', false)
                """.stripMargin
 
 
@@ -71,9 +72,9 @@ object PileupRunner {
     val results = ss.sql(query)
     ss.time{
       results
-//                .count()
+               .count()
        // .coalesce(128)
-        .write.orc("/tmp/wes_seq_pileup_2")
+      //  .write.orc("/tmp/wes_seq_pileup_2")
       //        .show()
     }
 //    val writer = new PrintWriter(new OutputStreamWriter(System.out, "UTF-8"))

@@ -35,7 +35,7 @@ object PileupDisqTest {
     val lowerBounds = PartitionUtils.getPartitionLowerBound(reads) // get the start of first read in partition
     lowerBounds.foreach(l => println(s"Partition lower lowerBounds ${l.idx} => ${l.record.getContig},${l.record.getAlignmentStart}"))
     val adjBounds = PartitionUtils.getAdjustedPartitionBounds(lowerBounds)
-    adjBounds.foreach(l => println(s"Partition ${l.idx} => ${l.contigStart},${l.postStart} -- ${l.contigEnd},${l.posEnd}"))
+    adjBounds.foreach(l => println(s"Partition ${} => ${l.contigStart},${l.postStart} -- ${l.contigEnd},${l.posEnd}"))
     val broadcastBounds = spark.sparkContext.broadcast(adjBounds)
     val cnt = reads2.mapPartitionsWithIndex {
       (i, p) => {
