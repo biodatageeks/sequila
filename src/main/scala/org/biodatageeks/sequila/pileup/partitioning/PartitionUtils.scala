@@ -36,11 +36,21 @@ object PartitionUtils {
           val reads = p.overlappers(upperPosBound, upperPosBound)
             .asScala
             .flatMap(r => r.getValue.asScala)
-          val maxOverlaps = reads.takeWhile(r => r.rName != upperReadName).toArray //FIXME: Check if order is preserved!!!
+            .toArray
+//          reads.foreach(r => println(r.rName))
+          val maxOverlaps = reads //FIXME: Check if order is preserved!!!
           if (maxOverlaps.isEmpty)
             upperPosBound -1
           else {
-            val maxOverlap = maxOverlaps(maxOverlaps.length - 1)
+            var maxPos = Int.MinValue
+            var maxId = 0
+            while(maxId < maxOverlaps.length){
+              if(maxPos <= maxOverlaps(maxId).posEnd) {
+                maxPos = maxOverlaps(maxId).posEnd
+              }
+              maxId += 1
+            }
+            val maxOverlap = maxOverlaps(maxId - 1)
             logger.info(s"Found max overlap for partition ${i} with read name ${maxOverlap.rName}, ${upperContig} and max position ${maxOverlap.posEnd}")
             rName = Some(maxOverlap.rName)
             maxOverlap.posEnd

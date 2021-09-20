@@ -51,6 +51,8 @@ class PartitionCoalesceTestSuite extends PileupTestBase{
     val pileup = new Pileup[BAMBDGInputFormat](ss)
     val allAlignments = pileup.readTableFile(name=tableName, sampleId).filter(r => r.getReadUnmappedFlag != true)
 
+    PartitionUtils.getPartitionLowerBound(allAlignments).foreach(r => println(r.record.getReadName))
+
     allAlignments.foreachPartition(r => println(r.toArray.length) )
     val repartitionedAlignments = pileup.repartitionAlignments(allAlignments, tableName, sampleId)
     repartitionedAlignments.foreachPartition(r => println(r.toArray.length) )

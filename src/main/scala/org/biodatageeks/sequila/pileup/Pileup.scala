@@ -77,12 +77,15 @@ class Pileup[T<:BDGAlignInputFormat](spark:SparkSession)(implicit c: ClassTag[T]
       (i, p) => {
         val bounds = broadcastBounds.value(i)
         p.takeWhile(r =>
-          if (r.getReadUnmappedFlag ||
+          if (r.getReadUnmappedFlag) true
+          else if (
             (r.getContig == bounds.contigStart && r.getAlignmentStart >= bounds.postStart && r.getAlignmentEnd <= bounds.posEnd
               ) ||
             (r.getContig == bounds.contigEnd  && r.getAlignmentEnd <= bounds.posEnd ) ) true
-          else
-            false)
+          else {
+            println(s"Finishing reading partition with read ${r.getReadName}, ${r.getContig}:${r.getAlignmentEnd}")
+            false
+          })
       }
     }
     adjustedAlignments
