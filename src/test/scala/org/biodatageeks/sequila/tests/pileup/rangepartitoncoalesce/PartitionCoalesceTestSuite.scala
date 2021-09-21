@@ -1,13 +1,16 @@
 package org.biodatageeks.sequila.tests.pileup.rangepartitoncoalesce
 
+import com.holdenkarau.spark.testing.RDDComparisons
 import org.apache.spark.sql.SequilaSession
 import org.biodatageeks.sequila.pileup.Pileup
+import org.biodatageeks.sequila.pileup.conf.Conf
 import org.biodatageeks.sequila.pileup.partitioning.PartitionUtils
 import org.biodatageeks.sequila.tests.pileup.PileupTestBase
 import org.biodatageeks.sequila.utils.{InternalParams, SequilaRegister}
 import org.seqdoop.hadoop_bam.BAMBDGInputFormat
 
-class PartitionCoalesceTestSuite extends PileupTestBase{
+case class AlignmentReadId(name: String, flag:Int)
+class PartitionCoalesceTestSuite extends PileupTestBase with RDDComparisons {
 
   val query =
     s"""
@@ -35,28 +38,48 @@ class PartitionCoalesceTestSuite extends PileupTestBase{
     val ss = SequilaSession(spark)
     SequilaRegister.register(ss)
     val pileup = new Pileup[BAMBDGInputFormat](ss)
+    val conf = new Conf
     val allAlignments = pileup.readTableFile(name=tableName, sampleId)
-    val adjBounds = pileup.getPartitionBounds(allAlignments,tableName, sampleId)
+    val adjBounds = pileup.getPartitionBounds(allAlignments,tableName, sampleId, conf)
 
-    assert(adjBounds(0).readName.get == "61CC3AAXX100125:5:66:10346:21333") //last read of partition 0
-    assert(adjBounds(1).readName.get == "61CC3AAXX100125:5:62:5183:2612") //last read of partition 1
+    assert(adjBounds(0).readName.get == "61DC0AAXX100127:8:61:5362:15864") //max pos read of partition 0
+    assert(adjBounds(1).readName.get == "61DC0AAXX100127:8:58:2296:9811") //max pos read of partition 1
   }
 
   test("Basic count"){
     val splitSize = "1000000"
+    val allReadsPath: String = getClass.getResource("/partitioner/read_names.txt.bz2").getPath
+
     spark.sqlContext.setConf(InternalParams.InputSplitSize, splitSize)
-//    spark.sparkContext.setLogLevel("INFO")
     val ss = SequilaSession(spark)
     SequilaRegister.register(ss)
     val pileup = new Pileup[BAMBDGInputFormat](ss)
-    val allAlignments = pileup.readTableFile(name=tableName, sampleId).filter(r => r.getReadUnmappedFlag != true)
+    val conf = new Conf
+    val allAlignments = pileup.readTableFile(name=tableName, sampleId)
 
     PartitionUtils.getPartitionLowerBound(allAlignments).foreach(r => println(r.record.getReadName))
 
     allAlignments.foreachPartition(r => println(r.toArray.length) )
-    val repartitionedAlignments = pileup.repartitionAlignments(allAlignments, tableName, sampleId)
-    repartitionedAlignments.foreachPartition(r => println(r.toArray.length) )
-    println(repartitionedAlignments.count())
+    val repartitionedAlignments = pileup.repartitionAlignments(allAlignments, tableName, sampleId, conf)
+    val testReads = repartitionedAlignments
+      .map( r => AlignmentReadId(r.getReadName, r.getFlags) )
+      .distinct()
+
+    /**
+      *** check distinct count reads
+      * samtools view src/test/resources/multichrom/mdbam/NA12878.multichrom.md.bam| wc -l
+     22607
+      */
+    assert(testReads.count() == 22607) // check distinct count reads
+
+    val allReadsRDD = spark.sparkContext.textFile(allReadsPath)
+      .map(_.split("\\t"))
+      .map(r => AlignmentReadId(r(0),r(1).toInt))
+
+    /**
+      * check if all reads are there tuple( readName, flag)
+      */
+    assertRDDEquals(testReads, allReadsRDD)
 
 
   }

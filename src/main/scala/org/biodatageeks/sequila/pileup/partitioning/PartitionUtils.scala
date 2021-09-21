@@ -1,13 +1,13 @@
 package org.biodatageeks.sequila.pileup.partitioning
 
 import htsjdk.samtools.SAMRecord
-import htsjdk.samtools.util.Interval
 import org.apache.log4j.Logger
 import org.apache.spark.rdd.RDD
 import org.biodatageeks.sequila.pileup.TruncRead
+import org.biodatageeks.sequila.pileup.conf.Conf
 import org.biodatageeks.sequila.rangejoins.methods.IntervalTree.IntervalHolderChromosome
 
-import collection.JavaConverters._
+import scala.collection.JavaConverters._
 
 case class LowerPartitionBoundAlignmentRecord(idx: Int, record: SAMRecord)
 case class PartitionBounds(idx: Int, contigStart: String, postStart: Int, contigEnd: String, posEnd: Int, readName: Option[String] = None )
@@ -22,7 +22,7 @@ object PartitionUtils {
     }.collect()
   }
 
-  def getAdjustedPartitionBounds2(lowerBounds : Array[LowerPartitionBoundAlignmentRecord], tree: IntervalHolderChromosome[TruncRead] ):  Array[PartitionBounds] = {
+  def getAdjustedPartitionBounds2(lowerBounds : Array[LowerPartitionBoundAlignmentRecord], tree: IntervalHolderChromosome[TruncRead], conf: Conf ):  Array[PartitionBounds] = {
     val adjPartitionBounds = new Array[PartitionBounds](lowerBounds.length)
     var i = 0
     while(i < lowerBounds.length - 1){
@@ -76,7 +76,7 @@ object PartitionUtils {
       lowerBounds(lastIdx).idx,
       lowerBounds(lastIdx).record.getContig,
       lowerBounds(lastIdx).record.getAlignmentStart,
-      "Unknown",
+      conf.unknownContigName,
       Int.MaxValue
     )
     adjPartitionBounds

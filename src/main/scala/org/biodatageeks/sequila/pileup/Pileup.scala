@@ -17,6 +17,7 @@ import org.biodatageeks.sequila.utils.{InternalParams, TableFuncs}
 import org.seqdoop.hadoop_bam.CRAMBDGInputFormat
 import org.slf4j.LoggerFactory
 
+
 import scala.reflect.ClassTag
 import collection.JavaConverters._
 
@@ -36,7 +37,7 @@ class Pileup[T<:BDGAlignInputFormat](spark:SparkSession)(implicit c: ClassTag[T]
     lazy val allAlignments = readTableFile(name=tableName, sampleId)
     val alignments = filterAlignments(allAlignments, bdConf )
 
-    val repartitionedAlignments = repartitionAlignments(alignments, tableName, sampleId)
+    val repartitionedAlignments = repartitionAlignments(alignments, tableName, sampleId, conf)
     PileupMethods.calculatePileup(repartitionedAlignments, spark, refPath, bdConf)
 
   }
@@ -47,7 +48,7 @@ class Pileup[T<:BDGAlignInputFormat](spark:SparkSession)(implicit c: ClassTag[T]
       .mkString(",")
   }
 
-  def getPartitionBounds(alignments:RDD[SAMRecord], tableName: String, sampleId: String) = {
+  def getPartitionBounds(alignments:RDD[SAMRecord], tableName: String, sampleId: String, conf: Conf) = {
     val lowerBounds = PartitionUtils.getPartitionLowerBound(alignments) // get the start of first read in partition
     spark
       .sqlContext
@@ -63,13 +64,13 @@ class Pileup[T<:BDGAlignInputFormat](spark:SparkSession)(implicit c: ClassTag[T]
     logger.info(s"Found ${boundsOverlappingReads.length} overlapping reads")
     val tree = new IntervalHolderChromosome[TruncRead](boundsOverlappingReads, "org.biodatageeks.sequila.rangejoins.methods.IntervalTree.IntervalTreeRedBlack")
 
-    PartitionUtils.getAdjustedPartitionBounds2(lowerBounds, tree)
+    PartitionUtils.getAdjustedPartitionBounds2(lowerBounds, tree, conf)
   }
 
-  def repartitionAlignments (alignments:RDD[SAMRecord], tableName: String, sampleId: String): RDD[SAMRecord] = {
+  def repartitionAlignments (alignments:RDD[SAMRecord], tableName: String, sampleId: String, conf: Conf): RDD[SAMRecord] = {
     val numPartitions = alignments.getNumPartitions
     val maxEndIndex = (List.range(1, numPartitions) :+ (numPartitions-1)).map(r=> new Integer(r )).asJava //FIXME should be calculated based on max end pos of a rightmost read in the left partition
-    val adjBounds = getPartitionBounds(alignments, tableName, sampleId)
+    val adjBounds = getPartitionBounds(alignments, tableName, sampleId, conf: Conf)
     val broadcastBounds = spark.sparkContext.broadcast(adjBounds)
     logger.info(s"Final partition bounds: ${adjBounds.mkString("|")}")
     val alignments2 = alignments.coalesce(alignments.getNumPartitions,false, Some(new RangePartitionCoalescer(maxEndIndex )) )
@@ -78,8 +79,9 @@ class Pileup[T<:BDGAlignInputFormat](spark:SparkSession)(implicit c: ClassTag[T]
         val bounds = broadcastBounds.value(i)
         p.takeWhile(r =>
           if (r.getReadUnmappedFlag) true
+          else if (i == numPartitions - 1) true // read the whole last partition
           else if (
-            (r.getContig == bounds.contigStart && r.getAlignmentStart >= bounds.postStart && r.getAlignmentEnd <= bounds.posEnd
+            (r.getContig == bounds.contigStart && r.getAlignmentStart  <= bounds.posEnd
               ) ||
             (r.getContig == bounds.contigEnd  && r.getAlignmentEnd <= bounds.posEnd ) ) true
           else {
