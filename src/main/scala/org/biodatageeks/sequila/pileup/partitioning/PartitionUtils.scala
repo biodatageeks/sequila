@@ -8,9 +8,13 @@ import org.biodatageeks.sequila.pileup.conf.Conf
 import org.biodatageeks.sequila.rangejoins.methods.IntervalTree.IntervalHolderChromosome
 
 import scala.collection.JavaConverters._
+import scala.collection.mutable.ArrayBuffer
 
 case class LowerPartitionBoundAlignmentRecord(idx: Int, record: SAMRecord)
-case class PartitionBounds(idx: Int, contigStart: String, postStart: Int, contigEnd: String, posEnd: Int, readName: Option[String] = None )
+case class PartitionBounds(idx: Int, contigStart: String, postStart: Int,
+                           contigEnd: String, posEnd: Int,
+                           readName: Option[String] = None ,
+                           wholeContigs: Set[String] = Set[String]())
 object PartitionUtils {
 
   val logger =  Logger.getLogger(this.getClass.getCanonicalName)
@@ -22,7 +26,9 @@ object PartitionUtils {
     }.collect()
   }
 
-  def getAdjustedPartitionBounds2(lowerBounds : Array[LowerPartitionBoundAlignmentRecord], tree: IntervalHolderChromosome[TruncRead], conf: Conf ):  Array[PartitionBounds] = {
+  def getAdjustedPartitionBounds(lowerBounds : Array[LowerPartitionBoundAlignmentRecord],
+                                 tree: IntervalHolderChromosome[TruncRead],
+                                 conf: Conf, contigsList: Array[String]):  Array[PartitionBounds] = {
     val adjPartitionBounds = new Array[PartitionBounds](lowerBounds.length)
     var i = 0
     var previousMaxPos = Int.MinValue
@@ -69,9 +75,9 @@ object PartitionUtils {
           if(i ==0) lowerBounds(i).record.getAlignmentStart else previousMaxPos + 1,
           upperContig,
           maxPos,
-          rName
+          rName,
+          getContigsBetween(lowerBounds(i).record.getContig, upperContig, contigsList )
         )
-
       i += 1
       previousMaxPos = maxPos
     }
@@ -89,29 +95,38 @@ object PartitionUtils {
     adjPartitionBounds
   }
 
+private def getContigsBetween(startContig: String, endContig: String, contigsList: Array[String]) = {
+  contigsList
+    .slice(
+      contigsList.indexOf(startContig) + 1,
+      contigsList.indexOf(endContig)
+    ).toSet
+}
 
-  def getAdjustedPartitionBounds(lowerBounds : Array[LowerPartitionBoundAlignmentRecord]): Array[PartitionBounds] = {
-    val adjPartitionBounds = new Array[PartitionBounds](lowerBounds.length)
-    var i = 0
-    while(i < lowerBounds.length - 1){
-      adjPartitionBounds(i) =  PartitionBounds(
-        lowerBounds(i).idx,
-        lowerBounds(i).record.getContig,
-        lowerBounds(i).record.getAlignmentStart,
-        lowerBounds(i + 1).record.getContig,
-        lowerBounds(i + 1).record.getAlignmentStart - 1
-      )
-      i += 1
-    }
-    val lastIdx = lowerBounds.length - 1
-    adjPartitionBounds(lastIdx) = PartitionBounds(
-      lowerBounds(lastIdx).idx,
-      lowerBounds(lastIdx).record.getContig,
-      lowerBounds(lastIdx).record.getAlignmentStart,
-      "Unknown",
-      Int.MaxValue
-    )
-    adjPartitionBounds
-  }
+//  def getAdjustedPartitionBounds(lowerBounds : Array[LowerPartitionBoundAlignmentRecord]): Array[PartitionBounds] = {
+//    val adjPartitionBounds = new Array[PartitionBounds](lowerBounds.length)
+//    var i = 0
+//    while(i < lowerBounds.length - 1){
+//      adjPartitionBounds(i) =  PartitionBounds(
+//        lowerBounds(i).idx,
+//        lowerBounds(i).record.getContig,
+//        lowerBounds(i).record.getAlignmentStart,
+//        lowerBounds(i + 1).record.getContig,
+//        lowerBounds(i + 1).record.getAlignmentStart - 1
+//      )
+//      i += 1
+//    }
+//    val lastIdx = lowerBounds.length - 1
+//    adjPartitionBounds(lastIdx) = PartitionBounds(
+//      lowerBounds(lastIdx).idx,
+//      lowerBounds(lastIdx).record.getContig,
+//      lowerBounds(lastIdx).record.getAlignmentStart,
+//      "Unknown",
+//      Int.MaxValue
+//    )
+//    adjPartitionBounds
+//  }
+
+
 
 }

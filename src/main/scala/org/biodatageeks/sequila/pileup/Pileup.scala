@@ -50,21 +50,31 @@ class Pileup[T<:BDGAlignInputFormat](spark:SparkSession)(implicit c: ClassTag[T]
 
   def getPartitionBounds(alignments:RDD[SAMRecord], tableName: String, sampleId: String, conf: Conf) = {
     val lowerBounds = PartitionUtils.getPartitionLowerBound(alignments) // get the start of first read in partition
+    val contigsList = readTableFile(name=tableName, sampleId).first()
+      .getHeader
+      .getSequenceDictionary
+      .getSequences
+      .asScala
+      .map(_.getContig)
+      .toArray
+
     spark
       .sqlContext
       .setConf(InternalParams.AlignmentIntervals, boundsToIntervals(lowerBounds))
     logger.info(s"Getting bounds overlapping reads for intervals: ${boundsToIntervals(lowerBounds)}")
     val boundsOverlappingReads = readTableFile(name=tableName, sampleId)
-      .collect()
       .filter(r => r.getReadUnmappedFlag != true )
       .map( r => (r.getContig, Interval(r.getStart, r.getEnd), TruncRead(r.getReadName, r.getContig, r.getStart, r.getEnd)) )
+      .collect()
+
+
     spark
       .sqlContext
       .setConf(InternalParams.AlignmentIntervals, "")
     logger.info(s"Found ${boundsOverlappingReads.length} overlapping reads")
     val tree = new IntervalHolderChromosome[TruncRead](boundsOverlappingReads, "org.biodatageeks.sequila.rangejoins.methods.IntervalTree.IntervalTreeRedBlack")
 
-    PartitionUtils.getAdjustedPartitionBounds2(lowerBounds, tree, conf)
+    PartitionUtils.getAdjustedPartitionBounds(lowerBounds, tree, conf, contigsList)
   }
 
   def repartitionAlignments (alignments:RDD[SAMRecord], tableName: String, sampleId: String, conf: Conf): RDD[SAMRecord] = {
@@ -80,6 +90,7 @@ class Pileup[T<:BDGAlignInputFormat](spark:SparkSession)(implicit c: ClassTag[T]
         p.takeWhile(r =>
           if (r.getReadUnmappedFlag) true
           else if (i == numPartitions - 1) true // read the whole last partition
+          else if (bounds.wholeContigs.contains(r.getContig)) true //read all records between upper and lower contigs
           else if (
             (r.getContig == bounds.contigStart && r.getAlignmentStart  <= bounds.posEnd
               ) ||
