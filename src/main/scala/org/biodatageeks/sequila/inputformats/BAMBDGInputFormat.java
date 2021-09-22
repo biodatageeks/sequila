@@ -311,8 +311,6 @@ public class BAMBDGInputFormat
             IntelInflaterFactory intelDeflaterFactory =  new IntelInflaterFactory();
             readerFactory.inflaterFactory(intelDeflaterFactory);
         }
-        else
-            System.out.println("Using Java builtin Inflater");
         for (Path bamFile : bamFiles) {
             FileSystem fs = bamFile.getFileSystem(conf);
 

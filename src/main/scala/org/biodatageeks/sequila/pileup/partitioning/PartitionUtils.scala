@@ -25,12 +25,14 @@ object PartitionUtils {
   def getAdjustedPartitionBounds2(lowerBounds : Array[LowerPartitionBoundAlignmentRecord], tree: IntervalHolderChromosome[TruncRead], conf: Conf ):  Array[PartitionBounds] = {
     val adjPartitionBounds = new Array[PartitionBounds](lowerBounds.length)
     var i = 0
+    var previousMaxPos = Int.MinValue
     while(i < lowerBounds.length - 1){
       val upperContig = lowerBounds(i + 1).record.getContig
       val upperPosBound = lowerBounds(i + 1).record.getAlignmentStart
       val upperReadName = lowerBounds(i + 1).record.getReadName
       val treeContig = tree.getIntervalTreeByChromosome(upperContig)
       var rName : Option[String] = None
+
       val maxPos = treeContig match {
         case Some(p) => {
           val reads = p.overlappers(upperPosBound, upperPosBound)
@@ -61,21 +63,26 @@ object PartitionUtils {
           upperPosBound - 1
         }
       }
-      adjPartitionBounds(i) =  PartitionBounds(
-        lowerBounds(i).idx,
-        lowerBounds(i).record.getContig,
-        lowerBounds(i).record.getAlignmentStart,
-        upperContig,
-        maxPos,
-        rName
-      )
+        adjPartitionBounds(i) =  PartitionBounds(
+          lowerBounds(i).idx,
+          lowerBounds(i).record.getContig,
+          if(i ==0) lowerBounds(i).record.getAlignmentStart else previousMaxPos + 1,
+          upperContig,
+          maxPos,
+          rName
+        )
+
       i += 1
+      previousMaxPos = maxPos
     }
     val lastIdx = lowerBounds.length - 1
     adjPartitionBounds(lastIdx) = PartitionBounds(
       lowerBounds(lastIdx).idx,
       lowerBounds(lastIdx).record.getContig,
-      lowerBounds(lastIdx).record.getAlignmentStart,
+      if(lastIdx > 0 && lowerBounds(lastIdx).record.getContig == lowerBounds(lastIdx - 1).record.getContig)
+        previousMaxPos + 1
+      else
+        lowerBounds(lastIdx).record.getAlignmentStart,
       conf.unknownContigName,
       Int.MaxValue
     )
