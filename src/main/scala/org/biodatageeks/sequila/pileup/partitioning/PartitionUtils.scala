@@ -103,6 +103,16 @@ private def getContigsBetween(startContig: String, endContig: String, contigsLis
     ).toSet
 }
 
+  def getMaxEndPartitionIndex(adjBounds: Array[PartitionBounds], lowerBounds: Array[LowerPartitionBoundAlignmentRecord]) = {
+    adjBounds.map(
+      r => {
+        val maxPos = r.posEnd
+        val maxIndex = lowerBounds.takeWhile( p => p.record.getAlignmentStart <= maxPos).takeRight(1)(0).idx
+        maxIndex
+      }
+    ).toList
+  }
+
 //  def getAdjustedPartitionBounds(lowerBounds : Array[LowerPartitionBoundAlignmentRecord]): Array[PartitionBounds] = {
 //    val adjPartitionBounds = new Array[PartitionBounds](lowerBounds.length)
 //    var i = 0

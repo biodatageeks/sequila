@@ -40,7 +40,8 @@ class PartitionCoalesceTestSuite extends PileupTestBase with RDDComparisons {
     val pileup = new Pileup[BAMBDGInputFormat](ss)
     val conf = new Conf
     val allAlignments = pileup.readTableFile(name=tableName, sampleId)
-    val adjBounds = pileup.getPartitionBounds(allAlignments,tableName, sampleId, conf)
+    val lowerBounds = PartitionUtils.getPartitionLowerBound(allAlignments)
+    val adjBounds = pileup.getPartitionBounds(allAlignments,tableName, sampleId, conf, lowerBounds)
 
     assert(adjBounds(0).readName.get == "61DC0AAXX100127:8:61:5362:15864") //max pos read of partition 0
     assert(adjBounds(1).readName.get == "61DC0AAXX100127:8:58:2296:9811") //max pos read of partition 1

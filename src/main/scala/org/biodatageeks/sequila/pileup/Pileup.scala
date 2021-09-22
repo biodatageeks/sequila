@@ -48,9 +48,15 @@ class Pileup[T<:BDGAlignInputFormat](spark:SparkSession)(implicit c: ClassTag[T]
       .mkString(",")
   }
 
-  def getPartitionBounds(alignments:RDD[SAMRecord], tableName: String, sampleId: String, conf: Conf) = {
-    val lowerBounds = PartitionUtils.getPartitionLowerBound(alignments) // get the start of first read in partition
-    val contigsList = readTableFile(name=tableName, sampleId).first()
+  def getPartitionBounds(alignments:RDD[SAMRecord],
+                         tableName: String,
+                         sampleId: String,
+                         conf: Conf,
+                         lowerBounds: Array[LowerPartitionBoundAlignmentRecord]
+                        ) = {
+
+    val contigsList = readTableFile(name=tableName, sampleId)
+      .first()
       .getHeader
       .getSequenceDictionary
       .getSequences
@@ -79,11 +85,13 @@ class Pileup[T<:BDGAlignInputFormat](spark:SparkSession)(implicit c: ClassTag[T]
 
   def repartitionAlignments (alignments:RDD[SAMRecord], tableName: String, sampleId: String, conf: Conf): RDD[SAMRecord] = {
     val numPartitions = alignments.getNumPartitions
-    val maxEndIndex = (List.range(1, numPartitions) :+ (numPartitions-1)).map(r=> new Integer(r )).asJava //FIXME should be calculated based on max end pos of a rightmost read in the left partition
-    val adjBounds = getPartitionBounds(alignments, tableName, sampleId, conf: Conf)
+    val lowerBounds = PartitionUtils.getPartitionLowerBound(alignments) // get the start of first read in partition
+    val adjBounds = getPartitionBounds(alignments, tableName, sampleId, conf, lowerBounds)
+    val maxEndIndex = PartitionUtils.getMaxEndPartitionIndex(adjBounds, lowerBounds)
     val broadcastBounds = spark.sparkContext.broadcast(adjBounds)
     logger.info(s"Final partition bounds: ${adjBounds.mkString("|")}")
-    val alignments2 = alignments.coalesce(alignments.getNumPartitions,false, Some(new RangePartitionCoalescer(maxEndIndex )) )
+    logger.info(s"MaxEndIndex list ${maxEndIndex.mkString("|")}")
+    val alignments2 = alignments.coalesce(alignments.getNumPartitions,false, Some(new RangePartitionCoalescer(maxEndIndex.map(r=> new Integer(r )).asJava )) )
     val adjustedAlignments = alignments2.mapPartitionsWithIndex {
       (i, p) => {
         val bounds = broadcastBounds.value(i)
