@@ -3,8 +3,8 @@ package org.biodatageeks.sequila.pileup.partitioning
 import htsjdk.samtools.SAMRecord
 import org.apache.log4j.Logger
 import org.apache.spark.rdd.RDD
-import org.biodatageeks.sequila.pileup.TruncRead
 import org.biodatageeks.sequila.pileup.conf.Conf
+import org.biodatageeks.sequila.pileup.model.TruncRead
 import org.biodatageeks.sequila.rangejoins.methods.IntervalTree.IntervalHolderChromosome
 
 import scala.collection.JavaConverters._
