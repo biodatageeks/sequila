@@ -18,6 +18,4 @@ class BAMDataSource extends DataSourceRegister
 
     new BDGAlignmentRelation[BAMBDGInputFormat](parameters("path"))(sqlContext)
   }
-
-
 }

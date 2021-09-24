@@ -2,9 +2,9 @@ package org.biodatageeks.sequila.tests.pileup.rangepartitoncoalesce
 
 import com.holdenkarau.spark.testing.RDDComparisons
 import org.apache.spark.sql.SequilaSession
+import org.biodatageeks.sequila.datasources.BAM.BAMTableReader
 import org.biodatageeks.sequila.pileup.Pileup
 import org.biodatageeks.sequila.pileup.conf.Conf
-import org.biodatageeks.sequila.pileup.partitioning.PartitionUtils
 import org.biodatageeks.sequila.tests.pileup.PileupTestBase
 import org.biodatageeks.sequila.utils.{InternalParams, SequilaRegister}
 import org.seqdoop.hadoop_bam.BAMBDGInputFormat
@@ -35,14 +35,14 @@ class PartitionCoalesceTestSuite extends PileupTestBase with RDDComparisons {
       */
     val splitSize = "1000000"
     spark.sqlContext.setConf(InternalParams.InputSplitSize, splitSize)
-//    spark.sparkContext.setLogLevel("INFO")
     val ss = SequilaSession(spark)
     SequilaRegister.register(ss)
-    val pileup = new Pileup[BAMBDGInputFormat](ss)
+    val tableReader = new BAMTableReader[BAMBDGInputFormat](spark, tableName, sampleId)
     val conf = new Conf
-    val allAlignments = pileup.readTableFile(name=tableName, sampleId)
+
+    val allAlignments = tableReader.readFile
     val lowerBounds = allAlignments.getPartitionLowerBound
-    val adjBounds = pileup.getPartitionBounds(allAlignments,tableName, sampleId, conf, lowerBounds)
+    val adjBounds = allAlignments.getPartitionBounds(tableReader, conf, lowerBounds, spark)
 
     assert(adjBounds(0).readName.get == "61DC0AAXX100127:8:61:5362:15864") //max pos read of partition 0
     assert(adjBounds(1).readName.get == "61DC0AAXX100127:8:58:2296:9811") //max pos read of partition 1
@@ -55,14 +55,14 @@ class PartitionCoalesceTestSuite extends PileupTestBase with RDDComparisons {
     spark.sqlContext.setConf(InternalParams.InputSplitSize, splitSize)
     val ss = SequilaSession(spark)
     SequilaRegister.register(ss)
-    val pileup = new Pileup[BAMBDGInputFormat](ss)
     val conf = new Conf
-    val allAlignments = pileup.readTableFile(name=tableName, sampleId)
+    val tableReader = new BAMTableReader[BAMBDGInputFormat](spark, tableName, sampleId)
 
+    val allAlignments = tableReader.readFile
     allAlignments.getPartitionLowerBound.foreach(r => println(r.record.getReadName))
 
     allAlignments.foreachPartition(r => println(r.toArray.length) )
-    val repartitionedAlignments = pileup.repartitionAlignments(allAlignments, tableName, sampleId, conf)
+    val repartitionedAlignments = allAlignments.repartitionAlignments(tableReader, conf, spark)
     val testReads = repartitionedAlignments
       .map( r => AlignmentReadId(r.getReadName, r.getFlags) )
       .distinct()
@@ -82,7 +82,5 @@ class PartitionCoalesceTestSuite extends PileupTestBase with RDDComparisons {
       * check if all reads are there tuple( readName, flag)
       */
     assertRDDEquals(testReads, allReadsRDD)
-
-
   }
 }

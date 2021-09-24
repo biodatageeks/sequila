@@ -2,13 +2,11 @@ package org.biodatageeks.sequila.pileup.partitioning
 
 import htsjdk.samtools.SAMRecord
 import org.apache.log4j.Logger
-import org.apache.spark.rdd.RDD
 import org.biodatageeks.sequila.pileup.conf.Conf
 import org.biodatageeks.sequila.pileup.model.TruncRead
 import org.biodatageeks.sequila.rangejoins.methods.IntervalTree.IntervalHolderChromosome
 
 import scala.collection.JavaConverters._
-import scala.collection.mutable.ArrayBuffer
 
 case class LowerPartitionBoundAlignmentRecord(idx: Int, record: SAMRecord)
 case class PartitionBounds(idx: Int, contigStart: String, postStart: Int,
@@ -109,5 +107,9 @@ private def getContigsBetween(startContig: String, endContig: String, contigsLis
     ).toList
   }
 
-
+  def boundsToIntervals(a: Array[LowerPartitionBoundAlignmentRecord]) = {
+    a
+      .map( r => s"${r.record.getContig}:${r.record.getStart}-${r.record.getStart}")
+      .mkString(",")
+  }
 }
