@@ -24,7 +24,7 @@ trait BDGAlignFileReaderWriter [T <: BDGAlignInputFormat]{
 
   val confMap = new mutable.HashMap[String,String]()
 
-  def setLocalConf(@transient sqlContext: SQLContext) = {
+  def setLocalConf(@transient sqlContext: SQLContext): confMap.type = {
 
     val predicatePushdown = sqlContext.getConf("spark.biodatageeks.bam.predicatePushdown","false")
     val gklInflate = sqlContext.getConf("spark.biodatageeks.bam.useGKLInflate","false")
@@ -33,7 +33,7 @@ trait BDGAlignFileReaderWriter [T <: BDGAlignInputFormat]{
 
   }
 
-  def setConf(key:String,value:String) = confMap += (key -> value)
+  def setConf(key:String,value:String): confMap.type = confMap += (key -> value)
 
   private def setHadoopConf(@transient sqlContext: SQLContext): Unit = {
     setLocalConf(sqlContext)
@@ -50,37 +50,17 @@ trait BDGAlignFileReaderWriter [T <: BDGAlignInputFormat]{
         .hadoopConfiguration
         .unset("hadoopbam.bam.inflate")
 
-    confMap.get("spark.biodatageeks.bam.intervals") match {
-      case Some(s) => {
-        if(s.length > 0)
-        spark
-          .sparkContext
-          .hadoopConfiguration
-          .set("hadoopbam.bam.intervals", s"chr${s}")
-        else
-          spark
-            .sparkContext
-            .hadoopConfiguration
-            .unset("hadoopbam.bam.intervals")
-
-      }
-        case _ => None
-      }
 
     spark
       .sparkContext
       .hadoopConfiguration.set(SAMHeaderReader.VALIDATION_STRINGENCY_PROPERTY, ValidationStringency.LENIENT.toString)
   }
 
-  def readBAMFile(@transient sqlContext: SQLContext, path: String, refPath: Option[String] = None)(implicit c: ClassTag[T]) = {
+  def readBAMFile(@transient sqlContext: SQLContext, path: String, refPath: Option[String] = None)(implicit c: ClassTag[T]): RDD[SAMRecord] = {
 
     val logger =  Logger.getLogger(this.getClass.getCanonicalName)
     setLocalConf(sqlContext)
-    setConf("spark.biodatageeks.bam.intervals","") //FIXME: disabled PP
     setHadoopConf(sqlContext)
-
-
-
 
     val spark = sqlContext
       .sparkSession
@@ -93,7 +73,20 @@ trait BDGAlignFileReaderWriter [T <: BDGAlignInputFormat]{
 
     alignReadMethod match {
       case "hadoopbam" => {
-        logger.info(s"Using Intel GKL inflater: ${InternalParams.UseIntelGKL}")
+        logger.info(s"Using Intel GKL inflater: ${spark.sqlContext.getConf(InternalParams.UseIntelGKL, "false")}")
+        val intervals = spark.sqlContext.getConf(InternalParams.AlignmentIntervals,"")
+        if (intervals.length > 0){
+          logger.info(s"Doing interval queries for intervals ${intervals}")
+          spark
+            .sparkContext
+            .hadoopConfiguration
+            .set("hadoopbam.bam.intervals", intervals)
+        }
+        else
+          spark
+            .sparkContext
+            .hadoopConfiguration
+            .unset("hadoopbam.bam.intervals")
         spark.sparkContext
           .newAPIHadoopFile[LongWritable, SAMRecordWritable, T](path)
           .map(r => r._2.get())
@@ -176,7 +169,7 @@ trait BDGAlignFileReaderWriter [T <: BDGAlignInputFormat]{
           case (sampleId, r) =>
             val record = new Array[Any](requiredColumns.length)
             //requiredColumns.
-            for (i <- 0 to requiredColumns.length - 1) {
+            for (i <- requiredColumns.indices) {
               record(i) = getValueFromColumn(requiredColumns(i), r, sampleId,serializer, ctasCmd)
             }
             Row.fromSeq(record)
@@ -232,12 +225,12 @@ class BDGAlignmentRelation[T <:BDGAlignInputFormat](path:String, refPath:Option[
     with Serializable
     with BDGAlignFileReaderWriter[T] {
 
-  @transient val logger = Logger.getLogger(this.getClass.getCanonicalName)
-  val spark = sqlContext
+  @transient val logger: Logger = Logger.getLogger(this.getClass.getCanonicalName)
+  val spark: SparkSession = sqlContext
     .sparkSession
   setLocalConf(sqlContext)
 
-  val tablePath = path
+  val tablePath: String = path
 
   spark
     .sparkContext

@@ -22,32 +22,6 @@ class SamtoolsTestSuite extends PileupTestBase {
        |FROM  pileup('$tableName', '${sampleId}', '$referencePath', true)
                          """.stripMargin
 
-  val queryQualSingleChrom =
-    s"""
-       |SELECT contig, pos_start, pos_end, ref, coverage, alts, quals_to_map(${Columns.QUALS}) as $qualAgg
-       |FROM  pileup('$tableNameSingleChrom', '${sampleIdSingleChrom}', '$singleChromRefPath', true)
-                         """.stripMargin
-
-  test("SINGLE CHROM: alts,quals: one partition") {
-//    val df = PileupReader.load(spark, samResSinglePath, SamtoolsSchema.schema, delimiter = "\t", quote = "\u0000")
-//
-//    val converter = new SamtoolsConverter(spark)
-//    val sam = converter
-//      .transformToBlocks(df, caseSensitive = true)
-//      .orderBy("contig", "pos_start")
-
-    val ss = SequilaSession(spark)
-    SequilaRegister.register(ss)
-
-    val bdgRes = ss.sql(queryQualSingleChrom).orderBy("contig", "pos_start")
-//    val samRes = spark.createDataFrame(sam.rdd, bdgRes.schema)
-//    samRes.show()
-    bdgRes.show()
-
-    // assertDataFrameEquals(samRes, bdgRes)
-  }
-
-
 
   test("MULTI CHROM: alts: one partition") {
     val df = PileupReader.load(spark, samResPath, SamtoolsSchema.schema, delimiter = "\t", quote = "\u0000")

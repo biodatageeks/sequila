@@ -17,6 +17,7 @@ object ReadOperations {
   }
 
 }
+case class TruncRead(rName: String, contig: String, posStart: Int, posEnd: Int)
 
 case class ExtendedReads(read: SAMRecord) {
 

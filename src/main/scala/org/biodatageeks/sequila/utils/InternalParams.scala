@@ -28,6 +28,9 @@ object InternalParams {
   /*Intel GKL support */
   final val UseIntelGKL = "spark.biodatageeks.bam.useGKLInflate"
 
+  /*interval queries*/
+  final val AlignmentIntervals = "spark.biodatageeks.bam.intervals"
+
   final val BAMValidationStringency = "spark.biodatageeks.bam.validation"
 
   /*instrumentation*/
@@ -48,5 +51,7 @@ object InternalParams {
   final val maxGap = "spark.biodatageeks.rangejoin.maxGap"
   final val minOverlap = "spark.biodatageeks.rangejoin.minOverlap"
   final val intervalHolderClass = "spark.biodatageeks.rangejoin.intervalHolderClass"
+
+
 
 }

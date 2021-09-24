@@ -25,8 +25,12 @@ variables:
 version-branch:
   stage: version
   image:
-    name: mdomke/git-semver:v4.0.1
+    name: mdomke/git-semver:6.0.2
     entrypoint: [""]
+  before_script:
+    - git lfs uninstall
+    - git reset --hard
+    - git lfs install && git lfs pull
   script:
     - cd /builds/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME && git-semver --format x.y.z+m | sed -e 's/$/-SNAPSHOT/g' | xargs -I {} echo "export VERSION={}" > $VERSION_FILE
     - cat $VERSION_FILE
