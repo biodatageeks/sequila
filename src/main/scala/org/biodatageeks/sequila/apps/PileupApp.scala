@@ -10,7 +10,7 @@ object PileupApp extends App with SequilaApp {
 
     val ss = createSequilaSession()
 
-    val bamPath = "/Users/aga/workplace/sequila/src/test/resources/singlechrom/NA12878.chr20.short.md.bam"
+    val bamPath = "/Users/aga/workplace/sequila/src/test/resources/multichrom/mdbam/NA12878.multichrom.md.bam"
     val referencePath = "/Users/aga/workplace/data/Homo_sapiens_assembly18_chr20.fasta"
     val tableNameBAM = "reads"
 
