@@ -8,7 +8,6 @@ import org.apache.spark.sql.catalyst.InternalRow
 import org.biodatageeks.sequila.pileup.conf.Conf
 import org.biodatageeks.sequila.pileup.model.AggregateRDDOperations.implicits._
 import org.biodatageeks.sequila.pileup.model.AlignmentsRDDOperations.implicits._
-import org.biodatageeks.sequila.pileup.model._
 import org.slf4j.{Logger, LoggerFactory}
 /**
   * Class implementing pileup calculations on set of aligned reads

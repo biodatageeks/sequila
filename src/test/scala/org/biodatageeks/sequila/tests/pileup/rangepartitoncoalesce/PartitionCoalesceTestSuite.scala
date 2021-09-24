@@ -42,7 +42,7 @@ class PartitionCoalesceTestSuite extends PileupTestBase with RDDComparisons {
 
     val allAlignments = tableReader.readFile
     val lowerBounds = allAlignments.getPartitionLowerBound
-    val adjBounds = allAlignments.getPartitionBounds(tableReader, conf, lowerBounds, spark)
+    val adjBounds = allAlignments.getPartitionBounds(tableReader, conf, lowerBounds)
 
     assert(adjBounds(0).readName.get == "61DC0AAXX100127:8:61:5362:15864") //max pos read of partition 0
     assert(adjBounds(1).readName.get == "61DC0AAXX100127:8:58:2296:9811") //max pos read of partition 1
@@ -62,7 +62,7 @@ class PartitionCoalesceTestSuite extends PileupTestBase with RDDComparisons {
     allAlignments.getPartitionLowerBound.foreach(r => println(r.record.getReadName))
 
     allAlignments.foreachPartition(r => println(r.toArray.length) )
-    val repartitionedAlignments = allAlignments.repartitionAlignments(tableReader, conf, spark)
+    val repartitionedAlignments = allAlignments.repartition(tableReader, conf)
     val testReads = repartitionedAlignments
       .map( r => AlignmentReadId(r.getReadName, r.getFlags) )
       .distinct()

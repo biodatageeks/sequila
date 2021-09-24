@@ -166,8 +166,7 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
 
   def getPartitionBounds(reader: BAMTableReader[BAMBDGInputFormat],
                          conf: Conf,
-                         lowerBounds: Array[LowerPartitionBoundAlignmentRecord],
-                         spark: SparkSession
+                         lowerBounds: Array[LowerPartitionBoundAlignmentRecord]
                         ): Array[PartitionBounds] = {
 
     val contigsList = reader
@@ -180,7 +179,8 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
       .map(_.getContig)
       .toArray
 
-    spark
+
+    SparkSession.builder.config(this.rdd.sparkContext.getConf).getOrCreate()
       .sqlContext
       .setConf(InternalParams.AlignmentIntervals, PartitionUtils.boundsToIntervals(lowerBounds))
     logger.info(s"Getting bounds overlapping reads for intervals: ${PartitionUtils.boundsToIntervals(lowerBounds)}")
@@ -189,7 +189,7 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
       .map( r => (r.getContig, Interval(r.getStart, r.getEnd), TruncRead(r.getReadName, r.getContig, r.getStart, r.getEnd)) )
       .collect()
 
-    spark
+    SparkSession.builder.config(this.rdd.sparkContext.getConf).getOrCreate()
       .sqlContext
       .setConf(InternalParams.AlignmentIntervals, "")
     logger.info(s"Found ${boundsOverlappingReads.length} overlapping reads")
@@ -198,13 +198,14 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
     PartitionUtils.getAdjustedPartitionBounds(lowerBounds, tree, conf, contigsList)
   }
 
-  def repartitionAlignments (reader:BAMTableReader[BAMBDGInputFormat], conf: Conf, spark: SparkSession): RDD[SAMRecord] = {
+  def repartition(reader:BAMTableReader[BAMBDGInputFormat], conf: Conf): RDD[SAMRecord] = {
+
     val alignments = this.rdd
     val numPartitions = alignments.getNumPartitions
     val lowerBounds = getPartitionLowerBound // get the start of first read in partition
-    val adjBounds = getPartitionBounds(reader, conf, lowerBounds, spark)
+    val adjBounds = getPartitionBounds(reader, conf, lowerBounds)
     val maxEndIndex = PartitionUtils.getMaxEndPartitionIndex(adjBounds, lowerBounds)
-    val broadcastBounds = spark.sparkContext.broadcast(adjBounds)
+    val broadcastBounds = this.rdd.sparkContext.broadcast(adjBounds)
     logger.info(s"Final partition bounds: ${adjBounds.mkString("|")}")
     logger.info(s"MaxEndIndex list ${maxEndIndex.mkString("|")}")
     val alignments2 = alignments.coalesce(alignments.getNumPartitions,false, Some(new RangePartitionCoalescer(maxEndIndex.map(r=> new Integer(r )).asJava )) )

@@ -25,7 +25,7 @@ class Pileup(spark:SparkSession) {
       tableReader
       .readFile // all alignments from file
       .filterByConfig(bdConf, spark) // filtered with user defined config
-      .repartitionAlignments(tableReader, conf, spark)
+      .repartition(tableReader, conf)
 
     PileupMethods.calculatePileup(alignments, spark, refPath, bdConf)
   }

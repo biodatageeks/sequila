@@ -18,8 +18,6 @@ object PartitionUtils {
   val logger =  Logger.getLogger(this.getClass.getCanonicalName)
   val intervalStep = 1000
 
-
-
   def getAdjustedPartitionBounds(lowerBounds : Array[LowerPartitionBoundAlignmentRecord],
                                  tree: IntervalHolderChromosome[TruncRead],
                                  conf: Conf, contigsList: Array[String]):  Array[PartitionBounds] = {
@@ -107,7 +105,7 @@ private def getContigsBetween(startContig: String, endContig: String, contigsLis
     ).toList
   }
 
-  def boundsToIntervals(a: Array[LowerPartitionBoundAlignmentRecord]) = {
+  def boundsToIntervals(a: Array[LowerPartitionBoundAlignmentRecord]): String = {
     a
       .map( r => s"${r.record.getContig}:${r.record.getStart}-${r.record.getStart}")
       .mkString(",")
