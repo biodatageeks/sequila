@@ -11,12 +11,13 @@ import org.biodatageeks.sequila.datasources.InputDataType
 import org.biodatageeks.sequila.inputformats.BDGAlignInputFormat
 import org.biodatageeks.sequila.pileup.conf.Conf
 import org.biodatageeks.sequila.pileup.model.TruncRead
-import org.biodatageeks.sequila.pileup.partitioning.{LowerPartitionBoundAlignmentRecord, PartitionUtils, RangePartitionCoalescer}
+import org.biodatageeks.sequila.pileup.partitioning.{LowerPartitionBoundAlignmentRecord, PartitionBounds, PartitionUtils, RangePartitionCoalescer}
 import org.biodatageeks.sequila.rangejoins.IntervalTree.Interval
 import org.biodatageeks.sequila.rangejoins.methods.IntervalTree.{IntervalHolderChromosome, IntervalTreeRedBlack}
 import org.biodatageeks.sequila.utils.{InternalParams, TableFuncs}
 import org.seqdoop.hadoop_bam.CRAMBDGInputFormat
 import org.slf4j.LoggerFactory
+import org.biodatageeks.sequila.pileup.model.AlignmentsRDDOperations.implicits._
 
 import scala.reflect.ClassTag
 import collection.JavaConverters._
@@ -52,7 +53,7 @@ class Pileup[T<:BDGAlignInputFormat](spark:SparkSession)(implicit c: ClassTag[T]
                          sampleId: String,
                          conf: Conf,
                          lowerBounds: Array[LowerPartitionBoundAlignmentRecord]
-                        ) = {
+                        ): Array[PartitionBounds] = {
 
     val contigsList = readTableFile(name=tableName, sampleId)
       .first()
@@ -68,7 +69,7 @@ class Pileup[T<:BDGAlignInputFormat](spark:SparkSession)(implicit c: ClassTag[T]
       .setConf(InternalParams.AlignmentIntervals, boundsToIntervals(lowerBounds))
     logger.info(s"Getting bounds overlapping reads for intervals: ${boundsToIntervals(lowerBounds)}")
     val boundsOverlappingReads = readTableFile(name=tableName, sampleId)
-      .filter(r => r.getReadUnmappedFlag != true )
+      .filter(r => !r.getReadUnmappedFlag )
       .map( r => (r.getContig, Interval(r.getStart, r.getEnd), TruncRead(r.getReadName, r.getContig, r.getStart, r.getEnd)) )
       .collect()
 
@@ -84,7 +85,7 @@ class Pileup[T<:BDGAlignInputFormat](spark:SparkSession)(implicit c: ClassTag[T]
 
   def repartitionAlignments (alignments:RDD[SAMRecord], tableName: String, sampleId: String, conf: Conf): RDD[SAMRecord] = {
     val numPartitions = alignments.getNumPartitions
-    val lowerBounds = PartitionUtils.getPartitionLowerBound(alignments) // get the start of first read in partition
+    val lowerBounds = alignments.getPartitionLowerBound // get the start of first read in partition
     val adjBounds = getPartitionBounds(alignments, tableName, sampleId, conf, lowerBounds)
     val maxEndIndex = PartitionUtils.getMaxEndPartitionIndex(adjBounds, lowerBounds)
     val broadcastBounds = spark.sparkContext.broadcast(adjBounds)

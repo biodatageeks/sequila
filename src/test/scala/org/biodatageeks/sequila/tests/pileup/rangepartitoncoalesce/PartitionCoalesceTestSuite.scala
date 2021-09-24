@@ -8,6 +8,7 @@ import org.biodatageeks.sequila.pileup.partitioning.PartitionUtils
 import org.biodatageeks.sequila.tests.pileup.PileupTestBase
 import org.biodatageeks.sequila.utils.{InternalParams, SequilaRegister}
 import org.seqdoop.hadoop_bam.BAMBDGInputFormat
+import org.biodatageeks.sequila.pileup.model.AlignmentsRDDOperations.implicits._
 
 case class AlignmentReadId(name: String, flag:Int)
 class PartitionCoalesceTestSuite extends PileupTestBase with RDDComparisons {
@@ -40,7 +41,7 @@ class PartitionCoalesceTestSuite extends PileupTestBase with RDDComparisons {
     val pileup = new Pileup[BAMBDGInputFormat](ss)
     val conf = new Conf
     val allAlignments = pileup.readTableFile(name=tableName, sampleId)
-    val lowerBounds = PartitionUtils.getPartitionLowerBound(allAlignments)
+    val lowerBounds = allAlignments.getPartitionLowerBound
     val adjBounds = pileup.getPartitionBounds(allAlignments,tableName, sampleId, conf, lowerBounds)
 
     assert(adjBounds(0).readName.get == "61DC0AAXX100127:8:61:5362:15864") //max pos read of partition 0
@@ -58,7 +59,7 @@ class PartitionCoalesceTestSuite extends PileupTestBase with RDDComparisons {
     val conf = new Conf
     val allAlignments = pileup.readTableFile(name=tableName, sampleId)
 
-    PartitionUtils.getPartitionLowerBound(allAlignments).foreach(r => println(r.record.getReadName))
+    allAlignments.getPartitionLowerBound.foreach(r => println(r.record.getReadName))
 
     allAlignments.foreachPartition(r => println(r.toArray.length) )
     val repartitionedAlignments = pileup.repartitionAlignments(allAlignments, tableName, sampleId, conf)

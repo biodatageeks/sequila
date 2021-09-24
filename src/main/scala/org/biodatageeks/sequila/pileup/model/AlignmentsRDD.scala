@@ -14,6 +14,7 @@ import org.slf4j.{Logger, LoggerFactory}
 import org.biodatageeks.sequila.pileup.conf.{Conf, QualityConstants}
 import org.biodatageeks.sequila.pileup.model.Alts.MultiLociAlts
 import org.biodatageeks.sequila.pileup.model.Quals.MultiLociQuals
+import org.biodatageeks.sequila.pileup.partitioning.LowerPartitionBoundAlignmentRecord
 
 object AlignmentsRDDOperations {
   object implicits {
@@ -152,6 +153,13 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
       contigLenMap += contigName -> sequence.getSequenceLength
     }
     contigLenMap.toMap
+  }
+
+
+  def getPartitionLowerBound: Array[LowerPartitionBoundAlignmentRecord] = {
+    this.rdd.mapPartitionsWithIndex{
+      (i, p) => Iterator(LowerPartitionBoundAlignmentRecord(i ,p.next()) )
+    }.collect()
   }
 
 }

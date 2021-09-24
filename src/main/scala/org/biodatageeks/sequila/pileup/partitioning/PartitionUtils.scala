@@ -20,11 +20,7 @@ object PartitionUtils {
   val logger =  Logger.getLogger(this.getClass.getCanonicalName)
   val intervalStep = 1000
 
-  def getPartitionLowerBound(rdd: RDD[SAMRecord]) : Array[LowerPartitionBoundAlignmentRecord] = {
-    rdd.mapPartitionsWithIndex{
-      (i, p) => Iterator(LowerPartitionBoundAlignmentRecord(i ,p.next()) )
-    }.collect()
-  }
+
 
   def getAdjustedPartitionBounds(lowerBounds : Array[LowerPartitionBoundAlignmentRecord],
                                  tree: IntervalHolderChromosome[TruncRead],
@@ -103,7 +99,7 @@ private def getContigsBetween(startContig: String, endContig: String, contigsLis
     ).toSet
 }
 
-  def getMaxEndPartitionIndex(adjBounds: Array[PartitionBounds], lowerBounds: Array[LowerPartitionBoundAlignmentRecord]) = {
+  def getMaxEndPartitionIndex(adjBounds: Array[PartitionBounds], lowerBounds: Array[LowerPartitionBoundAlignmentRecord]): Seq[Int] = {
     adjBounds.map(
       r => {
         val maxPos = r.posEnd
@@ -112,31 +108,6 @@ private def getContigsBetween(startContig: String, endContig: String, contigsLis
       }
     ).toList
   }
-
-//  def getAdjustedPartitionBounds(lowerBounds : Array[LowerPartitionBoundAlignmentRecord]): Array[PartitionBounds] = {
-//    val adjPartitionBounds = new Array[PartitionBounds](lowerBounds.length)
-//    var i = 0
-//    while(i < lowerBounds.length - 1){
-//      adjPartitionBounds(i) =  PartitionBounds(
-//        lowerBounds(i).idx,
-//        lowerBounds(i).record.getContig,
-//        lowerBounds(i).record.getAlignmentStart,
-//        lowerBounds(i + 1).record.getContig,
-//        lowerBounds(i + 1).record.getAlignmentStart - 1
-//      )
-//      i += 1
-//    }
-//    val lastIdx = lowerBounds.length - 1
-//    adjPartitionBounds(lastIdx) = PartitionBounds(
-//      lowerBounds(lastIdx).idx,
-//      lowerBounds(lastIdx).record.getContig,
-//      lowerBounds(lastIdx).record.getAlignmentStart,
-//      "Unknown",
-//      Int.MaxValue
-//    )
-//    adjPartitionBounds
-//  }
-
 
 
 }
