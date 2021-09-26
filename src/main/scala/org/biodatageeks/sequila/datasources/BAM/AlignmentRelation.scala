@@ -1,6 +1,7 @@
 package org.biodatageeks.sequila.datasources.BAM
 
 
+import htsjdk.samtools.util.Interval
 import htsjdk.samtools.{SAMRecord, ValidationStringency}
 import org.apache.hadoop.io.LongWritable
 import org.apache.hadoop.mapreduce.lib.input.FileSplit
@@ -16,8 +17,17 @@ import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.reflect.ClassTag
 import org.biodatageeks.sequila.utils.{Columns, DataQualityFuncs, FastSerializer, InternalParams, ScalaFuncs, TableFuncs}
-import org.biodatageeks.formats.{Alignment}
+import org.biodatageeks.formats.Alignment
+import org.disq_bio.disq.HtsjdkReadsTraversalParameters
+
+import java.util
 import scala.reflect.runtime.universe._
+import collection.JavaConverters._
+
+
+class HtsjdkReadsTraversalParametersSerializable[T<:htsjdk.samtools.util.Locatable](intervalsForTraversal: util.List[T], traverseUnplacedUnmapped: Boolean)
+  extends  HtsjdkReadsTraversalParameters[T](intervalsForTraversal: util.List[T], traverseUnplacedUnmapped: Boolean)
+  with Serializable
 
 //TODO refactor rename to AlignmentsFileReaderWriter
 trait BDGAlignFileReaderWriter [T <: BDGAlignInputFormat]{
@@ -118,10 +128,22 @@ trait BDGAlignFileReaderWriter [T <: BDGAlignInputFormat]{
             .rdd
           }
           case None => {
+            val intervals = spark.sqlContext.getConf(InternalParams.AlignmentIntervals,"")
+            val ranges = if (intervals.length > 0) {
+              logger.info(s"Doing interval queries for intervals ${intervals}")
+              intervals
+                .split(",")
+                .map(_.split("[:,-]"))
+                .map(r => new Interval(r(0), r(1).toInt, r(2).toInt))
+                .toList
+            } else List.empty[Interval]
+
+            val traverseParam = if(ranges.nonEmpty) new HtsjdkReadsTraversalParametersSerializable(ranges.asJava, false) else null
+            logger.info(s"disq|TraversalParameters: ${if(traverseParam == null) "N/A" else traverseParam.getIntervalsForTraversal.asScala.mkString("|")}")
             HtsjdkReadsRddStorage
               .makeDefault(sqlContext.sparkContext)
               .validationStringency(validationStringency)
-              .read(resolvedPath)
+              .read(resolvedPath, traverseParam)
               .getReads
               .rdd
           }

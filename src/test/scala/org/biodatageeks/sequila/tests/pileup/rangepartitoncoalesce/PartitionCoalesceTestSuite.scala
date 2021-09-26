@@ -33,54 +33,73 @@ class PartitionCoalesceTestSuite extends PileupTestBase with RDDComparisons {
             2 -> 61CC3AAXX100125:6:36:1256:17370
 
       */
-    val splitSize = "1000000"
-    spark.sqlContext.setConf(InternalParams.InputSplitSize, splitSize)
-    val ss = SequilaSession(spark)
-    SequilaRegister.register(ss)
-    val tableReader = new BAMTableReader[BAMBDGInputFormat](spark, tableName, sampleId)
-    val conf = new Conf
+    Array("hadoopBAM", "disq").foreach ( m => {
+      val splitSize = "1000000"
+      val ss = SequilaSession(spark)
+      SequilaRegister.register(ss)
+      ss
+        .sqlContext
+        .setConf(InternalParams.IOReadAlignmentMethod, m)
+      ss
+        .sparkContext
+        .hadoopConfiguration
+        .setInt("mapred.max.split.size", splitSize.toInt)
 
-    val allAlignments = tableReader.readFile
-    val lowerBounds = allAlignments.getPartitionLowerBound
-    val adjBounds = allAlignments.getPartitionBounds(tableReader, conf, lowerBounds)
+      val tableReader = new BAMTableReader[BAMBDGInputFormat](ss, tableName, sampleId)
+      val conf = new Conf
 
-    assert(adjBounds(0).readName.get == "61DC0AAXX100127:8:61:5362:15864") //max pos read of partition 0
-    assert(adjBounds(1).readName.get == "61DC0AAXX100127:8:58:2296:9811") //max pos read of partition 1
+      val allAlignments = tableReader.readFile
+      val lowerBounds = allAlignments.getPartitionLowerBound
+      val adjBounds = allAlignments.getPartitionBounds(tableReader, conf, lowerBounds)
+
+      assert(adjBounds(0).readName.get == "61DC0AAXX100127:8:61:5362:15864") //max pos read of partition 0
+      assert(adjBounds(1).readName.get == "61DC0AAXX100127:8:58:2296:9811") //max pos read of partition 1
+      }
+    )
   }
 
   test("Basic count"){
     val splitSize = "1000000"
     val allReadsPath: String = getClass.getResource("/partitioner/read_names.txt.bz2").getPath
 
-    spark.sqlContext.setConf(InternalParams.InputSplitSize, splitSize)
-    val ss = SequilaSession(spark)
-    SequilaRegister.register(ss)
-    val conf = new Conf
-    val tableReader = new BAMTableReader[BAMBDGInputFormat](spark, tableName, sampleId)
+    Array("hadoopBAM", "disq").foreach ( m => {
+        val ss = SequilaSession(spark)
+        SequilaRegister.register(ss)
+        ss
+          .sqlContext
+          .setConf(InternalParams.IOReadAlignmentMethod, m)
+        ss
+          .sparkContext
+          .hadoopConfiguration
+          .setInt("mapred.max.split.size", splitSize.toInt)
+        val conf = new Conf
+        val tableReader = new BAMTableReader[BAMBDGInputFormat](spark, tableName, sampleId)
 
-    val allAlignments = tableReader.readFile
-    allAlignments.getPartitionLowerBound.foreach(r => println(r.record.getReadName))
+        val allAlignments = tableReader.readFile
+        allAlignments.getPartitionLowerBound.foreach(r => println(r.record.getReadName))
 
-    allAlignments.foreachPartition(r => println(r.toArray.length) )
-    val repartitionedAlignments = allAlignments.repartition(tableReader, conf)
-    val testReads = repartitionedAlignments
-      .map( r => AlignmentReadId(r.getReadName, r.getFlags) )
-      .distinct()
+        allAlignments.foreachPartition(r => println(r.toArray.length))
+        val repartitionedAlignments = allAlignments.repartition(tableReader, conf)
+        val testReads = repartitionedAlignments
+          .map(r => AlignmentReadId(r.getReadName, r.getFlags))
+          .distinct()
 
-    /**
-      *** check distinct count reads
-      * samtools view src/test/resources/multichrom/mdbam/NA12878.multichrom.md.bam| wc -l
-     22607
-      */
-    assert(testReads.count() == 22607) // check distinct count reads
+        /**
+          * ** check distinct count reads
+          * samtools view src/test/resources/multichrom/mdbam/NA12878.multichrom.md.bam| wc -l
+          *  22607
+          */
+        assert(testReads.count() == 22607) // check distinct count reads
 
-    val allReadsRDD = spark.sparkContext.textFile(allReadsPath)
-      .map(_.split("\\t"))
-      .map(r => AlignmentReadId(r(0),r(1).toInt))
+        val allReadsRDD = spark.sparkContext.textFile(allReadsPath)
+          .map(_.split("\\t"))
+          .map(r => AlignmentReadId(r(0), r(1).toInt))
 
-    /**
-      * check if all reads are there tuple( readName, flag)
-      */
-    assertRDDEquals(testReads, allReadsRDD)
+        /**
+          * check if all reads are there tuple( readName, flag)
+          */
+        assertRDDEquals(testReads, allReadsRDD)
+      }
+    )
   }
 }
