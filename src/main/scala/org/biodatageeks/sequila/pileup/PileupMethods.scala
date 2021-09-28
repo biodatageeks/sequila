@@ -1,17 +1,14 @@
 package org.biodatageeks.sequila.pileup
 
 import htsjdk.samtools.SAMRecord
-import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.catalyst.InternalRow
-import org.apache.spark.sql.SparkSession
-import org.apache.spark.storage.StorageLevel
-import org.biodatageeks.sequila.pileup.model.{Reference, _}
-import org.biodatageeks.sequila.utils.InternalParams
-import org.slf4j.{Logger, LoggerFactory}
-import AggregateRDDOperations.implicits._
-import AlignmentsRDDOperations.implicits._
 import org.apache.spark.broadcast.Broadcast
+import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.catalyst.InternalRow
 import org.biodatageeks.sequila.pileup.conf.Conf
+import org.biodatageeks.sequila.pileup.model.AggregateRDDOperations.implicits._
+import org.biodatageeks.sequila.pileup.model.AlignmentsRDDOperations.implicits._
+import org.slf4j.{Logger, LoggerFactory}
 /**
   * Class implementing pileup calculations on set of aligned reads
   */
