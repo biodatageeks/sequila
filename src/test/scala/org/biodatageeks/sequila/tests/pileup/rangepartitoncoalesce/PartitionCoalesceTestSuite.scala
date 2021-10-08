@@ -79,7 +79,7 @@ class PartitionCoalesceTestSuite extends PileupTestBase with RDDComparisons {
         allAlignments.getPartitionLowerBound.foreach(r => println(r.record.getReadName))
 
         allAlignments.foreachPartition(r => println(r.toArray.length))
-        val repartitionedAlignments = allAlignments.repartition(tableReader, conf)
+        val (repartitionedAlignments, bounds) = allAlignments.repartition(tableReader, conf)
         val testReads = repartitionedAlignments
           .map(r => AlignmentReadId(r.getReadName, r.getFlags))
           .distinct()
