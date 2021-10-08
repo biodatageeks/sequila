@@ -21,12 +21,12 @@ class Pileup(spark:SparkSession) {
     val bdConf = spark.sparkContext.broadcast(conf)
 
     val tableReader = new BAMTableReader[BAMBDGInputFormat](spark, tableName, sampleId)
-    val alignments =
+    val (alignments, bounds) =
       tableReader
       .readFile // all alignments from file
       .filterByConfig(bdConf, spark) // filtered with user defined config
       .repartition(tableReader, conf)
 
-    PileupMethods.calculatePileup(alignments, spark, refPath, bdConf)
+    PileupMethods.calculatePileup(alignments, bounds, spark, refPath, bdConf)
   }
 }

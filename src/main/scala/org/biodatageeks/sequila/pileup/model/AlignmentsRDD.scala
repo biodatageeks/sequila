@@ -198,7 +198,7 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
     PartitionUtils.getAdjustedPartitionBounds(lowerBounds, tree, conf, contigsList)
   }
 
-  def repartition(reader:BAMTableReader[BAMBDGInputFormat], conf: Conf): RDD[SAMRecord] = {
+  def repartition(reader:BAMTableReader[BAMBDGInputFormat], conf: Conf): (RDD[SAMRecord], Broadcast[Array[PartitionBounds]]) = {
 
     val alignments = this.rdd
     val numPartitions = alignments.getNumPartitions
@@ -226,6 +226,6 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
           })
       }
     }
-    adjustedAlignments
+    (adjustedAlignments, broadcastBounds)
   }
 }

@@ -9,6 +9,7 @@ import org.biodatageeks.sequila.pileup.conf.{Conf, QualityConstants}
 import org.biodatageeks.sequila.pileup.serializers.PileupProjection
 import org.biodatageeks.sequila.pileup.model.Alts._
 import org.biodatageeks.sequila.pileup.model.Quals._
+import org.biodatageeks.sequila.pileup.partitioning.PartitionBounds
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.mutable.ArrayBuffer
@@ -22,7 +23,7 @@ object AggregateRDDOperations {
 case class AggregateRDD(rdd: RDD[ContigAggregate]) {
   val logger: Logger = LoggerFactory.getLogger(this.getClass.getCanonicalName)
 
-  def toPileup(refPath: String, conf: Broadcast[Conf] ) : RDD[InternalRow] = {
+  def toPileup(refPath: String, conf: Broadcast[Conf], bounds: Broadcast[Array[PartitionBounds]] ) : RDD[InternalRow] = {
 
     this.rdd.mapPartitions { part =>
       val reference = new Reference(refPath)

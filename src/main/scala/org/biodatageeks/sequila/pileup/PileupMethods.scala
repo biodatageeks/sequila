@@ -8,6 +8,7 @@ import org.apache.spark.sql.catalyst.InternalRow
 import org.biodatageeks.sequila.pileup.conf.Conf
 import org.biodatageeks.sequila.pileup.model.AggregateRDDOperations.implicits._
 import org.biodatageeks.sequila.pileup.model.AlignmentsRDDOperations.implicits._
+import org.biodatageeks.sequila.pileup.partitioning.PartitionBounds
 import org.slf4j.{Logger, LoggerFactory}
 /**
   * Class implementing pileup calculations on set of aligned reads
@@ -22,9 +23,9 @@ object PileupMethods {
     * @param spark spark session
     * @return distributed collection of PileupRecords
     */
-  def calculatePileup(alignments: RDD[SAMRecord], spark: SparkSession, refPath: String, conf : Broadcast[Conf]): RDD[InternalRow] = {
+  def calculatePileup(alignments: RDD[SAMRecord], bounds: Broadcast[Array[PartitionBounds]], spark: SparkSession, refPath: String, conf : Broadcast[Conf]): RDD[InternalRow] = {
     val aggregates = alignments.assembleContigAggregates(conf)
-    val pileup = aggregates.toPileup(refPath, conf)
+    val pileup = aggregates.toPileup(refPath, conf, bounds)
     pileup
   }
 }
