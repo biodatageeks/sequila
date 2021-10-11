@@ -5,6 +5,7 @@ import org.apache.log4j.Logger
 import org.biodatageeks.sequila.pileup.conf.Conf
 import org.biodatageeks.sequila.pileup.model.TruncRead
 import org.biodatageeks.sequila.rangejoins.methods.IntervalTree.IntervalHolderChromosome
+import org.biodatageeks.sequila.utils.DataQualityFuncs
 
 import scala.collection.JavaConverters._
 
@@ -63,9 +64,9 @@ object PartitionUtils {
       }
         adjPartitionBounds(i) =  PartitionBounds(
           lowerBounds(i).idx,
-          lowerBounds(i).record.getContig,
+          DataQualityFuncs.cleanContig(lowerBounds(i).record.getContig),
           if(i ==0) lowerBounds(i).record.getAlignmentStart else previousMaxPos + 1,
-          upperContig,
+          DataQualityFuncs.cleanContig(upperContig),
           maxPos,
           rName,
           getContigsBetween(lowerBounds(i).record.getContig, upperContig, contigsList )
@@ -76,7 +77,7 @@ object PartitionUtils {
     val lastIdx = lowerBounds.length - 1
     adjPartitionBounds(lastIdx) = PartitionBounds(
       lowerBounds(lastIdx).idx,
-      lowerBounds(lastIdx).record.getContig,
+      DataQualityFuncs.cleanContig(lowerBounds(lastIdx).record.getContig),
       if(lastIdx > 0 && lowerBounds(lastIdx).record.getContig == lowerBounds(lastIdx - 1).record.getContig)
         previousMaxPos + 1
       else

@@ -217,9 +217,9 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
           else if (i == numPartitions - 1) true // read the whole last partition
           else if (bounds.wholeContigs.contains(r.getContig)) true //read all records between upper and lower contigs
           else if (
-            (r.getContig == bounds.contigStart && r.getAlignmentStart  <= bounds.posEnd
+            (DataQualityFuncs.cleanContig(r.getContig) == bounds.contigStart && r.getAlignmentStart  <= bounds.posEnd
               ) ||
-              (r.getContig == bounds.contigEnd  && r.getAlignmentEnd <= bounds.posEnd ) ) true
+              (DataQualityFuncs.cleanContig(r.getContig)== bounds.contigEnd  && r.getAlignmentEnd <= bounds.posEnd ) ) true
           else {
             logger.info(s"Finishing reading partition with read ${r.getReadName}, ${r.getContig}:${r.getAlignmentEnd}")
             false
