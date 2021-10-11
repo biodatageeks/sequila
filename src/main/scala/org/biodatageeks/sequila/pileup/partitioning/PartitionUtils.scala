@@ -69,7 +69,7 @@ object PartitionUtils {
           DataQualityFuncs.cleanContig(upperContig),
           maxPos,
           rName,
-          getContigsBetween(lowerBounds(i).record.getContig, upperContig, contigsList )
+          getContigsBetween(DataQualityFuncs.cleanContig(lowerBounds(i).record.getContig), upperContig, contigsList )
         )
       i += 1
       previousMaxPos = maxPos
