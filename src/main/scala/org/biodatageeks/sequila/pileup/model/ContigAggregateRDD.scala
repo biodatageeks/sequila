@@ -53,11 +53,12 @@ breakable {
   while (i < agg.events.length) { // repartition change -> no shrinking, we have to go through whole array
     currPos = i + startPosition
     cov += agg.events(i)
-    if (contig == "MT" && currPos == 7931 && startPosition == 7831)
+    if (contig == "MT" && currPos == 7929 && (startPosition == 7831 ))
       println
-    if (isInPartitionRange(currPos, contig, partitionBounds)) {
-      if (currPos == partitionBounds.postStart - 1)
+    if (isInPartitionRange(currPos - 1 , contig, partitionBounds)) {
+      if (currPos == partitionBounds.postStart) {
         prev.reset(i)
+      }
       if (prev.hasAlt) {
         addBaseRecord(result, ind, agg, bases, i, prev, conf)
         ind += 1;
@@ -75,11 +76,11 @@ breakable {
         prev.alt = agg.alts(currPos)
       } else if (isEndOfZeroCoverageRegion(cov, prev.cov, i)) { // coming back from zero coverage. clear block
         prev.reset(i)
-      } else if (isChangeOfCoverage(cov, prev.cov, i) || isStartOfZeroCoverageRegion(cov, prev.cov)) { // different cov, add to output previous group
+      } else if (isChangeOfCoverage(cov, prev.cov,  i) || isStartOfZeroCoverageRegion(cov, prev.cov)) { // different cov, add to output previous group
         addBlockRecord(result, ind, agg, bases, i, prev)
         ind += 1;
         prev.reset(i)
-      } else if (currPos == partitionBounds.posEnd) { // last item -> convert it
+      } else if (currPos == partitionBounds.posEnd + 1) { // last item -> convert it
         addBlockRecord(result, ind, agg, bases, i, prev)
         ind += 1;
         prev.reset(i)
