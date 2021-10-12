@@ -8,12 +8,9 @@ import org.biodatageeks.sequila.pileup.broadcast.{FullCorrections, PileupAccumul
 import org.biodatageeks.sequila.pileup.conf.{Conf, QualityConstants}
 import org.biodatageeks.sequila.pileup.serializers.PileupProjection
 import org.biodatageeks.sequila.pileup.model.Alts._
-import org.biodatageeks.sequila.pileup.model.Quals._
 import org.biodatageeks.sequila.pileup.partitioning.PartitionBounds
 import org.slf4j.{Logger, LoggerFactory}
 import scala.util.control.Breaks._
-
-import scala.collection.mutable.ArrayBuffer
 
 object AggregateRDDOperations {
   object implicits {
@@ -24,11 +21,15 @@ object AggregateRDDOperations {
 case class AggregateRDD(rdd: RDD[ContigAggregate]) {
   val logger: Logger = LoggerFactory.getLogger(this.getClass.getCanonicalName)
 
-  def isInPartitionRange(currPos: Int, contig: String, bound: PartitionBounds): Boolean = {
+  def isInPartitionRange(currPos: Int, contig: String, bound: PartitionBounds,conf: Broadcast[Conf]): Boolean = {
     if (contig == bound.contigStart && contig == bound.contigEnd)
       currPos >= bound.postStart - 1 && currPos <= bound.posEnd
-    else
+    else if (contig == bound.contigStart && bound.contigEnd == conf.value.unknownContigName)
+      currPos >= bound.postStart - 1
+    else if (contig != bound.contigStart && bound.contigEnd == conf.value.unknownContigName)
       true
+    else
+      false
   }
 
   def toPileup(refPath: String, conf: Broadcast[Conf], bounds: Broadcast[Array[PartitionBounds]] ) : RDD[InternalRow] = {
@@ -53,9 +54,9 @@ breakable {
   while (i < agg.events.length) { // repartition change -> no shrinking, we have to go through whole array
     currPos = i + startPosition
     cov += agg.events(i)
-    if (contig == "MT" && currPos == 7929 && (startPosition == 7831 ))
+    if (contig == "MT" && currPos == 14247 && (startPosition == 7831 || startPosition==14247 ))
       println
-    if (isInPartitionRange(currPos - 1 , contig, partitionBounds)) {
+    if (isInPartitionRange(currPos - 1 , contig, partitionBounds, conf)) {
       if (currPos == partitionBounds.postStart) {
         prev.reset(i)
       }
