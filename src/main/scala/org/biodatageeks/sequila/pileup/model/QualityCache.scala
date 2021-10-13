@@ -4,12 +4,12 @@ import org.biodatageeks.sequila.pileup.conf.QualityConstants
 import scala.collection.mutable.ArrayBuffer
 
 class QualityCache(size: Int) extends Serializable {
-  var cache = new Array[ReadQualSummary](QualityConstants.CACHE_EXPANDER*size)
+  var cache = new Array[ReadSummary](QualityConstants.CACHE_EXPANDER*size)
   val rollingIndexStart = size
   var currentIndex = 0
   var isFull = false
 
-  def this (qualityArray:Array[ReadQualSummary] ) {
+  def this (qualityArray:Array[ReadSummary] ) {
     this(qualityArray.size/2)
     this.cache=qualityArray
   }
@@ -20,16 +20,16 @@ class QualityCache(size: Int) extends Serializable {
     newCache
   }
   def length: Int = cache.length
-  def apply(index: Int):ReadQualSummary = cache(index)
+  def apply(index: Int):ReadSummary = cache(index)
 
   def ++ (that:QualityCache):QualityCache = {
-    val mergedArray = new Array[ReadQualSummary](length + that.length)
+    val mergedArray = new Array[ReadSummary](length + that.length)
     System.arraycopy(this.cache, 0, mergedArray, 0, length)
     System.arraycopy(that.cache, 0, mergedArray, length, that.length)
     new QualityCache(mergedArray)
   }
 
-  def addOrReplace(readSummary: ReadQualSummary):Unit = {
+  def addOrReplace(readSummary: ReadSummary):Unit = {
     cache(currentIndex) = readSummary
     if (currentIndex + 1 >= length) {
       currentIndex = rollingIndexStart
@@ -38,7 +38,7 @@ class QualityCache(size: Int) extends Serializable {
     else currentIndex = currentIndex + 1
   }
 
-  def getReadsOverlappingPosition(position: Int): Array[ReadQualSummary] = {
+  def getReadsOverlappingPosition(position: Int): Array[ReadSummary] = {
     var currPos =  if(currentIndex==0) 0
     else if (!isFull) currentIndex -1
     else if (isFull && currentIndex == rollingIndexStart) cache.length-1
@@ -46,11 +46,11 @@ class QualityCache(size: Int) extends Serializable {
 
     val rs = cache(currPos)
     if(rs == null || rs.start > position)
-      return Array.empty[ReadQualSummary]
+      return Array.empty[ReadSummary]
     else {
       var it = 0
       val maxIterations = (cache.length/2)-1
-      val buffer = new ArrayBuffer[ReadQualSummary]()
+      val buffer = new ArrayBuffer[ReadSummary]()
       while (it <= maxIterations) {
         val rs = cache(currPos)
         if (rs == null || rs.start > position)
@@ -73,8 +73,8 @@ class QualityCache(size: Int) extends Serializable {
     }
   }
 
-  def getReadsOverlappingPositionFullCache(position: Int): Array[ReadQualSummary] = {
-    val buffer = new ArrayBuffer[ReadQualSummary]()
+  def getReadsOverlappingPositionFullCache(position: Int): Array[ReadSummary] = {
+    val buffer = new ArrayBuffer[ReadSummary]()
         for (rs <- cache) {
           if (rs == null )
             return buffer.toArray
@@ -84,8 +84,8 @@ class QualityCache(size: Int) extends Serializable {
     buffer.toArray
   }
 
-  def getReadsOverlappingPositionInHeader(position: Int): Array[ReadQualSummary] = {
-    val buffer = new ArrayBuffer[ReadQualSummary]()
+  def getReadsOverlappingPositionInHeader(position: Int): Array[ReadSummary] = {
+    val buffer = new ArrayBuffer[ReadSummary]()
     for (ind <- cache.indices) {
       if(ind > rollingIndexStart)
         return buffer.toArray

@@ -2,9 +2,10 @@ package org.biodatageeks.sequila.pileup.model
 
 
 
-case class ReadQualSummary (start: Int, end: Int,
-                            qualsArray: Array[Byte],
-                            cigarDerivedConf: CigarDerivedConf
+case class ReadSummary(start: Int, end: Int,
+                       basesArray: Array[Byte],
+                       qualsArray: Array[Byte],
+                       cigarDerivedConf: CigarDerivedConf
                             ) {
 
   @inline
