@@ -46,7 +46,11 @@ class BaseQualityTestSuite extends PileupTestBase {
     ss.sparkContext.setLogLevel("ERROR")
 
     val result = ss.sql(pileupQuery)
-    assert(result.count()==14671)
+
+    val partNum = result.rdd.getNumPartitions
+    val count = result.count()
+    assert(count >= 14671 && count <= 14671 + partNum)
+
     result.where(s"$covEquality == false").show(10, false)
 
     val equals = result.select(covEquality).distinct()
