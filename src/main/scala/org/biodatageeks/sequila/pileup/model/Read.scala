@@ -4,7 +4,6 @@ import htsjdk.samtools.{Cigar, CigarOperator, SAMRecord}
 import org.apache.spark.broadcast.Broadcast
 import org.biodatageeks.sequila.pileup.MDTagParser
 import org.biodatageeks.sequila.pileup.conf.Conf
-import org.biodatageeks.sequila.pileup.conf.QualityConstants.{OUTER_QUAL_SIZE, QUAL_INDEX_SHIFT, REF_SYMBOL}
 import org.biodatageeks.sequila.pileup.model.Quals._
 import org.biodatageeks.sequila.pileup.model.Alts._
 
