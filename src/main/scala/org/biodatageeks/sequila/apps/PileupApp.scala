@@ -10,8 +10,8 @@ object PileupApp extends App with SequilaApp {
 
     val ss = createSequilaSession()
 
-    val bamPath = "/Users/aga/NA12878.chr20.md.bam"
-    val referencePath = "/Users/aga/Homo_sapiens_assembly18_chr20.fasta"
+    val bamPath = "/Users/aga/workplace/sequila/src/test/resources/multichrom/mdbam/NA12878.multichrom.md.bam"
+    val referencePath = "/Users/aga/workplace/data/Homo_sapiens_assembly18_chr20.fasta"
     val tableNameBAM = "reads"
 
     ss.sql(s"""DROP  TABLE IF  EXISTS $tableNameBAM""")
@@ -24,8 +24,8 @@ object PileupApp extends App with SequilaApp {
 
     val queryQual =
       s"""
-         |SELECT count(*)
-         |FROM  pileup('$tableNameBAM', 'NA12878', '${referencePath}', true, 1)
+         |SELECT *
+         |FROM  pileup('$tableNameBAM', 'NA12878.chr20', '${referencePath}', true, 1)
        """.stripMargin
 
     val resultsQual = ss.sql(queryQual)

@@ -10,7 +10,7 @@ import org.biodatageeks.sequila.utils.Columns
 class SequilaConverter (spark: SparkSession) extends Serializable with PileupConverter {
 
   override def transform(path: String): DataFrame = {
-    val df = PileupReader.load(spark, path, CommonPileupFormat.schemaAltsQualsString)
+    val df = PileupReader.load(spark, path, CommonPileupFormat.schemaAltsQualsString, delimiter = "|")
     toCommonFormat(df, caseSensitive = true)
   }
 

@@ -1,16 +1,10 @@
 package org.biodatageeks.sequila.tests.pileup
 
 import com.holdenkarau.spark.testing.{DataFrameSuiteBase, SharedSparkContext}
-import org.apache.spark.sql.{Dataset, Row, SaveMode, SparkSession}
-import org.apache.spark.sql.types.{IntegerType, ShortType, StringType, StructField, StructType}
 import org.apache.spark.storage.StorageLevel
-import org.biodatageeks.sequila.pileup.conf.QualityConstants
-import org.biodatageeks.sequila.pileup.model.Quals._
 import org.biodatageeks.sequila.utils.InternalParams
-import org.eclipse.jetty.server.Authentication.Wrapped
 import org.scalatest.{BeforeAndAfter, FunSuite}
 
-import scala.collection.mutable
 
 class PileupTestBase extends FunSuite
   with DataFrameSuiteBase
@@ -48,7 +42,5 @@ class PileupTestBase extends FunSuite
          |OPTIONS(path "$cramPath", refPath "$referencePath" )
          |
       """.stripMargin)
-
   }
-
 }

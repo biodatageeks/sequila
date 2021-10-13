@@ -80,7 +80,7 @@ object PileupComparison extends App with SequilaApp with DatasetComparer {
   }
 
   private def printDf(df: DataFrame, format: String): Unit = {
-    println(format)
+    println(s"$format: ${df.count} ${df.rdd.getNumPartitions}")
     df.printSchema()
     df.show(10)
   }

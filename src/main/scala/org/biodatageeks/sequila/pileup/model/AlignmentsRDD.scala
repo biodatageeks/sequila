@@ -3,17 +3,23 @@ package org.biodatageeks.sequila.pileup.model
 import java.util
 
 import htsjdk.samtools.SAMRecord
-import org.apache.spark.rdd.RDD
-import org.biodatageeks.sequila.utils.{DataQualityFuncs, FastMath}
-
-import scala.collection.{JavaConverters, mutable}
-import ReadOperations.implicits._
 import org.apache.spark.broadcast.Broadcast
-import org.apache.spark.util.SizeEstimator
-import org.slf4j.{Logger, LoggerFactory}
+import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.SparkSession
+import org.biodatageeks.sequila.datasources.BAM.BAMTableReader
 import org.biodatageeks.sequila.pileup.conf.{Conf, QualityConstants}
 import org.biodatageeks.sequila.pileup.model.Alts.MultiLociAlts
 import org.biodatageeks.sequila.pileup.model.Quals.MultiLociQuals
+import org.biodatageeks.sequila.pileup.model.ReadOperations.implicits._
+import org.biodatageeks.sequila.pileup.partitioning.{LowerPartitionBoundAlignmentRecord, PartitionBounds, PartitionUtils, RangePartitionCoalescer}
+import org.biodatageeks.sequila.rangejoins.IntervalTree.Interval
+import org.biodatageeks.sequila.rangejoins.methods.IntervalTree.IntervalHolderChromosome
+import org.biodatageeks.sequila.utils.{DataQualityFuncs, FastMath, InternalParams}
+import org.seqdoop.hadoop_bam.BAMBDGInputFormat
+import org.slf4j.{Logger, LoggerFactory}
+
+import scala.collection.JavaConverters._
+import scala.collection.{JavaConverters, mutable}
 
 object AlignmentsRDDOperations {
   object implicits {
@@ -33,8 +39,6 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
     val contigLenMap = initContigLengths(this.rdd.first())
 
     this.rdd.mapPartitions { partition =>
-//      println(s"Creating aggregates from alignments")
-
       val aggMap = new mutable.HashMap[String, ContigAggregate]()
       val contigMaxReadLen = new mutable.HashMap[String, Int]()
       var contigIter, contigCleanIter  = ""
@@ -96,18 +100,7 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
         contigEventAgg.qualityCache,
         conf
       )
-//      val coef = 1048576.0
-//      val aggSize = SizeEstimator.estimate(agg)/coef
-//      val altsSize = SizeEstimator.estimate(agg.alts)/coef
-//      val qualSize = SizeEstimator.estimate(agg.quals)/coef
-//      val cacheSize = SizeEstimator.estimate(agg.qualityCache)/coef
-//      val altsKeySize = SizeEstimator.estimate(agg.alts.keySet)/coef
-//      val altsValuesSize = SizeEstimator.estimate(agg.alts.values.toSet)/coef
-//      val qualsKeySize = SizeEstimator.estimate(agg.quals.keySet)/coef
-//      val qualsValueSize = SizeEstimator.estimate(agg.quals.values.toSet)/coef
-
       output(i) = agg
-
 
       i += 1
     }
@@ -156,4 +149,83 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
     contigLenMap.toMap
   }
 
+  def filterByConfig(conf : Broadcast[Conf], spark: SparkSession): RDD[SAMRecord] = {
+    // any other filtering conditions should go here
+    val filterFlag = spark.conf.get(InternalParams.filterReadsByFlag, conf.value.filterFlag).toInt
+    val cleaned = this.rdd.filter(read => read.getContig != null && (read.getFlags & filterFlag) == 0)
+    if(logger.isDebugEnabled()) logger.debug("Processing {} cleaned reads in total", cleaned.count() )
+    cleaned
+  }
+
+
+  def getPartitionLowerBound: Array[LowerPartitionBoundAlignmentRecord] = {
+    this.rdd.mapPartitionsWithIndex{
+      (i, p) => Iterator(LowerPartitionBoundAlignmentRecord(i ,p.next()) )
+    }.collect()
+  }
+
+  def getPartitionBounds(reader: BAMTableReader[BAMBDGInputFormat],
+                         conf: Conf,
+                         lowerBounds: Array[LowerPartitionBoundAlignmentRecord]
+                        ): Array[PartitionBounds] = {
+
+    val contigsList = reader
+      .readFile
+      .first()
+      .getHeader
+      .getSequenceDictionary
+      .getSequences
+      .asScala
+      .map(r => DataQualityFuncs.cleanContig(r.getContig))
+      .toArray
+
+
+    SparkSession.builder.config(this.rdd.sparkContext.getConf).getOrCreate()
+      .sqlContext
+      .setConf(InternalParams.AlignmentIntervals, PartitionUtils.boundsToIntervals(lowerBounds))
+    logger.info(s"Getting bounds overlapping reads for intervals: ${PartitionUtils.boundsToIntervals(lowerBounds)}")
+    val boundsOverlappingReads = reader.readFile
+      .filter(r => !r.getReadUnmappedFlag )
+      .map( r => (r.getContig, Interval(r.getStart, r.getEnd), TruncRead(r.getReadName, r.getContig, r.getStart, r.getEnd)) )
+      .collect()
+
+    SparkSession.builder.config(this.rdd.sparkContext.getConf).getOrCreate()
+      .sqlContext
+      .setConf(InternalParams.AlignmentIntervals, "")
+    logger.info(s"Found ${boundsOverlappingReads.length} overlapping reads")
+    val tree = new IntervalHolderChromosome[TruncRead](boundsOverlappingReads, "org.biodatageeks.sequila.rangejoins.methods.IntervalTree.IntervalTreeRedBlack")
+
+    PartitionUtils.getAdjustedPartitionBounds(lowerBounds, tree, conf, contigsList)
+  }
+
+  def repartition(reader:BAMTableReader[BAMBDGInputFormat], conf: Conf): (RDD[SAMRecord], Broadcast[Array[PartitionBounds]]) = {
+
+    val alignments = this.rdd
+    val numPartitions = alignments.getNumPartitions
+    val lowerBounds = getPartitionLowerBound // get the start of first read in partition
+    val adjBounds = getPartitionBounds(reader, conf, lowerBounds)
+    val maxEndIndex = PartitionUtils.getMaxEndPartitionIndex(adjBounds, lowerBounds)
+    val broadcastBounds = this.rdd.sparkContext.broadcast(adjBounds)
+    logger.info(s"Final partition bounds: ${adjBounds.mkString("|")}")
+    logger.info(s"MaxEndIndex list ${maxEndIndex.mkString("|")}")
+    val alignments2 = alignments.coalesce(alignments.getNumPartitions,false, Some(new RangePartitionCoalescer(maxEndIndex.map(r=> new Integer(r )).asJava )) )
+    val adjustedAlignments = alignments2.mapPartitionsWithIndex {
+      (i, p) => {
+        val bounds = broadcastBounds.value(i)
+        p.takeWhile(r =>
+          if (r.getReadUnmappedFlag) true
+          else if (i == numPartitions - 1) true // read the whole last partition
+          else if (bounds.wholeContigs.contains(DataQualityFuncs.cleanContig(r.getContig))) true //read all records between upper and lower contigs
+          else if (
+            (DataQualityFuncs.cleanContig(r.getContig) == bounds.contigStart && r.getAlignmentStart  <= bounds.posEnd
+              ) ||
+              (DataQualityFuncs.cleanContig(r.getContig)== bounds.contigEnd  && r.getAlignmentEnd <= bounds.posEnd ) ) true
+          else {
+            logger.info(s"Finishing reading partition with read ${r.getReadName}, ${r.getContig}:${r.getAlignmentEnd}")
+            false
+          })
+      }
+    }
+    (adjustedAlignments, broadcastBounds)
+  }
 }

@@ -54,7 +54,10 @@ class BinningTestSuite extends PileupTestBase {
 
     val result = ss.sql(pileupQuery)
 
-    assert(result.count()==14671)
+    val partNum = result.rdd.getNumPartitions
+    val count = result.count()
+    assert(count >= 14671 && count <= 14671 + partNum)
+
     val equals = result.select(covEquality).distinct()
     assert(equals.count()==1)
     assert(equals.head.getBoolean(0))
