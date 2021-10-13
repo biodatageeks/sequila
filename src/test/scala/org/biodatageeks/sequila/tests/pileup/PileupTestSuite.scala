@@ -41,28 +41,6 @@ class PileupTestSuite extends PileupTestBase {
 
   }
 
-  test("Pileup unpersist"){
-    val ss = SequilaSession(spark)
-    SequilaRegister.register(ss)
-    val result = ss.sql(pileupQuery)
-    result.count
-
-    val eventCacheNameBefore = spark
-      .sparkContext
-      .getPersistentRDDs
-      .filter(t=> t._2.name==InternalParams.RDDPileupEventsName)
-
-    PileupPlan.clearCache(spark)
-
-    val eventCacheNameAfter = spark
-      .sparkContext
-      .getPersistentRDDs
-      .filter(t=> t._2.name==InternalParams.RDDPileupEventsName)
-
-     assert(eventCacheNameBefore.size > 0 && eventCacheNameAfter.size ==0 )
-
-  }
-
   private def performAssertions(result:DataFrame):Unit ={
     assert(result.count()==14671)
     assert(result.first().get(1) != 1) // first position check (should not start from 1 with ShowAllPositions = false)
