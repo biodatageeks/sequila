@@ -54,8 +54,6 @@ breakable {
   while (i < agg.events.length) { // repartition change -> no shrinking, we have to go through whole array
     currPos = i + startPosition
     cov += agg.events(i)
-    if (contig == "MT" && currPos == 14247 && (startPosition == 7831 || startPosition==14247 ))
-      println
     if (isInPartitionRange(currPos - 1 , contig, partitionBounds, conf)) {
       if (currPos == partitionBounds.postStart) {
         prev.reset(i)
