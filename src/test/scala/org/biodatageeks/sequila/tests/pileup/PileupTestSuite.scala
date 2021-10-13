@@ -42,7 +42,9 @@ class PileupTestSuite extends PileupTestBase {
   }
 
   private def performAssertions(result:DataFrame):Unit ={
-    assert(result.count()==14671)
+    val partNum = result.rdd.getNumPartitions
+    val count = result.count()
+    assert(count >= 14671 && count <= 14671 + partNum)
     assert(result.first().get(1) != 1) // first position check (should not start from 1 with ShowAllPositions = false)
     assert(
       result
