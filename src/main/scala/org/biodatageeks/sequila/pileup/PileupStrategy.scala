@@ -59,6 +59,10 @@ case class PileupPlan [T<:BDGAlignInputFormat](plan:LogicalPlan, spark:SparkSess
 
   private def setupPileupConfiguration(): Conf = {
     val conf = new Conf
+    if (refPath.isEmpty) {// FIXME -> change to Option
+      conf.coverageOnly = true
+      return conf
+    }
     val maxQual = spark.conf.get(InternalParams.maxBaseQualityValue, DEFAULT_MAX_QUAL.toString).toInt
     conf.maxQuality = maxQual
     conf.maxQualityIndex = maxQual + 1
