@@ -100,8 +100,14 @@ private def getContigsBetween(startContig: String, endContig: String, contigsLis
     adjBounds.map(
       r => {
         val maxPos = r.posEnd
-        val maxIndex = lowerBounds.takeWhile( p => p.record.getAlignmentStart <= maxPos).takeRight(1)(0).idx
-        maxIndex
+        val maxIndex = lowerBounds
+          .filter( l => l.record.getContig == r.contigEnd)
+          .takeWhile( p => p.record.getAlignmentStart <= maxPos)
+
+        if (maxIndex.nonEmpty)
+          maxIndex.takeRight(1)(0).idx
+        else
+          r.idx
       }
     ).toList
   }
