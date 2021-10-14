@@ -7,7 +7,7 @@ import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SparkSession
 import org.biodatageeks.sequila.datasources.BAM.BAMTableReader
-import org.biodatageeks.sequila.pileup.conf.{Conf, QualityConstants}
+import org.biodatageeks.sequila.pileup.conf.Conf
 import org.biodatageeks.sequila.pileup.model.Alts.MultiLociAlts
 import org.biodatageeks.sequila.pileup.model.Quals.MultiLociQuals
 import org.biodatageeks.sequila.pileup.model.ReadOperations.implicits._
@@ -97,7 +97,6 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
         contigEventAgg.startPosition + maxIndex,
         0,
         cigarMap(contig),
-        contigEventAgg.qualityCache,
         conf
       )
       output(i) = agg
@@ -124,7 +123,6 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
       quals = if(conf.value.includeBaseQualities ) new MultiLociQuals() else null,
       startPosition = read.getStart,
       maxPosition = contigLen - 1,
-      qualityCache =  if(conf.value.includeBaseQualities ) new QualityCache(QualityConstants.CACHE_SIZE) else null,
       conf = conf )
 
     aggMap += contig -> contigEventAggregate

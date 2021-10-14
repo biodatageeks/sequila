@@ -52,7 +52,8 @@ class SamtoolsTestSuite extends PileupTestBase {
 
     val sequilaPileup = calculateSequilaPileup(None)
     val samPileup = loadSam(sequilaPileup.schema)
-
+        PileupWriter.save(samPileup, "samRes.csv")
+        PileupWriter.save(sequilaPileup, "sequilaPileup.csv")
     assertDataFrameEquals(samPileup, sequilaPileup)
   }
 

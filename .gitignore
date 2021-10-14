@@ -15,6 +15,7 @@ samRes.csv
 bdgResFullSplit.csv
 bdgRes.csv
 sequilaQualsBlocks.csv
+sequilaPileup.csv
 
 ${seq.metastore.dir}
 

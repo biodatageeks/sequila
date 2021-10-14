@@ -38,10 +38,10 @@ object Quals {
       })
     }
 
-    def addQualityForAlt(alt: Char, quality: Byte, updateMax: Boolean, conf: Broadcast[Conf]): Unit = {
+    def addQualityForBase(base: Char, quality: Byte, updateMax: Boolean, conf: Broadcast[Conf]): Unit = {
       val qualityIndex = if (conf.value.isBinningEnabled) (quality / conf.value.binSize).toShort else quality
       val arrSize = conf.value.qualityArrayLength
-      val altArrIndex = alt - QualityConstants.QUAL_INDEX_SHIFT
+      val altArrIndex = base - QualityConstants.QUAL_INDEX_SHIFT
 
       if (arr(altArrIndex) == null) {
         val array = new Array[Short](arrSize)
@@ -76,15 +76,15 @@ object Quals {
     def trim(conf: Broadcast[Conf]): MultiLociQuals = map.map({ case (k, v) => k -> v.trim(conf)})
 
     @inline
-    def updateQuals(position: Int, alt: Char, quality: Byte, firstUpdate: Boolean = false,
+    def updateQuals(position: Int, base: Char, quality: Byte, firstUpdate: Boolean = false,
                     updateMax: Boolean = false,
                     conf: Broadcast[Conf]): Unit = {
-      if (!firstUpdate || map.contains(position)) {
-        map(position).addQualityForAlt(alt, quality, updateMax, conf)
+      if (map.contains(position)) {
+        map(position).addQualityForBase(base, quality, updateMax, conf)
       }
       else {
         val singleLocusQualMap = new SingleLocusQuals(QualityConstants.OUTER_QUAL_SIZE)
-        singleLocusQualMap.addQualityForAlt(alt, quality, updateMax, conf)
+        singleLocusQualMap.addQualityForBase(base, quality, updateMax, conf)
         map.update(position, singleLocusQualMap)
       }
     }
