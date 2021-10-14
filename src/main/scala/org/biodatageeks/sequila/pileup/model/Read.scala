@@ -20,8 +20,6 @@ case class TruncRead(rName: String, contig: String, posStart: Int, posEnd: Int)
 
 case class ExtendedReads(read: SAMRecord) {
 
-
-
   def analyzeRead(contig: String,
                   agg: ContigAggregate,
                   contigMaxReadLen: mutable.HashMap[String, Int],
@@ -36,13 +34,14 @@ case class ExtendedReads(read: SAMRecord) {
     calculateAlts(agg, start, cigar, bQual, isPositiveStrand, conf)
 
     if (conf.value.includeBaseQualities) {
-      calculateQuals (agg, start, cigar, bQual, conf)
+      calculateQuals (agg, start, cigar, bQual, isPositiveStrand, conf)
     }
   }
 
-  def calculateQuals(agg: ContigAggregate, start: Int, cigar: Cigar, bQual: Array[Byte], conf: Broadcast[Conf]):Unit = {
+  def calculateQuals(agg: ContigAggregate, start: Int, cigar: Cigar, bQual: Array[Byte], isPositiveStrand:Boolean, conf: Broadcast[Conf]):Unit = {
     val cigarConf = CigarDerivedConf.create(start, cigar)
-    val readQualSummary = ReadSummary(start, read.getEnd, read.getReadBases, bQual, cigarConf)
+    val readBases = if (isPositiveStrand) read.getReadBases.map(_.toChar.toUpper) else read.getReadBases.map(_.toChar.toLower)
+    val readQualSummary = ReadSummary(start, read.getEnd, readBases, bQual, cigarConf)
     fillBaseQualities(agg, readQualSummary, conf)
   }
 
@@ -151,7 +150,7 @@ case class ExtendedReads(read: SAMRecord) {
       if (!readSummary.hasDeletionOnPosition(currPosition)) {
         val relativePos = if (!readSummary.cigarDerivedConf.hasIndel && !readSummary.cigarDerivedConf.hasClip) currPosition - readSummary.start
         else readSummary.relativePosition(currPosition)
-        agg.quals.updateQuals(currPosition, readSummary.basesArray(relativePos).toChar, readSummary.qualsArray(relativePos), false, true, conf)
+        agg.quals.updateQuals(currPosition, readSummary.basesArray(relativePos), readSummary.qualsArray(relativePos), false, true, conf)
       }
       ind += 1
     }
