@@ -73,7 +73,7 @@ class SamtoolsConverter(spark: SparkSession) extends Serializable with PileupCon
       baseMap.update(qualityChar.toString, (baseQualCount+1).toShort)
       res.update(pileupChar.toByte, baseMap)
     }
-    res
+    mutable.LinkedHashMap(res.toSeq.sortBy(_._1):_*)
   }
 
   /**

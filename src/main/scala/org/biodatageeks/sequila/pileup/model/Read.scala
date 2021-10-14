@@ -6,6 +6,7 @@ import org.biodatageeks.sequila.pileup.MDTagParser
 import org.biodatageeks.sequila.pileup.conf.Conf
 import org.biodatageeks.sequila.pileup.model.Quals._
 import org.biodatageeks.sequila.pileup.model.Alts._
+import org.biodatageeks.sequila.pileup.conf.QualityConstants.REF_SYMBOL
 
 import scala.collection.mutable
 
@@ -31,18 +32,18 @@ case class ExtendedReads(read: SAMRecord) {
     val isPositiveStrand = ! read.getReadNegativeStrandFlag
 
     calculateEvents(contig, agg, contigMaxReadLen, start, cigar)
-    calculateAlts(agg, start, cigar, bQual, isPositiveStrand, conf)
+    val altPositions = calculateAlts(agg, start, cigar, bQual, isPositiveStrand, conf)
 
     if (conf.value.includeBaseQualities) {
-      calculateQuals (agg, start, cigar, bQual, isPositiveStrand, conf)
+      calculateQuals (agg, altPositions, start, cigar, bQual, isPositiveStrand, conf)
     }
   }
 
-  def calculateQuals(agg: ContigAggregate, start: Int, cigar: Cigar, bQual: Array[Byte], isPositiveStrand:Boolean, conf: Broadcast[Conf]):Unit = {
+  def calculateQuals(agg: ContigAggregate, altPositions:scala.collection.Set[Int],start: Int, cigar: Cigar, bQual: Array[Byte], isPositiveStrand:Boolean, conf: Broadcast[Conf]):Unit = {
     val cigarConf = CigarDerivedConf.create(start, cigar)
     val readBases = if (isPositiveStrand) read.getReadBases.map(_.toChar.toUpper) else read.getReadBases.map(_.toChar.toLower)
     val readQualSummary = ReadSummary(start, read.getEnd, readBases, bQual, cigarConf)
-    fillBaseQualities(agg, readQualSummary, conf)
+    fillBaseQualities(agg, altPositions, readQualSummary, conf)
   }
 
   def calculateEvents(contig: String, aggregate: ContigAggregate, contigMaxReadLen: mutable.HashMap[String, Int],
@@ -104,7 +105,7 @@ case class ExtendedReads(read: SAMRecord) {
 
   def calculateAlts(aggregate: ContigAggregate, start: Int,
                     cigar: Cigar, bQual: Array[Byte],
-                    isPositiveStrand:Boolean, conf: Broadcast[Conf]): Unit = {
+                    isPositiveStrand:Boolean, conf: Broadcast[Conf]): scala.collection.Set[Int] = {
     var position = start
     val ops = MDTagParser.parseMDTag(read.getAttribute("MD").toString)
 
@@ -134,6 +135,7 @@ case class ExtendedReads(read: SAMRecord) {
       else if (mdtag.base == 'S')
         position += mdtag.length
     }
+    altsPositions
   }
 
   def updateMaxCigarInContig(cigarLen: Int, contig: String, contigMaxReadLen: mutable.HashMap[String, Int]): Unit = {
@@ -142,7 +144,7 @@ case class ExtendedReads(read: SAMRecord) {
   }
 
 
-  def fillBaseQualities(agg: ContigAggregate, readSummary: ReadSummary, conf: Broadcast[Conf]): Unit = {
+  def fillBaseQualities(agg: ContigAggregate, altPositions:scala.collection.Set[Int], readSummary: ReadSummary, conf: Broadcast[Conf]): Unit = {
     val positionsToFill = (read.getAlignmentStart to read.getAlignmentEnd).toArray
     var ind = 0
     while (ind < positionsToFill.length) {
@@ -150,7 +152,10 @@ case class ExtendedReads(read: SAMRecord) {
       if (!readSummary.hasDeletionOnPosition(currPosition)) {
         val relativePos = if (!readSummary.cigarDerivedConf.hasIndel && !readSummary.cigarDerivedConf.hasClip) currPosition - readSummary.start
         else readSummary.relativePosition(currPosition)
-        agg.quals.updateQuals(currPosition, readSummary.basesArray(relativePos), readSummary.qualsArray(relativePos), false, true, conf)
+        if (altPositions.contains(currPosition))
+          agg.quals.updateQuals(currPosition, readSummary.basesArray(relativePos), readSummary.qualsArray(relativePos), false, true, conf)
+        else
+          agg.quals.updateQuals(currPosition, REF_SYMBOL, readSummary.qualsArray(relativePos), false, true, conf)
       }
       ind += 1
     }
