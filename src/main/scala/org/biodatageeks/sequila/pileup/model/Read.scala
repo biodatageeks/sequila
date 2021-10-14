@@ -112,6 +112,7 @@ case class ExtendedReads(read: SAMRecord) {
         position += 1
 
         val indexInSeq = calculatePositionInReadSeq(position - start - delCounter, cigar)
+
         val altBase = if (isPositiveStrand) bases(indexInSeq - 1).toChar else bases(indexInSeq - 1).toChar.toLower
         val altPosition = position - clipLen - 1
 
