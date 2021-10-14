@@ -144,16 +144,14 @@ case class ExtendedReads(read: SAMRecord) {
 
 
   def fillBaseQualities(agg: ContigAggregate, readSummary: ReadSummary, conf: Broadcast[Conf]): Unit = {
-    //FIXME binning
-    // val altBaseQual = if (conf.value.isBinningEnabled) (bQual(indexInSeq - 1)/conf.value.binSize).toByte else bQual(indexInSeq - 1)
-    val positionsToFill = (read.getAlignmentStart to read.getAlignmentEnd + 1).toArray
+    val positionsToFill = (read.getAlignmentStart to read.getAlignmentEnd).toArray
     var ind = 0
     while (ind < positionsToFill.length) {
       val currPosition = positionsToFill(ind)
-      if (readSummary.cigarDerivedConf.hasDel || !readSummary.hasDeletionOnPosition(currPosition)) {
+      if (!readSummary.hasDeletionOnPosition(currPosition)) {
         val relativePos = if (!readSummary.cigarDerivedConf.hasIndel && !readSummary.cigarDerivedConf.hasClip) currPosition - readSummary.start
         else readSummary.relativePosition(currPosition)
-        agg.quals.updateQuals(currPosition, readSummary.qualsArray(relativePos).toChar, readSummary.qualsArray(relativePos), false, true, conf)
+        agg.quals.updateQuals(currPosition, readSummary.basesArray(relativePos).toChar, readSummary.qualsArray(relativePos), false, true, conf)
       }
       ind += 1
     }

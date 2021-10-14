@@ -79,7 +79,7 @@ object Quals {
     def updateQuals(position: Int, base: Char, quality: Byte, firstUpdate: Boolean = false,
                     updateMax: Boolean = false,
                     conf: Broadcast[Conf]): Unit = {
-      if (!firstUpdate || map.contains(position)) {
+      if (map.contains(position)) {
         map(position).addQualityForBase(base, quality, updateMax, conf)
       }
       else {
