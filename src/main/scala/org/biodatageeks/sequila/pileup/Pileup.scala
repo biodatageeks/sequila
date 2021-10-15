@@ -17,7 +17,6 @@ class Pileup(spark:SparkSession) {
   def handlePileup(tableName: String, sampleId: String, refPath:String, output: Seq[Attribute], conf: Conf): RDD[InternalRow] = {
     logger.info(s"Calculating pileup on table: $tableName with configuration\n$conf")
 
-    spark.sqlContext.getConf(InternalParams.IOReadAlignmentMethod,"disq").toLowerCase
     val bdConf = spark.sparkContext.broadcast(conf)
 
     val tableReader = new BAMTableReader[BAMBDGInputFormat](spark, tableName, sampleId)
