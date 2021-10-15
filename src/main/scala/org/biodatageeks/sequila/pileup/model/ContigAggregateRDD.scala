@@ -8,7 +8,6 @@ import org.biodatageeks.sequila.pileup.serializers.PileupProjection
 import org.biodatageeks.sequila.pileup.model.Alts._
 import org.biodatageeks.sequila.pileup.partitioning.PartitionBounds
 import org.slf4j.{Logger, LoggerFactory}
-import scala.util.control.Breaks._
 
 object AggregateRDDOperations {
   object implicits {
@@ -19,37 +18,48 @@ object AggregateRDDOperations {
 case class AggregateRDD(rdd: RDD[ContigAggregate]) {
   val logger: Logger = LoggerFactory.getLogger(this.getClass.getCanonicalName)
 
-  def isInPartitionRange(currPos: Int, contig: String, bound: PartitionBounds,conf: Broadcast[Conf]): Boolean = {
+  def isInPartitionRange(currPos: Int, contig: String, bound: PartitionBounds,conf: Conf): Boolean = {
     if (contig == bound.contigStart && contig == bound.contigEnd)
       currPos >= bound.postStart - 1 && currPos <= bound.posEnd
-    else if (contig == bound.contigStart && bound.contigEnd == conf.value.unknownContigName)
+    else if (contig == bound.contigStart && bound.contigEnd == conf.unknownContigName)
       currPos >= bound.postStart - 1
-    else if (contig != bound.contigStart && bound.contigEnd == conf.value.unknownContigName)
+    else if (contig != bound.contigStart && bound.contigEnd == conf.unknownContigName)
       true
     else
       false
   }
 
-  def toPileup(refPath: String, conf: Broadcast[Conf], bounds: Broadcast[Array[PartitionBounds]] ) : RDD[InternalRow] = {
+  def rangeCondition(currPos: Int, contig: String, partitionBounds: PartitionBounds, conf: Conf): Boolean = {
+    if (contig == partitionBounds.contigStart && currPos <= partitionBounds.posEnd + 1)
+      true
+    else if(partitionBounds.contigEnd==conf.unknownContigName)
+      true
+    else false
+
+  }
+
+  def toPileup(refPath: String, confBroadcast: Broadcast[Conf], bounds: Broadcast[Array[PartitionBounds]] ) : RDD[InternalRow] = {
 
     this.rdd.mapPartitionsWithIndex { (index, part) =>
       val reference = new Reference(refPath)
       val contigMap = reference.getNormalizedContigMap
+      val conf = confBroadcast.value
+      val partitionBounds = bounds.value(index)
       PileupProjection.setContigMap(contigMap)
 
       part.map { agg => {
-        var cov, ind, i, currPos = 0
+        var cov, ind, i = 0
         val allPos = false
         val maxLen = agg.calculateMaxLength(allPos)
         val result = new Array[InternalRow](maxLen)
         val prev = new BlockProperties()
         val startPosition = agg.startPosition
-        val partitionBounds = bounds.value(index)
+        var currPos = i + startPosition
         val contig = agg.contig
         val bases = reference.getBasesFromReference(contigMap(agg.contig), agg.startPosition, agg.startPosition + agg.events.length - 1)
 
-breakable {
-  while (i < agg.events.length) { // repartition change -> no shrinking, we have to go through whole array
+
+  while (i < agg.events.length && rangeCondition(currPos, contig, partitionBounds, conf)) {
     currPos = i + startPosition
     cov += agg.events(i)
     if (isInPartitionRange(currPos - 1 , contig, partitionBounds, conf)) {
@@ -81,14 +91,14 @@ breakable {
         addBlockRecord(result, ind, agg, bases, i, prev)
         ind += 1;
         prev.reset(i)
-        break
+
       }
     }
     prev.cov = cov;
     prev.len = prev.len + 1;
     i += 1
   } // while
-}
+
 
         if (ind < maxLen) result.take(ind) else result
       }
@@ -101,7 +111,7 @@ breakable {
   private def isEndOfZeroCoverageRegion(cov: Int, prevCov: Int, i: Int) = cov != 0 && prevCov == 0 && i > 0
 
   private def addBaseRecord(result:Array[InternalRow], ind:Int,
-                    agg:ContigAggregate, bases:String, i:Int, prev:BlockProperties, conf: Broadcast[Conf]) {
+                    agg:ContigAggregate, bases:String, i:Int, prev:BlockProperties, conf: Conf) {
     val posStart, posEnd = i+agg.startPosition-1
     val ref = bases.substring(prev.pos, i)
     val altsCount = prev.alt.derivedAltsNumber
@@ -110,8 +120,8 @@ breakable {
     prev.alt.clear()
   }
 
-  private def prepareOutputQualMap(agg: ContigAggregate, posStart: Int, ref:String, cov: Short, conf: Broadcast[Conf]): Map[Byte, Array[Short]] = {
-    if (!conf.value.includeBaseQualities)
+  private def prepareOutputQualMap(agg: ContigAggregate, posStart: Int, ref:String, cov: Short, conf: Conf): Map[Byte, Array[Short]] = {
+    if (!conf.includeBaseQualities)
       return null
 
     val qualsMap = agg.quals(posStart)

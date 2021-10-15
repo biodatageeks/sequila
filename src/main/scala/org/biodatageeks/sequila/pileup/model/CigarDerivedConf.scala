@@ -74,13 +74,4 @@ object CigarDerivedConf {
    InDelPositions(delPositions, insertPositions)
   }
 
-
-  private def fillPositionSet(start:Int, end: Int, set: mutable.LinkedHashSet[Int]): mutable.LinkedHashSet[Int] = {
-    var i = start
-    while(i < end) {
-      set.add(i)
-      i += 1
-    }
-    set
-  }
 }
