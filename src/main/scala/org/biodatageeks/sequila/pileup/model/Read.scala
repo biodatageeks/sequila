@@ -23,6 +23,8 @@ case class ExtendedReads(read: SAMRecord) {
   def analyzeReadWithQuals(agg: ContigAggregate): Unit = {
     val bases = read.getReadBases
     calculateEvents(agg)
+    if (agg.conf.coverageOnly)
+      return
     calculateAlts(agg, bases)
     addReadToQualsBuffer(agg, bases)
   }
