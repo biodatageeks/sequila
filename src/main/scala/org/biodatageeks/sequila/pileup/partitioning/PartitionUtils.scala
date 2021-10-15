@@ -101,7 +101,7 @@ private def getContigsBetween(startContig: String, endContig: String, contigsLis
       r => {
         val maxPos = r.posEnd
         val maxIndex = lowerBounds
-          .filter( l => l.record.getContig == r.contigEnd)
+          .filter( l => DataQualityFuncs.cleanContig(l.record.getContig) == r.contigEnd)
           .takeWhile( p => p.record.getAlignmentStart <= maxPos)
 
         if (maxIndex.nonEmpty)
