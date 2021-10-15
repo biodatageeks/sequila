@@ -38,12 +38,12 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
 
   }
 
-  def toPileup(refPath: String, confBroadcast: Broadcast[Conf], bounds: Broadcast[Array[PartitionBounds]] ) : RDD[InternalRow] = {
+  def toPileup(refPath: String,  bounds: Broadcast[Array[PartitionBounds]] ) : RDD[InternalRow] = {
 
     this.rdd.mapPartitionsWithIndex { (index, part) =>
       val reference = new Reference(refPath)
       val contigMap = reference.getNormalizedContigMap
-      val conf = confBroadcast.value
+
       val partitionBounds = bounds.value(index)
       PileupProjection.setContigMap(contigMap)
 
@@ -57,7 +57,7 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
         var currPos = i + startPosition
         val contig = agg.contig
         val bases = reference.getBasesFromReference(contigMap(agg.contig), agg.startPosition, agg.startPosition + agg.events.length - 1)
-
+        val conf = agg.conf.value
 
   while (i < agg.events.length && rangeCondition(currPos, contig, partitionBounds, conf)) {
     currPos = i + startPosition
@@ -67,7 +67,7 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
         prev.reset(i)
       }
       if (prev.hasAlt) {
-        addBaseRecord(result, ind, agg, bases, i, prev, conf)
+        addBaseRecord(result, ind, agg, bases, i, prev)
         ind += 1;
         prev.reset(i)
         if (agg.hasAltOnPosition(currPos))
@@ -111,17 +111,17 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
   private def isEndOfZeroCoverageRegion(cov: Int, prevCov: Int, i: Int) = cov != 0 && prevCov == 0 && i > 0
 
   private def addBaseRecord(result:Array[InternalRow], ind:Int,
-                    agg:ContigAggregate, bases:String, i:Int, prev:BlockProperties, conf: Conf) {
+                    agg:ContigAggregate, bases:String, i:Int, prev:BlockProperties) {
     val posStart, posEnd = i+agg.startPosition-1
     val ref = bases.substring(prev.pos, i)
     val altsCount = prev.alt.derivedAltsNumber
-    val qualsMap = prepareOutputQualMap(agg, posStart, ref, prev.cov.toShort, conf)
+    val qualsMap = prepareOutputQualMap(agg, posStart, ref, prev.cov.toShort)
     result(ind) = PileupProjection.convertToRow(agg.contig, posStart, posEnd, ref, prev.cov.toShort, (prev.cov-altsCount).toShort,altsCount, prev.alt.toMap, qualsMap)
     prev.alt.clear()
   }
 
-  private def prepareOutputQualMap(agg: ContigAggregate, posStart: Int, ref:String, cov: Short, conf: Conf): Map[Byte, Array[Short]] = {
-    if (!conf.includeBaseQualities)
+  private def prepareOutputQualMap(agg: ContigAggregate, posStart: Int, ref:String, cov: Short): Map[Byte, Array[Short]] = {
+    if (!agg.conf.value.includeBaseQualities)
       return null
 
     val qualsMap = agg.quals(posStart)

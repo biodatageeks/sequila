@@ -1,7 +1,5 @@
 package org.biodatageeks.sequila.pileup.model
 
-
-
 case class ReadSummary(start: Int, end: Int,
                        basesArray: Array[Char],
                        qualsArray: Array[Byte],
