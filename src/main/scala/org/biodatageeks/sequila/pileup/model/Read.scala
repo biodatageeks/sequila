@@ -28,13 +28,14 @@ case class ExtendedReads(read: SAMRecord) {
                  ): Unit = {
     val start = read.getStart
     val cigar = read.getCigar
-    val bQual = read.getBaseQualities
+
     val isPositiveStrand = ! read.getReadNegativeStrandFlag
 
     calculateEvents(contig, agg, contigMaxReadLen, start, cigar)
-    val altPositions = calculateAlts(agg, start, cigar, bQual, isPositiveStrand, conf)
+    val altPositions = calculateAlts(agg, start, cigar, isPositiveStrand)
 
     if (conf.value.includeBaseQualities) {
+      val bQual = read.getBaseQualities
       calculateQuals (agg, altPositions, start, cigar, bQual, isPositiveStrand, conf)
     }
   }
@@ -104,13 +105,13 @@ case class ExtendedReads(read: SAMRecord) {
   }
 
   def calculateAlts(aggregate: ContigAggregate, start: Int,
-                    cigar: Cigar, bQual: Array[Byte],
-                    isPositiveStrand:Boolean, conf: Broadcast[Conf]): scala.collection.Set[Int] = {
+                    cigar: Cigar,
+                    isPositiveStrand:Boolean): scala.collection.Set[Int] = {
     var position = start
     val ops = MDTagParser.parseMDTag(read.getStringAttribute("MD"))
 
     var delCounter = 0
-    var altsPositions = mutable.Set.empty[Int]
+    val altsPositions = mutable.Set.empty[Int]
     val clipLen =
       if (cigar.getCigarElement(0).getOperator == CigarOperator.SOFT_CLIP)
         cigar.getCigarElement(0).getLength else 0
@@ -126,7 +127,6 @@ case class ExtendedReads(read: SAMRecord) {
 
         val indexInSeq = calculatePositionInReadSeq(position - start - delCounter, cigar)
         val altBase = if (isPositiveStrand) read.getReadString.charAt(indexInSeq - 1).toUpper else read.getReadString.charAt(indexInSeq - 1).toLower
-        val altBaseQual = if (conf.value.isBinningEnabled) (bQual(indexInSeq - 1)/conf.value.binSize).toByte else bQual(indexInSeq - 1)
         val altPosition = position - clipLen - 1
 
         aggregate.alts.updateAlts(altPosition, altBase)
