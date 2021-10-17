@@ -107,7 +107,7 @@ case class ExtendedReads(read: SAMRecord) {
                     cigar: Cigar, bQual: Array[Byte],
                     isPositiveStrand:Boolean, conf: Broadcast[Conf]): scala.collection.Set[Int] = {
     var position = start
-    val ops = MDTagParser.parseMDTag(read.getAttribute("MD").toString)
+    val ops = MDTagParser.parseMDTag(read.getStringAttribute("MD"))
 
     var delCounter = 0
     var altsPositions = mutable.Set.empty[Int]
