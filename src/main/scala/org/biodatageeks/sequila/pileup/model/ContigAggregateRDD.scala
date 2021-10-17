@@ -7,7 +7,9 @@ import org.biodatageeks.sequila.pileup.conf.{Conf, QualityConstants}
 import org.biodatageeks.sequila.pileup.serializers.PileupProjection
 import org.biodatageeks.sequila.pileup.model.Alts._
 import org.biodatageeks.sequila.pileup.partitioning.PartitionBounds
+import org.biodatageeks.sequila.utils.DataQualityFuncs
 import org.slf4j.{Logger, LoggerFactory}
+
 import scala.util.control.Breaks._
 
 object AggregateRDDOperations {
@@ -44,7 +46,15 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
         val result = new Array[InternalRow](maxLen)
         val prev = new BlockProperties()
         val startPosition = agg.startPosition
-        val partitionBounds = bounds.value(index)
+        val boundNotNorm = bounds
+          .value(index)
+        //normalize contigs here for performance reason
+        val partitionBounds = boundNotNorm
+            .copy(
+              contigStart = DataQualityFuncs.cleanContig(boundNotNorm.contigStart),
+              contigEnd = DataQualityFuncs.cleanContig(boundNotNorm.contigEnd),
+              wholeContigs = boundNotNorm.wholeContigs.toList.map(r=> DataQualityFuncs.cleanContig(r)).toSet
+          )
         val contig = agg.contig
         val bases = reference.getBasesFromReference(contigMap(agg.contig), agg.startPosition, agg.startPosition + agg.events.length - 1)
 

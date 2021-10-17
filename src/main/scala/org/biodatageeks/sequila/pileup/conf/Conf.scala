@@ -12,7 +12,7 @@ import org.apache.commons.lang3.builder.ToStringStyle;
   var maxQuality:Int = QualityConstants.DEFAULT_MAX_QUAL
   var maxQualityIndex:Int =  QualityConstants.DEFAULT_MAX_QUAL + 1
 
-  var unknownContigName: String = "chrUCN"
+  var unknownContigName: String = "UCN"
 
   override def toString: String = {
     ReflectionToStringBuilder.toString(this, ToStringStyle.SHORT_PREFIX_STYLE)
