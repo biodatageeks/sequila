@@ -72,8 +72,22 @@ trait BDGAlignFileReaderWriter [T <: BDGAlignInputFormat]{
     setLocalConf(sqlContext)
     setHadoopConf(sqlContext)
 
+
+
+
     val spark = sqlContext
       .sparkSession
+
+    val validationStringencyOptLenient = ValidationStringency.LENIENT.toString
+    val validationStringencyOptSilent = ValidationStringency.SILENT.toString
+    val validationStringencyOptStrict = ValidationStringency.STRICT.toString
+
+    val validationStringency =  spark.sqlContext.getConf(InternalParams.BAMValidationStringency) match {
+      case `validationStringencyOptLenient`  => ValidationStringency.LENIENT
+      case `validationStringencyOptSilent`   => ValidationStringency.SILENT
+      case `validationStringencyOptStrict`   => ValidationStringency.STRICT
+      case _ => throw new Exception(s"Unknown validation stringency ${spark.sqlContext.getConf(InternalParams.BAMValidationStringency)}")
+    }
     val resolvedPath = TableFuncs.getExactSamplePath(spark,path)
 //    val folderPath = TableFuncs.getParentFolderPath(spark,path)
     logger.info(s"######## Reading ${resolvedPath} or ${path}")
@@ -97,26 +111,19 @@ trait BDGAlignFileReaderWriter [T <: BDGAlignInputFormat]{
             .sparkContext
             .hadoopConfiguration
             .unset("hadoopbam.bam.intervals")
+
+        logger.info(s"Setting BAM validation stringency to ${validationStringency.toString}")
+        spark
+          .sparkContext
+          .hadoopConfiguration
+          .set(SAMHeaderReader.VALIDATION_STRINGENCY_PROPERTY, validationStringency.toString)
+
         spark.sparkContext
           .newAPIHadoopFile[LongWritable, SAMRecordWritable, T](path)
           .map(r => r._2.get())
       }
       case "disq" => {
         import org.disq_bio.disq.HtsjdkReadsRddStorage
-
-
-          val validationStringencyOptLenient = ValidationStringency.LENIENT.toString
-          val validationStringencyOptSilent = ValidationStringency.SILENT.toString
-          val validationStringencyOptStrict = ValidationStringency.STRICT.toString
-
-        val validationStringency =  spark.sqlContext.getConf(InternalParams.BAMValidationStringency) match {
-          case `validationStringencyOptLenient`  => ValidationStringency.LENIENT
-          case `validationStringencyOptSilent`   => ValidationStringency.SILENT
-          case `validationStringencyOptStrict`   => ValidationStringency.STRICT
-          case _ => throw new Exception(s"Unknown validation stringency ${spark.sqlContext.getConf(InternalParams.BAMValidationStringency)}")
-        }
-
-
         refPath match {
           case Some(ref) => {
           HtsjdkReadsRddStorage
