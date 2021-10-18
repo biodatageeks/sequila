@@ -33,12 +33,13 @@ case class ReadSummary(start: Int, end: Int,
 
   @inline
   def hasDeletionOnPosition(pos: Int): Boolean = {
+    val leftClipLen = cigarDerivedConf.leftClipLength
     if (!cigarDerivedConf.hasDel)
       false
     else {
       cigarDerivedConf
         .indelPositions
-        .delPositions.exists { case (start, end) => pos >= start && pos < end }
+        .delPositions.exists { case (start, end) => pos + leftClipLen >= start && pos + leftClipLen < end }
     }
   }
 }

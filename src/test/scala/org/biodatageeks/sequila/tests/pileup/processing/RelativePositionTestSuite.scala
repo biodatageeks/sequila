@@ -78,12 +78,30 @@ class RelativePositionTestSuite extends FunSuite{
     assert (rs.relativePosition(813676) ==19+4+1+1+2+4+1) // second insert
     assert(rs.relativePosition(813744) == 100) // last index from ref
 
-    //    assert(rs.getBaseQualityForPosition(220108224)==0)
-//    assert(rs.getBaseQualityForPosition(220108325)==0)
-//    assertThrows[java.lang.ArrayIndexOutOfBoundsException](rs.getBaseQualityForPosition(220108326))
-
   }
+  test("relative test #4") {
 
+    val cElement1 = new CigarElement(6, CigarOperator.S)
+    val cElement2 = new CigarElement(6, CigarOperator.M)
+    val cElement3 = new CigarElement(37, CigarOperator.D)
+    val cElement4 = new CigarElement(89, CigarOperator.M)
+
+
+    val c = new Cigar(seqAsJavaList(List(cElement1,cElement2,cElement3, cElement4 )))
+    val len = c.getReadLength
+    val conf = CigarDerivedConf.create(76032260, c)
+    val rs = ReadSummary(76032260, 76032391, new Array[Char](len), new Array[Byte](len), conf)
+
+    assert(len==101)
+    assert(conf.hasDel)
+    assert (rs.relativePosition(76032260) == 6)
+    assert (rs.relativePosition(76032261) == 7)
+    assert (rs.relativePosition(76032262) == 8)
+    assert (rs.relativePosition(76032263) == 9)
+    assert (rs.relativePosition(76032264) == 10)
+    assert (rs.relativePosition(76032265) == 11)
+    assert(rs.hasDeletionOnPosition(76032266))
+  }
 }
 
 
