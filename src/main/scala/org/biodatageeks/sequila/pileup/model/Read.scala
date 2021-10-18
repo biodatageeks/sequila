@@ -136,10 +136,11 @@ case class ExtendedReads(read: SAMRecord) {
   }
 
   def fillBaseQualities(agg: ContigAggregate, altPositions:scala.collection.Set[Int], readSummary: ReadSummary, conf: Broadcast[Conf]): Unit = {
-    val positionsToFill = (read.getAlignmentStart to read.getAlignmentEnd).toArray
+    val start = readSummary.start
+    val end = readSummary.end
     var ind = 0
-    while (ind < positionsToFill.length) {
-      val currPosition = positionsToFill(ind)
+    var currPosition = ind + start
+    while (currPosition <= end) {
       if (!readSummary.hasDeletionOnPosition(currPosition)) {
         val relativePos = if (!readSummary.cigarDerivedConf.hasIndel && !readSummary.cigarDerivedConf.hasClip) currPosition - readSummary.start
         else readSummary.relativePosition(currPosition)
@@ -148,7 +149,7 @@ case class ExtendedReads(read: SAMRecord) {
         else
           agg.quals.updateQuals(currPosition, REF_SYMBOL, readSummary.qualsArray(relativePos), conf)
       }
-      ind += 1
+      currPosition += 1
     }
   }
 }
