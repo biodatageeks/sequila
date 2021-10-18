@@ -174,7 +174,7 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
       .getSequenceDictionary
       .getSequences
       .asScala
-      .map(r => DataQualityFuncs.cleanContig(r.getContig))
+      .map(r => r.getContig)
       .toArray
 
 
@@ -213,11 +213,11 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
         p.takeWhile(r =>
           if (r.getReadUnmappedFlag) true
           else if (i == numPartitions - 1) true // read the whole last partition
-          else if (bounds.wholeContigs.contains(DataQualityFuncs.cleanContig(r.getContig))) true //read all records between upper and lower contigs
+          else if (bounds.wholeContigs.contains(r.getContig) ) true //read all records between upper and lower contigs
           else if (
-            (DataQualityFuncs.cleanContig(r.getContig) == bounds.contigStart && r.getAlignmentStart  <= bounds.posEnd
+            (r.getContig == bounds.contigStart && r.getAlignmentStart  <= bounds.posEnd
               ) ||
-              (DataQualityFuncs.cleanContig(r.getContig)== bounds.contigEnd  && r.getAlignmentEnd <= bounds.posEnd ) ) true
+              (r.getContig == bounds.contigEnd  && r.getAlignmentEnd <= bounds.posEnd ) ) true
           else {
             logger.info(s"Finishing reading partition with read ${r.getReadName}, ${r.getContig}:${r.getAlignmentEnd}")
             false

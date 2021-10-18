@@ -11,6 +11,8 @@ class PileupTestBase extends FunSuite
   with BeforeAndAfter
   with SharedSparkContext{
 
+  System.setSecurityManager(null)
+
   val sampleId = "NA12878.multichrom.md"
   val samResPath: String = getClass.getResource("/multichrom/mdbam/samtools_x.pileup").getPath
   val referencePath: String = getClass.getResource("/reference/Homo_sapiens_assembly18_chr1_chrM.small.fasta").getPath

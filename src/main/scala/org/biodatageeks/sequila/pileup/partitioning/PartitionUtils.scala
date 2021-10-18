@@ -64,12 +64,12 @@ object PartitionUtils {
       }
         adjPartitionBounds(i) =  PartitionBounds(
           lowerBounds(i).idx,
-          DataQualityFuncs.cleanContig(lowerBounds(i).record.getContig),
+          lowerBounds(i).record.getContig,
           if(i ==0) lowerBounds(i).record.getAlignmentStart else previousMaxPos + 1,
-          DataQualityFuncs.cleanContig(upperContig),
+          upperContig,
           maxPos,
           rName,
-          getContigsBetween(DataQualityFuncs.cleanContig(lowerBounds(i).record.getContig), upperContig, contigsList )
+          getContigsBetween(lowerBounds(i).record.getContig, upperContig, contigsList )
         )
       i += 1
       previousMaxPos = maxPos
@@ -77,7 +77,7 @@ object PartitionUtils {
     val lastIdx = lowerBounds.length - 1
     adjPartitionBounds(lastIdx) = PartitionBounds(
       lowerBounds(lastIdx).idx,
-      DataQualityFuncs.cleanContig(lowerBounds(lastIdx).record.getContig),
+      lowerBounds(lastIdx).record.getContig,
       if(lastIdx > 0 && lowerBounds(lastIdx).record.getContig == lowerBounds(lastIdx - 1).record.getContig)
         previousMaxPos + 1
       else
@@ -101,9 +101,8 @@ private def getContigsBetween(startContig: String, endContig: String, contigsLis
       r => {
         val maxPos = r.posEnd
         val maxIndex = lowerBounds
-          .filter( l => DataQualityFuncs.cleanContig(l.record.getContig) == r.contigEnd)
+          .filter( l => l.record.getContig == r.contigEnd)
           .takeWhile( p => p.record.getAlignmentStart <= maxPos)
-
         if (maxIndex.nonEmpty)
           maxIndex.takeRight(1)(0).idx
         else
