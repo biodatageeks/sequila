@@ -24,7 +24,6 @@ case class ContigAggregate(
                                 ) {
 
   def hasAltOnPosition(pos:Int):Boolean = alts.contains(pos)
-  def trimQuals: MultiLociQuals = if(quals != null) quals.trim(conf) else null
 
   def calculateMaxLength(allPositions: Boolean): Int = {
     if (! allPositions)
@@ -44,7 +43,7 @@ case class ContigAggregate(
     alts.updateAlts(pos, alt)
   }
 
-  def updateQuals(pos: Int, alt: Char, quality: Byte, firstUpdate: Boolean = false, updateMax:Boolean = true): Unit = {
-      quals.updateQuals(pos, alt,quality, firstUpdate, updateMax, conf)
+  def updateQuals(pos: Int, alt: Char, quality: Byte): Unit = {
+      quals.updateQuals(pos, alt,quality, conf)
   }
 }

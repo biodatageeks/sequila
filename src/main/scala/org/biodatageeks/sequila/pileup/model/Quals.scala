@@ -25,20 +25,7 @@ object Quals {
         else x.zipAll(y, 0.toShort, 0.toShort).map(a => (a._1 + a._2).toShort)
       }}
 
-    def trim(conf: Broadcast[Conf]): SingleLocusQuals = {
-      arr.map({ array =>
-        if (array != null) {
-          val maxIndex = array.last
-          if (maxIndex < conf.value.maxQuality)
-            array.take(maxIndex + 1)
-          else
-            array.dropRight(1) // remove maxQuality from array
-        }
-        else null
-      })
-    }
-
-    def addQualityForBase(base: Char, quality: Byte, updateMax: Boolean, conf: Broadcast[Conf]): Unit = {
+    def addQualityForBase(base: Char, quality: Byte, conf: Broadcast[Conf]): Unit = {
       val qualityIndex = if (conf.value.isBinningEnabled) (quality / conf.value.binSize).toShort else quality
       val arrSize = conf.value.qualityArrayLength
       val altArrIndex = base - QualityConstants.QUAL_INDEX_SHIFT
@@ -46,15 +33,7 @@ object Quals {
       if (arr(altArrIndex) == null) {
         val array = new Array[Short](arrSize)
         array(qualityIndex) = 1.toShort // no need for incrementing. first and last time here.
-        array(arrSize - 1) = qualityIndex
         arr(altArrIndex) = array
-        return
-      }
-
-      if (updateMax) {
-        arr(altArrIndex)(qualityIndex) = (arr(altArrIndex)(qualityIndex) + 1).toShort
-        if (qualityIndex > arr(altArrIndex).last)
-          arr(altArrIndex)(arrSize - 1) = qualityIndex
         return
       }
 
@@ -73,33 +52,19 @@ object Quals {
     def ++(that: Quals.MultiLociQuals): Quals.MultiLociQuals = (map ++ that)
 
 
-    def trim(conf: Broadcast[Conf]): MultiLociQuals = map.map({ case (k, v) => k -> v.trim(conf)})
 
     @inline
-    def updateQuals(position: Int, base: Char, quality: Byte, firstUpdate: Boolean = false,
-                    updateMax: Boolean = false,
-                    conf: Broadcast[Conf]): Unit = {
+    def updateQuals(position: Int, base: Char, quality: Byte, conf: Broadcast[Conf]): Unit = {
       if (map.contains(position)) {
-        map(position).addQualityForBase(base, quality, updateMax, conf)
+        map(position).addQualityForBase(base, quality, conf)
       }
       else {
         val singleLocusQualMap = new SingleLocusQuals(QualityConstants.OUTER_QUAL_SIZE)
-        singleLocusQualMap.addQualityForBase(base, quality, updateMax, conf)
+        singleLocusQualMap.addQualityForBase(base, quality, conf)
         map.update(position, singleLocusQualMap)
       }
     }
 
-    def merge(mapOther: MultiLociQuals): MultiLociQuals = {
-      val fastMerge = FastMath.merge(map, mapOther)
-      if (fastMerge.isDefined)
-        return fastMerge.get.asInstanceOf[MultiLociQuals]
-
-      var mergedQualsMap = new MultiLociQuals()
-      for (k <- map.keySet ++ mapOther.keySet) {
-        mergedQualsMap += k -> map.getOrElse(k, new SingleLocusQuals(QualityConstants.OUTER_QUAL_SIZE)).merge(mapOther.getOrElse(k, new SingleLocusQuals(QualityConstants.OUTER_QUAL_SIZE)))
-      }
-      mergedQualsMap
-    }
 
     def getTotalEntries: Long = {
       map.map { case (k, v) => k -> map(k).totalEntries }.foldLeft(0L)(_ + _._2)
