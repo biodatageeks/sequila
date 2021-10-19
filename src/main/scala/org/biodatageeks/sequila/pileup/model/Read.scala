@@ -34,11 +34,11 @@ case class ExtendedReads(read: SAMRecord) {
 
     if (conf.value.includeBaseQualities) {
       val bQual = read.getBaseQualities
-      calculateQuals (agg, altPositions, start, cigar, bQual, isPositiveStrand, conf)
+      calculateQuals (agg, altPositions, start, cigar, bQual, isPositiveStrand, conf.value)
     }
   }
 
-  def calculateQuals(agg: ContigAggregate, altPositions:scala.collection.Set[Int],start: Int, cigar: Cigar, bQual: Array[Byte], isPositiveStrand:Boolean, conf: Broadcast[Conf]):Unit = {
+  def calculateQuals(agg: ContigAggregate, altPositions:scala.collection.Set[Int],start: Int, cigar: Cigar, bQual: Array[Byte], isPositiveStrand:Boolean, conf: Conf):Unit = {
     val cigarConf = CigarDerivedConf.create(start, cigar)
     val readBases = if (isPositiveStrand) read.getReadBases.map(_.toChar.toUpper) else read.getReadBases.map(_.toChar.toLower)
     val readQualSummary = ReadSummary(start, read.getEnd, readBases, bQual, cigarConf)
@@ -135,11 +135,11 @@ case class ExtendedReads(read: SAMRecord) {
     altsPositions
   }
 
-  def fillBaseQualities(agg: ContigAggregate, altPositions:scala.collection.Set[Int], readSummary: ReadSummary, conf: Broadcast[Conf]): Unit = {
+
+  def fillBaseQualities(agg: ContigAggregate, altPositions:scala.collection.Set[Int], readSummary: ReadSummary, conf:Conf): Unit = {
     val start = readSummary.start
     val end = readSummary.end
-    var ind = 0
-    var currPosition = ind + start
+    var currPosition = start
     while (currPosition <= end) {
       if (!readSummary.hasDeletionOnPosition(currPosition)) {
         val relativePos = if (!readSummary.cigarDerivedConf.hasIndel && !readSummary.cigarDerivedConf.hasClip) currPosition - readSummary.start

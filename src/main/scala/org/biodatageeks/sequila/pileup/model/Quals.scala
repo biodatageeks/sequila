@@ -25,27 +25,28 @@ object Quals {
         else x.zipAll(y, 0.toShort, 0.toShort).map(a => (a._1 + a._2).toShort)
       }}
 
-    def addQualityForBase(base: Char, quality: Byte, conf: Broadcast[Conf]): Unit = {
-      val qualityIndex = if (conf.value.isBinningEnabled) (quality / conf.value.binSize).toShort else quality
-      val arrSize = conf.value.qualityArrayLength
+
+    def addQualityForBase(base: Char, quality: Byte, conf: Conf): Unit = {
+      val qualityIndex = if (conf.isBinningEnabled) (quality / conf.binSize).toShort else quality
       val altArrIndex = base - QualityConstants.QUAL_INDEX_SHIFT
-
-      if (arr(altArrIndex) == null) {
-        val array = new Array[Short](arrSize)
-        array(qualityIndex) = 1.toShort // no need for incrementing. first and last time here.
-        arr(altArrIndex) = array
-        return
-      }
-
-      if (qualityIndex >= arr(altArrIndex).length) {
-        val array = new Array[Short](arrSize)
-        System.arraycopy(arr(altArrIndex), 0, array, 0, arr(altArrIndex).length)
-        array(qualityIndex) = 1.toShort
-        arr(altArrIndex) = array
-        return
-      }
       arr(altArrIndex)(qualityIndex) = (arr(altArrIndex)(qualityIndex) + 1).toShort
     }
+
+    def allocateArrays (conf: Conf):Unit = {
+      val arrSize = conf.qualityArrayLength
+      arr('A' - QualityConstants.QUAL_INDEX_SHIFT) = new Array[Short](arrSize)
+      arr('C' - QualityConstants.QUAL_INDEX_SHIFT) = new Array[Short](arrSize)
+      arr('T' - QualityConstants.QUAL_INDEX_SHIFT) = new Array[Short](arrSize)
+      arr('G' - QualityConstants.QUAL_INDEX_SHIFT) = new Array[Short](arrSize)
+      arr('N' - QualityConstants.QUAL_INDEX_SHIFT) = new Array[Short](arrSize)
+      arr('a' - QualityConstants.QUAL_INDEX_SHIFT) = new Array[Short](arrSize)
+      arr('c' - QualityConstants.QUAL_INDEX_SHIFT) = new Array[Short](arrSize)
+      arr('t' - QualityConstants.QUAL_INDEX_SHIFT) = new Array[Short](arrSize)
+      arr('g' - QualityConstants.QUAL_INDEX_SHIFT) = new Array[Short](arrSize)
+      arr('n' - QualityConstants.QUAL_INDEX_SHIFT) = new Array[Short](arrSize)
+      arr(QualityConstants.REF_SYMBOL - QualityConstants.QUAL_INDEX_SHIFT) = new Array[Short](arrSize)
+    }
+
   }
 
   implicit class MultiLociQualsExtension(val map: Quals.MultiLociQuals) {
@@ -54,12 +55,13 @@ object Quals {
 
 
     @inline
-    def updateQuals(position: Int, base: Char, quality: Byte, conf: Broadcast[Conf]): Unit = {
+    def updateQuals(position: Int, base: Char, quality: Byte, conf: Conf): Unit = {
       if (map.contains(position)) {
         map(position).addQualityForBase(base, quality, conf)
       }
       else {
         val singleLocusQualMap = new SingleLocusQuals(QualityConstants.OUTER_QUAL_SIZE)
+        singleLocusQualMap.allocateArrays(conf)
         singleLocusQualMap.addQualityForBase(base, quality, conf)
         map.update(position, singleLocusQualMap)
       }

@@ -43,7 +43,4 @@ case class ContigAggregate(
     alts.updateAlts(pos, alt)
   }
 
-  def updateQuals(pos: Int, alt: Char, quality: Byte): Unit = {
-      quals.updateQuals(pos, alt,quality, conf)
-  }
 }
