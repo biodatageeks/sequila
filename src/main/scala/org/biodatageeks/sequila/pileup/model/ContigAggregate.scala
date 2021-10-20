@@ -20,7 +20,6 @@ case class ContigAggregate(
                             quals: MultiLociQuals,
                             startPosition: Int = 0,
                             maxPosition: Int = 0,
-                            shrinkedEventsArraySize: Int = 0,
                             conf: Broadcast[Conf]
                                 ) {
 

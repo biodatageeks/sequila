@@ -94,11 +94,9 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
         contigEventAgg.trimQuals,
         contigEventAgg.startPosition,
         contigEventAgg.startPosition + maxIndex,
-        0,
         conf
       )
       output(i) = agg
-
       i += 1
     }
     output
@@ -121,7 +119,6 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
       startPosition = read.getStart,
       maxPosition = contigLen - 1,
       conf = conf )
-
     aggMap += contig -> contigEventAggregate
   }
 
