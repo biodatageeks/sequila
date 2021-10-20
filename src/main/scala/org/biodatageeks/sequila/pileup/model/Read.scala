@@ -40,9 +40,9 @@ case class ExtendedReads(read: SAMRecord) {
 
   def calculateQuals(agg: ContigAggregate, altPositions:scala.collection.Set[Int],start: Int, cigar: Cigar, bQual: Array[Byte], isPositiveStrand:Boolean, conf: Conf):Unit = {
     val cigarConf = CigarDerivedConf.create(start, cigar)
-    val readBases = if (isPositiveStrand) read.getReadBases.map(_.toChar.toUpper) else read.getReadBases.map(_.toChar.toLower)
-    val readQualSummary = ReadSummary(start, read.getEnd, readBases, bQual, cigarConf)
-    fillBaseQualities(agg, altPositions, readQualSummary, conf)
+    //val readBases = if (isPositiveStrand) read.getReadBases.map(_.toChar.toUpper) else read.getReadBases.map(_.toChar.toLower)
+    val readQualSummary = ReadSummary(start, read.getEnd, read.getReadBases, bQual, cigarConf)
+    fillBaseQualities(agg, altPositions, readQualSummary, isPositiveStrand, conf)
   }
 
   def calculateEvents(aggregate: ContigAggregate,
@@ -136,7 +136,7 @@ case class ExtendedReads(read: SAMRecord) {
   }
 
 
-  def fillBaseQualities(agg: ContigAggregate, altPositions:scala.collection.Set[Int], readSummary: ReadSummary, conf:Conf): Unit = {
+  def fillBaseQualities(agg: ContigAggregate, altPositions:scala.collection.Set[Int], readSummary: ReadSummary, isPositive:Boolean, conf:Conf): Unit = {
     val start = readSummary.start
     val end = readSummary.end
     var currPosition = start
@@ -144,9 +144,10 @@ case class ExtendedReads(read: SAMRecord) {
       if (!readSummary.hasDeletionOnPosition(currPosition)) {
         val relativePos = if (!readSummary.cigarDerivedConf.hasIndel && !readSummary.cigarDerivedConf.hasClip) currPosition - readSummary.start
         else readSummary.relativePosition(currPosition)
-        if (altPositions.contains(currPosition))
-          agg.quals.updateQuals(currPosition, readSummary.basesArray(relativePos), readSummary.qualsArray(relativePos),  conf)
-        else
+        if (altPositions.contains(currPosition)) {
+          val base = if(isPositive)  readSummary.basesArray(relativePos).toChar.toUpper else readSummary.basesArray(relativePos).toChar.toLower
+          agg.quals.updateQuals(currPosition, base, readSummary.qualsArray(relativePos), conf)
+        } else
           agg.quals.updateQuals(currPosition, REF_SYMBOL, readSummary.qualsArray(relativePos), conf)
       }
       currPosition += 1

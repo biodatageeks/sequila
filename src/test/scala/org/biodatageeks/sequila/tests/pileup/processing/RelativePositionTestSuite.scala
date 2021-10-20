@@ -17,7 +17,7 @@ class RelativePositionTestSuite extends FunSuite{
     val len = c.getReadLength
     val conf = CigarDerivedConf.create(7801998, c)
 
-    val rs = ReadSummary(7801998, 7801998 + len, new Array[Char](len), new Array[Byte](len), conf)
+    val rs = ReadSummary(7801998, 7801998 + len, new Array[Byte](len), new Array[Byte](len), conf)
 
     assert(len==101)
     assert(conf.hasDel)
@@ -39,7 +39,7 @@ class RelativePositionTestSuite extends FunSuite{
 
     val conf = CigarDerivedConf.create(220108224, c)
 
-    val rs = ReadSummary(220108224, 220108224 + len, new Array[Char](len), new Array[Byte](len), conf)
+    val rs = ReadSummary(220108224, 220108224 + len, new Array[Byte](len), new Array[Byte](len), conf)
 
     assert(len==101)
     assert(conf.hasDel)
@@ -66,7 +66,7 @@ class RelativePositionTestSuite extends FunSuite{
     val c = new Cigar(seqAsJavaList(List(cElement1,cElement2,cElement3, cElement4,cElement5,cElement6,cElement7, cElement8,cElement9 )))
     val len = c.getReadLength
     val conf = CigarDerivedConf.create(813652, c)
-    val rs = ReadSummary(813652, 813744, new Array[Char](len), new Array[Byte](len), conf)
+    val rs = ReadSummary(813652, 813744, new Array[Byte](len), new Array[Byte](len), conf)
 
     assert(len==101)
     assert(conf.hasDel)
@@ -90,7 +90,7 @@ class RelativePositionTestSuite extends FunSuite{
     val c = new Cigar(seqAsJavaList(List(cElement1,cElement2,cElement3, cElement4 )))
     val len = c.getReadLength
     val conf = CigarDerivedConf.create(76032260, c)
-    val rs = ReadSummary(76032260, 76032391, new Array[Char](len), new Array[Byte](len), conf)
+    val rs = ReadSummary(76032260, 76032391, new Array[Byte](len), new Array[Byte](len), conf)
 
     assert(len==101)
     assert(conf.hasDel)
