@@ -42,6 +42,7 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
       val aggMap = new mutable.HashMap[String, ContigAggregate]()
       val contigMaxReadLen = new mutable.HashMap[String, Int]()
       var contigIter, contigCleanIter  = ""
+      var currentContig = ""
       var contigAggregate: ContigAggregate = null
         while (partition.hasNext) {
           val read = partition.next()
@@ -53,12 +54,11 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
               contigCleanIter =  DataQualityFuncs.cleanContig(contigIter)
               contigCleanIter
             }
-
-          if (!aggMap.contains(contig))
-
+          if ( contig != currentContig ) {
               handleFirstReadForContigInPartition(read, contig, contigLenMap, contigMaxReadLen, aggMap, conf)
-              contigAggregate = aggMap(contig)
-
+              currentContig = contig
+          }
+          contigAggregate = aggMap(contig)
           read.analyzeRead(contig, contigAggregate, contigMaxReadLen, conf)
         }
         val aggregates = prepareOutputAggregates(aggMap, contigMaxReadLen, conf).toIterator
