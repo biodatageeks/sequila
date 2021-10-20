@@ -23,7 +23,6 @@ case class ExtendedReads(read: SAMRecord) {
 
   def analyzeRead(contig: String,
                   agg: ContigAggregate,
-                  contigMaxReadLen: mutable.HashMap[String, Int],
                   conf : Broadcast[Conf]
                  ): Unit = {
     val start = read.getStart
@@ -31,7 +30,7 @@ case class ExtendedReads(read: SAMRecord) {
 
     val isPositiveStrand = ! read.getReadNegativeStrandFlag
 
-    calculateEvents(contig, agg, contigMaxReadLen, start, cigar)
+    calculateEvents(contig, agg, start, cigar)
     val altPositions = calculateAlts(agg, start, cigar, isPositiveStrand)
 
     if (conf.value.includeBaseQualities) {
@@ -47,7 +46,7 @@ case class ExtendedReads(read: SAMRecord) {
     fillBaseQualities(agg, altPositions, readQualSummary, conf)
   }
 
-  def calculateEvents(contig: String, aggregate: ContigAggregate, contigMaxReadLen: mutable.HashMap[String, Int],
+  def calculateEvents(contig: String, aggregate: ContigAggregate,
                       start: Int, cigar: Cigar): Unit = {
     val partitionStart = aggregate.startPosition
     var position = start
@@ -77,7 +76,6 @@ case class ExtendedReads(read: SAMRecord) {
         position += cigarOperatorLen
 
     }
-    updateMaxCigarInContig(cigarLen, contig, contigMaxReadLen)
   }
 
 
@@ -137,12 +135,6 @@ case class ExtendedReads(read: SAMRecord) {
     }
     altsPositions
   }
-
-  def updateMaxCigarInContig(cigarLen: Int, contig: String, contigMaxReadLen: mutable.HashMap[String, Int]): Unit = {
-    if (cigarLen > contigMaxReadLen(contig))
-      contigMaxReadLen(contig) = cigarLen
-  }
-
 
   def fillBaseQualities(agg: ContigAggregate, altPositions:scala.collection.Set[Int], readSummary: ReadSummary, conf: Broadcast[Conf]): Unit = {
     val positionsToFill = (read.getAlignmentStart to read.getAlignmentEnd).toArray

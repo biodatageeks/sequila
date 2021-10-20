@@ -21,7 +21,6 @@ case class ContigAggregate(
                             startPosition: Int = 0,
                             maxPosition: Int = 0,
                             shrinkedEventsArraySize: Int = 0,
-                            maxSeqLen:Int = 0,
                             conf: Broadcast[Conf]
                                 ) {
 
