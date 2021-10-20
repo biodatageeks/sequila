@@ -21,8 +21,7 @@ case class TruncRead(rName: String, contig: String, posStart: Int, posEnd: Int)
 
 case class ExtendedReads(read: SAMRecord) {
 
-  def analyzeRead(contig: String,
-                  agg: ContigAggregate,
+  def analyzeRead(agg: ContigAggregate,
                   conf : Broadcast[Conf]
                  ): Unit = {
     val start = read.getStart
@@ -30,7 +29,7 @@ case class ExtendedReads(read: SAMRecord) {
 
     val isPositiveStrand = ! read.getReadNegativeStrandFlag
 
-    calculateEvents(contig, agg, start, cigar)
+    calculateEvents(agg, start, cigar)
     val altPositions = calculateAlts(agg, start, cigar, isPositiveStrand)
 
     if (conf.value.includeBaseQualities) {
@@ -46,7 +45,7 @@ case class ExtendedReads(read: SAMRecord) {
     fillBaseQualities(agg, altPositions, readQualSummary, conf)
   }
 
-  def calculateEvents(contig: String, aggregate: ContigAggregate,
+  def calculateEvents(aggregate: ContigAggregate,
                       start: Int, cigar: Cigar): Unit = {
     val partitionStart = aggregate.startPosition
     var position = start

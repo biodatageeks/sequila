@@ -58,7 +58,7 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
               currentContig = contig
           }
           contigAggregate = aggMap(contig)
-          read.analyzeRead(contig, contigAggregate, conf)
+          read.analyzeRead(contigAggregate, conf)
         }
         val aggregates = prepareOutputAggregates(aggMap, conf).toIterator
         aggregates
