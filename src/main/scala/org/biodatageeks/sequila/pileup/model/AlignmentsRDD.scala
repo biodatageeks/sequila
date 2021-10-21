@@ -40,8 +40,7 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
 
     this.rdd.mapPartitions { partition =>
       val aggMap = new mutable.HashMap[String, ContigAggregate]()
-      var contigIter, contigCleanIter  = ""
-      var currentContig = ""
+      var contigIter, contigCleanIter,  currentContig  = ""
       var contigAggregate: ContigAggregate = null
         while (partition.hasNext) {
           val read = partition.next()
