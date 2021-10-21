@@ -44,15 +44,13 @@ object Quals {
       arr('t' - QualityConstants.QUAL_INDEX_SHIFT) = new Array[Short](arrSize)
       arr('g' - QualityConstants.QUAL_INDEX_SHIFT) = new Array[Short](arrSize)
       arr('n' - QualityConstants.QUAL_INDEX_SHIFT) = new Array[Short](arrSize)
-      arr(QualityConstants.REF_SYMBOL - QualityConstants.QUAL_INDEX_SHIFT) = new Array[Short](arrSize)
+      //arr(QualityConstants.REF_SYMBOL - QualityConstants.QUAL_INDEX_SHIFT) = new Array[Short](arrSize)
     }
 
   }
 
   implicit class MultiLociQualsExtension(val map: Quals.MultiLociQuals) {
     def ++(that: Quals.MultiLociQuals): Quals.MultiLociQuals = (map ++ that)
-
-
 
     @inline
     def updateQuals(position: Int, base: Char, quality: Byte, conf: Conf): Unit = {
