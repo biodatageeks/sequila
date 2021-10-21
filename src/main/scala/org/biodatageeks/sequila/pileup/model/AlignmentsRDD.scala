@@ -33,13 +33,14 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
     *
     * @return distributed collection of PileupRecords
     */
-  def assembleContigAggregates(conf: Broadcast[Conf]): RDD[ContigAggregate] = {
+  def assembleContigAggregates(bounds: Broadcast[Array[PartitionBounds]], conf: Broadcast[Conf]): RDD[ContigAggregate] = {
     val contigLenMap = initContigLengths(this.rdd.first())
 
-    this.rdd.mapPartitions { partition =>
+    this.rdd.mapPartitionsWithIndex { (index, partition) =>
       val aggMap = new mutable.HashMap[String, ContigAggregate]()
       var contigIter, contigCleanIter,  currentContig  = ""
       var contigAggregate: ContigAggregate = null
+      val partBound = bounds.value(index)
         while (partition.hasNext) {
           val read = partition.next()
           val contig =
@@ -56,6 +57,7 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
           }
           contigAggregate = aggMap(contig)
           read.analyzeRead(contigAggregate, conf)
+
         }
       aggMap.valuesIterator
     }
@@ -63,10 +65,10 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
 
   private def handleFirstReadForContigInPartition(read: SAMRecord, contig: String, contigLenMap: Map[String, Int],
                                                   aggMap: mutable.HashMap[String, ContigAggregate],
-                                                  conf: Broadcast[Conf]
+                                                  bound: PartitionBounds, conf: Broadcast[Conf]
                                                   ):Unit = {
     val contigLen = contigLenMap(contig)
-    val arrayLen = contigLen - read.getStart + 10
+    val arrayLen = calculateEventArraySize(read.getStart, contig, contigLen, bound, conf.value)
 
     val contigEventAggregate = ContigAggregate(
       contig = contig,
@@ -78,6 +80,19 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
       maxPosition = contigLen - 1,
       conf = conf )
     aggMap += contig -> contigEventAggregate
+  }
+
+  private def calculateEventArraySize (start:Int, contig: String, contigLen: Int, bound: PartitionBounds, conf: Conf): Int = {
+//    if (contig == bound.contigStart && contig == bound.contigEnd)
+//      bound.posEnd - bound.postStart + 10
+//    else if (contig == bound.contigStart && contig == conf.unknownContigName)
+//      contigLen - bound.postStart + 10
+//    else //if (contig != bound.contigStart && contig == bound.contigEnd)
+//      bound.posEnd - start + 10
+
+    contigLen - start + 10
+
+
   }
 
   /**

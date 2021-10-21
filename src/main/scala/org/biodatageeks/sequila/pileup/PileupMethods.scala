@@ -24,7 +24,7 @@ object PileupMethods {
     * @return distributed collection of PileupRecords
     */
   def calculatePileup(alignments: RDD[SAMRecord], bounds: Broadcast[Array[PartitionBounds]], spark: SparkSession, refPath: String, conf : Broadcast[Conf]): RDD[InternalRow] = {
-    val aggregates = alignments.assembleContigAggregates(conf)
+    val aggregates = alignments.assembleContigAggregates(bounds, conf)
     val pileup = aggregates.toPileup(refPath, conf, bounds)
     pileup
   }
