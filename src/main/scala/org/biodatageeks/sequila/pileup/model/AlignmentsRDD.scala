@@ -1,7 +1,5 @@
 package org.biodatageeks.sequila.pileup.model
 
-import java.util
-
 import htsjdk.samtools.SAMRecord
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
@@ -14,7 +12,7 @@ import org.biodatageeks.sequila.pileup.model.ReadOperations.implicits._
 import org.biodatageeks.sequila.pileup.partitioning.{LowerPartitionBoundAlignmentRecord, PartitionBounds, PartitionUtils, RangePartitionCoalescer}
 import org.biodatageeks.sequila.rangejoins.IntervalTree.Interval
 import org.biodatageeks.sequila.rangejoins.methods.IntervalTree.IntervalHolderChromosome
-import org.biodatageeks.sequila.utils.{DataQualityFuncs, FastMath, InternalParams}
+import org.biodatageeks.sequila.utils.{DataQualityFuncs, InternalParams}
 import org.seqdoop.hadoop_bam.BAMBDGInputFormat
 import org.slf4j.{Logger, LoggerFactory}
 
@@ -59,49 +57,9 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
           contigAggregate = aggMap(contig)
           read.analyzeRead(contigAggregate, conf)
         }
-        val aggregates = prepareOutputAggregates(aggMap, conf).toIterator
-        aggregates
-
+      aggMap.valuesIterator
     }
   }
-
-
-  /**
-    * transforms map structure of contigEventAggregates, by reducing number of last zeroes in the cov array
-    * also adds calculated maxCigar len to output
-    *
-    * @param aggMap   mapper between contig and contigEventAggregate
-    * @param cigarMap mapper between contig and max length of cigar in given
-    * @return
-    */
-  def prepareOutputAggregates(aggMap: mutable.HashMap[String, ContigAggregate],
-                             conf: Broadcast[Conf]): Array[ContigAggregate] = {
-    val output = new Array[ContigAggregate](aggMap.size)
-    var i = 0
-    val iter = aggMap.toIterator
-    while(iter.hasNext){
-      val nextVal = iter.next()
-      val contig = nextVal._1
-      val contigEventAgg = nextVal._2
-
-      val maxIndex: Int = FastMath.findMaxIndex(contigEventAgg.events)
-      val agg = ContigAggregate(
-        contig,
-        contigEventAgg.contigLen,
-        util.Arrays.copyOfRange(contigEventAgg.events, 0, maxIndex + 1), //FIXME: https://stackoverflow.com/questions/37969193/why-is-array-slice-so-shockingly-slow
-        contigEventAgg.alts,
-        contigEventAgg.quals,
-        //contigEventAgg.trimQuals,
-        contigEventAgg.startPosition,
-        contigEventAgg.startPosition + maxIndex,
-        conf
-      )
-      output(i) = agg
-      i += 1
-    }
-    output
-  }
-
 
   private def handleFirstReadForContigInPartition(read: SAMRecord, contig: String, contigLenMap: Map[String, Int],
                                                   aggMap: mutable.HashMap[String, ContigAggregate],

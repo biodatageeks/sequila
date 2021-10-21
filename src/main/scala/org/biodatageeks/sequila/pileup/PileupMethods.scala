@@ -19,7 +19,7 @@ object PileupMethods {
   /**
     * implementation of pileup algorithm
     *
-    * @param alignments aligned reads
+    * @param alignments aligned reads repartitions
     * @param spark spark session
     * @return distributed collection of PileupRecords
     */

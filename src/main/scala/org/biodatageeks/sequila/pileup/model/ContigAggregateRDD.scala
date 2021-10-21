@@ -9,7 +9,7 @@ import org.biodatageeks.sequila.pileup.model.Alts._
 import org.biodatageeks.sequila.pileup.model.Quals.SingleLocusQuals
 import org.biodatageeks.sequila.pileup.model.Quals.SingleLocusQuals._
 import org.biodatageeks.sequila.pileup.partitioning.PartitionBounds
-import org.biodatageeks.sequila.utils.DataQualityFuncs
+import org.biodatageeks.sequila.utils.{DataQualityFuncs, FastMath}
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.util.control.Breaks._
@@ -41,10 +41,12 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
       val contigMap = reference.getNormalizedContigMap
       PileupProjection.setContigMap(contigMap)
 
+
       part.map { agg => {
         var cov, ind, i, currPos = 0
         val allPos = false
         val maxLen = agg.calculateMaxLength(allPos)
+        val maxIndex = FastMath.findMaxIndex(agg.events)
         val result = new Array[InternalRow](maxLen)
         val prev = new BlockProperties()
         val startPosition = agg.startPosition
@@ -58,10 +60,10 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
               wholeContigs = boundNotNorm.wholeContigs.toList.map(r=> DataQualityFuncs.cleanContig(r)).toSet
           )
         val contig = agg.contig
-        val bases = reference.getBasesFromReference(contigMap(agg.contig), agg.startPosition, agg.startPosition + agg.events.length - 1)
+        val bases = reference.getBasesFromReference(contigMap(agg.contig), agg.startPosition, agg.startPosition + maxIndex)
 
 breakable {
-  while (i < agg.events.length) { // repartition change -> no shrinking, we have to go through whole array
+  while (i <= maxIndex) { // repartition change -> no shrinking, we have to go through whole array
     currPos = i + startPosition
     cov += agg.events(i)
     if (isInPartitionRange(currPos - 1 , contig, partitionBounds, conf)) {
