@@ -50,15 +50,7 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
         val result = new Array[InternalRow](maxLen)
         val prev = new BlockProperties()
         val startPosition = agg.startPosition
-        val boundNotNorm = bounds
-          .value(index)
-        //normalize contigs here for performance reason
-        val partitionBounds = boundNotNorm
-            .copy(
-              contigStart = DataQualityFuncs.cleanContig(boundNotNorm.contigStart),
-              contigEnd = DataQualityFuncs.cleanContig(boundNotNorm.contigEnd),
-              wholeContigs = boundNotNorm.wholeContigs.toList.map(r=> DataQualityFuncs.cleanContig(r)).toSet
-          )
+        val partitionBounds = bounds.value(index)
         val contig = agg.contig
         val bases = reference.getBasesFromReference(contigMap(agg.contig), agg.startPosition, agg.startPosition + maxIndex)
 

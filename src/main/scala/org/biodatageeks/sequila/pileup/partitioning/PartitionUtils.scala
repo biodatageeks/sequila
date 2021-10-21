@@ -13,7 +13,15 @@ case class LowerPartitionBoundAlignmentRecord(idx: Int, record: SAMRecord)
 case class PartitionBounds(idx: Int, contigStart: String, postStart: Int,
                            contigEnd: String, posEnd: Int,
                            readName: Option[String] = None ,
-                           wholeContigs: Set[String] = Set[String]())
+                           wholeContigs: Set[String] = Set[String]()) {
+  def normalize():PartitionBounds ={
+    copy(
+      contigStart = DataQualityFuncs.cleanContig(contigStart),
+      contigEnd = DataQualityFuncs.cleanContig(contigEnd),
+      wholeContigs = wholeContigs.toList.map(r=> DataQualityFuncs.cleanContig(r)).toSet
+    )}
+}
+
 object PartitionUtils {
 
   val logger =  Logger.getLogger(this.getClass.getCanonicalName)
@@ -115,5 +123,10 @@ private def getContigsBetween(startContig: String, endContig: String, contigsLis
     a
       .map( r => s"${r.record.getContig}:${r.record.getStart}-${r.record.getStart}")
       .mkString(",")
+  }
+
+  def normalizeBounds(adjBounds: Array[PartitionBounds]): Array[PartitionBounds] = {
+    adjBounds.map {_.normalize()}
+
   }
 }

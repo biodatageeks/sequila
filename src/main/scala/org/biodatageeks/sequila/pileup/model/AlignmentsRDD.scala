@@ -154,7 +154,9 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
     val lowerBounds = getPartitionLowerBound // get the start of first read in partition
     val adjBounds = getPartitionBounds(reader, conf, lowerBounds)
     val maxEndIndex = PartitionUtils.getMaxEndPartitionIndex(adjBounds, lowerBounds)
+    val normalizedBounds = adjBounds.map {_.normalize()}
     val broadcastBounds = this.rdd.sparkContext.broadcast(adjBounds)
+    val normBroadcastBounds = this.rdd.sparkContext.broadcast(normalizedBounds)
     logger.info(s"Final partition bounds: ${adjBounds.mkString("|")}")
     logger.info(s"MaxEndIndex list ${maxEndIndex.mkString("|")}")
     val alignments2 = alignments.coalesce(alignments.getNumPartitions,false, Some(new RangePartitionCoalescer(maxEndIndex.map(r=> new Integer(r )).asJava )) )
@@ -175,6 +177,6 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
           })
       }
     }
-    (adjustedAlignments, broadcastBounds)
+    (adjustedAlignments, normBroadcastBounds)
   }
 }
