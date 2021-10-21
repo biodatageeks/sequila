@@ -96,6 +96,8 @@ assemblyMergeStrategy in assembly := {
   case PathList("shadeio", xs@_*) => MergeStrategy.first
   case PathList("au", xs@_*) => MergeStrategy.first
   case PathList("htsjdk", xs@_*) => MergeStrategy.first
+  case PathList("jersey", xs@_*) => MergeStrategy.first
+  case PathList("scala", xs@_*) => MergeStrategy.first
   case ("META-INF/org/apache/logging/log4j/core/config/plugins/Log4j2Plugins.dat") => MergeStrategy.first
   case ("images/ant_logo_large.gif") => MergeStrategy.first
   case "overview.html" => MergeStrategy.rename
@@ -110,6 +112,8 @@ assemblyMergeStrategy in assembly := {
   case "plugin.xml" => MergeStrategy.last
   case "codegen/config.fmpp" => MergeStrategy.last
   case "git.properties" => MergeStrategy.last
+  case "jetty-dir.css" => MergeStrategy.last
+  case "module-info.class" => MergeStrategy.last
   case x =>
     val oldStrategy = (assemblyMergeStrategy in assembly).value
     oldStrategy(x)
