@@ -20,29 +20,27 @@ case class TruncRead(rName: String, contig: String, posStart: Int, posEnd: Int)
 
 case class ExtendedReads(read: SAMRecord) {
 
-  def analyzeRead(agg: ContigAggregate,
-                  conf : Broadcast[Conf]
-                 ): Unit = {
+
+  def analyzeRead( agg: ContigAggregate, conf : Broadcast[Conf]): Unit = {
     val start = read.getStart
     val cigar = read.getCigar
-
     val isPositiveStrand = ! read.getReadNegativeStrandFlag
 
     calculateEvents(agg, start, cigar)
-    val altPositions = calculateAlts(agg, start, cigar, isPositiveStrand)
+    calculateAlts(agg, start, cigar, isPositiveStrand)
 
     if (conf.value.includeBaseQualities)
-      calculateQuals (agg, altPositions, start, cigar, read.getBaseQualities, isPositiveStrand, conf.value)
+      calculateQuals (agg, start, cigar, read.getBaseQualities, isPositiveStrand, conf.value)
   }
 
-  def calculateQuals(agg: ContigAggregate, altPositions:scala.collection.Set[Int],start: Int, cigar: Cigar, bQual: Array[Byte], isPositiveStrand:Boolean, conf: Conf):Unit = {
+  def calculateQuals(agg: ContigAggregate, start: Int, cigar: Cigar, bQual: Array[Byte], isPositiveStrand:Boolean, conf: Conf):Unit = {
     val cigarConf = CigarDerivedConf.create(start, cigar)
     val readQualSummary = ReadSummary(start, read.getEnd, read.getReadBases, bQual, cigarConf)
-    fillBaseQualities(agg, altPositions, readQualSummary, isPositiveStrand, conf)
+    fillBaseQualities(agg, readQualSummary, isPositiveStrand, conf)
   }
 
-  def calculateEvents(aggregate: ContigAggregate,
-                      start: Int, cigar: Cigar): Unit = {
+
+  def calculateEvents(aggregate: ContigAggregate, start: Int, cigar: Cigar): Unit = {
     val partitionStart = aggregate.startPosition
     var position = start
     val cigarIterator = cigar.iterator()
@@ -99,7 +97,7 @@ case class ExtendedReads(read: SAMRecord) {
 
   def calculateAlts(aggregate: ContigAggregate, start: Int,
                     cigar: Cigar,
-                    isPositiveStrand:Boolean): scala.collection.Set[Int] = {
+                    isPositiveStrand:Boolean): Unit = {
     var position = start
     val ops = MDTagParser.parseMDTag(read.getStringAttribute("MD"))
 
@@ -128,11 +126,11 @@ case class ExtendedReads(read: SAMRecord) {
       else if (mdtag.base == 'S')
         position += mdtag.length
     }
-    altsPositions
+
   }
 
 
-  def fillBaseQualities(agg: ContigAggregate, altPositions:scala.collection.Set[Int], readSummary: ReadSummary, isPositive:Boolean, conf:Conf): Unit = {
+  def fillBaseQualities(agg: ContigAggregate, readSummary: ReadSummary, isPositive:Boolean, conf:Conf): Unit = {
     val start = readSummary.start
     val end = readSummary.end
     var currPosition = start

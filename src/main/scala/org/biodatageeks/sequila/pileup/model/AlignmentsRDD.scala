@@ -52,11 +52,12 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
               contigCleanIter
             }
           if ( contig != currentContig ) {
-              handleFirstReadForContigInPartition(read, contig, contigLenMap, aggMap, conf)
+              handleFirstReadForContigInPartition(read, contig, contigLenMap, aggMap, partBound, conf)
               currentContig = contig
           }
           contigAggregate = aggMap(contig)
           read.analyzeRead(contigAggregate, conf)
+
 
         }
       aggMap.valuesIterator
