@@ -43,22 +43,16 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
       val partBound = bounds.value(index)
         while (partition.hasNext) {
           val read = partition.next()
-          val contig =
-            if(read.getContig == contigIter)
-              contigCleanIter
-            else {
-              contigIter = read.getContig
-              contigCleanIter =  DataQualityFuncs.cleanContig(contigIter)
-              contigCleanIter
-            }
+          val contig =  if(read.getContig == contigIter)  contigCleanIter
+                        else DataQualityFuncs.cleanContig(read.getContig)
+
           if ( contig != currentContig ) {
               handleFirstReadForContigInPartition(read, contig, contigLenMap, aggMap, partBound, conf)
               currentContig = contig
           }
+
           contigAggregate = aggMap(contig)
           read.analyzeRead(contigAggregate, conf)
-
-
         }
       aggMap.valuesIterator
     }
