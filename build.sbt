@@ -41,10 +41,12 @@ libraryDependencies += "de.ruedigermoeller" % "fst" % "2.57"
 libraryDependencies += "org.apache.commons" % "commons-lang3" % "3.7"
 libraryDependencies += "org.eclipse.jetty" % "jetty-servlet" % "9.3.24.v20180605"
 libraryDependencies += "org.apache.derby" % "derbyclient" % "10.14.2.0"
-libraryDependencies += "org.disq-bio" % "disq" % "0.3.8"
+//libraryDependencies += "org.disq-bio" % "disq" % "0.3.8" <-disabled since we use patched version of HtsjdkReadsTraversalParameters
 libraryDependencies += "io.projectglow" %% "glow-spark3" % "1.0.1" excludeAll (ExclusionRule("com.github.samtools")) excludeAll (ExclusionRule("org.seqdoop")) //FIXME:: remove togehter with disq
 libraryDependencies += "com.intel.gkl" % "gkl" % "0.8.6"
 libraryDependencies += "org.openjdk.jol" % "jol-core" % "0.16" % "provided"
+libraryDependencies += "com.github.jsr203hadoop" % "jsr203hadoop" % "1.0.3"
+
 
 
 
@@ -96,6 +98,8 @@ assemblyMergeStrategy in assembly := {
   case PathList("shadeio", xs@_*) => MergeStrategy.first
   case PathList("au", xs@_*) => MergeStrategy.first
   case PathList("htsjdk", xs@_*) => MergeStrategy.first
+  case PathList("jersey", xs@_*) => MergeStrategy.first
+  case PathList("scala", xs@_*) => MergeStrategy.first
   case ("META-INF/org/apache/logging/log4j/core/config/plugins/Log4j2Plugins.dat") => MergeStrategy.first
   case ("images/ant_logo_large.gif") => MergeStrategy.first
   case "overview.html" => MergeStrategy.rename
@@ -110,6 +114,8 @@ assemblyMergeStrategy in assembly := {
   case "plugin.xml" => MergeStrategy.last
   case "codegen/config.fmpp" => MergeStrategy.last
   case "git.properties" => MergeStrategy.last
+  case "jetty-dir.css" => MergeStrategy.last
+  case "module-info.class" => MergeStrategy.last
   case x =>
     val oldStrategy = (assemblyMergeStrategy in assembly).value
     oldStrategy(x)

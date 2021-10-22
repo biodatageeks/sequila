@@ -40,8 +40,7 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
 
     this.rdd.mapPartitions { partition =>
       val aggMap = new mutable.HashMap[String, ContigAggregate]()
-      val contigMaxReadLen = new mutable.HashMap[String, Int]()
-      var contigIter, contigCleanIter  = ""
+      var contigIter, contigCleanIter,  currentContig  = ""
       var contigAggregate: ContigAggregate = null
         while (partition.hasNext) {
           val read = partition.next()
@@ -53,15 +52,14 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
               contigCleanIter =  DataQualityFuncs.cleanContig(contigIter)
               contigCleanIter
             }
-
-          if (!aggMap.contains(contig))
-
-              handleFirstReadForContigInPartition(read, contig, contigLenMap, contigMaxReadLen, aggMap, conf)
-              contigAggregate = aggMap(contig)
-
-          read.analyzeRead(contig, contigAggregate, contigMaxReadLen, conf)
+          if ( contig != currentContig ) {
+              handleFirstReadForContigInPartition(read, contig, contigLenMap, aggMap, conf)
+              currentContig = contig
+          }
+          contigAggregate = aggMap(contig)
+          read.analyzeRead(contigAggregate, conf)
         }
-        val aggregates = prepareOutputAggregates(aggMap, contigMaxReadLen, conf).toIterator
+        val aggregates = prepareOutputAggregates(aggMap, conf).toIterator
         aggregates
 
     }
@@ -76,7 +74,7 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
     * @param cigarMap mapper between contig and max length of cigar in given
     * @return
     */
-  def prepareOutputAggregates(aggMap: mutable.HashMap[String, ContigAggregate], cigarMap: mutable.HashMap[String, Int],
+  def prepareOutputAggregates(aggMap: mutable.HashMap[String, ContigAggregate],
                              conf: Broadcast[Conf]): Array[ContigAggregate] = {
     val output = new Array[ContigAggregate](aggMap.size)
     var i = 0
@@ -95,12 +93,9 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
         contigEventAgg.trimQuals,
         contigEventAgg.startPosition,
         contigEventAgg.startPosition + maxIndex,
-        0,
-        cigarMap(contig),
         conf
       )
       output(i) = agg
-
       i += 1
     }
     output
@@ -108,9 +103,8 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
 
 
   private def handleFirstReadForContigInPartition(read: SAMRecord, contig: String, contigLenMap: Map[String, Int],
-                                                  contigMaxReadLen: mutable.HashMap[String, Int],
                                                   aggMap: mutable.HashMap[String, ContigAggregate],
-                                                 conf: Broadcast[Conf]
+                                                  conf: Broadcast[Conf]
                                                   ):Unit = {
     val contigLen = contigLenMap(contig)
     val arrayLen = contigLen - read.getStart + 10
@@ -124,9 +118,7 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
       startPosition = read.getStart,
       maxPosition = contigLen - 1,
       conf = conf )
-
     aggMap += contig -> contigEventAggregate
-    contigMaxReadLen += contig -> 0
   }
 
   /**

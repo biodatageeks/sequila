@@ -1,7 +1,6 @@
 package org.biodatageeks.sequila.datasources.BAM
 
 
-import htsjdk.samtools.util.Interval
 import htsjdk.samtools.{SAMRecord, ValidationStringency}
 import org.apache.hadoop.io.LongWritable
 import org.apache.hadoop.mapreduce.lib.input.FileSplit
@@ -23,12 +22,15 @@ import org.disq_bio.disq.HtsjdkReadsTraversalParameters
 import java.util
 import scala.reflect.runtime.universe._
 import collection.JavaConverters._
+import htsjdk.samtools.util.Locatable
 
+case class Interval(contig: String, posStart: Int, posEnd: Int) extends Locatable with Serializable {
+  override def getContig: String = contig
 
-class HtsjdkReadsTraversalParametersSerializable[T<:htsjdk.samtools.util.Locatable](intervalsForTraversal: util.List[T], traverseUnplacedUnmapped: Boolean)
-  extends  HtsjdkReadsTraversalParameters[T](intervalsForTraversal: util.List[T], traverseUnplacedUnmapped: Boolean)
-  with Serializable
+  override def getStart: Int = posStart
 
+  override def getEnd: Int = posEnd
+}
 //TODO refactor rename to AlignmentsFileReaderWriter
 trait BDGAlignFileReaderWriter [T <: BDGAlignInputFormat]{
 
@@ -136,7 +138,7 @@ trait BDGAlignFileReaderWriter [T <: BDGAlignInputFormat]{
           }
           case None => {
             val intervals = spark.sqlContext.getConf(InternalParams.AlignmentIntervals,"")
-            val ranges = if (intervals.length > 0) {
+            @transient lazy val ranges = if (intervals.length > 0) {
               logger.info(s"Doing interval queries for intervals ${intervals}")
               intervals
                 .split(",")
@@ -145,7 +147,7 @@ trait BDGAlignFileReaderWriter [T <: BDGAlignInputFormat]{
                 .toList
             } else List.empty[Interval]
 
-            val traverseParam = if(ranges.nonEmpty) new HtsjdkReadsTraversalParametersSerializable(ranges.asJava, false) else null
+            val traverseParam = if(ranges.nonEmpty) new HtsjdkReadsTraversalParameters(ranges.asJava, false) else null
             logger.info(s"disq|TraversalParameters: ${if(traverseParam == null) "N/A" else traverseParam.getIntervalsForTraversal.asScala.mkString("|")}")
             HtsjdkReadsRddStorage
               .makeDefault(sqlContext.sparkContext)

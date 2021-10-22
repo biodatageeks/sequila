@@ -150,6 +150,9 @@ public class BAMBDGRecordReader
 
         java.nio.file.Path index = SamFiles.findIndex(NIOFileUtil.asPath(fs.makeQualified(file).toUri()));
         Path fileIndex = index == null ? null : new Path(index.toUri());
+        if( fileIndex != null && fileIndex.toString().startsWith("hdfs")){
+            fileIndex = new Path("hdfs://" + fileIndex.toUri().getPath());
+        }
         SeekableStream indexStream = fileIndex == null ? null : WrapSeekable.openPath(fs, fileIndex);
         in = WrapSeekable.openPath(fs, file);
         SamReader samReader = createSamReader(in, indexStream, stringency, conf);
