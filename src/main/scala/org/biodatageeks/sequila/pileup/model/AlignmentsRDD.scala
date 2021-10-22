@@ -83,16 +83,14 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
   }
 
   private def calculateEventArraySize (start:Int, contig: String, contigLen: Int, bound: PartitionBounds, conf: Conf): Int = {
-//    if (contig == bound.contigStart && contig == bound.contigEnd)
-//      bound.posEnd - bound.postStart + 10
-//    else if (contig == bound.contigStart && contig == conf.unknownContigName)
-//      contigLen - bound.postStart + 10
-//    else //if (contig != bound.contigStart && contig == bound.contigEnd)
-//      bound.posEnd - start + 10
-
-    contigLen - start + 10
-
-
+    if (contig == bound.contigStart && contig == bound.contigEnd)
+      bound.posEnd - start +1 + 10
+    else if (contig == bound.contigStart && bound.contigEnd == conf.unknownContigName)
+      contigLen - start +  10
+    else if (contig != bound.contigStart && contig == bound.contigEnd)
+      bound.posEnd - start + 10
+    else
+      contigLen - start + 10
   }
 
   /**

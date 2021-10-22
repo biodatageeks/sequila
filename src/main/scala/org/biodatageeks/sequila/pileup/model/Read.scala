@@ -6,7 +6,6 @@ import org.biodatageeks.sequila.pileup.MDTagParser
 import org.biodatageeks.sequila.pileup.conf.Conf
 import org.biodatageeks.sequila.pileup.model.Quals._
 import org.biodatageeks.sequila.pileup.model.Alts._
-import org.biodatageeks.sequila.pileup.conf.QualityConstants.REF_SYMBOL
 
 import scala.collection.mutable
 
@@ -32,15 +31,12 @@ case class ExtendedReads(read: SAMRecord) {
     calculateEvents(agg, start, cigar)
     val altPositions = calculateAlts(agg, start, cigar, isPositiveStrand)
 
-    if (conf.value.includeBaseQualities) {
-      val bQual = read.getBaseQualities
-      calculateQuals (agg, altPositions, start, cigar, bQual, isPositiveStrand, conf.value)
-    }
+    if (conf.value.includeBaseQualities)
+      calculateQuals (agg, altPositions, start, cigar, read.getBaseQualities, isPositiveStrand, conf.value)
   }
 
   def calculateQuals(agg: ContigAggregate, altPositions:scala.collection.Set[Int],start: Int, cigar: Cigar, bQual: Array[Byte], isPositiveStrand:Boolean, conf: Conf):Unit = {
     val cigarConf = CigarDerivedConf.create(start, cigar)
-    //val readBases = if (isPositiveStrand) read.getReadBases.map(_.toChar.toUpper) else read.getReadBases.map(_.toChar.toLower)
     val readQualSummary = ReadSummary(start, read.getEnd, read.getReadBases, bQual, cigarConf)
     fillBaseQualities(agg, altPositions, readQualSummary, isPositiveStrand, conf)
   }

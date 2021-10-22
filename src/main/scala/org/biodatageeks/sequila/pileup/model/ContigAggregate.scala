@@ -19,7 +19,7 @@ case class ContigAggregate(
                             alts: MultiLociAlts,
                             quals: MultiLociQuals,
                             startPosition: Int = 0,
-                            maxPosition: Int = 0,
+                            maxPosition: Int = 0, // FIXME: review if still needed
                             conf: Broadcast[Conf]
                                 ) {
 
@@ -36,6 +36,8 @@ case class ContigAggregate(
 
   def updateEvents(pos: Int, startPart: Int, delta: Short): Unit = {
     val position = pos - startPart
+    if (position > events.length -1)
+      return
     events(position) = (events(position) + delta).toShort
   }
 
