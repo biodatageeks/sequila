@@ -7,9 +7,8 @@ import org.biodatageeks.sequila.pileup.conf.{Conf, QualityConstants}
 import org.biodatageeks.sequila.pileup.serializers.PileupProjection
 import org.biodatageeks.sequila.pileup.model.Alts._
 import org.biodatageeks.sequila.pileup.model.Quals.SingleLocusQuals
-import org.biodatageeks.sequila.pileup.model.Quals.SingleLocusQuals._
 import org.biodatageeks.sequila.pileup.partitioning.PartitionBounds
-import org.biodatageeks.sequila.utils.{DataQualityFuncs, FastMath}
+import org.biodatageeks.sequila.utils.FastMath
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.util.control.Breaks._
@@ -23,24 +22,23 @@ object AggregateRDDOperations {
 case class AggregateRDD(rdd: RDD[ContigAggregate]) {
   val logger: Logger = LoggerFactory.getLogger(this.getClass.getCanonicalName)
 
-  def isInPartitionRange(currPos: Int, contig: String, bound: PartitionBounds,conf: Broadcast[Conf]): Boolean = {
+  def isInPartitionRange(currPos: Int, contig: String, bound: PartitionBounds,conf:Conf): Boolean = {
     if (contig == bound.contigStart && contig == bound.contigEnd)
       currPos >= bound.postStart - 1 && currPos <= bound.posEnd
-    else if (contig == bound.contigStart && bound.contigEnd == conf.value.unknownContigName)
+    else if (contig == bound.contigStart && bound.contigEnd == conf.unknownContigName)
       currPos >= bound.postStart - 1
-    else if (contig != bound.contigStart && bound.contigEnd == conf.value.unknownContigName)
+    else if (contig != bound.contigStart && bound.contigEnd == conf.unknownContigName)
       true
     else
       false
   }
 
-  def toPileup(refPath: String, conf: Broadcast[Conf], bounds: Broadcast[Array[PartitionBounds]] ) : RDD[InternalRow] = {
+  def toPileup(refPath: String, bounds: Broadcast[Array[PartitionBounds]] ) : RDD[InternalRow] = {
 
     this.rdd.mapPartitionsWithIndex { (index, part) =>
       val reference = new Reference(refPath)
       val contigMap = reference.getNormalizedContigMap
       PileupProjection.setContigMap(contigMap)
-
 
       part.map { agg => {
         var cov, ind, i, currPos = 0
@@ -58,12 +56,12 @@ breakable {
   while (i <= maxIndex) { // repartition change -> no shrinking, we have to go through whole array
     currPos = i + startPosition
     cov += agg.events(i)
-    if (isInPartitionRange(currPos - 1 , contig, partitionBounds, conf)) {
+    if (isInPartitionRange(currPos - 1 , contig, partitionBounds, agg.conf)) {
       if (currPos == partitionBounds.postStart) {
         prev.reset(i)
       }
       if (prev.hasAlt) {
-        addBaseRecord(result, ind, agg, bases, i, prev, conf)
+        addBaseRecord(result, ind, agg, bases, i, prev)
         ind += 1;
         prev.reset(i)
         if (agg.hasAltOnPosition(currPos))
@@ -107,11 +105,11 @@ breakable {
   private def isEndOfZeroCoverageRegion(cov: Int, prevCov: Int, i: Int) = cov != 0 && prevCov == 0 && i > 0
 
   private def addBaseRecord(result:Array[InternalRow], ind:Int,
-                    agg:ContigAggregate, bases:String, i:Int, prev:BlockProperties, conf: Broadcast[Conf]) {
+                    agg:ContigAggregate, bases:String, i:Int, prev:BlockProperties) {
     val posStart, posEnd = i+agg.startPosition-1
     val ref = bases.substring(prev.pos, i)
     val altsCount = prev.alt.derivedAltsNumber
-    val qualsMap = prepareOutputQualMap(agg, posStart, ref, conf)
+    val qualsMap = prepareOutputQualMap(agg, posStart, ref)
     result(ind) = PileupProjection.convertToRow(agg.contig, posStart, posEnd, ref, prev.cov.toShort, (prev.cov-altsCount).toShort,altsCount, prev.alt.toMap, qualsMap)
     prev.alt.clear()
   }
@@ -124,8 +122,8 @@ breakable {
     arr(refBaseIndexLower) = null
   }
 
-  private def prepareOutputQualMap(agg: ContigAggregate, posStart: Int, ref:String, conf: Broadcast[Conf]): Map[Byte, Array[Short]] = {
-    if (!conf.value.includeBaseQualities)
+  private def prepareOutputQualMap(agg: ContigAggregate, posStart: Int, ref:String): Map[Byte, Array[Short]] = {
+    if (!agg.conf.includeBaseQualities)
       return null
 
     val qualsMap = agg.quals(posStart)

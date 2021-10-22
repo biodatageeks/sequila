@@ -20,7 +20,7 @@ case class ContigAggregate(
                             quals: MultiLociQuals,
                             startPosition: Int = 0,
                             maxPosition: Int = 0, // FIXME: review if still needed
-                            conf: Broadcast[Conf]
+                            conf: Conf
                                 ) {
 
   def hasAltOnPosition(pos:Int):Boolean = alts.contains(pos)

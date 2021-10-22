@@ -1,9 +1,7 @@
 package org.biodatageeks.sequila.pileup.model
 
 import htsjdk.samtools.{Cigar, CigarOperator, SAMRecord}
-import org.apache.spark.broadcast.Broadcast
 import org.biodatageeks.sequila.pileup.MDTagParser
-import org.biodatageeks.sequila.pileup.conf.Conf
 import org.biodatageeks.sequila.pileup.model.Quals._
 import org.biodatageeks.sequila.pileup.model.Alts._
 
@@ -14,14 +12,12 @@ object ReadOperations {
   object implicits {
     implicit def reads(r: SAMRecord) = ExtendedReads(r)
   }
-
 }
 case class TruncRead(rName: String, contig: String, posStart: Int, posEnd: Int)
-
 case class ExtendedReads(read: SAMRecord) {
 
 
-  def analyzeRead( agg: ContigAggregate, conf : Broadcast[Conf]): Unit = {
+  def analyzeRead( agg: ContigAggregate): Unit = {
     val start = read.getStart
     val cigar = read.getCigar
     val isPositiveStrand = ! read.getReadNegativeStrandFlag
@@ -29,14 +25,14 @@ case class ExtendedReads(read: SAMRecord) {
     calculateEvents(agg, start, cigar)
     calculateAlts(agg, start, cigar, isPositiveStrand)
 
-    if (conf.value.includeBaseQualities)
-      calculateQuals (agg, start, cigar, read.getBaseQualities, isPositiveStrand, conf.value)
+    if (agg.conf.includeBaseQualities)
+      calculateQuals (agg, start, cigar, read.getBaseQualities, isPositiveStrand)
   }
 
-  def calculateQuals(agg: ContigAggregate, start: Int, cigar: Cigar, bQual: Array[Byte], isPositiveStrand:Boolean, conf: Conf):Unit = {
+  def calculateQuals(agg: ContigAggregate, start: Int, cigar: Cigar, bQual: Array[Byte], isPositiveStrand:Boolean):Unit = {
     val cigarConf = CigarDerivedConf.create(start, cigar)
     val readQualSummary = ReadSummary(start, read.getEnd, read.getReadBases, bQual, cigarConf)
-    fillBaseQualities(agg, readQualSummary, isPositiveStrand, conf)
+    fillBaseQualities(agg, readQualSummary, isPositiveStrand)
   }
 
 
@@ -126,11 +122,9 @@ case class ExtendedReads(read: SAMRecord) {
       else if (mdtag.base == 'S')
         position += mdtag.length
     }
-
   }
 
-
-  def fillBaseQualities(agg: ContigAggregate, readSummary: ReadSummary, isPositive:Boolean, conf:Conf): Unit = {
+  def fillBaseQualities(agg: ContigAggregate, readSummary: ReadSummary, isPositive:Boolean): Unit = {
     val start = readSummary.start
     val end = readSummary.end
     var currPosition = start
@@ -139,7 +133,7 @@ case class ExtendedReads(read: SAMRecord) {
         val relativePos = if (!readSummary.cigarDerivedConf.hasIndel && !readSummary.cigarDerivedConf.hasClip) currPosition - readSummary.start
         else readSummary.relativePosition(currPosition)
           val base = if(isPositive)  readSummary.basesArray(relativePos).toChar.toUpper else readSummary.basesArray(relativePos).toChar.toLower
-          agg.quals.updateQuals(currPosition, base, readSummary.qualsArray(relativePos), conf)
+          agg.quals.updateQuals(currPosition, base, readSummary.qualsArray(relativePos), agg.conf)
       }
       currPosition += 1
     }

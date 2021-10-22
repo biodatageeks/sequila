@@ -52,7 +52,7 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
           }
 
           contigAggregate = aggMap(contig)
-          read.analyzeRead(contigAggregate, conf)
+          read.analyzeRead(contigAggregate)
         }
       aggMap.valuesIterator
     }
@@ -73,7 +73,7 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
       quals = if(conf.value.includeBaseQualities) new MultiLociQuals() else null,
       startPosition = read.getStart,
       maxPosition = contigLen - 1,
-      conf = conf )
+      conf = conf.value )
     aggMap += contig -> contigEventAggregate
   }
 
