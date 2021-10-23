@@ -7,7 +7,6 @@ import org.apache.spark.sql.catalyst.expressions.Attribute
 import org.biodatageeks.sequila.datasources.BAM.BAMTableReader
 import org.biodatageeks.sequila.pileup.conf.Conf
 import org.biodatageeks.sequila.pileup.model.AlignmentsRDDOperations.implicits._
-import org.biodatageeks.sequila.utils.InternalParams
 import org.seqdoop.hadoop_bam.BAMBDGInputFormat
 import org.slf4j.LoggerFactory
 

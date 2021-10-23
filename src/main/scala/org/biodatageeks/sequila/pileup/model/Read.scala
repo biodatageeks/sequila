@@ -1,12 +1,9 @@
 package org.biodatageeks.sequila.pileup.model
 
 import htsjdk.samtools.{Cigar, CigarOperator, SAMRecord}
-import org.apache.spark.broadcast.Broadcast
 import org.biodatageeks.sequila.pileup.MDTagParser
-import org.biodatageeks.sequila.pileup.conf.Conf
 import org.biodatageeks.sequila.pileup.model.Quals._
 import org.biodatageeks.sequila.pileup.model.Alts._
-import org.biodatageeks.sequila.pileup.conf.QualityConstants.REF_SYMBOL
 
 import scala.collection.mutable
 
@@ -15,38 +12,31 @@ object ReadOperations {
   object implicits {
     implicit def reads(r: SAMRecord) = ExtendedReads(r)
   }
-
 }
 case class TruncRead(rName: String, contig: String, posStart: Int, posEnd: Int)
-
 case class ExtendedReads(read: SAMRecord) {
 
-  def analyzeRead(agg: ContigAggregate,
-                  conf : Broadcast[Conf]
-                 ): Unit = {
+
+  def analyzeRead( agg: ContigAggregate): Unit = {
     val start = read.getStart
     val cigar = read.getCigar
-
     val isPositiveStrand = ! read.getReadNegativeStrandFlag
 
     calculateEvents(agg, start, cigar)
-    val altPositions = calculateAlts(agg, start, cigar, isPositiveStrand)
+    calculateAlts(agg, start, cigar, isPositiveStrand)
 
-    if (conf.value.includeBaseQualities) {
-      val bQual = read.getBaseQualities
-      calculateQuals (agg, altPositions, start, cigar, bQual, isPositiveStrand, conf)
-    }
+    if (agg.conf.includeBaseQualities)
+      calculateQuals (agg, start, cigar, read.getBaseQualities, isPositiveStrand)
   }
 
-  def calculateQuals(agg: ContigAggregate, altPositions:scala.collection.Set[Int],start: Int, cigar: Cigar, bQual: Array[Byte], isPositiveStrand:Boolean, conf: Broadcast[Conf]):Unit = {
+  def calculateQuals(agg: ContigAggregate, start: Int, cigar: Cigar, bQual: Array[Byte], isPositiveStrand:Boolean):Unit = {
     val cigarConf = CigarDerivedConf.create(start, cigar)
-    val readBases = if (isPositiveStrand) read.getReadBases.map(_.toChar.toUpper) else read.getReadBases.map(_.toChar.toLower)
-    val readQualSummary = ReadSummary(start, read.getEnd, readBases, bQual, cigarConf)
-    fillBaseQualities(agg, altPositions, readQualSummary, conf)
+    val readQualSummary = ReadSummary(start, read.getEnd, read.getReadBases, bQual, cigarConf)
+    fillBaseQualities(agg, readQualSummary, isPositiveStrand)
   }
 
-  def calculateEvents(aggregate: ContigAggregate,
-                      start: Int, cigar: Cigar): Unit = {
+
+  def calculateEvents(aggregate: ContigAggregate, start: Int, cigar: Cigar): Unit = {
     val partitionStart = aggregate.startPosition
     var position = start
     val cigarIterator = cigar.iterator()
@@ -103,7 +93,7 @@ case class ExtendedReads(read: SAMRecord) {
 
   def calculateAlts(aggregate: ContigAggregate, start: Int,
                     cigar: Cigar,
-                    isPositiveStrand:Boolean): scala.collection.Set[Int] = {
+                    isPositiveStrand:Boolean): Unit = {
     var position = start
     val ops = MDTagParser.parseMDTag(read.getStringAttribute("MD"))
 
@@ -132,23 +122,20 @@ case class ExtendedReads(read: SAMRecord) {
       else if (mdtag.base == 'S')
         position += mdtag.length
     }
-    altsPositions
   }
 
-  def fillBaseQualities(agg: ContigAggregate, altPositions:scala.collection.Set[Int], readSummary: ReadSummary, conf: Broadcast[Conf]): Unit = {
-    val positionsToFill = (read.getAlignmentStart to read.getAlignmentEnd).toArray
-    var ind = 0
-    while (ind < positionsToFill.length) {
-      val currPosition = positionsToFill(ind)
+  def fillBaseQualities(agg: ContigAggregate, readSummary: ReadSummary, isPositive:Boolean): Unit = {
+    val start = readSummary.start
+    val end = readSummary.end
+    var currPosition = start
+    while (currPosition <= end) {
       if (!readSummary.hasDeletionOnPosition(currPosition)) {
         val relativePos = if (!readSummary.cigarDerivedConf.hasIndel && !readSummary.cigarDerivedConf.hasClip) currPosition - readSummary.start
         else readSummary.relativePosition(currPosition)
-        if (altPositions.contains(currPosition))
-          agg.quals.updateQuals(currPosition, readSummary.basesArray(relativePos), readSummary.qualsArray(relativePos), false, true, conf)
-        else
-          agg.quals.updateQuals(currPosition, REF_SYMBOL, readSummary.qualsArray(relativePos), false, true, conf)
+          val base = if(isPositive)  readSummary.basesArray(relativePos).toChar.toUpper else readSummary.basesArray(relativePos).toChar.toLower
+          agg.quals.updateQuals(currPosition, base, readSummary.qualsArray(relativePos), agg.conf)
       }
-      ind += 1
+      currPosition += 1
     }
   }
 }

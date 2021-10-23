@@ -1,7 +1,5 @@
 package org.biodatageeks.sequila.pileup.model
 
-import java.util
-
 import htsjdk.samtools.SAMRecord
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
@@ -14,7 +12,7 @@ import org.biodatageeks.sequila.pileup.model.ReadOperations.implicits._
 import org.biodatageeks.sequila.pileup.partitioning.{LowerPartitionBoundAlignmentRecord, PartitionBounds, PartitionUtils, RangePartitionCoalescer}
 import org.biodatageeks.sequila.rangejoins.IntervalTree.Interval
 import org.biodatageeks.sequila.rangejoins.methods.IntervalTree.IntervalHolderChromosome
-import org.biodatageeks.sequila.utils.{DataQualityFuncs, FastMath, InternalParams}
+import org.biodatageeks.sequila.utils.{DataQualityFuncs, InternalParams}
 import org.seqdoop.hadoop_bam.BAMBDGInputFormat
 import org.slf4j.{Logger, LoggerFactory}
 
@@ -35,90 +33,59 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
     *
     * @return distributed collection of PileupRecords
     */
-  def assembleContigAggregates(conf: Broadcast[Conf]): RDD[ContigAggregate] = {
+  def assembleContigAggregates(bounds: Broadcast[Array[PartitionBounds]], conf: Broadcast[Conf]): RDD[ContigAggregate] = {
     val contigLenMap = initContigLengths(this.rdd.first())
 
-    this.rdd.mapPartitions { partition =>
+    this.rdd.mapPartitionsWithIndex { (index, partition) =>
       val aggMap = new mutable.HashMap[String, ContigAggregate]()
       var contigIter, contigCleanIter,  currentContig  = ""
       var contigAggregate: ContigAggregate = null
+      val partBound = bounds.value(index)
         while (partition.hasNext) {
           val read = partition.next()
-          val contig =
-            if(read.getContig == contigIter)
-              contigCleanIter
-            else {
-              contigIter = read.getContig
-              contigCleanIter =  DataQualityFuncs.cleanContig(contigIter)
-              contigCleanIter
-            }
+          val contig =  if(read.getContig == contigIter)  contigCleanIter
+                        else DataQualityFuncs.cleanContig(read.getContig)
+
           if ( contig != currentContig ) {
-              handleFirstReadForContigInPartition(read, contig, contigLenMap, aggMap, conf)
+              handleFirstReadForContigInPartition(read, contig, contigLenMap, aggMap, partBound, conf)
               currentContig = contig
           }
+
           contigAggregate = aggMap(contig)
-          read.analyzeRead(contigAggregate, conf)
+          read.analyzeRead(contigAggregate)
         }
-        val aggregates = prepareOutputAggregates(aggMap, conf).toIterator
-        aggregates
-
+      aggMap.valuesIterator
     }
   }
-
-
-  /**
-    * transforms map structure of contigEventAggregates, by reducing number of last zeroes in the cov array
-    * also adds calculated maxCigar len to output
-    *
-    * @param aggMap   mapper between contig and contigEventAggregate
-    * @param cigarMap mapper between contig and max length of cigar in given
-    * @return
-    */
-  def prepareOutputAggregates(aggMap: mutable.HashMap[String, ContigAggregate],
-                             conf: Broadcast[Conf]): Array[ContigAggregate] = {
-    val output = new Array[ContigAggregate](aggMap.size)
-    var i = 0
-    val iter = aggMap.toIterator
-    while(iter.hasNext){
-      val nextVal = iter.next()
-      val contig = nextVal._1
-      val contigEventAgg = nextVal._2
-
-      val maxIndex: Int = FastMath.findMaxIndex(contigEventAgg.events)
-      val agg = ContigAggregate(
-        contig,
-        contigEventAgg.contigLen,
-        util.Arrays.copyOfRange(contigEventAgg.events, 0, maxIndex + 1), //FIXME: https://stackoverflow.com/questions/37969193/why-is-array-slice-so-shockingly-slow
-        contigEventAgg.alts,
-        contigEventAgg.trimQuals,
-        contigEventAgg.startPosition,
-        contigEventAgg.startPosition + maxIndex,
-        conf
-      )
-      output(i) = agg
-      i += 1
-    }
-    output
-  }
-
 
   private def handleFirstReadForContigInPartition(read: SAMRecord, contig: String, contigLenMap: Map[String, Int],
                                                   aggMap: mutable.HashMap[String, ContigAggregate],
-                                                  conf: Broadcast[Conf]
+                                                  bound: PartitionBounds, conf: Broadcast[Conf]
                                                   ):Unit = {
     val contigLen = contigLenMap(contig)
-    val arrayLen = contigLen - read.getStart + 10
+    val arrayLen = calculateEventArraySize(read.getStart, contig, contigLen, bound, conf.value)
 
     val contigEventAggregate = ContigAggregate(
       contig = contig,
       contigLen = contigLen,
       events = new Array[Short](arrayLen),
       alts = new MultiLociAlts(),
-      quals = if(conf.value.includeBaseQualities ) new MultiLociQuals() else null,
+      quals = if(conf.value.includeBaseQualities) new MultiLociQuals() else null,
       startPosition = read.getStart,
       maxPosition = contigLen - 1,
-      conf = conf )
+      conf = conf.value )
     aggMap += contig -> contigEventAggregate
+  }
+
+  private def calculateEventArraySize (start:Int, contig: String, contigLen: Int, bound: PartitionBounds, conf: Conf): Int = {
+    if (contig == bound.contigStart && contig == bound.contigEnd)
+      bound.posEnd - start +1 + 10
+    else if (contig == bound.contigStart && bound.contigEnd == conf.unknownContigName)
+      contigLen - start +  10
+    else if (contig != bound.contigStart && contig == bound.contigEnd)
+      bound.posEnd - start + 10
+    else
+      contigLen - start + 10
   }
 
   /**
@@ -195,7 +162,9 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
     val lowerBounds = getPartitionLowerBound // get the start of first read in partition
     val adjBounds = getPartitionBounds(reader, conf, lowerBounds)
     val maxEndIndex = PartitionUtils.getMaxEndPartitionIndex(adjBounds, lowerBounds)
+    val normalizedBounds = adjBounds.map {_.normalize()}
     val broadcastBounds = this.rdd.sparkContext.broadcast(adjBounds)
+    val normBroadcastBounds = this.rdd.sparkContext.broadcast(normalizedBounds)
     logger.info(s"Final partition bounds: ${adjBounds.mkString("|")}")
     logger.info(s"MaxEndIndex list ${maxEndIndex.mkString("|")}")
     val alignments2 = alignments.coalesce(alignments.getNumPartitions,false, Some(new RangePartitionCoalescer(maxEndIndex.map(r=> new Integer(r )).asJava )) )
@@ -216,6 +185,6 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
           })
       }
     }
-    (adjustedAlignments, broadcastBounds)
+    (adjustedAlignments, normBroadcastBounds)
   }
 }

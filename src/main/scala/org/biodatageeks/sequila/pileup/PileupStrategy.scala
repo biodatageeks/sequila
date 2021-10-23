@@ -66,11 +66,11 @@ case class PileupPlan [T<:BDGAlignInputFormat](plan:LogicalPlan, spark:SparkSess
     if(binSize.isDefined) {
       conf.isBinningEnabled = true
       conf.binSize = binSize.get
-      conf.qualityArrayLength = Math.round(conf.maxQuality  / conf.binSize.toDouble).toInt + 2
+      conf.qualityArrayLength = Math.round(conf.maxQuality  / conf.binSize.toDouble).toInt + 1
     } else {
       conf.isBinningEnabled = false
       conf.binSize = DEFAULT_BIN_SIZE
-      conf.qualityArrayLength = conf.maxQuality + 2
+      conf.qualityArrayLength = conf.maxQuality + 1
     }
     conf
   }

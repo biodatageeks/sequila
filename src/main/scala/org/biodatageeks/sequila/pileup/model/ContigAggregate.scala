@@ -19,12 +19,11 @@ case class ContigAggregate(
                             alts: MultiLociAlts,
                             quals: MultiLociQuals,
                             startPosition: Int = 0,
-                            maxPosition: Int = 0,
-                            conf: Broadcast[Conf]
+                            maxPosition: Int = 0, // FIXME: review if still needed
+                            conf: Conf
                                 ) {
 
   def hasAltOnPosition(pos:Int):Boolean = alts.contains(pos)
-  def trimQuals: MultiLociQuals = if(quals != null) quals.trim(conf) else null
 
   def calculateMaxLength(allPositions: Boolean): Int = {
     if (! allPositions)
@@ -37,6 +36,8 @@ case class ContigAggregate(
 
   def updateEvents(pos: Int, startPart: Int, delta: Short): Unit = {
     val position = pos - startPart
+    if (position > events.length -1)
+      return
     events(position) = (events(position) + delta).toShort
   }
 
@@ -44,7 +45,4 @@ case class ContigAggregate(
     alts.updateAlts(pos, alt)
   }
 
-  def updateQuals(pos: Int, alt: Char, quality: Byte, firstUpdate: Boolean = false, updateMax:Boolean = true): Unit = {
-      quals.updateQuals(pos, alt,quality, firstUpdate, updateMax, conf)
-  }
 }

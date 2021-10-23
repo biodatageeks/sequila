@@ -19,13 +19,13 @@ object PileupMethods {
   /**
     * implementation of pileup algorithm
     *
-    * @param alignments aligned reads
+    * @param alignments aligned reads repartitions
     * @param spark spark session
     * @return distributed collection of PileupRecords
     */
   def calculatePileup(alignments: RDD[SAMRecord], bounds: Broadcast[Array[PartitionBounds]], spark: SparkSession, refPath: String, conf : Broadcast[Conf]): RDD[InternalRow] = {
-    val aggregates = alignments.assembleContigAggregates(conf)
-    val pileup = aggregates.toPileup(refPath, conf, bounds)
+    val aggregates = alignments.assembleContigAggregates(bounds, conf)
+    val pileup = aggregates.toPileup(refPath, bounds)
     pileup
   }
 }

@@ -27,8 +27,8 @@ object PileupRunner {
     spark.sparkContext.setLogLevel("INFO")
     //        val bamPath = "/Users/mwiewior/research/data/NA12878.chrom20.ILLUMINA.bwa.CEU.low_coverage.20121211.md.bam"
     //        val referencePath = "/Users/mwiewior/research/data/hs37d5.fa"
-            val bamPath = "/Users/mwiewior/research/data/NA12878.proper.wes.md.chr1.bam"
-        val referencePath = "/Users/mwiewior/research/data/Homo_sapiens_assembly18.fasta"
+            val bamPath = "/Users/aga/workplace/data/NA12878.chr20.md.bam"
+        val referencePath = "/Users/aga/workplace/data/Homo_sapiens_assembly18_chr20.fasta"
 //          val bamPath = "/Users/mwiewior/research/data/WGS/NA12878.proper.wgs.md.bam"
 
     //            val referencePath = "/Users/mwiewior/research/data/broad/Homo_sapiens_assembly38.fasta"
@@ -62,7 +62,7 @@ object PileupRunner {
             val query =
               s"""
                  |SELECT *
-                 |FROM  pileup('$tableNameBAM', 'NA12878.proper.wes.md.chr1', '${referencePath}', false)
+                 |FROM  pileup('$tableNameBAM', 'NA12878.chr20.md', '${referencePath}', true)
                """.stripMargin
 
 
