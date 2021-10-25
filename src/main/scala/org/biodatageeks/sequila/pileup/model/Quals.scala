@@ -54,11 +54,20 @@ object Quals {
       map(position).addQualityForBase(base, quality, conf)
     }
 
-    def extendAllocation(oldMax:Int, newMax:Int, conf: Conf): Unit = {
-      for (i <- oldMax to newMax) {
-        val singleLocusQualMap = new SingleLocusQuals(QualityConstants.OUTER_QUAL_SIZE)
-        singleLocusQualMap.allocateArrays(conf)
-        map(i) = singleLocusQualMap
+    def extendAllocation(start: Int, end: Int, oldMax:Int, conf: Conf): Unit = {
+      if (start > oldMax) {
+        for (i <- start to end) {
+          val singleLocusQualMap = new SingleLocusQuals(QualityConstants.OUTER_QUAL_SIZE)
+          singleLocusQualMap.allocateArrays(conf)
+          map(i) = singleLocusQualMap
+        }
+      }
+      else {
+        for (i <- oldMax + 1 to end) {
+          val singleLocusQualMap = new SingleLocusQuals(QualityConstants.OUTER_QUAL_SIZE)
+          singleLocusQualMap.allocateArrays(conf)
+          map(i) = singleLocusQualMap
+        }
       }
     }
 

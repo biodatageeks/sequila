@@ -23,8 +23,8 @@ case class ContigAggregate(
                             conf: Conf,
                             var maxEventPosition:Int = 0
                                 ) {
-  def extendAllocation(newMax: Int):Unit = {
-    quals.extendAllocation(maxEventPosition, newMax, conf)
+  def extendAllocation(start:Int, end: Int):Unit = {
+    quals.extendAllocation(start, end, maxEventPosition, conf)
   }
 
 

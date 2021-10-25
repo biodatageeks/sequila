@@ -74,7 +74,7 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
       startPosition = read.getStart,
       maxPosition = contigLen - 1,
       conf = conf.value,
-      maxEventPosition = read.getStart)
+      maxEventPosition = read.getStart - 1)
     aggMap += contig -> contigEventAggregate
   }
 
