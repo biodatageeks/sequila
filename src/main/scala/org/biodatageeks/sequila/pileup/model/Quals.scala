@@ -55,19 +55,11 @@ object Quals {
     }
 
     def extendAllocation(start: Int, end: Int, oldMax:Int, conf: Conf): Unit = {
-      if (start > oldMax) {
-        for (i <- start to end) {
-          val singleLocusQualMap = new SingleLocusQuals(QualityConstants.OUTER_QUAL_SIZE)
-          singleLocusQualMap.allocateArrays(conf)
-          map(i) = singleLocusQualMap
-        }
-      }
-      else {
-        for (i <- oldMax + 1 to end) {
-          val singleLocusQualMap = new SingleLocusQuals(QualityConstants.OUTER_QUAL_SIZE)
-          singleLocusQualMap.allocateArrays(conf)
-          map(i) = singleLocusQualMap
-        }
+      val allocStartPos = if (start > oldMax) start else oldMax + 1
+      for (i <- allocStartPos to end) {
+        val singleLocusQualMap = new SingleLocusQuals(QualityConstants.OUTER_QUAL_SIZE)
+        singleLocusQualMap.allocateArrays(conf)
+        map(i) = singleLocusQualMap
       }
     }
 
