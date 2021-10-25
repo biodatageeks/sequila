@@ -73,7 +73,8 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
       quals = if(conf.value.includeBaseQualities) new MultiLociQuals() else null,
       startPosition = read.getStart,
       maxPosition = contigLen - 1,
-      conf = conf.value )
+      conf = conf.value,
+      maxEventPosition = read.getStart)
     aggMap += contig -> contigEventAggregate
   }
 
