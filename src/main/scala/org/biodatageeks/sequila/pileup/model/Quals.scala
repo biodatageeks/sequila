@@ -1,9 +1,6 @@
 package org.biodatageeks.sequila.pileup.model
 
-import org.apache.spark.broadcast.Broadcast
 import org.biodatageeks.sequila.pileup.conf.{Conf, QualityConstants}
-import org.biodatageeks.sequila.utils.FastMath
-
 import scala.collection.mutable
 
 object Quals {
@@ -54,20 +51,15 @@ object Quals {
 
     @inline
     def updateQuals(position: Int, base: Char, quality: Byte, conf: Conf): Unit = {
-      if (map.contains(position)) {
-        map(position).addQualityForBase(base, quality, conf)
-      }
-      else {
-        val singleLocusQualMap = new SingleLocusQuals(QualityConstants.OUTER_QUAL_SIZE)
-        singleLocusQualMap.allocateArrays(conf)
-        singleLocusQualMap.addQualityForBase(base, quality, conf)
-        map.update(position, singleLocusQualMap)
-      }
+      map(position).addQualityForBase(base, quality, conf)
     }
 
-
-    def getTotalEntries: Long = {
-      map.map { case (k, v) => k -> map(k).totalEntries }.foldLeft(0L)(_ + _._2)
+    def extendAllocation(oldMax:Int, newMax:Int, conf: Conf): Unit = {
+      for (i <- oldMax to newMax) {
+        val singleLocusQualMap = new SingleLocusQuals(QualityConstants.OUTER_QUAL_SIZE)
+        singleLocusQualMap.allocateArrays(conf)
+        map(i) = singleLocusQualMap
+      }
     }
 
   }

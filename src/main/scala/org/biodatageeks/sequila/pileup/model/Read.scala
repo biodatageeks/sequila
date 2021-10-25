@@ -22,21 +22,26 @@ case class ExtendedReads(read: SAMRecord) {
     val cigar = read.getCigar
     val isPositiveStrand = ! read.getReadNegativeStrandFlag
 
-    calculateEvents(agg, start, cigar)
+    val newMaxEvent = calculateEvents(agg, start, cigar)
     calculateAlts(agg, start, cigar, isPositiveStrand)
 
     if (agg.conf.includeBaseQualities)
-      calculateQuals (agg, start, cigar, read.getBaseQualities, isPositiveStrand)
+      calculateQuals (agg, start, cigar, read.getBaseQualities, isPositiveStrand, newMaxEvent)
   }
 
-  def calculateQuals(agg: ContigAggregate, start: Int, cigar: Cigar, bQual: Array[Byte], isPositiveStrand:Boolean):Unit = {
+  def calculateQuals(agg: ContigAggregate, start: Int, cigar: Cigar, bQual: Array[Byte], isPositiveStrand:Boolean, newMax: Int):Unit = {
+    if (newMax > agg.maxEventPosition) {
+      agg.extendAllocation (newMax)
+      agg.maxEventPosition = newMax
+    }
+
     val cigarConf = CigarDerivedConf.create(start, cigar)
     val readQualSummary = ReadSummary(start, read.getEnd, read.getReadBases, bQual, cigarConf)
     fillBaseQualities(agg, readQualSummary, isPositiveStrand)
   }
 
 
-  def calculateEvents(aggregate: ContigAggregate, start: Int, cigar: Cigar): Unit = {
+  def calculateEvents(aggregate: ContigAggregate, start: Int, cigar: Cigar): Int = {
     val partitionStart = aggregate.startPosition
     var position = start
     val cigarIterator = cigar.iterator()
@@ -63,8 +68,8 @@ case class ExtendedReads(read: SAMRecord) {
       }
       else if (cigarOperator == CigarOperator.N || cigarOperator == CigarOperator.D)
         position += cigarOperatorLen
-
     }
+    position
   }
 
 

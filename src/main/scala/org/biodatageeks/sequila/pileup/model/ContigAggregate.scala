@@ -20,8 +20,13 @@ case class ContigAggregate(
                             quals: MultiLociQuals,
                             startPosition: Int = 0,
                             maxPosition: Int = 0, // FIXME: review if still needed
-                            conf: Conf
+                            conf: Conf,
+                            var maxEventPosition:Int = 0
                                 ) {
+  def extendAllocation(newMax: Int):Unit = {
+    quals.extendAllocation(maxEventPosition, newMax, conf)
+  }
+
 
   def hasAltOnPosition(pos:Int):Boolean = alts.contains(pos)
 
