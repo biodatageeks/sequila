@@ -70,7 +70,7 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
       contigLen = contigLen,
       events = new Array[Short](arrayLen),
       alts = new MultiLociAlts(),
-      quals = if(conf.value.includeBaseQualities) new MultiLociQuals() else null,
+      quals = if(conf.value.includeBaseQualities) new MultiLociQuals(contigLen - read.getStart + 10) else null,
       startPosition = read.getStart,
       maxPosition = contigLen - 1,
       conf = conf.value )

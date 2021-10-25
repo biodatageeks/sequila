@@ -1,17 +1,13 @@
 package org.biodatageeks.sequila.pileup.model
 
-import org.apache.spark.broadcast.Broadcast
 import org.biodatageeks.sequila.pileup.conf.{Conf, QualityConstants}
-import org.biodatageeks.sequila.utils.FastMath
 
-import scala.collection.mutable
 
 object Quals {
   type SingleLocusQuals = Array[Array[Short]]
+  type MultiLociQuals = Array[Quals.SingleLocusQuals]
   val SingleLocusQuals = Array[Array[Short]] _
-
-  type MultiLociQuals = mutable.IntMap[Quals.SingleLocusQuals]
-  val MultiLociQuals = mutable.IntMap[Quals.SingleLocusQuals] _
+  val MultiLociQuals = Array[Quals.SingleLocusQuals] _
 
   implicit class SingleLocusQualsExtension(val arr: Quals.SingleLocusQuals) {
     def derivedCoverage: Short = arr.flatMap(x => if (x != null) x.toList else List.empty).sum
@@ -49,26 +45,21 @@ object Quals {
 
   }
 
-  implicit class MultiLociQualsExtension(val map: Quals.MultiLociQuals) {
-    def ++(that: Quals.MultiLociQuals): Quals.MultiLociQuals = (map ++ that)
+  implicit class MultiLociQualsExtension(val positionArray: Quals.MultiLociQuals) {
+    def ++(that: Quals.MultiLociQuals): Quals.MultiLociQuals = (positionArray ++ that)
 
     @inline
     def updateQuals(position: Int, base: Char, quality: Byte, conf: Conf): Unit = {
-      if (map.contains(position)) {
-        map(position).addQualityForBase(base, quality, conf)
+
+      if (positionArray(position) != null ) {
+        positionArray(position).addQualityForBase(base, quality, conf)
       }
       else {
         val singleLocusQualMap = new SingleLocusQuals(QualityConstants.OUTER_QUAL_SIZE)
         singleLocusQualMap.allocateArrays(conf)
         singleLocusQualMap.addQualityForBase(base, quality, conf)
-        map.update(position, singleLocusQualMap)
+        positionArray(position) = singleLocusQualMap
       }
     }
-
-
-    def getTotalEntries: Long = {
-      map.map { case (k, v) => k -> map(k).totalEntries }.foldLeft(0L)(_ + _._2)
-    }
-
   }
 }

@@ -52,7 +52,7 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
         val contig = agg.contig
         val bases = reference.getBasesFromReference(contigMap(agg.contig), agg.startPosition, agg.startPosition + maxIndex)
 
-breakable {
+        breakable {
   while (i <= maxIndex) { // repartition change -> no shrinking, we have to go through whole array
     currPos = i + startPosition
     cov += agg.events(i)
@@ -123,17 +123,20 @@ breakable {
   }
 
   private def prepareOutputQualMap(agg: ContigAggregate, posStart: Int, ref:String): Map[Byte, Array[Short]] = {
+
     if (!agg.conf.includeBaseQualities)
       return null
 
-    val qualsMap = agg.quals(posStart)
+    val qualsMap = agg.quals(posStart - agg.startPosition)
     rearrange(qualsMap, ref(0))
-    qualsMap.zipWithIndex.map { case (_, i) =>
+
+    val map = qualsMap.zipWithIndex.map { case (_, i) =>
       val ind = i + QualityConstants.QUAL_INDEX_SHIFT
       if (qualsMap(i) != null && qualsMap(i).sum != 0)
           ind.toByte  -> qualsMap(i)
       else null
     }.filter(_ != null).toMap
+    map
   }
 
   private def addBlockRecord(result:Array[InternalRow], ind:Int,

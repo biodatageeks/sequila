@@ -1,12 +1,8 @@
 package org.biodatageeks.sequila.pileup.model
 
-import org.apache.spark.broadcast.Broadcast
-
 import org.biodatageeks.sequila.pileup.conf.Conf
-
 import org.biodatageeks.sequila.pileup.model.Alts._
 import org.biodatageeks.sequila.pileup.model.Quals._
-
 
 
 /** Events aggregation on contig
@@ -44,5 +40,4 @@ case class ContigAggregate(
   def updateAlts(pos: Int, alt: Char): Unit = {
     alts.updateAlts(pos, alt)
   }
-
 }

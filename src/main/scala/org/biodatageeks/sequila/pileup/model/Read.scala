@@ -125,15 +125,16 @@ case class ExtendedReads(read: SAMRecord) {
   }
 
   def fillBaseQualities(agg: ContigAggregate, readSummary: ReadSummary, isPositive:Boolean): Unit = {
-    val start = readSummary.start
-    val end = readSummary.end
-    var currPosition = start
-    while (currPosition <= end) {
+    val readStart = readSummary.start
+    val readEnd = readSummary.end
+    val partitionStart = agg.startPosition
+    var currPosition = readStart
+    while (currPosition <= readEnd) {
       if (!readSummary.hasDeletionOnPosition(currPosition)) {
         val relativePos = if (!readSummary.cigarDerivedConf.hasIndel && !readSummary.cigarDerivedConf.hasClip) currPosition - readSummary.start
         else readSummary.relativePosition(currPosition)
           val base = if(isPositive)  readSummary.basesArray(relativePos).toChar.toUpper else readSummary.basesArray(relativePos).toChar.toLower
-          agg.quals.updateQuals(currPosition, base, readSummary.qualsArray(relativePos), agg.conf)
+          agg.quals.updateQuals(currPosition-partitionStart, base, readSummary.qualsArray(relativePos), agg.conf)
       }
       currPosition += 1
     }
