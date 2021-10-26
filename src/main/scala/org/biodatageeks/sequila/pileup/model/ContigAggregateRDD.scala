@@ -6,7 +6,6 @@ import org.apache.spark.sql.catalyst.InternalRow
 import org.biodatageeks.sequila.pileup.conf.{Conf, QualityConstants}
 import org.biodatageeks.sequila.pileup.serializers.PileupProjection
 import org.biodatageeks.sequila.pileup.model.Alts._
-import org.biodatageeks.sequila.pileup.model.Quals.SingleLocusQuals
 import org.biodatageeks.sequila.pileup.partitioning.PartitionBounds
 import org.biodatageeks.sequila.utils.FastMath
 import org.slf4j.{Logger, LoggerFactory}
@@ -114,26 +113,26 @@ breakable {
     prev.alt.clear()
   }
 
-  private def rearrange(arr: SingleLocusQuals, refBase: Char):Unit = {
-    val refBaseIndexLower = refBase.toLower - QualityConstants.QUAL_INDEX_SHIFT
-    val refBaseIndexUpper = refBase - QualityConstants.QUAL_INDEX_SHIFT
-
-    arr(refBaseIndexUpper) = arr(refBaseIndexLower).zip(arr(refBaseIndexUpper)).map { case (x, y) => (x + y).toShort }
-    arr(refBaseIndexLower) = null
-  }
+//  private def rearrange(arr: SingleLocusQuals, refBase: Char):Unit = {
+//    val refBaseIndexLower = refBase.toLower - QualityConstants.QUAL_INDEX_SHIFT
+//    val refBaseIndexUpper = refBase - QualityConstants.QUAL_INDEX_SHIFT
+//
+//    arr(refBaseIndexUpper) = arr(refBaseIndexLower).zip(arr(refBaseIndexUpper)).map { case (x, y) => (x + y).toShort }
+//    arr(refBaseIndexLower) = null
+//  }
 
   private def prepareOutputQualMap(agg: ContigAggregate, posStart: Int, ref:String): Map[Byte, Array[Short]] = {
     if (!agg.conf.includeBaseQualities)
       return null
-
-    val qualsMap = agg.quals(posStart)
-    rearrange(qualsMap, ref(0))
-    qualsMap.zipWithIndex.map { case (_, i) =>
-      val ind = i + QualityConstants.QUAL_INDEX_SHIFT
-      if (qualsMap(i) != null && qualsMap(i).sum != 0)
-          ind.toByte  -> qualsMap(i)
-      else null
-    }.filter(_ != null).toMap
+return null
+//    val qualsMap = agg.quals(posStart)
+//    //rearrange(qualsMap, ref(0))
+//    qualsMap.zipWithIndex.map { case (_, i) =>
+//      val ind = i + QualityConstants.QUAL_INDEX_SHIFT
+//      if (qualsMap(i) != null && qualsMap(i).sum != 0)
+//          ind.toByte  -> qualsMap(i)
+//      else null
+//    }.filter(_ != null).toMap
   }
 
   private def addBlockRecord(result:Array[InternalRow], ind:Int,
