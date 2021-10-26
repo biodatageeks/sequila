@@ -2,8 +2,8 @@ package org.biodatageeks.sequila.pileup.model
 
 import htsjdk.samtools.{Cigar, CigarOperator, SAMRecord}
 import org.biodatageeks.sequila.pileup.MDTagParser
-import org.biodatageeks.sequila.pileup.model.Quals._
 import org.biodatageeks.sequila.pileup.model.Alts._
+import org.biodatageeks.sequila.pileup.model.Quals._
 
 import scala.collection.mutable
 
@@ -31,8 +31,8 @@ case class ExtendedReads(read: SAMRecord) {
 
   def calculateQuals(agg: ContigAggregate, start: Int, cigar: Cigar, bQual: Array[Byte], isPositiveStrand:Boolean):Unit = {
     val cigarConf = CigarDerivedConf.create(start, cigar)
-    val readQualSummary = ReadSummary(start, read.getEnd, read.getReadBases, bQual, cigarConf)
-    fillBaseQualities(agg, readQualSummary, isPositiveStrand)
+    //val readQualSummary = ReadSummary(start, read.getEnd, read.getReadBases, bQual, cigarConf)
+    fillBaseQualities(agg, isPositiveStrand, cigarConf)
   }
 
 
@@ -124,18 +124,54 @@ case class ExtendedReads(read: SAMRecord) {
     }
   }
 
-  def fillBaseQualities(agg: ContigAggregate, readSummary: ReadSummary, isPositive:Boolean): Unit = {
-    val start = readSummary.start
-    val end = readSummary.end
+  def fillBaseQualities(agg: ContigAggregate, isPositive:Boolean, cigarDerivedConf: CigarDerivedConf): Unit = {
+    val start = read.getStart
+    val end = read.getEnd
     var currPosition = start
     while (currPosition <= end) {
-      if (!readSummary.hasDeletionOnPosition(currPosition)) {
-        val relativePos = if (!readSummary.cigarDerivedConf.hasIndel && !readSummary.cigarDerivedConf.hasClip) currPosition - readSummary.start
-        else readSummary.relativePosition(currPosition)
-          val base = if(isPositive)  readSummary.basesArray(relativePos).toChar.toUpper else readSummary.basesArray(relativePos).toChar.toLower
-          agg.quals.updateQuals(currPosition, base, readSummary.qualsArray(relativePos), agg.conf)
+      if (!hasDeletionOnPosition(currPosition, cigarDerivedConf)) {
+        val relativePos = if (!cigarDerivedConf.hasIndel && !cigarDerivedConf.hasClip) currPosition - start
+          else relativePosition(currPosition, cigarDerivedConf)
+        val base = if(isPositive)  read.getReadBases()(relativePos).toChar.toUpper else read.getReadBases()(relativePos).toChar.toLower
+        val qual = read.getBaseQualities()(relativePos)
+        agg.quals.updateQuals(currPosition, base, qual, agg.conf)
+
       }
       currPosition += 1
     }
   }
+
+  @inline
+  def getBaseQualityForPosition(position: Int, cigarDerivedConf: CigarDerivedConf): Byte = {
+    read.getBaseQualities()(relativePosition(position, cigarDerivedConf))
+  }
+
+  @inline
+  def overlapsPosition(pos: Int, cigarDerivedConf: CigarDerivedConf): Boolean = !hasDeletionOnPosition(pos,cigarDerivedConf) && read.getStart <= pos && read.getEnd >= pos
+
+  @inline
+  def relativePosition(absPosition: Int, cigarDerivedConf: CigarDerivedConf): Int = {
+    absPosition - read.getStart + inDelEventsOffset(absPosition, cigarDerivedConf) + cigarDerivedConf.leftClipLength
+
+  }
+
+  @inline
+  private def inDelEventsOffset(pos: Int, cigarDerivedConf: CigarDerivedConf): Int = {
+    if (!cigarDerivedConf.hasIndel)
+      return 0
+    cigarDerivedConf.getInsertOffsetForPosition(pos)- cigarDerivedConf.getDelOffsetForPosition(pos)
+  }
+
+  @inline
+  def hasDeletionOnPosition(pos: Int, cigarDerivedConf: CigarDerivedConf): Boolean = {
+    val leftClipLen = cigarDerivedConf.leftClipLength
+    if (!cigarDerivedConf.hasDel)
+      false
+    else {
+      cigarDerivedConf
+        .indelPositions
+        .delPositions.exists { case (start, end) => pos + leftClipLen >= start && pos + leftClipLen < end }
+    }
+  }
+
 }
