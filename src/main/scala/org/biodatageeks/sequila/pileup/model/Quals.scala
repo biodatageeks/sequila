@@ -7,11 +7,11 @@ import org.biodatageeks.sequila.utils.FastMath
 import scala.collection.mutable
 
 object Quals {
-  type SingleLocusQuals =  mutable.ListBuffer[(Char, Byte)]
-  val SingleLocusQuals = mutable.ListBuffer[(Char, Byte)] _
+  type SingleLocusQuals =  mutable.TreeSet[(Char, Byte)]
+  val SingleLocusQuals = mutable.TreeSet[(Char, Byte)] _
 
-  type MultiLociQuals = mutable.IntMap[Quals.SingleLocusQuals]
-  val MultiLociQuals = mutable.IntMap[Quals.SingleLocusQuals] _
+  type MultiLociQuals = Array[Quals.SingleLocusQuals]
+  val MultiLociQuals = Array[Quals.SingleLocusQuals] _
 
   implicit class SingleLocusQualsExtension(val arr: Quals.SingleLocusQuals) {
     //def derivedCoverage: Short = arr.flatMap(x => if (x != null) x.toList else List.empty).sum
@@ -27,7 +27,7 @@ object Quals {
 
 
     def addQualityForBase(base: Char, quality: Byte, conf: Conf): Unit = {
-      arr.append((base,quality))
+      arr+=((base,quality))
     }
 
 //    def allocateArrays (conf: Conf):Unit = {
@@ -47,19 +47,19 @@ object Quals {
 
   }
 
-  implicit class MultiLociQualsExtension(val map: Quals.MultiLociQuals) {
-    def ++(that: Quals.MultiLociQuals): Quals.MultiLociQuals = (map ++ that)
+  implicit class MultiLociQualsExtension(val arr: Quals.MultiLociQuals) {
+    def ++(that: Quals.MultiLociQuals): Quals.MultiLociQuals = (arr ++ that)
 
     @inline
     def updateQuals(position: Int, base: Char, quality: Byte, conf: Conf): Unit = {
-      val quals = map.get(position)
-      if (quals.isDefined)
-        quals.get.addQualityForBase(base, quality, conf)
-      else {
-        val singleLocusQualMap = new SingleLocusQuals()
-        singleLocusQualMap.addQualityForBase(base, quality, conf)
-        map.update(position, singleLocusQualMap)
+        arr(position).addQualityForBase(base, quality, conf)
+    }
+
+    def allocateEmptySets(): MultiLociQuals = {
+      for(i <- arr.indices) {
+        arr(i) = mutable.TreeSet.empty
       }
+      arr
     }
 
 

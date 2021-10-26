@@ -133,7 +133,7 @@ case class ExtendedReads(read: SAMRecord) {
         val relativePos = if (!readSummary.cigarDerivedConf.hasIndel && !readSummary.cigarDerivedConf.hasClip) currPosition - readSummary.start
         else readSummary.relativePosition(currPosition)
           val base = if(isPositive)  readSummary.basesArray(relativePos).toChar.toUpper else readSummary.basesArray(relativePos).toChar.toLower
-          agg.quals.updateQuals(currPosition, base, readSummary.qualsArray(relativePos), agg.conf)
+          agg.quals.updateQuals(currPosition - start, base, readSummary.qualsArray(relativePos), agg.conf)
       }
       currPosition += 1
     }

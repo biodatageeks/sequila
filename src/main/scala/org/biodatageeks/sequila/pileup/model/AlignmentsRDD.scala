@@ -7,7 +7,7 @@ import org.apache.spark.sql.SparkSession
 import org.biodatageeks.sequila.datasources.BAM.BAMTableReader
 import org.biodatageeks.sequila.pileup.conf.Conf
 import org.biodatageeks.sequila.pileup.model.Alts.MultiLociAlts
-import org.biodatageeks.sequila.pileup.model.Quals.MultiLociQuals
+import org.biodatageeks.sequila.pileup.model.Quals._
 import org.biodatageeks.sequila.pileup.model.ReadOperations.implicits._
 import org.biodatageeks.sequila.pileup.partitioning.{LowerPartitionBoundAlignmentRecord, PartitionBounds, PartitionUtils, RangePartitionCoalescer}
 import org.biodatageeks.sequila.rangejoins.IntervalTree.Interval
@@ -70,7 +70,7 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
       contigLen = contigLen,
       events = new Array[Short](arrayLen),
       alts = new MultiLociAlts(),
-      quals = if(conf.value.includeBaseQualities) new MultiLociQuals() else null,
+      quals = if(conf.value.includeBaseQualities) new MultiLociQuals(arrayLen).allocateEmptySets() else null,
       startPosition = read.getStart,
       maxPosition = contigLen - 1,
       conf = conf.value )
