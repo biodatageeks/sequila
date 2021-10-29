@@ -11,7 +11,7 @@ import org.biodatageeks.sequila.pileup.model.Quals.MultiLociQuals
 import org.biodatageeks.sequila.pileup.model.ReadOperations.implicits._
 import org.biodatageeks.sequila.pileup.partitioning.{LowerPartitionBoundAlignmentRecord, PartitionBounds, PartitionUtils, RangePartitionCoalescer}
 import org.biodatageeks.sequila.rangejoins.IntervalTree.Interval
-import org.biodatageeks.sequila.rangejoins.methods.IntervalTree.IntervalHolderChromosome
+import org.biodatageeks.sequila.rangejoins.methods.IntervalTree.{IntervalHolderChromosome, IntervalTreeRedBlack}
 import org.biodatageeks.sequila.utils.{DataQualityFuncs, InternalParams}
 import org.seqdoop.hadoop_bam.BAMBDGInputFormat
 import org.slf4j.{Logger, LoggerFactory}
@@ -40,6 +40,13 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
       val aggMap = new mutable.HashMap[String, ContigAggregate]()
       var contigIter, contigCleanIter,  currentContig  = ""
       var contigAggregate: ContigAggregate = null
+      val qualsWindowSize = 1500
+      var qualsWindowWatermark = qualsWindowSize //for buffering and tree pruning
+      var qualsWindowPos = 0
+      val qualsWindowProcessSize = 500 // for processing  - must much shorter than qualsWindowSize
+      var qualsWindowProcessWatermark = qualsWindowProcessSize
+      var readSummaryTree = new IntervalTreeRedBlack[ReadSummary]()
+      var altsTree = new IntervalTreeRedBlack[Int]() //tree for holding relative position in conting
       val partBound = bounds.value(index)
         while (partition.hasNext) {
           val read = partition.next()
@@ -48,11 +55,22 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
 
           if ( contig != currentContig ) {
               handleFirstReadForContigInPartition(read, contig, contigLenMap, aggMap, partBound, conf)
+//              readSummaryTree.remove(0, Int.MaxValue)
+              readSummaryTree = new IntervalTreeRedBlack[ReadSummary]()
+              altsTree = new IntervalTreeRedBlack[Int]()
               currentContig = contig
           }
 
           contigAggregate = aggMap(contig)
-          read.analyzeRead(contigAggregate)
+          qualsWindowPos = read.getStart
+          qualsWindowProcessWatermark = read.analyzeRead(contigAggregate, qualsWindowProcessSize, qualsWindowPos, qualsWindowProcessWatermark, readSummaryTree, altsTree)
+          if(qualsWindowPos > qualsWindowWatermark) { //tree pruning - 2nd last buffer window not the last one
+            val pruneStart = read.getStart - (2*qualsWindowSize + 1)
+            val pruneEnd = read.getStart - (qualsWindowSize + 1)
+            readSummaryTree.remove(pruneStart, pruneEnd)
+            altsTree.remove(pruneStart, pruneEnd)
+            qualsWindowWatermark = (qualsWindowPos/qualsWindowWatermark + 1) * qualsWindowWatermark
+          }
         }
       aggMap.valuesIterator
     }
