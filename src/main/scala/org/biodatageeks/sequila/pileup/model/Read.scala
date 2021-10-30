@@ -60,7 +60,6 @@ case class ExtendedReads(read: SAMRecord) {
         while (rsIterator.hasNext) {
           val nodeIterator = rsIterator.next().getValue.iterator()
           while (nodeIterator.hasNext) {
-//            nodeIterator.next()
             fillBaseQualities(agg,  nodeIterator.next(), altsArray)
           }
         }
@@ -155,7 +154,8 @@ case class ExtendedReads(read: SAMRecord) {
 
         aggregate.alts.updateAlts(altPosition, altBase)
         altsPositions += altPosition
-        altsTree.put(altPosition, altPosition, altPosition)
+        if(aggregate.conf.includeBaseQualities)
+          altsTree.put(altPosition, altPosition, altPosition)
 
       }
       else if (mdtag.base == 'S')

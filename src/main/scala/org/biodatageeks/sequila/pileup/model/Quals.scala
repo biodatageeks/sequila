@@ -32,21 +32,6 @@ object Quals {
       arr(altArrIndex)(qualityIndex) = (arr(altArrIndex)(qualityIndex) + 1).toShort
     }
 
-//    def allocateArrays (conf: Conf):Unit = {
-//      val arrSize = conf.qualityArrayLength
-//      arr('A' - QualityConstants.QUAL_INDEX_SHIFT) = new Array[Short](arrSize)
-//      arr('C' - QualityConstants.QUAL_INDEX_SHIFT) = new Array[Short](arrSize)
-//      arr('T' - QualityConstants.QUAL_INDEX_SHIFT) = new Array[Short](arrSize)
-//      arr('G' - QualityConstants.QUAL_INDEX_SHIFT) = new Array[Short](arrSize)
-//      arr('N' - QualityConstants.QUAL_INDEX_SHIFT) = new Array[Short](arrSize)
-//      arr('a' - QualityConstants.QUAL_INDEX_SHIFT) = new Array[Short](arrSize)
-//      arr('c' - QualityConstants.QUAL_INDEX_SHIFT) = new Array[Short](arrSize)
-//      arr('t' - QualityConstants.QUAL_INDEX_SHIFT) = new Array[Short](arrSize)
-//      arr('g' - QualityConstants.QUAL_INDEX_SHIFT) = new Array[Short](arrSize)
-//      arr('n' - QualityConstants.QUAL_INDEX_SHIFT) = new Array[Short](arrSize)
-//      //arr(QualityConstants.REF_SYMBOL - QualityConstants.QUAL_INDEX_SHIFT) = new Array[Short](arrSize)
-//    }
-
   }
 
   implicit class MultiLociQualsExtension(val map: Quals.MultiLociQuals) {

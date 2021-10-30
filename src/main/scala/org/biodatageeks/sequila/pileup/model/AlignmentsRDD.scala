@@ -40,10 +40,10 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
       val aggMap = new mutable.HashMap[String, ContigAggregate]()
       var contigIter, contigCleanIter,  currentContig  = ""
       var contigAggregate: ContigAggregate = null
-      val qualsWindowSize = 1500
+      val qualsWindowSize = 1500 //FIXME: conf parameter
       var qualsWindowWatermark = qualsWindowSize //for buffering and tree pruning
       var qualsWindowPos = 0
-      val qualsWindowProcessSize = 500 // for processing  - must much shorter than qualsWindowSize
+      val qualsWindowProcessSize = 500 //FIXME: conf parameter for processing  - must much shorter than qualsWindowSize
       var qualsWindowProcessWatermark = qualsWindowProcessSize
       var readSummaryTree = new IntervalTreeRedBlack[ReadSummary]()
       var altsTree = new IntervalTreeRedBlack[Int]() //tree for holding relative position in conting
@@ -55,16 +55,20 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
 
           if ( contig != currentContig ) {
               handleFirstReadForContigInPartition(read, contig, contigLenMap, aggMap, partBound, conf)
-//              readSummaryTree.remove(0, Int.MaxValue)
               readSummaryTree = new IntervalTreeRedBlack[ReadSummary]()
               altsTree = new IntervalTreeRedBlack[Int]()
               currentContig = contig
+              qualsWindowPos = 0
+              //FIXME: perhaps we should flush buffer from the previous contig
           }
 
           contigAggregate = aggMap(contig)
           qualsWindowPos = read.getStart
-          qualsWindowProcessWatermark = read.analyzeRead(contigAggregate, qualsWindowProcessSize, qualsWindowPos, qualsWindowProcessWatermark, readSummaryTree, altsTree)
-          if(qualsWindowPos > qualsWindowWatermark) { //tree pruning - 2nd last buffer window not the last one
+          qualsWindowProcessWatermark = read.analyzeRead(
+                    contigAggregate, qualsWindowProcessSize,
+                    qualsWindowPos, qualsWindowProcessWatermark,
+                    readSummaryTree, altsTree)
+          if(contigAggregate.conf.includeBaseQualities && qualsWindowPos > qualsWindowWatermark) { //tree pruning - 2nd last buffer window not the last one
             val pruneStart = read.getStart - (2*qualsWindowSize + 1)
             val pruneEnd = read.getStart - (qualsWindowSize + 1)
             readSummaryTree.remove(pruneStart, pruneEnd)
