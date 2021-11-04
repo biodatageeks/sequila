@@ -115,11 +115,17 @@ breakable {
   }
 
   private def rearrange(arr: SingleLocusQuals, refBase: Char):Unit = {
-    val refBaseIndexLower = refBase.toLower - QualityConstants.QUAL_INDEX_SHIFT
-    val refBaseIndexUpper = refBase - QualityConstants.QUAL_INDEX_SHIFT
+    val refBaseIndexLower = Quals.mapBaseToIdx(refBase.toLower)
+    val refBaseIndexUpper = Quals.mapBaseToIdx(refBase)
 
-    arr(refBaseIndexUpper) = arr(refBaseIndexLower).zip(arr(refBaseIndexUpper)).map { case (x, y) => (x + y).toShort }
+    arr(refBaseIndexUpper) = mergeArrays( arr(refBaseIndexLower), arr(refBaseIndexUpper))
     arr(refBaseIndexLower) = null
+  }
+
+  private def mergeArrays(arr1: Array[Short], arr2: Array[Short]): Array[Short] = {
+    if (arr1 == null) arr2
+    else if (arr2 == null) arr1
+    else arr1.zip(arr2).map { case (x, y) => (x + y).toShort }
   }
 
   private def prepareOutputQualMap(agg: ContigAggregate, posStart: Int, ref:String): Map[Byte, Array[Short]] = {

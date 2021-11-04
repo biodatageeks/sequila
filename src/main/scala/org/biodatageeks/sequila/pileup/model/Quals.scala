@@ -70,25 +70,24 @@ object Quals {
 //      }
     }
 
-    def mapBaseToIdx(base: Char) = {
-      base match {
-        case 'A' => 0
-        case 'C' => 1
-        case 'T' => 2
-        case 'G' => 3
-        case 'N' => 4
-        case 'a' => 5
-        case 'c' => 6
-        case 't' => 7
-        case 'g' => 8
-        case 'n' => 9
-      }
-    }
-
-
     def getTotalEntries: Long = {
       map.map { case (k, v) => k -> map(k).totalEntries }.foldLeft(0L)(_ + _._2)
     }
 
+  }
+
+  def mapBaseToIdx(base: Char): Int = {
+    base match {
+      case 'A' => 0
+      case 'C' => 1
+      case 'T' => 2
+      case 'G' => 3
+      case 'N' => 4
+      case 'a' => 5
+      case 'c' => 6
+      case 't' => 7
+      case 'g' => 8
+      case 'n' => 9
+    }
   }
 }
