@@ -49,11 +49,10 @@ case class ExtendedReads(read: SAMRecord) {
     val qualsWindowPos = read.getStart
     if (qualsWindowPos <=  qualsWindowProcessWatermark)
       return qualsWindowProcessWatermark
-
     val windowStart = qualsWindowProcessWatermark - (QualityConstants.PROCESS_SIZE + 1)
     val windowEnd = read.getStart - 1
     flushQualsBuffer(readSummaryTree, altsTree, windowStart, windowEnd, agg)
-    read.getStart + QualityConstants.PROCESS_SIZE
+    read.getStart + QualityConstants.PROCESS_SIZE + 1
   }
 
   def flushQualsBuffer(readSummaryTree: IntervalTreeRedBlack[ReadSummary], altsTree: IntervalTreeRedBlack[Int], start: Int, end: Int, agg:ContigAggregate): Unit = {
@@ -172,6 +171,8 @@ case class ExtendedReads(read: SAMRecord) {
       if (currPosition >= readSummary.start && currPosition<= readSummary.end && !readSummary.hasDeletionOnPosition(currPosition)) {
         val relativePos = if (!readSummary.cigarDerivedConf.hasIndel && !readSummary.cigarDerivedConf.hasClip) currPosition - readSummary.start
         else readSummary.relativePosition(currPosition)
+        if (agg.contig == "1" && currPosition == 3092)
+          println()
           val base = if(readSummary.isPositiveStrand)  readSummary.basesArray(relativePos).toChar.toUpper else readSummary.basesArray(relativePos).toChar.toLower
           agg.quals.updateQuals(currPosition, base, readSummary.qualsArray(relativePos), agg.conf)
       }
