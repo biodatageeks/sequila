@@ -2,6 +2,7 @@ package org.biodatageeks.sequila.pileup.model
 
 import htsjdk.samtools.{Cigar, CigarOperator, SAMRecord}
 import org.biodatageeks.sequila.pileup.MDTagParser
+import org.biodatageeks.sequila.pileup.conf.QualityConstants
 import org.biodatageeks.sequila.pileup.model.Quals._
 import org.biodatageeks.sequila.pileup.model.Alts._
 import org.biodatageeks.sequila.rangejoins.methods.IntervalTree.IntervalTreeRedBlack
@@ -18,12 +19,16 @@ case class TruncRead(rName: String, contig: String, posStart: Int, posEnd: Int)
 case class ExtendedReads(read: SAMRecord) {
 
 
-  def analyzeRead( agg: ContigAggregate,
-                   qualsWindowProcessSize: Int,
-                   qualsWindowPos: Int,
-                   qualsWindowProcessWatermark: Int,
-                   readSummaryTree: IntervalTreeRedBlack[ReadSummary],
-                   altsTree : IntervalTreeRedBlack[Int]): Int = {
+  def addReadToQualsBuffer(start: Int, cigar: Cigar, readSummaryTree: IntervalTreeRedBlack[ReadSummary]): ReadSummary = {
+    val cigarConf = CigarDerivedConf.create(start, cigar)
+    val readQualSummary = ReadSummary(start, read.getEnd, read.getReadBases, read.getBaseQualities, ! read.getReadNegativeStrandFlag, cigarConf)
+    readSummaryTree.put(read.getStart, read.getEnd, readQualSummary)
+  }
+
+  def analyzeRead(agg: ContigAggregate,
+                  qualsWindowProcessWatermark: Int,
+                  readSummaryTree: IntervalTreeRedBlack[ReadSummary],
+                  altsTree : IntervalTreeRedBlack[Int]): Int = {
     val start = read.getStart
     val cigar = read.getCigar
     val isPositiveStrand = ! read.getReadNegativeStrandFlag
@@ -32,42 +37,40 @@ case class ExtendedReads(read: SAMRecord) {
     calculateAlts(agg, start, cigar, isPositiveStrand, altsTree)
 
     if (agg.conf.includeBaseQualities) {
-      calculateQuals (agg, start, cigar, read.getBaseQualities, readSummaryTree, altsTree,
-        qualsWindowProcessSize, qualsWindowPos, qualsWindowProcessWatermark)
+      addReadToQualsBuffer (start, cigar, readSummaryTree)
+      processQualsBuffer (agg, readSummaryTree, altsTree, start, qualsWindowProcessWatermark)
     }
     else
       qualsWindowProcessWatermark
   }
 
-  def calculateQuals(agg: ContigAggregate, start: Int, cigar: Cigar,
-                     bQual: Array[Byte],
-                     readSummaryTree: IntervalTreeRedBlack[ReadSummary],
-                     altsTree: IntervalTreeRedBlack[Int],
-                     qualsWindowProcessSize: Int,
-                     qualsWindowPos: Int,
-                     qualsWindowProcessWatermark: Int
+  def processQualsBuffer(agg: ContigAggregate,
+                         readSummaryTree: IntervalTreeRedBlack[ReadSummary],
+                         altsTree: IntervalTreeRedBlack[Int],
+                         qualsWindowPos: Int,
+                         qualsWindowProcessWatermark: Int
                     ):Int = {
-    val cigarConf = CigarDerivedConf.create(start, cigar)
-    val readQualSummary = ReadSummary(start, read.getEnd, read.getReadBases, bQual, ! read.getReadNegativeStrandFlag, cigarConf)
-    readSummaryTree.put(read.getStart, read.getEnd, readQualSummary)
-    if (qualsWindowPos > qualsWindowProcessWatermark ) {
-      val windowStart = read.getStart - (qualsWindowProcessSize + 1)
-      val windowEnd = read.getStart - 1
-      val altsArray = altsTree.overlappers(windowStart, windowEnd).asScala.flatMap(r=>r.getValue.asScala).toArray.distinct
-//      println(s"Processing ${windowStart}-${windowEnd} with alts: ${altsArray.mkString("|")}")
-      if(altsArray.length > 0) {
-        val rsIterator = readSummaryTree.overlappers(windowStart, windowEnd)
-        while (rsIterator.hasNext) {
-          val nodeIterator = rsIterator.next().getValue.iterator()
-          while (nodeIterator.hasNext) {
-            fillBaseQualities(agg,  nodeIterator.next(), altsArray)
-          }
+
+    if (qualsWindowPos <=  qualsWindowProcessWatermark)
+      return qualsWindowProcessWatermark
+
+    val windowStart = read.getStart - (QualityConstants.PROCESS_SIZE + 1)
+    val windowEnd = read.getStart - 1
+    flushQualsBuffer(readSummaryTree, altsTree, windowStart, windowEnd, agg)
+    read.getStart + QualityConstants.PROCESS_SIZE
+  }
+
+  def flushQualsBuffer(readSummaryTree: IntervalTreeRedBlack[ReadSummary], altsTree: IntervalTreeRedBlack[Int], start: Int, end: Int, agg:ContigAggregate): Unit = {
+    val altsArray = altsTree.overlappers(start, end).asScala.flatMap(r=>r.getValue.asScala).toArray.distinct
+    if(altsArray.length > 0) {
+      val rsIterator = readSummaryTree.overlappers(start, end)
+      while (rsIterator.hasNext) {
+        val nodeIterator = rsIterator.next().getValue.iterator()
+        while (nodeIterator.hasNext) {
+          fillBaseQualities(agg,  nodeIterator.next(), altsArray)
         }
       }
-      read.getStart + qualsWindowProcessSize
     }
-    else qualsWindowProcessWatermark
-
   }
 
 

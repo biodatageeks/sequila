@@ -7,4 +7,7 @@ object QualityConstants {
   final val DEFAULT_BIN_SIZE = 1
   final val QUAL_INDEX_SHIFT = 'A'.toInt
   final val OUTER_QUAL_SIZE = 't' - 'A' + 1
+
+  final val WINDOW_SIZE = 1500
+  final val PROCESS_SIZE  = 500
 }

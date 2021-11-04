@@ -5,7 +5,7 @@ import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SparkSession
 import org.biodatageeks.sequila.datasources.BAM.BAMTableReader
-import org.biodatageeks.sequila.pileup.conf.Conf
+import org.biodatageeks.sequila.pileup.conf.{Conf, QualityConstants}
 import org.biodatageeks.sequila.pileup.model.Alts.MultiLociAlts
 import org.biodatageeks.sequila.pileup.model.Quals.MultiLociQuals
 import org.biodatageeks.sequila.pileup.model.ReadOperations.implicits._
@@ -39,12 +39,10 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
     this.rdd.mapPartitionsWithIndex { (index, partition) =>
       val aggMap = new mutable.HashMap[String, ContigAggregate]()
       var contigIter, contigCleanIter,  currentContig  = ""
-      var contigAggregate: ContigAggregate = null
-      val qualsWindowSize = 1500 //FIXME: conf parameter
-      var qualsWindowWatermark = qualsWindowSize //for buffering and tree pruning
+      var agg: ContigAggregate = null
+      var qualsWindowWatermark = QualityConstants.WINDOW_SIZE //for buffering and tree pruning
       var qualsWindowPos = 0
-      val qualsWindowProcessSize = 500 //FIXME: conf parameter for processing  - must much shorter than qualsWindowSize
-      var qualsWindowProcessWatermark = qualsWindowProcessSize
+      var qualsWindowProcessWatermark = QualityConstants.PROCESS_SIZE
       var readSummaryTree = new IntervalTreeRedBlack[ReadSummary]()
       var altsTree = new IntervalTreeRedBlack[Int]() //tree for holding relative position in conting
       val partBound = bounds.value(index)
@@ -59,21 +57,25 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
               altsTree = new IntervalTreeRedBlack[Int]()
               currentContig = contig
               qualsWindowPos = 0
+              qualsWindowProcessWatermark = QualityConstants.PROCESS_SIZE // TODO - verify
               //FIXME: perhaps we should flush buffer from the previous contig
           }
 
-          contigAggregate = aggMap(contig)
+          agg = aggMap(contig)
           qualsWindowPos = read.getStart
-          qualsWindowProcessWatermark = read.analyzeRead(
-                    contigAggregate, qualsWindowProcessSize,
-                    qualsWindowPos, qualsWindowProcessWatermark,
-                    readSummaryTree, altsTree)
-          if(contigAggregate.conf.includeBaseQualities && qualsWindowPos > qualsWindowWatermark) { //tree pruning - 2nd last buffer window not the last one
-            val pruneStart = read.getStart - (2*qualsWindowSize + 1)
-            val pruneEnd = read.getStart - (qualsWindowSize + 1)
+          qualsWindowProcessWatermark = read.analyzeRead(agg, qualsWindowProcessWatermark, readSummaryTree, altsTree)
+          if(agg.conf.includeBaseQualities && qualsWindowPos > qualsWindowWatermark) { //tree pruning - 2nd last buffer window not the last one
+            val pruneStart = read.getStart - (2 * QualityConstants.WINDOW_SIZE + 1)
+            val pruneEnd = read.getStart - (QualityConstants.WINDOW_SIZE + 1)
             readSummaryTree.remove(pruneStart, pruneEnd)
             altsTree.remove(pruneStart, pruneEnd)
             qualsWindowWatermark = (qualsWindowPos/qualsWindowWatermark + 1) * qualsWindowWatermark
+          }
+          if (!partition.hasNext && agg.conf.includeBaseQualities && qualsWindowPos <= qualsWindowProcessWatermark) {
+            val windowStart = read.getStart - (QualityConstants.PROCESS_SIZE + 1)
+            val windowEnd = read.getEnd - 1
+              read.flushQualsBuffer(readSummaryTree, altsTree, windowStart, windowEnd, agg)
+            agg
           }
         }
       aggMap.valuesIterator
