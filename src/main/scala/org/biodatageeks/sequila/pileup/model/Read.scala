@@ -19,9 +19,9 @@ case class TruncRead(rName: String, contig: String, posStart: Int, posEnd: Int)
 case class ExtendedReads(read: SAMRecord) {
 
 
-  def addReadToQualsBuffer(start: Int, cigar: Cigar, readSummaryTree: IntervalTreeRedBlack[ReadSummary]): ReadSummary = {
-    val cigarConf = CigarDerivedConf.create(start, cigar)
-    val readQualSummary = ReadSummary(start, read.getEnd, read.getReadBases, read.getBaseQualities, ! read.getReadNegativeStrandFlag, cigarConf)
+  def addReadToQualsBuffer(readSummaryTree: IntervalTreeRedBlack[ReadSummary]): ReadSummary = {
+    val cigarConf = CigarDerivedConf.create(read.getStart, read.getCigar)
+    val readQualSummary = ReadSummary(read.getStart, read.getEnd, read.getReadBases, read.getBaseQualities, ! read.getReadNegativeStrandFlag, cigarConf)
     readSummaryTree.put(read.getStart, read.getEnd, readQualSummary)
   }
 
@@ -29,16 +29,13 @@ case class ExtendedReads(read: SAMRecord) {
                   qualsWindowProcessWatermark: Int,
                   readSummaryTree: IntervalTreeRedBlack[ReadSummary],
                   altsTree : IntervalTreeRedBlack[Int]): Int = {
-    val start = read.getStart
-    val cigar = read.getCigar
-    val isPositiveStrand = ! read.getReadNegativeStrandFlag
 
-    calculateEvents(agg, start, cigar)
-    calculateAlts(agg, start, cigar, isPositiveStrand, altsTree)
+    calculateEvents(agg)
+    calculateAlts(agg, altsTree)
 
     if (agg.conf.includeBaseQualities) {
-      addReadToQualsBuffer (start, cigar, readSummaryTree)
-      processQualsBuffer (agg, readSummaryTree, altsTree, start, qualsWindowProcessWatermark)
+      addReadToQualsBuffer (readSummaryTree)
+      processQualsBuffer (agg, readSummaryTree, altsTree, qualsWindowProcessWatermark)
     }
     else
       qualsWindowProcessWatermark
@@ -47,14 +44,13 @@ case class ExtendedReads(read: SAMRecord) {
   def processQualsBuffer(agg: ContigAggregate,
                          readSummaryTree: IntervalTreeRedBlack[ReadSummary],
                          altsTree: IntervalTreeRedBlack[Int],
-                         qualsWindowPos: Int,
                          qualsWindowProcessWatermark: Int
                     ):Int = {
-
+    val qualsWindowPos = read.getStart
     if (qualsWindowPos <=  qualsWindowProcessWatermark)
       return qualsWindowProcessWatermark
 
-    val windowStart = read.getStart - (QualityConstants.PROCESS_SIZE + 1)
+    val windowStart = qualsWindowProcessWatermark - (QualityConstants.PROCESS_SIZE + 1)
     val windowEnd = read.getStart - 1
     flushQualsBuffer(readSummaryTree, altsTree, windowStart, windowEnd, agg)
     read.getStart + QualityConstants.PROCESS_SIZE
@@ -74,7 +70,9 @@ case class ExtendedReads(read: SAMRecord) {
   }
 
 
-  def calculateEvents(aggregate: ContigAggregate, start: Int, cigar: Cigar): Unit = {
+  def calculateEvents(aggregate: ContigAggregate): Unit = {
+    val start = read.getStart
+    val cigar = read.getCigar
     val partitionStart = aggregate.startPosition
     var position = start
     val cigarIterator = cigar.iterator()
@@ -129,10 +127,11 @@ case class ExtendedReads(read: SAMRecord) {
     mdPosition + numInsertions
   }
 
-  def calculateAlts(aggregate: ContigAggregate, start: Int,
-                    cigar: Cigar,
-                    isPositiveStrand:Boolean,
+  def calculateAlts(aggregate: ContigAggregate,
                     altsTree: IntervalTreeRedBlack[Int]): Unit = {
+    val start = read.getStart
+    val cigar = read.getCigar
+    val isPositiveStrand = !read.getReadNegativeStrandFlag
     var position = start
     val ops = MDTagParser.parseMDTag(read.getStringAttribute("MD"))
 
