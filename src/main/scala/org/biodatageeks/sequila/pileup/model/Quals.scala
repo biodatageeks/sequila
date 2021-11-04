@@ -90,4 +90,19 @@ object Quals {
       case 'n' => 9
     }
   }
+
+  def mapIdxToBase(ind: Int): Char = {
+    ind match {
+      case 0 => 'A'
+      case 1 => 'C'
+      case 2 => 'T'
+      case 3 => 'G'
+      case 4 => 'N'
+      case 5 => 'a'
+      case 6 => 'c'
+      case 7 => 't'
+      case 8 => 'g'
+      case 9 => 'n'
+    }
+  }
 }

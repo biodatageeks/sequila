@@ -135,7 +135,7 @@ breakable {
     val qualsMap = agg.quals(posStart)
     rearrange(qualsMap, ref(0))
     qualsMap.zipWithIndex.map { case (_, i) =>
-      val ind = i + QualityConstants.QUAL_INDEX_SHIFT
+      val ind = Quals.mapIdxToBase(i)
       if (qualsMap(i) != null && qualsMap(i).sum != 0)
           ind.toByte  -> qualsMap(i)
       else null
