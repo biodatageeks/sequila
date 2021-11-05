@@ -78,7 +78,7 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
           }
           if (!partition.hasNext && agg.conf.includeBaseQualities && qualsWindowPos <= qualsWindowProcessWatermark) {
             val windowStart = qualsWindowProcessWatermark - (QualityConstants.PROCESS_SIZE + 1)
-            val windowEnd = read.getEnd - 1
+            val windowEnd = altsTree.max().getEnd
             read.flushQualsBuffer(readSummaryTree, altsTree, windowStart, windowEnd, agg)
           }
         }
