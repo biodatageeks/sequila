@@ -49,14 +49,13 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
         val prev = new BlockProperties()
         val startPosition = agg.startPosition
         val partitionBounds = bounds.value(index)
-        val contig = agg.contig
         val bases = reference.getBasesFromReference(contigMap(agg.contig), agg.startPosition, agg.startPosition + maxIndex)
 
 breakable {
-  while (i <= maxIndex) { // repartition change -> no shrinking, we have to go through whole array
+  while (i <= maxIndex) {
     currPos = i + startPosition
     cov += agg.events(i)
-    if (isInPartitionRange(currPos - 1 , contig, partitionBounds, agg.conf)) {
+    if (isInPartitionRange(currPos - 1 , agg.contig, partitionBounds, agg.conf)) {
       if (currPos == partitionBounds.postStart) {
         prev.reset(i)
       }
