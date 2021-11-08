@@ -54,7 +54,7 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
           if ( contig != currentContig ) {
             if(conf.value.includeBaseQualities && altsTree.size() != 0 ) {
               val windowStart = qualsWindowProcessWatermark - (QualityConstants.PROCESS_SIZE + 1)
-              val windowEnd = altsTree.max().getEnd
+              val windowEnd = qualsWindowProcessWatermark
               read.flushQualsBuffer(readSummaryTree, altsTree, windowStart, windowEnd, agg)
             }
               handleFirstReadForContigInPartition(read, contig, contigLenMap, aggMap, partBound, conf)
@@ -78,7 +78,7 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
           }
           if (!partition.hasNext && agg.conf.includeBaseQualities && qualsWindowPos <= qualsWindowProcessWatermark) {
             val windowStart = qualsWindowProcessWatermark - (QualityConstants.PROCESS_SIZE + 1)
-            val windowEnd = altsTree.max().getEnd
+            val windowEnd = qualsWindowProcessWatermark
             read.flushQualsBuffer(readSummaryTree, altsTree, windowStart, windowEnd, agg)
           }
         }
