@@ -25,6 +25,13 @@ object Quals {
         else x.zipAll(y, 0.toShort, 0.toShort).map(a => (a._1 + a._2).toShort)
       }}
 
+    def isAllZeros (ind: Int): Boolean = {
+      for (i<- arr(ind).indices)
+        if (arr(ind)(i) != 0 )
+          return false
+      true
+    }
+
 
     def addQualityForBase(base: Char, quality: Byte, conf: Conf): Unit = {
       val qualityIndex = if (conf.isBinningEnabled) (quality / conf.binSize).toShort else quality
@@ -91,7 +98,7 @@ object Quals {
     }
   }
 
-  def mapIdxToBase(ind: Int): Char = {
+  def mapIdxToBase(ind: Int): Byte = {
     ind match {
       case 0 => 'A'
       case 1 => 'C'

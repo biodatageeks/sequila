@@ -6,11 +6,13 @@ import org.apache.spark.sql.catalyst.InternalRow
 import org.biodatageeks.sequila.pileup.conf.{Conf, QualityConstants}
 import org.biodatageeks.sequila.pileup.serializers.PileupProjection
 import org.biodatageeks.sequila.pileup.model.Alts._
+import org.biodatageeks.sequila.pileup.model.Quals._
 import org.biodatageeks.sequila.pileup.model.Quals.SingleLocusQuals
 import org.biodatageeks.sequila.pileup.partitioning.PartitionBounds
 import org.biodatageeks.sequila.utils.FastMath
 import org.slf4j.{Logger, LoggerFactory}
 
+import scala.collection.mutable
 import scala.util.control.Breaks._
 
 object AggregateRDDOperations {
@@ -51,49 +53,48 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
         val partitionBounds = bounds.value(index)
         val bases = reference.getBasesFromReference(contigMap(agg.contig), agg.startPosition, agg.startPosition + maxIndex)
 
-breakable {
-  while (i <= maxIndex) {
-    currPos = i + startPosition
-    cov += agg.events(i)
-    if (isInPartitionRange(currPos - 1 , agg.contig, partitionBounds, agg.conf)) {
-      if (currPos == partitionBounds.postStart) {
-        prev.reset(i)
-      }
-      if (prev.hasAlt) {
-        addBaseRecord(result, ind, agg, bases, i, prev)
-        ind += 1;
-        prev.reset(i)
-        if (agg.hasAltOnPosition(currPos))
-          prev.alt = agg.alts(currPos)
-      }
-      else if (agg.hasAltOnPosition(currPos)) { // there is ALT in this posiion
-        if (prev.isNonZeroCoverage) { // there is previous group non-zero group -> convert it
-          addBlockRecord(result, ind, agg, bases, i, prev)
-          ind += 1;
-          prev.reset(i)
-        } else if (prev.isZeroCoverage) // previous ZERO group, clear block
-          prev.reset(i)
-        prev.alt = agg.alts(currPos)
-      } else if (isEndOfZeroCoverageRegion(cov, prev.cov, i)) { // coming back from zero coverage. clear block
-        prev.reset(i)
-      } else if (isChangeOfCoverage(cov, prev.cov,  i) || isStartOfZeroCoverageRegion(cov, prev.cov)) { // different cov, add to output previous group
-        addBlockRecord(result, ind, agg, bases, i, prev)
-        ind += 1;
-        prev.reset(i)
-      } else if (currPos == partitionBounds.posEnd + 1) { // last item -> convert it
-        addBlockRecord(result, ind, agg, bases, i, prev)
-        ind += 1;
-        prev.reset(i)
-        break
-      }
-    }
-    prev.cov = cov;
-    prev.len = prev.len + 1;
-    i += 1
-  } // while
-}
-
-        if (ind < maxLen) result.take(ind) else result
+        breakable {
+          while (i <= maxIndex) {
+            currPos = i + startPosition
+            cov += agg.events(i)
+            if (isInPartitionRange(currPos - 1 , agg.contig, partitionBounds, agg.conf)) {
+              if (currPos == partitionBounds.postStart) {
+                prev.reset(i)
+              }
+              if (prev.hasAlt) {
+                addBaseRecord(result, ind, agg, bases, i, prev)
+                ind += 1;
+                prev.reset(i)
+                if (agg.hasAltOnPosition(currPos))
+                  prev.alt = agg.alts(currPos)
+              }
+              else if (agg.hasAltOnPosition(currPos)) { // there is ALT in this posiion
+                if (prev.isNonZeroCoverage) { // there is previous group non-zero group -> convert it
+                  addBlockRecord(result, ind, agg, bases, i, prev)
+                  ind += 1;
+                  prev.reset(i)
+                } else if (prev.isZeroCoverage) // previous ZERO group, clear block
+                  prev.reset(i)
+                prev.alt = agg.alts(currPos)
+              } else if (isEndOfZeroCoverageRegion(cov, prev.cov, i)) { // coming back from zero coverage. clear block
+                prev.reset(i)
+              } else if (isChangeOfCoverage(cov, prev.cov,  i) || isStartOfZeroCoverageRegion(cov, prev.cov)) { // different cov, add to output previous group
+                addBlockRecord(result, ind, agg, bases, i, prev)
+                ind += 1;
+                prev.reset(i)
+              } else if (currPos == partitionBounds.posEnd + 1) { // last item -> convert it
+                addBlockRecord(result, ind, agg, bases, i, prev)
+                ind += 1;
+                prev.reset(i)
+                break
+              }
+            }
+            prev.cov = cov;
+            prev.len = prev.len + 1;
+            i += 1
+          } // while
+        }
+        result.take(ind)
       }
       }
     }.flatMap(r => r)
@@ -104,41 +105,45 @@ breakable {
   private def isEndOfZeroCoverageRegion(cov: Int, prevCov: Int, i: Int) = cov != 0 && prevCov == 0 && i > 0
 
   private def addBaseRecord(result:Array[InternalRow], ind:Int,
-                    agg:ContigAggregate, bases:String, i:Int, prev:BlockProperties): Unit = {
+                            agg:ContigAggregate, bases:String, i:Int, prev:BlockProperties): Unit = {
     val posStart, posEnd = i+agg.startPosition-1
     val ref = bases.substring(prev.pos, i)
     val altsCount = prev.alt.derivedAltsNumber
     val qualsMap = prepareOutputQualMap(agg, posStart, ref)
-    result(ind) = PileupProjection.convertToRow(agg.contig, posStart, posEnd, ref, prev.cov.toShort, (prev.cov-altsCount).toShort,altsCount, prev.alt.toMap, qualsMap)
+    result(ind) = PileupProjection.convertToRow(agg.contig, posStart, posEnd, ref, prev.cov.toShort, (prev.cov-altsCount).toShort,altsCount, prev.alt, qualsMap)
     prev.alt.clear()
   }
 
-  private def rearrange(arr: SingleLocusQuals, refBase: Char):Unit = {
-    val refBaseIndexLower = Quals.mapBaseToIdx(refBase.toLower)
-    val refBaseIndexUpper = Quals.mapBaseToIdx(refBase)
-
-    arr(refBaseIndexUpper) = mergeArrays( arr(refBaseIndexLower), arr(refBaseIndexUpper))
-    arr(refBaseIndexLower) = null
-  }
-
   private def mergeArrays(arr1: Array[Short], arr2: Array[Short]): Array[Short] = {
-    if (arr1 == null) arr2
-    else if (arr2 == null) arr1
+    if (arr2 == null) arr1
     else arr1.zip(arr2).map { case (x, y) => (x + y).toShort }
   }
 
-  private def prepareOutputQualMap(agg: ContigAggregate, posStart: Int, ref:String): Map[Byte, Array[Short]] = {
+  private def prepareOutputQualMap(agg: ContigAggregate, posStart: Int, ref:String): mutable.HashMap[Byte, Array[Short]] = {
     if (!agg.conf.includeBaseQualities)
       return null
 
     val qualsMap = agg.quals(posStart)
-    rearrange(qualsMap, ref(0))
-    qualsMap.zipWithIndex.flatMap { case (_, i) =>
-      val ind = Quals.mapIdxToBase(i)
-      if (qualsMap(i) != null && qualsMap(i).sum != 0)
-          Some(ind.toByte  -> qualsMap(i))
-      else None
-    }.toMap
+    val newMap = mutable.HashMap[Byte, Array[Short]]()
+
+    for (i <- qualsMap.indices){
+      if (qualsMap(i) != null ) {
+        val ind = Quals.mapIdxToBase(i)
+        val isZeros = qualsMap.isAllZeros(i)
+        if (!isZeros) {
+          if (ind == ref(0)) {
+            val i_lower = Quals.mapBaseToIdx(ind.toChar.toLower)
+            qualsMap(i) = mergeArrays(qualsMap(i), qualsMap(i_lower))
+            qualsMap(i_lower) = null
+            newMap(ind) = qualsMap(i)
+          } else if (ind == ref(0).toLower) {
+            newMap(ind.toChar.toUpper.toByte) = qualsMap(i)
+          } else
+            newMap(ind) = qualsMap(i)
+        }
+      }
+    }
+    newMap
   }
 
   private def addBlockRecord(result:Array[InternalRow], ind:Int,
