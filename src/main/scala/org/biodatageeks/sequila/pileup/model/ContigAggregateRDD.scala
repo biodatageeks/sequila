@@ -105,7 +105,7 @@ breakable {
   private def isEndOfZeroCoverageRegion(cov: Int, prevCov: Int, i: Int) = cov != 0 && prevCov == 0 && i > 0
 
   private def addBaseRecord(result:Array[InternalRow], ind:Int,
-                    agg:ContigAggregate, bases:String, i:Int, prev:BlockProperties) {
+                    agg:ContigAggregate, bases:String, i:Int, prev:BlockProperties): Unit = {
     val posStart, posEnd = i+agg.startPosition-1
     val ref = bases.substring(prev.pos, i)
     val altsCount = prev.alt.derivedAltsNumber
@@ -134,12 +134,12 @@ breakable {
 
     val qualsMap = agg.quals(posStart)
     rearrange(qualsMap, ref(0))
-    qualsMap.zipWithIndex.map { case (_, i) =>
+    qualsMap.zipWithIndex.flatMap { case (_, i) =>
       val ind = Quals.mapIdxToBase(i)
       if (qualsMap(i) != null && qualsMap(i).sum != 0)
-          ind.toByte  -> qualsMap(i)
-      else null
-    }.filter(_ != null).toMap
+          Some(ind.toByte  -> qualsMap(i))
+      else None
+    }.toMap
   }
 
   private def addBlockRecord(result:Array[InternalRow], ind:Int,
