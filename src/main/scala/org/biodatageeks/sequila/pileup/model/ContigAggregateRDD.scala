@@ -113,40 +113,46 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
     prev.alt.clear()
   }
 
-  private def mergeArrays(arr1: Array[Short], arr2: Array[Short]): Array[Short] = {
-    if (arr2 == null) arr1
-    else arr1.zip(arr2).map { case (x, y) => (x + y).toShort }
+  def updateQuals(inputBase: Byte, quality: Byte, ref: Char, isPositive: Boolean, map: mutable.HashMap[Byte, Array[Short]]):Unit = {
+    val base = if (!isPositive && inputBase == ref) ref.toByte else if (!isPositive) inputBase.toChar.toLower.toByte else inputBase
+
+    map.get(base) match {
+      case None =>
+        val arr =  new Array[Short](41)
+        arr(quality) = 1
+        map.put(base, arr)
+      case Some(baseQuals) =>
+        baseQuals(quality) = (baseQuals(quality) + 1).toShort
+    }
+  }
+
+  def fillBaseQualities(readSummary: ReadSummary, altPos: Int, ref: Char,  qualsMap: mutable.HashMap[Byte, Array[Short]]): Unit = {
+    if (altPos >= readSummary.start && altPos <= readSummary.end && !readSummary.hasDeletionOnPosition(altPos)) {
+      val relativePos = if (!readSummary.cigarDerivedConf.hasIndel && !readSummary.cigarDerivedConf.hasClip) altPos - readSummary.start
+      else readSummary.relativePosition(altPos)
+      val base = readSummary.basesArray(relativePos)
+      updateQuals(base, readSummary.qualsArray(relativePos), ref,  readSummary.isPositiveStrand, qualsMap)
+    }
   }
 
   private def prepareOutputQualMap(agg: ContigAggregate, posStart: Int, ref:String): mutable.HashMap[Byte, Array[Short]] = {
     if (!agg.conf.includeBaseQualities)
       return null
 
-    val qualsMap = agg.quals(posStart)
     val newMap = mutable.HashMap[Byte, Array[Short]]()
 
-    for (i <- qualsMap.indices){
-      if (qualsMap(i) != null ) {
-        val ind = Quals.mapIdxToBase(i)
-        val isZeros = qualsMap.isAllZeros(i)
-        if (!isZeros) {
-          if (ind == ref(0)) {
-            val i_lower = Quals.mapBaseToIdx(ind.toChar.toLower)
-            qualsMap(i) = mergeArrays(qualsMap(i), qualsMap(i_lower))
-            qualsMap(i_lower) = null
-            newMap(ind) = qualsMap(i)
-          } else if (ind == ref(0).toLower) {
-            newMap(ind.toChar.toUpper.toByte) = qualsMap(i)
-          } else
-            newMap(ind) = qualsMap(i)
-        }
+    val rsIterator = agg.rsTree.overlappers(posStart, posStart)
+    while (rsIterator.hasNext) {
+      val nodeIterator = rsIterator.next().getValue.iterator()
+      while (nodeIterator.hasNext) {
+        fillBaseQualities(nodeIterator.next(), posStart, ref(0), newMap)
       }
     }
     newMap
   }
 
   private def addBlockRecord(result:Array[InternalRow], ind:Int,
-                             agg:ContigAggregate, bases:String, i:Int, prev:BlockProperties) {
+                             agg:ContigAggregate, bases:String, i:Int, prev:BlockProperties): Unit = {
     val ref = bases.substring(prev.pos, i)
     val posStart=i+agg.startPosition-prev.len
     val posEnd=i+agg.startPosition-1
