@@ -1,6 +1,5 @@
 package org.biodatageeks.sequila.pileup.model
 
-import org.apache.spark.broadcast.Broadcast
 
 import org.biodatageeks.sequila.pileup.conf.Conf
 

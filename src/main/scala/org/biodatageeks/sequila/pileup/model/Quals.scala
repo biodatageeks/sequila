@@ -25,26 +25,18 @@ object Quals {
         else x.zipAll(y, 0.toShort, 0.toShort).map(a => (a._1 + a._2).toShort)
       }}
 
+    def isAllZeros (ind: Int): Boolean = {
+      for (i<- arr(ind).indices)
+        if (arr(ind)(i) != 0 )
+          return false
+      true
+    }
+
 
     def addQualityForBase(base: Char, quality: Byte, conf: Conf): Unit = {
       val qualityIndex = if (conf.isBinningEnabled) (quality / conf.binSize).toShort else quality
       val altArrIndex = base - QualityConstants.QUAL_INDEX_SHIFT
       arr(altArrIndex)(qualityIndex) = (arr(altArrIndex)(qualityIndex) + 1).toShort
-    }
-
-    def allocateArrays (conf: Conf):Unit = {
-      val arrSize = conf.qualityArrayLength
-      arr('A' - QualityConstants.QUAL_INDEX_SHIFT) = new Array[Short](arrSize)
-      arr('C' - QualityConstants.QUAL_INDEX_SHIFT) = new Array[Short](arrSize)
-      arr('T' - QualityConstants.QUAL_INDEX_SHIFT) = new Array[Short](arrSize)
-      arr('G' - QualityConstants.QUAL_INDEX_SHIFT) = new Array[Short](arrSize)
-      arr('N' - QualityConstants.QUAL_INDEX_SHIFT) = new Array[Short](arrSize)
-      arr('a' - QualityConstants.QUAL_INDEX_SHIFT) = new Array[Short](arrSize)
-      arr('c' - QualityConstants.QUAL_INDEX_SHIFT) = new Array[Short](arrSize)
-      arr('t' - QualityConstants.QUAL_INDEX_SHIFT) = new Array[Short](arrSize)
-      arr('g' - QualityConstants.QUAL_INDEX_SHIFT) = new Array[Short](arrSize)
-      arr('n' - QualityConstants.QUAL_INDEX_SHIFT) = new Array[Short](arrSize)
-      //arr(QualityConstants.REF_SYMBOL - QualityConstants.QUAL_INDEX_SHIFT) = new Array[Short](arrSize)
     }
 
   }
@@ -54,21 +46,70 @@ object Quals {
 
     @inline
     def updateQuals(position: Int, base: Char, quality: Byte, conf: Conf): Unit = {
-      if (map.contains(position)) {
-        map(position).addQualityForBase(base, quality, conf)
-      }
-      else {
-        val singleLocusQualMap = new SingleLocusQuals(QualityConstants.OUTER_QUAL_SIZE)
-        singleLocusQualMap.allocateArrays(conf)
-        singleLocusQualMap.addQualityForBase(base, quality, conf)
-        map.update(position, singleLocusQualMap)
-      }
-    }
 
+      val baseIdx = mapBaseToIdx(base)
+
+      map.get(position) match {
+        case None => {
+          val arr =  new Array[Array[Short]](10)
+          arr(baseIdx) = new Array[Short](41)
+          arr(baseIdx)(quality) = 1
+          map.put(position, arr)
+        }
+        case Some(posPointer) => {
+
+          if(posPointer(baseIdx) == null) {
+            posPointer(baseIdx) = new Array[Short](41)
+            posPointer(baseIdx)(quality) = 1
+          }
+          else posPointer(baseIdx)(quality) = (posPointer(baseIdx)(quality) + 1).toShort
+
+
+        }
+      }
+//      if (map.contains(position)) {
+//        map(position).addQualityForBase(base, quality, conf)
+//      }
+//      else {
+//        val singleLocusQualMap = new SingleLocusQuals(QualityConstants.OUTER_QUAL_SIZE)
+//        singleLocusQualMap.addQualityForBase(base, quality, conf)
+//        map.update(position, singleLocusQualMap)
+//      }
+    }
 
     def getTotalEntries: Long = {
       map.map { case (k, v) => k -> map(k).totalEntries }.foldLeft(0L)(_ + _._2)
     }
 
+  }
+
+  def mapBaseToIdx(base: Char): Int = {
+    base match {
+      case 'A' => 0
+      case 'C' => 1
+      case 'T' => 2
+      case 'G' => 3
+      case 'N' => 4
+      case 'a' => 5
+      case 'c' => 6
+      case 't' => 7
+      case 'g' => 8
+      case 'n' => 9
+    }
+  }
+
+  def mapIdxToBase(ind: Int): Byte = {
+    ind match {
+      case 0 => 'A'
+      case 1 => 'C'
+      case 2 => 'T'
+      case 3 => 'G'
+      case 4 => 'N'
+      case 5 => 'a'
+      case 6 => 'c'
+      case 7 => 't'
+      case 8 => 'g'
+      case 9 => 'n'
+    }
   }
 }

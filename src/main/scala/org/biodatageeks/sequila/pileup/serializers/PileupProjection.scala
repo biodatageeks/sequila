@@ -95,7 +95,7 @@ object PileupProjection {
   private def calculateArraySize(arr: Array[Short]): Int =
     wordSize + calculateArrayNullRegionLen(arr.length) + roundUp(arr.length *shortSize, wordSize)
 
-  def calculateAltsMapSizes(map: Map[Byte,Short]): (Int, Int, Int)= {
+  def calculateAltsMapSizes(map: mutable.HashMap[Byte,Short]): (Int, Int, Int)= {
     val numElements = map.size
     val arrayNullRegionLen = calculateArrayNullRegionLen(numElements)
 
@@ -106,7 +106,7 @@ object PileupProjection {
   }
 
 
-  def calculateQualMapSizes(map: Map[Byte,Array[Short]]): (Int, Int, Int)= {
+  def calculateQualMapSizes(map: mutable.HashMap[Byte,Array[Short]]): (Int, Int, Int)= {
     val numElements = map.size
     val arrayNullRegionLen = calculateArrayNullRegionLen(numElements)
 
@@ -179,7 +179,7 @@ object PileupProjection {
       writeShort(data, array(i), elementsOffset + i * shortSize)
   }
 
-    def writeMap(data: Array[Byte], map: Map[Byte,Short], headerOffset: Int, arraysOffset:Int): Unit = {
+    def writeMap(data: Array[Byte], map: mutable.HashMap[Byte,Short], headerOffset: Int, arraysOffset:Int): Unit = {
     val (mapSize, keysArraySize, _) = calculateAltsMapSizes(map)
 
     val keysOffset = arraysOffset + wordSize
@@ -191,7 +191,7 @@ object PileupProjection {
     writeArray(data, map.values.toArray[Short], valuesOffset)
   }
 
-  def writeQualsMap(data: Array[Byte], map: Map[Byte,Array[Short]], headerOffset: Int, arraysOffset:Int): Unit = {
+  def writeQualsMap(data: Array[Byte], map: mutable.HashMap[Byte,Array[Short]], headerOffset: Int, arraysOffset:Int): Unit = {
     val (mapSize, keysArraySize, _) = calculateQualMapSizes(map)
 
     val keysOffset = arraysOffset + wordSize
@@ -204,7 +204,7 @@ object PileupProjection {
   }
 
   def convertToRow(contig: String, start: Int, end: Int, bases: String, cov: Short, refCount: Short, altsCount: Short,
-                   altsMap: Map[Byte, Short], qualsMap: Map[Byte, Array[Short]]): UnsafeRow = {
+                   altsMap: mutable.HashMap[Byte, Short], qualsMap: mutable.HashMap[Byte, Array[Short]]): UnsafeRow = {
     val nullRegionLen, fixedRegionIndex = 8
     val numFields = 9 //FIXME constant fields num
     val fixedRegionLen = numFields * wordSize

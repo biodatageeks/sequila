@@ -5,6 +5,7 @@ package org.biodatageeks.sequila.pileup.model
 case class ReadSummary(start: Int, end: Int,
                        basesArray: Array[Byte],
                        qualsArray: Array[Byte],
+                       isPositiveStrand: Boolean,
                        cigarDerivedConf: CigarDerivedConf
                             ) {
 
