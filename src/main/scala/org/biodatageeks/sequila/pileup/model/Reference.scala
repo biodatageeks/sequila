@@ -20,10 +20,6 @@ class Reference(refPath : String) {
     }
     normContigMap
   }
-  def getBaseFromReference(contigMap: mutable.HashMap[String,String], contig: String, index: Int): String = {
-    val refBase = fasta.getSubsequenceAt(contigMap(contig), index.toLong, index.toLong)
-    refBase.getBaseString.toUpperCase
-  }
 
   def getBasesFromReference(contig: String, startIndex: Int, endIndex: Int): String = {
     val refBases = fasta.getSubsequenceAt(contig, startIndex.toLong, endIndex.toLong-1)

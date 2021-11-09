@@ -15,12 +15,8 @@ case class ReadSummary(start: Int, end: Int,
   }
 
   @inline
-  def overlapsPosition(pos: Int): Boolean = !hasDeletionOnPosition(pos) && start <= pos && end >= pos
-
-  @inline
   def relativePosition(absPosition: Int): Int = {
     absPosition - start + inDelEventsOffset(absPosition) + cigarDerivedConf.leftClipLength
-
   }
 
   @inline
@@ -28,8 +24,6 @@ case class ReadSummary(start: Int, end: Int,
     if (!cigarDerivedConf.hasIndel)
       return 0
     cigarDerivedConf.getInsertOffsetForPosition(pos)- cigarDerivedConf.getDelOffsetForPosition(pos)
-
-
   }
 
   @inline
