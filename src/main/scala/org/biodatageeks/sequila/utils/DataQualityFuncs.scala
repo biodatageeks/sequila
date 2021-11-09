@@ -33,6 +33,9 @@ object DataQualityFuncs {
       case "chrX" => "X"
       case "chrY" => "Y"
       case "chrM" => "MT"
+      case "chrMT" => "MT"
+      case "M" => "MT"
+      case c if c !=null && c.startsWith("chr") => contig.replace("chr","")
       case _ => contig
     }
   }
