@@ -15,21 +15,24 @@ case class TruncRead(rName: String, contig: String, posStart: Int, posEnd: Int)
 case class ExtendedReads(read: SAMRecord) {
 
 
-  def addReadToQualsBuffer(agg: ContigAggregate): Unit = {
+  def addReadToQualsBuffer(agg: ContigAggregate, bases: Array[Byte]): Unit = {
     val cigarConf = CigarDerivedConf.create(read.getStart, read.getCigar)
-    val readQualSummary = ReadSummary(read.getStart, read.getEnd, read.getReadBases, read.getBaseQualities, ! read.getReadNegativeStrandFlag, cigarConf)
+    val readQualSummary = ReadSummary(read.getStart, read.getEnd, bases, read.getBaseQualities, ! read.getReadNegativeStrandFlag, cigarConf)
     agg.rsTree.put(read.getStart, read.getEnd, readQualSummary)
+    ()
   }
 
   def analyzeReadWithQuals(agg: ContigAggregate): Unit = {
+    val bases = read.getReadBases
     calculateEvents(agg)
-    calculateAlts(agg)
-    addReadToQualsBuffer(agg)
+    calculateAlts(agg, bases)
+    addReadToQualsBuffer(agg, bases)
   }
 
   def analyzeReadNoQuals(agg: ContigAggregate): Unit = {
+    val bases = read.getReadBases
     calculateEvents(agg)
-    calculateAlts(agg)
+    calculateAlts(agg, bases)
   }
 
   def calculateEvents(aggregate: ContigAggregate): Unit = {
@@ -89,7 +92,7 @@ case class ExtendedReads(read: SAMRecord) {
     mdPosition + numInsertions
   }
 
-  def calculateAlts(aggregate: ContigAggregate): Unit = {
+  def calculateAlts(aggregate: ContigAggregate, bases: Array[Byte]): Unit = {
     val start = read.getStart
     val cigar = read.getCigar
     val isPositiveStrand = !read.getReadNegativeStrandFlag
@@ -97,7 +100,6 @@ case class ExtendedReads(read: SAMRecord) {
     val ops = MDTagParser.parseMDTag(read.getStringAttribute("MD"))
 
     var delCounter = 0
-    val altsPositions = mutable.Set.empty[Int]
     val clipLen =
       if (cigar.getCigarElement(0).getOperator == CigarOperator.SOFT_CLIP)
         cigar.getCigarElement(0).getLength else 0
@@ -112,12 +114,10 @@ case class ExtendedReads(read: SAMRecord) {
         position += 1
 
         val indexInSeq = calculatePositionInReadSeq(position - start - delCounter, cigar)
-        val altBase = if (isPositiveStrand) read.getReadString.charAt(indexInSeq - 1) else read.getReadString.charAt(indexInSeq - 1).toLower
+        val altBase = if (isPositiveStrand) bases(indexInSeq - 1).toChar else bases(indexInSeq - 1).toChar.toLower
         val altPosition = position - clipLen - 1
 
         aggregate.alts.updateAlts(altPosition, altBase)
-        altsPositions += altPosition
-
       }
       else if (mdtag.base == 'S')
         position += mdtag.length
