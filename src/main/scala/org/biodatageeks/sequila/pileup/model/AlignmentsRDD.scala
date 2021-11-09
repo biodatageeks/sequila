@@ -95,7 +95,6 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
       alts = new MultiLociAlts(),
       rsTree =  if(conf.value.includeBaseQualities) new IntervalTreeRedBlack[ReadSummary]() else null,
       startPosition = read.getStart,
-      maxPosition = contigLen - 1,
       conf = conf.value )
     aggMap += contig -> contigEventAggregate
   }

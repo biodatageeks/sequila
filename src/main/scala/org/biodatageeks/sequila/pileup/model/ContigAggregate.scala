@@ -16,7 +16,6 @@ case class ContigAggregate(
                             alts: MultiLociAlts,
                             rsTree: IntervalTreeRedBlack[ReadSummary],
                             startPosition: Int = 0,
-                            maxPosition: Int = 0, // FIXME: review if still needed
                             conf: Conf
                           ) {
 
@@ -25,10 +24,7 @@ case class ContigAggregate(
   def calculateMaxLength(allPositions: Boolean): Int = {
     if (! allPositions)
       return events.length
-
-    val firstBlockMaxLength = startPosition - 1
-    val lastBlockMaxLength = contigLen - maxPosition
-    firstBlockMaxLength + events.length + lastBlockMaxLength
+    events.length + 2
   }
 
   def updateEvents(pos: Int, startPart: Int, delta: Short): Unit = {
@@ -38,7 +34,4 @@ case class ContigAggregate(
     events(position) = (events(position) + delta).toShort
   }
 
-  def updateAlts(pos: Int, alt: Char): Unit = {
-    alts.updateAlts(pos, alt)
-  }
 }
