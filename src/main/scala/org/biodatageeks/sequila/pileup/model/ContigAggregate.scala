@@ -2,25 +2,24 @@ package org.biodatageeks.sequila.pileup.model
 
 
 import org.biodatageeks.sequila.pileup.conf.Conf
-
 import org.biodatageeks.sequila.pileup.model.Alts._
-import org.biodatageeks.sequila.pileup.model.Quals._
+import org.biodatageeks.sequila.rangejoins.methods.IntervalTree.IntervalTreeRedBlack
 
 
 
 /** Events aggregation on contig
-  */
+ */
 
 case class ContigAggregate(
                             contig: String = "",
                             contigLen: Int = 0,
                             events: Array[Short],
                             alts: MultiLociAlts,
-                            quals: MultiLociQuals,
+                            rsTree: IntervalTreeRedBlack[ReadSummary],
                             startPosition: Int = 0,
                             maxPosition: Int = 0, // FIXME: review if still needed
                             conf: Conf
-                                ) {
+                          ) {
 
   def hasAltOnPosition(pos:Int):Boolean = alts.contains(pos)
 
