@@ -6,7 +6,6 @@ import org.biodatageeks.sequila.pileup.model.Alts._
 import org.biodatageeks.sequila.rangejoins.methods.IntervalTree.IntervalTreeRedBlack
 
 
-
 /** Events aggregation on contig
  */
 
@@ -42,5 +41,4 @@ case class ContigAggregate(
   def updateAlts(pos: Int, alt: Char): Unit = {
     alts.updateAlts(pos, alt)
   }
-
 }

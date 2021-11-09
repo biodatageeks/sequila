@@ -1,7 +1,5 @@
 package org.biodatageeks.sequila.pileup.model
 
-import org.biodatageeks.sequila.utils.FastMath
-
 import scala.collection.mutable
 
 object Alts {
@@ -20,7 +18,6 @@ object Alts {
       sum
     }
   }
-
   implicit class MultiLociAltsExtension (val map: Alts.MultiLociAlts) {
     def ++ (that: Alts.MultiLociAlts): Alts.MultiLociAlts = (map ++ that)
 
