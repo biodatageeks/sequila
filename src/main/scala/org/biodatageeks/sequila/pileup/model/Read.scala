@@ -25,20 +25,21 @@ case class ExtendedReads(read: SAMRecord) {
     readSummaryTree.put(read.getStart, read.getEnd, readQualSummary)
   }
 
-  def analyzeRead(agg: ContigAggregate,
+  def analyzeReadWithQuals(agg: ContigAggregate,
                   qualsWindowProcessWatermark: Int,
                   readSummaryTree: IntervalTreeRedBlack[ReadSummary],
                   altsTree : IntervalTreeRedBlack[Int]): Int = {
 
     calculateEvents(agg)
     calculateAlts(agg, altsTree)
+    addReadToQualsBuffer (readSummaryTree)
+    processQualsBuffer (agg, readSummaryTree, altsTree, qualsWindowProcessWatermark)
+  }
 
-    if (agg.conf.includeBaseQualities) {
-      addReadToQualsBuffer (readSummaryTree)
-      processQualsBuffer (agg, readSummaryTree, altsTree, qualsWindowProcessWatermark)
-    }
-    else
-      qualsWindowProcessWatermark
+  def analyzeReadNoQuals(agg: ContigAggregate): Unit = {
+
+    calculateEvents(agg)
+    calculateAlts(agg, null)
   }
 
   def processQualsBuffer(agg: ContigAggregate,

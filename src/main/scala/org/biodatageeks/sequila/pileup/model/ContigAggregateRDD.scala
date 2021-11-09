@@ -3,11 +3,10 @@ package org.biodatageeks.sequila.pileup.model
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.catalyst.InternalRow
-import org.biodatageeks.sequila.pileup.conf.{Conf, QualityConstants}
+import org.biodatageeks.sequila.pileup.conf.Conf
 import org.biodatageeks.sequila.pileup.serializers.PileupProjection
 import org.biodatageeks.sequila.pileup.model.Alts._
 import org.biodatageeks.sequila.pileup.model.Quals._
-import org.biodatageeks.sequila.pileup.model.Quals.SingleLocusQuals
 import org.biodatageeks.sequila.pileup.partitioning.PartitionBounds
 import org.biodatageeks.sequila.utils.FastMath
 import org.slf4j.{Logger, LoggerFactory}

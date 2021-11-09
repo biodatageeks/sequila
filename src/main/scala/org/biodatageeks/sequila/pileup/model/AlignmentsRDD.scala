@@ -33,7 +33,31 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
     *
     * @return distributed collection of PileupRecords
     */
-  def assembleContigAggregates(bounds: Broadcast[Array[PartitionBounds]], conf: Broadcast[Conf]): RDD[ContigAggregate] = {
+  def assembleAggregates(bounds: Broadcast[Array[PartitionBounds]], conf: Broadcast[Conf]): RDD[ContigAggregate] = {
+    val contigLenMap = initContigLengths(this.rdd.first())
+
+    this.rdd.mapPartitionsWithIndex { (index, partition) =>
+      val aggMap = new mutable.HashMap[String, ContigAggregate]()
+      var contigIter, contigCleanIter,  currentContig  = ""
+      var agg: ContigAggregate = null
+      val partBound = bounds.value(index)
+        while (partition.hasNext) {
+          val read = partition.next()
+          val contig =  if(read.getContig == contigIter)  contigCleanIter
+                        else DataQualityFuncs.cleanContig(read.getContig)
+
+          if ( contig != currentContig ) {
+              handleFirstReadForContigInPartition(read, contig, contigLenMap, aggMap, partBound, conf)
+              currentContig = contig
+          }
+          agg = aggMap(contig)
+          read.analyzeReadNoQuals(agg)
+        }
+      aggMap.valuesIterator
+    }
+  }
+
+  def assembleAggregatesWithQuals(bounds: Broadcast[Array[PartitionBounds]], conf: Broadcast[Conf]): RDD[ContigAggregate] = {
     val contigLenMap = initContigLengths(this.rdd.first())
 
     this.rdd.mapPartitionsWithIndex { (index, partition) =>
@@ -46,42 +70,41 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
       var readSummaryTree = new IntervalTreeRedBlack[ReadSummary]()
       var altsTree = new IntervalTreeRedBlack[Int]() //tree for holding relative position in conting
       val partBound = bounds.value(index)
-        while (partition.hasNext) {
-          val read = partition.next()
-          val contig =  if(read.getContig == contigIter)  contigCleanIter
-                        else DataQualityFuncs.cleanContig(read.getContig)
+      while (partition.hasNext) {
+        val read = partition.next()
+        val contig =  if(read.getContig == contigIter)  contigCleanIter
+        else DataQualityFuncs.cleanContig(read.getContig)
 
-          if ( contig != currentContig ) {
-            if(conf.value.includeBaseQualities && altsTree.size() != 0 ) {
-              val windowStart = qualsWindowProcessWatermark - (QualityConstants.PROCESS_SIZE + 1)
-              val windowEnd = qualsWindowProcessWatermark
-              read.flushQualsBuffer(readSummaryTree, altsTree, windowStart, windowEnd, agg)
-            }
-              handleFirstReadForContigInPartition(read, contig, contigLenMap, aggMap, partBound, conf)
-              readSummaryTree = new IntervalTreeRedBlack[ReadSummary]()
-              altsTree = new IntervalTreeRedBlack[Int]()
-              currentContig = contig
-              qualsWindowPos = 0
-              qualsWindowProcessWatermark = QualityConstants.PROCESS_SIZE // TODO - verify
-              //FIXME: perhaps we should flush buffer from the previous contig
-          }
-
-          agg = aggMap(contig)
-          qualsWindowPos = read.getStart
-          qualsWindowProcessWatermark = read.analyzeRead(agg, qualsWindowProcessWatermark, readSummaryTree, altsTree)
-          if(agg.conf.includeBaseQualities && qualsWindowPos > qualsWindowWatermark) { //tree pruning - 2nd last buffer window not the last one
-            val pruneStart = read.getStart - (2 * QualityConstants.WINDOW_SIZE + 1)
-            val pruneEnd = read.getStart - (QualityConstants.WINDOW_SIZE + 1)
-            readSummaryTree.remove(pruneStart, pruneEnd)
-            altsTree.remove(pruneStart, pruneEnd)
-            qualsWindowWatermark = (qualsWindowPos/qualsWindowWatermark + 1) * qualsWindowWatermark
-          }
-          if (!partition.hasNext && agg.conf.includeBaseQualities && qualsWindowPos <= qualsWindowProcessWatermark) {
+        if ( contig != currentContig ) {
+          if(altsTree.size() != 0 ) {
             val windowStart = qualsWindowProcessWatermark - (QualityConstants.PROCESS_SIZE + 1)
             val windowEnd = qualsWindowProcessWatermark
             read.flushQualsBuffer(readSummaryTree, altsTree, windowStart, windowEnd, agg)
           }
+          handleFirstReadForContigInPartition(read, contig, contigLenMap, aggMap, partBound, conf)
+          readSummaryTree = new IntervalTreeRedBlack[ReadSummary]()
+          altsTree = new IntervalTreeRedBlack[Int]()
+          currentContig = contig
+          qualsWindowPos = 0
+          qualsWindowProcessWatermark = QualityConstants.PROCESS_SIZE // TODO - verify
         }
+
+        agg = aggMap(contig)
+        qualsWindowPos = read.getStart
+        qualsWindowProcessWatermark = read.analyzeReadWithQuals(agg, qualsWindowProcessWatermark, readSummaryTree, altsTree)
+        if(qualsWindowPos > qualsWindowWatermark) { //tree pruning - 2nd last buffer window not the last one
+          val pruneStart = read.getStart - (2 * QualityConstants.WINDOW_SIZE + 1)
+          val pruneEnd = read.getStart - (QualityConstants.WINDOW_SIZE + 1)
+          readSummaryTree.remove(pruneStart, pruneEnd)
+          altsTree.remove(pruneStart, pruneEnd)
+          qualsWindowWatermark = (qualsWindowPos/qualsWindowWatermark + 1) * qualsWindowWatermark
+        }
+        if (!partition.hasNext && qualsWindowPos <= qualsWindowProcessWatermark) {
+          val windowStart = qualsWindowProcessWatermark - (QualityConstants.PROCESS_SIZE + 1)
+          val windowEnd = qualsWindowProcessWatermark
+          read.flushQualsBuffer(readSummaryTree, altsTree, windowStart, windowEnd, agg)
+        }
+      }
       aggMap.valuesIterator
     }
   }
