@@ -4,7 +4,6 @@ import htsjdk.samtools.{Cigar, CigarOperator, SAMRecord}
 import org.biodatageeks.sequila.pileup.MDTagParser
 import org.biodatageeks.sequila.pileup.model.Alts._
 
-import scala.collection.mutable
 object ReadOperations {
 
   object implicits {

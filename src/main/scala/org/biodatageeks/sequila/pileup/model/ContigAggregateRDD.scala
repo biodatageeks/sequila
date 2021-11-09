@@ -109,7 +109,7 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
     val ref = bases.substring(prev.pos, i)
     val altsCount = prev.alt.derivedAltsNumber
     val qualsMap = prepareOutputQualMap(agg, posStart, ref)
-    result(ind) = PileupProjection.convertToRow(agg.contig, posStart, posEnd, ref, prev.cov.toShort, (prev.cov-altsCount).toShort,altsCount, prev.alt, qualsMap)
+    result(ind) = PileupProjection.convertToRow(agg.contig, posStart, posEnd, ref, prev.cov.toShort, (prev.cov-altsCount).toShort,altsCount.toShort, prev.alt, qualsMap)
     prev.alt.clear()
   }
 
