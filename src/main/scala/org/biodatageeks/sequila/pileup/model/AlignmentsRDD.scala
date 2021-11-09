@@ -5,9 +5,8 @@ import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SparkSession
 import org.biodatageeks.sequila.datasources.BAM.BAMTableReader
-import org.biodatageeks.sequila.pileup.conf.{Conf, QualityConstants}
+import org.biodatageeks.sequila.pileup.conf.Conf
 import org.biodatageeks.sequila.pileup.model.Alts.MultiLociAlts
-import org.biodatageeks.sequila.pileup.model.Quals.MultiLociQuals
 import org.biodatageeks.sequila.pileup.model.ReadOperations.implicits._
 import org.biodatageeks.sequila.pileup.partitioning.{LowerPartitionBoundAlignmentRecord, PartitionBounds, PartitionUtils, RangePartitionCoalescer}
 import org.biodatageeks.sequila.rangejoins.IntervalTree.Interval
