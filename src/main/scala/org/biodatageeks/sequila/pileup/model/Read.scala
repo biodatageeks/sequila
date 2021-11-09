@@ -19,11 +19,9 @@ case class ExtendedReads(read: SAMRecord) {
     val cigarConf = CigarDerivedConf.create(read.getStart, read.getCigar)
     val readQualSummary = ReadSummary(read.getStart, read.getEnd, read.getReadBases, read.getBaseQualities, ! read.getReadNegativeStrandFlag, cigarConf)
     agg.rsTree.put(read.getStart, read.getEnd, readQualSummary)
-    ()
   }
 
   def analyzeReadWithQuals(agg: ContigAggregate): Unit = {
-
     calculateEvents(agg)
     calculateAlts(agg)
     addReadToQualsBuffer(agg)

@@ -127,7 +127,7 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
   }
 
   def fillBaseQualities(readSummary: ReadSummary, altPos: Int, ref: Char,  qualsMap: mutable.HashMap[Byte, Array[Short]]): Unit = {
-    if (altPos >= readSummary.start && altPos <= readSummary.end && !readSummary.hasDeletionOnPosition(altPos)) {
+    if (!readSummary.hasDeletionOnPosition(altPos)) {
       val relativePos = if (!readSummary.cigarDerivedConf.hasIndel && !readSummary.cigarDerivedConf.hasClip) altPos - readSummary.start
       else readSummary.relativePosition(altPos)
       val base = readSummary.basesArray(relativePos)
