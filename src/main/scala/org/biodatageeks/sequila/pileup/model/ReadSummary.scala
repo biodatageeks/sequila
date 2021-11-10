@@ -1,13 +1,21 @@
 package org.biodatageeks.sequila.pileup.model
 
+import htsjdk.samtools.Cigar
 
 
 case class ReadSummary(start: Int, end: Int,
                        basesArray: Array[Byte],
                        qualsArray: Array[Byte],
                        isPositiveStrand: Boolean,
-                       cigarDerivedConf: CigarDerivedConf
+                       cigar: Cigar
                             ) {
+  private var _cigarDerivedConf: CigarDerivedConf = null
+
+  def cigarDerivedConf:CigarDerivedConf  = {
+    if (_cigarDerivedConf == null)
+      _cigarDerivedConf = CigarDerivedConf.create(start,cigar)
+    _cigarDerivedConf
+  }
 
   @inline
   def getBaseQualityForPosition(position: Int): Byte = {

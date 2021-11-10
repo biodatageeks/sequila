@@ -15,8 +15,7 @@ case class ExtendedReads(read: SAMRecord) {
 
 
   def addReadToQualsBuffer(agg: ContigAggregate, bases: Array[Byte]): Unit = {
-    val cigarConf = CigarDerivedConf.create(read.getStart, read.getCigar)
-    val readQualSummary = ReadSummary(read.getStart, read.getEnd, bases, read.getBaseQualities, ! read.getReadNegativeStrandFlag, cigarConf)
+    val readQualSummary = ReadSummary(read.getStart, read.getEnd, bases, read.getBaseQualities, ! read.getReadNegativeStrandFlag, read.getCigar)
     agg.rsTree.put(read.getStart, read.getEnd, readQualSummary)
     ()
   }
