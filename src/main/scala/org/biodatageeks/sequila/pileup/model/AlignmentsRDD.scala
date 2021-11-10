@@ -5,9 +5,8 @@ import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SparkSession
 import org.biodatageeks.sequila.datasources.BAM.BAMTableReader
-import org.biodatageeks.sequila.pileup.conf.{Conf, QualityConstants}
+import org.biodatageeks.sequila.pileup.conf.Conf
 import org.biodatageeks.sequila.pileup.model.Alts.MultiLociAlts
-import org.biodatageeks.sequila.pileup.model.Quals.MultiLociQuals
 import org.biodatageeks.sequila.pileup.model.ReadOperations.implicits._
 import org.biodatageeks.sequila.pileup.partitioning.{LowerPartitionBoundAlignmentRecord, PartitionBounds, PartitionUtils, RangePartitionCoalescer}
 import org.biodatageeks.sequila.rangejoins.IntervalTree.Interval
@@ -29,10 +28,10 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
   val logger: Logger = LoggerFactory.getLogger(this.getClass.getCanonicalName)
 
   /**
-    * Collects "interesting" (read start, stop, ref/nonref counting) events on alignments
-    *
-    * @return distributed collection of PileupRecords
-    */
+   * Collects "interesting" (read start, stop, ref/nonref counting) events on alignments
+   *
+   * @return distributed collection of PileupRecords
+   */
   def assembleAggregates(bounds: Broadcast[Array[PartitionBounds]], conf: Broadcast[Conf]): RDD[ContigAggregate] = {
     val contigLenMap = initContigLengths(this.rdd.first())
 
@@ -41,18 +40,18 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
       var contigIter, contigCleanIter,  currentContig  = ""
       var agg: ContigAggregate = null
       val partBound = bounds.value(index)
-        while (partition.hasNext) {
-          val read = partition.next()
-          val contig =  if(read.getContig == contigIter)  contigCleanIter
-                        else DataQualityFuncs.cleanContig(read.getContig)
+      while (partition.hasNext) {
+        val read = partition.next()
+        val contig =  if(read.getContig == contigIter)  contigCleanIter
+        else DataQualityFuncs.cleanContig(read.getContig)
 
-          if ( contig != currentContig ) {
-              handleFirstReadForContigInPartition(read, contig, contigLenMap, aggMap, partBound, conf)
-              currentContig = contig
-          }
-          agg = aggMap(contig)
-          read.analyzeReadNoQuals(agg)
+        if ( contig != currentContig ) {
+          handleFirstReadForContigInPartition(read, contig, contigLenMap, aggMap, partBound, conf)
+          currentContig = contig
         }
+        agg = aggMap(contig)
+        read.analyzeReadNoQuals(agg)
+      }
       aggMap.valuesIterator
     }
   }
@@ -64,11 +63,6 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
       val aggMap = new mutable.HashMap[String, ContigAggregate]()
       var contigIter, contigCleanIter,  currentContig  = ""
       var agg: ContigAggregate = null
-      var qualsWindowWatermark = QualityConstants.WINDOW_SIZE //for buffering and tree pruning
-      var qualsWindowPos = 0
-      var qualsWindowProcessWatermark = QualityConstants.PROCESS_SIZE
-      var readSummaryTree = new IntervalTreeRedBlack[ReadSummary]()
-      var altsTree = new IntervalTreeRedBlack[Int]() //tree for holding relative position in conting
       val partBound = bounds.value(index)
       while (partition.hasNext) {
         val read = partition.next()
@@ -76,34 +70,12 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
         else DataQualityFuncs.cleanContig(read.getContig)
 
         if ( contig != currentContig ) {
-          if(altsTree.size() != 0 ) {
-            val windowStart = qualsWindowProcessWatermark - (QualityConstants.PROCESS_SIZE + 1)
-            val windowEnd = qualsWindowProcessWatermark
-            read.flushQualsBuffer(readSummaryTree, altsTree, windowStart, windowEnd, agg)
-          }
           handleFirstReadForContigInPartition(read, contig, contigLenMap, aggMap, partBound, conf)
-          readSummaryTree = new IntervalTreeRedBlack[ReadSummary]()
-          altsTree = new IntervalTreeRedBlack[Int]()
           currentContig = contig
-          qualsWindowPos = 0
-          qualsWindowProcessWatermark = QualityConstants.PROCESS_SIZE // TODO - verify
         }
 
         agg = aggMap(contig)
-        qualsWindowPos = read.getStart
-        qualsWindowProcessWatermark = read.analyzeReadWithQuals(agg, qualsWindowProcessWatermark, readSummaryTree, altsTree)
-        if(qualsWindowPos > qualsWindowWatermark) { //tree pruning - 2nd last buffer window not the last one
-          val pruneStart = read.getStart - (2 * QualityConstants.WINDOW_SIZE + 1)
-          val pruneEnd = read.getStart - (QualityConstants.WINDOW_SIZE + 1)
-          readSummaryTree.remove(pruneStart, pruneEnd)
-          altsTree.remove(pruneStart, pruneEnd)
-          qualsWindowWatermark = (qualsWindowPos/qualsWindowWatermark + 1) * qualsWindowWatermark
-        }
-        if (!partition.hasNext && qualsWindowPos <= qualsWindowProcessWatermark) {
-          val windowStart = qualsWindowProcessWatermark - (QualityConstants.PROCESS_SIZE + 1)
-          val windowEnd = qualsWindowProcessWatermark
-          read.flushQualsBuffer(readSummaryTree, altsTree, windowStart, windowEnd, agg)
-        }
+        read.analyzeReadWithQuals(agg)
       }
       aggMap.valuesIterator
     }
@@ -112,7 +84,7 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
   private def handleFirstReadForContigInPartition(read: SAMRecord, contig: String, contigLenMap: Map[String, Int],
                                                   aggMap: mutable.HashMap[String, ContigAggregate],
                                                   bound: PartitionBounds, conf: Broadcast[Conf]
-                                                  ):Unit = {
+                                                 ):Unit = {
     val contigLen = contigLenMap(contig)
     val arrayLen = calculateEventArraySize(read.getStart, contig, contigLen, bound, conf.value)
 
@@ -121,9 +93,8 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
       contigLen = contigLen,
       events = new Array[Short](arrayLen),
       alts = new MultiLociAlts(),
-      quals = if(conf.value.includeBaseQualities) new MultiLociQuals() else null,
+      rsTree =  if(conf.value.includeBaseQualities) new IntervalTreeRedBlack[ReadSummary]() else null,
       startPosition = read.getStart,
-      maxPosition = contigLen - 1,
       conf = conf.value )
     aggMap += contig -> contigEventAggregate
   }
@@ -140,11 +111,11 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
   }
 
   /**
-    * initializes mapper between contig and its length basing on header values
-    *
-    * @param read single aligned read (its header contains info about all contigs)
-    * @return
-    */
+   * initializes mapper between contig and its length basing on header values
+   *
+   * @param read single aligned read (its header contains info about all contigs)
+   * @return
+   */
   def initContigLengths(read: SAMRecord): Map[String, Int] = {
     val contigLenMap = new mutable.HashMap[String, Int]()
     val sequenceList = read.getHeader.getSequenceDictionary.getSequences

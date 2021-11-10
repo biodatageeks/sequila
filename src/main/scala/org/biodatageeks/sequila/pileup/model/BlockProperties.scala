@@ -1,14 +1,10 @@
 package org.biodatageeks.sequila.pileup.model
 
-import org.biodatageeks.sequila.pileup.conf.QualityConstants
 import org.biodatageeks.sequila.pileup.model.Alts.SingleLocusAlts
-import org.biodatageeks.sequila.pileup.model.Quals.SingleLocusQuals
-
 
 class BlockProperties {
   var cov, len, pos = 0
   var alt = new SingleLocusAlts()
-  var quals = new SingleLocusQuals(QualityConstants.OUTER_QUAL_SIZE)
   def reset (position: Int) = {
     len = 0
     pos = position
