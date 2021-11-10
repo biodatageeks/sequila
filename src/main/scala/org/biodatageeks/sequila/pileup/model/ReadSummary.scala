@@ -41,15 +41,9 @@ case class ReadSummary(start: Int, end: Int,
       false
     else {
       val postition =  pos + leftClipLen
-      val iter = cigarDerivedConf
+      cigarDerivedConf
         .indelPositions
-        .delPositions.overlappers(postition, postition)
-      var hasdel = false
-      while(iter.hasNext && hasdel != true){
-        val del = iter.next()
-        if(del.getEnd > pos) hasdel = true
-      }
-      hasdel
+        .delPositions.overlappersExcludeLeft(postition, postition).hasNext
     }
   }
 }

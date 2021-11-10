@@ -26,26 +26,13 @@ case class CigarDerivedConf(
     lenSum
   }
 
-
-//  def getDelOffsetForPosition(position:Int): Int = {
-//    val pos = position + leftClipLength
-//    val filtered = indelPositions
-//      .delPositions
-//      .filter{case (start,end) => (pos >= end || (pos >=start && pos<=end))}
-//    val lengths = filtered.map{case(start,end)=> end-start}
-//    val lenSum = lengths.sum
-//    lenSum
-//  }
-//
-
-
   def getDelOffsetForPosition(position:Int): Int = {
     val pos = position + leftClipLength
     val delIterator = indelPositions.delPositions.iterator()
     var lenSum = 0
     while (delIterator.hasNext){
       val next = delIterator.next()
-      if(pos >= next.getEnd || (pos >=next.getStart && pos<=next.getEnd))
+      if(pos >= next.getStart)
         lenSum += next.getValue.get(0)
     }
     lenSum
