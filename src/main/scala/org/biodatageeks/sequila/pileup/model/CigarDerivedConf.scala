@@ -1,11 +1,12 @@
 package org.biodatageeks.sequila.pileup.model
 
 import htsjdk.samtools.{Cigar, CigarOperator}
+import org.biodatageeks.sequila.rangejoins.methods.IntervalTree.IntervalTreeRedBlack
 
 import scala.collection.mutable
 
 case class InDelPositions(
-                           delPositions: mutable.LinkedHashSet[(Int, Int)],
+                           delPositions:IntervalTreeRedBlack[(Int)],
                            insertPositions: mutable.LinkedHashSet[(Int,Int)]
                          )
 case class CigarDerivedConf(
@@ -24,13 +25,29 @@ case class CigarDerivedConf(
     val lenSum = lengths.sum
     lenSum
   }
+
+
+//  def getDelOffsetForPosition(position:Int): Int = {
+//    val pos = position + leftClipLength
+//    val filtered = indelPositions
+//      .delPositions
+//      .filter{case (start,end) => (pos >= end || (pos >=start && pos<=end))}
+//    val lengths = filtered.map{case(start,end)=> end-start}
+//    val lenSum = lengths.sum
+//    lenSum
+//  }
+//
+
+
   def getDelOffsetForPosition(position:Int): Int = {
     val pos = position + leftClipLength
-    val filtered = indelPositions
-      .delPositions
-      .filter{case (start,end) => (pos >= end || (pos >=start && pos<=end))}
-    val lengths = filtered.map{case(start,end)=> end-start}
-    val lenSum = lengths.sum
+    val delIterator = indelPositions.delPositions.iterator()
+    var lenSum = 0
+    while (delIterator.hasNext){
+      val next = delIterator.next()
+      if(pos >= next.getEnd || (pos >=next.getStart && pos<=next.getEnd))
+        lenSum += next.getValue.get(0)
+    }
     lenSum
   }
 }
@@ -49,7 +66,7 @@ object CigarDerivedConf {
 
 
   private def getIndelPostions(start: Int, cigar:Cigar): InDelPositions = {
-    val delPositions = new mutable.LinkedHashSet[(Int, Int)]()
+    val delPositions = new IntervalTreeRedBlack[(Int)]()
     val insertPositions  = new mutable.LinkedHashSet[(Int,Int)]()
     val cigarIterator = cigar.iterator()
     var positionFromCigar = start
@@ -61,7 +78,7 @@ object CigarDerivedConf {
         val eventStart = positionFromCigar
         val eventEnd = positionFromCigar + cigarOperatorLen
         if (cigarOperator == CigarOperator.DELETION)
-          delPositions.add((eventStart,eventEnd))
+          delPositions.put(eventStart, eventEnd, eventEnd - eventStart)
           //fillPositionSet(eventStart, eventEnd, delPositions)
         else if (cigarOperator == CigarOperator.INSERTION){
           insertPositions.add((eventStart, cigarOperatorLen))

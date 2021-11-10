@@ -40,9 +40,16 @@ case class ReadSummary(start: Int, end: Int,
     if (!cigarDerivedConf.hasDel)
       false
     else {
-      cigarDerivedConf
+      val postition =  pos + leftClipLen
+      val iter = cigarDerivedConf
         .indelPositions
-        .delPositions.exists { case (start, end) => pos + leftClipLen >= start && pos + leftClipLen < end }
+        .delPositions.overlappers(postition, postition)
+      var hasdel = false
+      while(iter.hasNext && hasdel != true){
+        val del = iter.next()
+        if(del.getEnd > pos) hasdel = true
+      }
+      hasdel
     }
   }
 }
