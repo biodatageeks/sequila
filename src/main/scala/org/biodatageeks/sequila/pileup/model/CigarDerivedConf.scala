@@ -19,19 +19,18 @@ case class CigarDerivedConf(
     val pos = position + leftClipLength
     val filtered = indelPositions
       .insertPositions
-      .filter{case (start,len) => (pos >= start )}.toList
+      .filter{case (start, _) => (pos >= start )}.toList
     val lengths = filtered.map(_._2)
     val lenSum = lengths.sum
     lenSum
   }
   def getDelOffsetForPosition(position:Int): Int = {
     val pos = position + leftClipLength
-    val filtered = indelPositions
+    indelPositions
       .delPositions
-      .filter{case (start,end) => (pos >= end || (pos >=start && pos<=end))}
-    val lengths = filtered.map{case(start,end)=> end-start}
-    val lenSum = lengths.sum
-    lenSum
+      .filter{case (start,_) => (pos >=start)}
+      .map{case(start,end)=> end-start}
+      .sum
   }
 }
 
