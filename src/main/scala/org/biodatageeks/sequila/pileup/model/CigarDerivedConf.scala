@@ -28,11 +28,10 @@ case class CigarDerivedConf(
 
   def getDelOffsetForPosition(position:Int): Int = {
     val pos = position + leftClipLength
-    val delIterator = indelPositions.delPositions.iterator()
+    val delIterator = indelPositions.delPositions.overlappersWithoutEnd(pos)
     var lenSum = 0
     while (delIterator.hasNext){
       val next = delIterator.next()
-      if(pos >= next.getStart)
         lenSum += next.getValue.get(0)
     }
     lenSum

@@ -296,6 +296,49 @@ public class IntervalTreeRedBlack<V> implements BaseIntervalHolder<V>,  Serializ
     }
 
 
+
+    public Node<V> minOverlapperWithoutEnd( final int start)
+    {
+        Node<V> result = null;
+        Node<V> node = mRoot;
+
+        if ( node != null && start >= node.getStart() )
+        {
+            while ( true )
+            {
+                if (  start >= node.getStart() )
+                { // this node overlaps.  there might be a lesser overlapper down the left sub-tree.
+                    // no need to consider the right sub-tree:  even if there's an overlapper, if won't be minimal
+                    result = node;
+                    node = node.getLeft();
+                    if ( node == null || node.getMaxEnd() < start )
+                        break; // no left sub-tree or all nodes end too early
+                }
+                else
+                { // no overlap.  if there might be a left sub-tree overlapper, consider the left sub-tree.
+                    final Node<V> left = node.getLeft();
+                    if ( left != null && left.getMaxEnd() >= start )
+                    {
+                        node = left;
+                    }
+                    else
+                    { // left sub-tree cannot contain an overlapper.  consider the right sub-tree.
+                        if ( node.getStart() > start )
+                            break; // everything in the right sub-tree is past the end of the query interval
+
+                        node = node.getRight();
+                        if ( node == null || node.getMaxEnd() < start )
+                            break; // no right sub-tree or all nodes end too early
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
+
+
     public Node<V> minOverlapperExcludeLeft( final int start, final int end )
     {
         Node<V> result = null;
@@ -421,6 +464,10 @@ public class IntervalTreeRedBlack<V> implements BaseIntervalHolder<V>,  Serializ
     public Iterator<BaseNode<V>> overlappersExcludeLeft( final int start, final int end )
     {
         return new OverlapIterator(start,end, true);
+    }
+    public Iterator<BaseNode<V>> overlappersWithoutEnd( final int start)
+    {
+        return new OverlapIterator(start);
     }
 
 
@@ -1226,6 +1273,12 @@ public class IntervalTreeRedBlack<V> implements BaseIntervalHolder<V>,  Serializ
             mEnd = end;
         }
 
+        public OverlapIterator( final int start)
+        {
+            mNext = minOverlapperWithoutEnd(start);
+            mStart = start;
+            mEnd = start;
+        }
 
 
         @Override

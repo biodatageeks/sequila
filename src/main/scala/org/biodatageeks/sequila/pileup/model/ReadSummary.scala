@@ -41,9 +41,13 @@ case class ReadSummary(start: Int, end: Int,
       false
     else {
       val postition =  pos + leftClipLen
-      cigarDerivedConf
+      if(cigarDerivedConf
         .indelPositions
-        .delPositions.overlappersExcludeLeft(postition, postition).hasNext
+        .delPositions.minOverlapperExcludeLeft(postition, postition) != null)
+        true
+      else
+        false
+
     }
   }
 }
