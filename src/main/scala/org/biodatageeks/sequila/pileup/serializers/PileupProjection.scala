@@ -113,9 +113,7 @@ object PileupProjection {
     val arrayNullRegionLen = calculateArrayNullRegionLen(numElements)
 
     val keysArraySize = wordSize + arrayNullRegionLen + roundUp(numElements*intSize, wordSize)
-    var shortArraysSize = 0
-    for (k <- map.keys)
-      shortArraysSize += calculateArraySize(map(k))
+    val shortArraysSize =  map.keys.size * calculateArraySize(map.values.head)
 
     val valuesArraySize = wordSize + arrayNullRegionLen + roundUp(shortArraysSize, wordSize) + map.size *wordSize
     val mapSize = wordSize + keysArraySize + valuesArraySize
