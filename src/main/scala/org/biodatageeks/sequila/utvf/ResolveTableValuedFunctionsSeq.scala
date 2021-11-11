@@ -233,7 +233,7 @@ object PileupTemplate {
                   basicOutput
                 else
                   basicOutput
-                    .add(StructField(Columns.QUALS,MapType(ByteType,ArrayType(ShortType)),nullable = true))
+                    .add(StructField(Columns.QUALS,MapType(IntegerType,ArrayType(ShortType)),nullable = true))
 
     val outputAttrs = output.toAttributes
 

@@ -71,6 +71,8 @@ object PileupProjection {
     }
   }
 
+
+
   private def writeString(data: Array[Byte], value: String, fieldOffset: Int, valueOffset: Int, valInBytes: Array[Byte] = null): Unit = {
     val len = value.length
     val valueInBytes = if (valInBytes != null) valInBytes else UTF8String.fromString(value).getBytes
@@ -106,11 +108,11 @@ object PileupProjection {
   }
 
 
-  def calculateQualMapSizes(map: mutable.HashMap[Byte,Array[Short]]): (Int, Int, Int)= {
+  def calculateQualMapSizes(map: mutable.IntMap[Array[Short]]): (Int, Int, Int)= {
     val numElements = map.size
     val arrayNullRegionLen = calculateArrayNullRegionLen(numElements)
 
-    val keysArraySize = wordSize + arrayNullRegionLen + roundUp(numElements*byteSize, wordSize)
+    val keysArraySize = wordSize + arrayNullRegionLen + roundUp(numElements*intSize, wordSize)
     var shortArraysSize = 0
     for (k <- map.keys)
       shortArraysSize += calculateArraySize(map(k))
@@ -179,6 +181,21 @@ object PileupProjection {
       writeShort(data, array(i), elementsOffset + i * shortSize)
   }
 
+  private def writeArray(data: Array[Byte], array: Array[Int], offset: Int): Unit = {
+    // in first 8 bytes write num elements
+    writeNumber(data, array.length, offset)
+
+    //null region next 8 bytes
+
+    val nullArrayRegionLen = calculateArrayNullRegionLen(array.length)
+    val elementsOffset = offset + wordSize + nullArrayRegionLen
+
+    for (i <- array.indices)
+      writeNumber(data, array(i), elementsOffset + i * intSize)
+  }
+
+
+
     def writeMap(data: Array[Byte], map: mutable.HashMap[Byte,Short], headerOffset: Int, arraysOffset:Int): Unit = {
     val (mapSize, keysArraySize, _) = calculateAltsMapSizes(map)
 
@@ -191,7 +208,7 @@ object PileupProjection {
     writeArray(data, map.values.toArray[Short], valuesOffset)
   }
 
-  def writeQualsMap(data: Array[Byte], map: mutable.HashMap[Byte,Array[Short]], headerOffset: Int, arraysOffset:Int): Unit = {
+  def writeQualsMap(data: Array[Byte], map: mutable.IntMap[Array[Short]], headerOffset: Int, arraysOffset:Int): Unit = {
     val (mapSize, keysArraySize, _) = calculateQualMapSizes(map)
 
     val keysOffset = arraysOffset + wordSize
@@ -199,12 +216,12 @@ object PileupProjection {
 
     writeMapFixedHeader(data, mapSize, headerOffset, arraysOffset)
     writeNumber(data, keysArraySize, arraysOffset)
-    writeArray(data, map.keySet.toArray[Byte], keysOffset)
+    writeArray(data, map.keySet.toArray[Int], keysOffset)
     writeNestedArray(data, map.values.toArray[Array[Short]], valuesOffset)
   }
 
   def convertToRow(contig: String, start: Int, end: Int, bases: String, cov: Short, refCount: Short, altsCount: Short,
-                   altsMap: mutable.HashMap[Byte, Short], qualsMap: mutable.HashMap[Byte, Array[Short]]): UnsafeRow = {
+                   altsMap: mutable.HashMap[Byte, Short], qualsMap: mutable.IntMap[Array[Short]]): UnsafeRow = {
     val nullRegionLen, fixedRegionIndex = 8
     val numFields = 9 //FIXME constant fields num
     val fixedRegionLen = numFields * wordSize
