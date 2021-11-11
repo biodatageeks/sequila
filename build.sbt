@@ -8,7 +8,7 @@ lazy val sparkVersion = Properties.envOrElse("SPARK_VERSION", DEFAULT_SPARK_3_VE
 
 version := s"${sys.env.getOrElse("VERSION", "0.1.0")}"
 organization := "org.biodatageeks"
-scalaVersion := "2.12.8"
+scalaVersion := "2.12.13"
 
 
 val isSnapshotVersion = settingKey[Boolean]("Is snapshot")
@@ -64,6 +64,11 @@ fork := true
 fork in Test := true
 parallelExecution in Test := true
 
+scalacOptions ++= Seq(
+  "-opt:-l:none,_",
+  "-opt-inline-from:**",
+  "-Yopt-log-inline", "_"
+)
 javaOptions in Test ++= Seq(
   "-Dlog4j.debug=false",
   "-Dlog4j.configuration=log4j.properties")
