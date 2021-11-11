@@ -37,10 +37,11 @@ case class CigarDerivedConf(
 
 object CigarDerivedConf {
   def create(start: Int, cigar:Cigar) ={
-    val hasClip = cigar.isLeftClipped
+    val firstCigarElement = cigar.getFirstCigarElement
+    val firstCigarElementOp = firstCigarElement.getOperator
+    val hasClip = firstCigarElementOp != null && firstCigarElementOp.isClipping
     val softClipLength = if(hasClip) {
-      val cigarElement = cigar.getFirstCigarElement
-      cigarElement.getLength
+      firstCigarElement.getLength
     } else 0
     val hasDel = cigar.containsOperator(CigarOperator.DELETION)
     val hasIndel =  hasDel || cigar.containsOperator(CigarOperator.INSERTION)
