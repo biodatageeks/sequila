@@ -64,10 +64,10 @@ fork := true
 fork in Test := true
 parallelExecution in Test := true
 
-scalacOptions ++= Seq(
+scalacOptions in assembly ++= Seq(
   "-opt:-l:none,_",
   "-opt-inline-from:**",
-  "-Yopt-log-inline", "_"
+  "-Yopt-log-inline", "_",
 )
 javaOptions in Test ++= Seq(
   "-Dlog4j.debug=false",
