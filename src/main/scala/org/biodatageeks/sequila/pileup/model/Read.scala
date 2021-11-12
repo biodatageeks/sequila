@@ -20,19 +20,15 @@ case class ExtendedReads(read: SAMRecord) {
     ()
   }
 
-  def analyzeReadWithQuals(agg: ContigAggregate): Unit = {
+  def analyzeRead(agg: ContigAggregate): Unit = {
     val bases = read.getReadBases
     calculateEvents(agg)
     if (agg.conf.coverageOnly)
       return
     calculateAlts(agg, bases)
-    addReadToQualsBuffer(agg, bases)
-  }
+    if (agg.conf.includeBaseQualities)
+      addReadToQualsBuffer(agg, bases)
 
-  def analyzeReadNoQuals(agg: ContigAggregate): Unit = {
-    val bases = read.getReadBases
-    calculateEvents(agg)
-    calculateAlts(agg, bases)
   }
 
   def calculateEvents(aggregate: ContigAggregate): Unit = {
@@ -67,7 +63,6 @@ case class ExtendedReads(read: SAMRecord) {
 
     }
   }
-
 
   def calculatePositionInReadSeq(mdPosition: Int, cigar: Cigar): Int = {
     if (!cigar.containsOperator(CigarOperator.INSERTION))

@@ -51,7 +51,7 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
           currentContig = contig
         }
         agg = aggMap(contig)
-        read.analyzeReadNoQuals(agg)
+        read.analyzeRead(agg)
       }
       aggMap.valuesIterator
     }
@@ -76,7 +76,7 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
         }
 
         agg = aggMap(contig)
-        read.analyzeReadWithQuals(agg)
+        read.analyzeRead(agg)
       }
       aggMap.valuesIterator
     }
