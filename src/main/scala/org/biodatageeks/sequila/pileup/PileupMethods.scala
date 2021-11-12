@@ -29,7 +29,11 @@ object PileupMethods {
     else
       alignments.assembleAggregates(bounds, conf)
 
-    val pileup = aggregates.toPileup(refPath, bounds)
-    pileup
+    val result =
+      if (conf.value.coverageOnly)
+        aggregates.toCoverage(refPath, bounds)
+      else
+        aggregates.toPileup(refPath, bounds)
+    result
   }
 }
