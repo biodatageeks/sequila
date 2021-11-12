@@ -64,6 +64,13 @@ fork := true
 fork in Test := true
 parallelExecution in Test := true
 
+//FIXME: limit inlining to only package scope !!!!
+scalacOptions ++= Seq(
+  "-opt:-l:none,_",
+  "-opt-inline-from:**",
+  "-Yopt-log-inline", "_",
+)
+
 scalacOptions in assembly ++= Seq(
   "-opt:-l:none,_",
   "-opt-inline-from:**",
