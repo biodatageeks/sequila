@@ -40,7 +40,7 @@ object FastMath {
     * @return index
     */
 
-  def findMaxIndex(array: Array[Short]): Int = {
+  def findMaxIndex(array: Array[Int]): Int = {
     var i = array.length - 1
 
     while (i > 0) {

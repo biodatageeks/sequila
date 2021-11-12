@@ -12,7 +12,7 @@ import org.biodatageeks.sequila.rangejoins.methods.IntervalTree.IntervalTreeRedB
 case class ContigAggregate(
                             contig: String = "",
                             contigLen: Int = 0,
-                            events: Array[Short],
+                            events: Array[Int],
                             alts: MultiLociAlts,
                             rsTree: IntervalTreeRedBlack[ReadSummary],
                             startPosition: Int = 0,
@@ -27,11 +27,11 @@ case class ContigAggregate(
     events.length + 2
   }
 
-  def updateEvents(pos: Int, startPart: Int, delta: Short): Unit = {
+  def updateEvents(pos: Int, startPart: Int, delta: Int): Unit = {
     val position = pos - startPart
     if (position > events.length -1)
       return
-    events(position) = (events(position) + delta).toShort
+    events(position) = events(position) + delta
   }
 
 }

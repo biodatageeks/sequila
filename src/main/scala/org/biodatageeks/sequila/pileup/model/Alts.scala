@@ -3,8 +3,8 @@ package org.biodatageeks.sequila.pileup.model
 import scala.collection.mutable
 
 object Alts {
-  type SingleLocusAlts = mutable.HashMap[Byte,Short]
-  val SingleLocusAlts = mutable.HashMap[Byte,Short] _
+  type SingleLocusAlts = mutable.HashMap[Byte,Int]
+  val SingleLocusAlts = mutable.HashMap[Byte,Int] _
 
 
   type MultiLociAlts= mutable.IntMap [SingleLocusAlts]
@@ -25,7 +25,7 @@ object Alts {
       val altByte = alt.toByte
 
       val altMap = map.getOrElse(position, new Alts.SingleLocusAlts())
-      altMap(altByte) = (altMap.getOrElse(altByte, 0.toShort) + 1).toShort
+      altMap(altByte) = altMap.getOrElse(altByte, 0) + 1
       map.update(position, altMap)
     }
   }

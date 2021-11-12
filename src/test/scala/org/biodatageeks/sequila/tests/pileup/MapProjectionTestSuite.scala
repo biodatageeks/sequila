@@ -25,7 +25,7 @@ class MapProjectionTestSuite extends BAMBaseTestSuite with SharedSparkContext{
   val contigMap: mutable.HashMap[String, String] = mutable.HashMap[String,String] ("1" -> "1", "MT" -> "MT")
 
   test ("save short map") {
-    val map = mutable.HashMap [Byte,Short] ('A'.toByte-> 20.toShort, '3'.toByte->30.toShort, '4'.toByte->40.toShort, '5'.toByte->50.toShort, '6'.toByte->60.toShort )
+    val map = mutable.HashMap [Byte,Int] ('A'.toByte-> 20, '3'.toByte->30, '4'.toByte->40, '5'.toByte->50, '6'.toByte->60 )
     val schema = ScalaReflection.schemaFor[SimpleByteShortRecord].dataType.asInstanceOf[StructType]
     val projection = UnsafeProjection.create(schema)
     val row = projection.apply(InternalRow(CatalystTypeConverters.convertToCatalyst(map)) )
@@ -59,7 +59,7 @@ class MapProjectionTestSuite extends BAMBaseTestSuite with SharedSparkContext{
     val map2 = row2.getMap(0)
 
     assert(map2.keyArray().toByteArray.sameElements(map.keySet.toArray[Byte]))
-    assert(map2.valueArray().toShortArray.sameElements(map.values.toArray[Short]))
+    assert(map2.valueArray().toShortArray.sameElements(map.values.toArray[Int]))
   }
 
 

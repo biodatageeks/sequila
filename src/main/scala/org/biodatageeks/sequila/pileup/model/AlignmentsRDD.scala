@@ -91,7 +91,7 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
     val contigEventAggregate = ContigAggregate(
       contig = contig,
       contigLen = contigLen,
-      events = new Array[Short](arrayLen),
+      events = new Array[Int](arrayLen),
       alts = new MultiLociAlts(),
       rsTree =  if(conf.value.includeBaseQualities) new IntervalTreeRedBlack[ReadSummary]() else null,
       startPosition = read.getStart,
