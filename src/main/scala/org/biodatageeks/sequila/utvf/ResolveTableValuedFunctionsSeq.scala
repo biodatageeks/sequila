@@ -87,19 +87,25 @@ object ResolveTableValuedFunctionsSeq extends Rule[LogicalPlan] {
     */
   private val builtinFunctions: Map[String, TVF] = Map(
     "pileup" -> Map(
-      /* pileup(tableName, sampleId, refPath) */
+      /* pileup(tableName, sampleId, refPath)  COVERAGE ONLY */
       tvf("table" -> StringType, "sampleId" -> StringType, "refPath" -> StringType)
       { case Seq(table: Any, sampleId: Any, refPath: Any) =>
-        PileupTemplate(table.toString, sampleId.toString, refPath.toString, false, None)
+        PileupTemplate(table.toString, sampleId.toString, refPath.toString, false, false, None)
       },
-      /* pileup(tableName, sampleId, refPath, baseQual) */
-      tvf("table" -> StringType, "sampleId" -> StringType, "refPath" -> StringType, "qual"->BooleanType)
-      { case Seq(table: Any, sampleId: Any, refPath: Any, qual:Any) =>
-        PileupTemplate(table.toString, sampleId.toString, refPath.toString, qual.toString.toBoolean, None)
+      /* pileup(tableName, sampleId, refPath, alts) COVERAGE + ALTS  */
+      tvf("table" -> StringType, "sampleId" -> StringType, "refPath" -> StringType, "alts"->BooleanType)
+      { case Seq(table: Any, sampleId: Any, refPath: Any, alts:Any) =>
+        PileupTemplate(table.toString, sampleId.toString, refPath.toString, alts.toString.toBoolean, false, None)
       },
-      tvf("table" -> StringType, "sampleId" -> StringType, "refPath" -> StringType, "qual"->BooleanType, "binSize"->IntegerType)
-      { case Seq(table: Any, sampleId: Any, refPath: Any, qual:Any, binSize:Any) =>
-        PileupTemplate(table.toString, sampleId.toString, refPath.toString, qual.toString.toBoolean, Some(binSize.toString.toInt))
+      /* pileup(tableName, sampleId, refPath, alts, quals ) COVERAGE + ALTS + QUALS */
+      tvf("table" -> StringType, "sampleId" -> StringType, "refPath" -> StringType, "alts"->BooleanType, "quals"->BooleanType)
+      { case Seq(table: Any, sampleId: Any, refPath: Any, alts:Any, quals:Any) =>
+        PileupTemplate(table.toString, sampleId.toString, refPath.toString, alts.toString.toBoolean, quals.toString.toBoolean, None)
+      },
+      /* pileup(tableName, sampleId, refPath, alts, quals, binSize ) COVERAGE + ALTS + QUALS + BINNING */
+      tvf("table" -> StringType, "sampleId" -> StringType, "refPath" -> StringType, "alts"->BooleanType, "quals"->BooleanType, "binSize"->IntegerType)
+      { case Seq(table: Any, sampleId: Any, refPath: Any, alts:Any, quals:Any, binSize:Any) =>
+        PileupTemplate(table.toString, sampleId.toString, refPath.toString, alts.toString.toBoolean, quals.toString.toBoolean, Some(binSize.toString.toInt))
       }
     ),
 
@@ -216,32 +222,37 @@ case class BDGCoverage(tableName:String, sampleId:String, result: String, target
 
 object PileupTemplate {
 
-  def apply(table:String, sampleId: String, refPath: String, qual: Boolean, binSize: Option[Int]): PileupTemplate = {
+  def apply(table:String, sampleId: String, refPath: String, alts:Boolean, quals: Boolean, binSize: Option[Int]): PileupTemplate = {
 
     val basicOutput = StructType(Seq(
       StructField(Columns.CONTIG,StringType,nullable = true),
       StructField(Columns.START,IntegerType,nullable = false),
       StructField(Columns.END,IntegerType,nullable = false),
       StructField(Columns.REF,StringType,nullable = false),
-      StructField(Columns.COVERAGE,ShortType,nullable = false),
-      StructField(Columns.COUNT_REF,ShortType,nullable = false),
-      StructField(Columns.COUNT_NONREF,ShortType,nullable = false),
-      StructField(Columns.ALTS,MapType(ByteType,ShortType),nullable = true)
+      StructField(Columns.COVERAGE,ShortType,nullable = false)
     ))
 
-    val output = if (!qual)
+    val output = if (!quals && !alts)
                   basicOutput
-                else
-                  basicOutput
-                    .add(StructField(Columns.QUALS,MapType(IntegerType,ArrayType(ShortType)),nullable = true))
+                else if (!quals && alts)
+              basicOutput
+                .add(StructField(Columns.COUNT_REF,ShortType,nullable = false))
+                .add(StructField(Columns.COUNT_NONREF,ShortType,nullable = false))
+                .add(StructField(Columns.ALTS,MapType(ByteType,ShortType),nullable = true))
+            else
+              basicOutput
+              .add(StructField(Columns.COUNT_REF,ShortType,nullable = false))
+              .add(StructField(Columns.COUNT_NONREF,ShortType,nullable = false))
+             .add(StructField(Columns.ALTS,MapType(ByteType,ShortType),nullable = true))
+             .add(StructField(Columns.QUALS,MapType(IntegerType,ArrayType(ShortType)),nullable = true))
 
     val outputAttrs = output.toAttributes
 
-    new PileupTemplate(table, sampleId, refPath, qual, binSize, outputAttrs)
+    new PileupTemplate(table, sampleId, refPath, alts, quals, binSize, outputAttrs)
   }
 }
 
-case class PileupTemplate(tableName: String, sampleId: String, refPath: String, qual:Boolean, binSize: Option[Int], output: Seq[Attribute] )
+case class PileupTemplate(tableName: String, sampleId: String, refPath: String, alts: Boolean, quals:Boolean, binSize: Option[Int], output: Seq[Attribute] )
   extends LeafNode with MultiInstanceRelation {
 
   override def newInstance(): PileupTemplate = copy(output = output.map(_.newInstance()))
