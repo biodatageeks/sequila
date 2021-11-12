@@ -112,7 +112,7 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
     prev.alt.clear()
   }
 
-  def updateQuals(inputBase: Byte, quality: Byte, ref: Char, isPositive: Boolean, map: mutable.HashMap[Byte, Array[Short]]):Unit = {
+  def updateQuals(inputBase: Byte, quality: Byte, ref: Char, isPositive: Boolean, map: mutable.IntMap[Array[Short]]):Unit = {
     val base = if (!isPositive && inputBase == ref) ref.toByte else if (!isPositive) inputBase.toChar.toLower.toByte else inputBase
 
     map.get(base) match {
@@ -125,7 +125,7 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
     }
   }
 
-  def fillBaseQualities(readSummary: ReadSummary, altPos: Int, ref: Char,  qualsMap: mutable.HashMap[Byte, Array[Short]]): Unit = {
+  def fillBaseQualities(readSummary: ReadSummary, altPos: Int, ref: Char,  qualsMap: mutable.IntMap[Array[Short]]): Unit = {
     if (!readSummary.hasDeletionOnPosition(altPos)) {
       val relativePos = if (!readSummary.cigarDerivedConf.hasIndel && !readSummary.cigarDerivedConf.hasClip) altPos - readSummary.start
       else readSummary.relativePosition(altPos)
@@ -134,11 +134,11 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
     }
   }
 
-  private def prepareOutputQualMap(agg: ContigAggregate, posStart: Int, ref:String): mutable.HashMap[Byte, Array[Short]] = {
+  private def prepareOutputQualMap(agg: ContigAggregate, posStart: Int, ref:String): mutable.IntMap[Array[Short]] = {
     if (!agg.conf.includeBaseQualities)
       return null
 
-    val newMap = mutable.HashMap[Byte, Array[Short]]()
+    val newMap = mutable.IntMap[Array[Short]]()
 
     val rsIterator = agg.rsTree.overlappers(posStart, posStart)
     while (rsIterator.hasNext) {
