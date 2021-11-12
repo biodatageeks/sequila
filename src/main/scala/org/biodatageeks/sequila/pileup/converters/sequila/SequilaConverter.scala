@@ -20,8 +20,8 @@ class SequilaConverter (spark: SparkSession) extends Serializable with PileupCon
   }
 
   def generatePerBaseOutput(df: DataFrame, caseSensitive: Boolean): DataFrame = {
-    val altsIncluded = df.schema.contains(Columns.ALTS)
-    val qualsIncluded = df.schema.contains(Columns.QUALS)
+    val altsIncluded = df.schema.length >= 6
+    val qualsIncluded = df.schema.length >= 7
     val perBase = df.rdd.flatMap { r => {
         val chr = r.getString(SequilaSchema.contig)
         val start = r.getInt(SequilaSchema.position_start)

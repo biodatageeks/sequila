@@ -11,7 +11,7 @@ class PileupCRAMTestSuite extends PileupTestBase {
     val query =
       s"""
          |SELECT ${Columns.CONTIG}, ${Columns.START}, ${Columns.END}, ${Columns.REF}, ${Columns.COVERAGE},${Columns.ALTS}
-         |FROM  pileup('{{tableName}}', '${sampleId}' , '$referencePath')
+         |FROM  pileup('{{tableName}}', '${sampleId}' , '$referencePath', true)
                  """.stripMargin
     val resultBAM = ss
       .sql(query.replace("{{tableName}}", tableName))
