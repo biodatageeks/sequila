@@ -12,9 +12,9 @@ class SamtoolsTestSuite extends PileupTestBase {
 
   val splitSize = "1000000"
   val qualAgg = "quals_agg"
-  val query =
+  val queryCov =
     s"""
-       |SELECT contig, pos_start, pos_end, ref, coverage, alts
+       |SELECT contig, pos_start, pos_end, ref, coverage
        |FROM  pileup('$tableName', '${sampleId}', '$referencePath')
                          """.stripMargin
 
@@ -35,13 +35,13 @@ class SamtoolsTestSuite extends PileupTestBase {
     spark.createDataFrame(pileup.rdd, schema)
   }
 
-  private def calculateSequilaPileup(splitSize: Option[String]): DataFrame = {
+  private def calculateSequilaPileup(query: String, splitSize: Option[String]): DataFrame = {
     if (splitSize.isDefined)
       spark.sqlContext.setConf(InternalParams.InputSplitSize, splitSize.get)
 
     val ss = SequilaSession(spark)
     SequilaRegister.register(ss)
-    val sequilaRaw = ss.sql(queryQual).orderBy("contig", "pos_start")
+    val sequilaRaw = ss.sql(query).orderBy("contig", "pos_start")
 
     val converter = new SequilaConverter(spark)
     converter.toCommonFormat(sequilaRaw, true)
@@ -50,7 +50,7 @@ class SamtoolsTestSuite extends PileupTestBase {
 
   test("MULTI CHROM one partition") {
 
-    val sequilaPileup = calculateSequilaPileup(None)
+    val sequilaPileup = calculateSequilaPileup(queryQual, None)
     val samPileup = loadSam(sequilaPileup.schema)
         PileupWriter.save(samPileup, "samRes.csv")
         PileupWriter.save(sequilaPileup, "sequilaPileup.csv")
@@ -59,11 +59,15 @@ class SamtoolsTestSuite extends PileupTestBase {
 
   test("MULTI CHROM: many partitions") {
 
-    val sequilaPileup = calculateSequilaPileup(Some(splitSize))
+    val sequilaPileup = calculateSequilaPileup(queryQual, Some(splitSize))
     val samPileup = loadSam(sequilaPileup.schema)
+    assertDataFrameEquals(samPileup, sequilaPileup)
+  }
 
-    //    PileupWriter.save(samPileup, "samRes.csv")
-    //    PileupWriter.save(spark, sequilaPileup, "sequilaPileup.csv")
+  test("COV only") {
+
+    val sequilaPileup = calculateSequilaPileup(queryCov, Some(splitSize)).select("contig", "pos_start", "pos_end", "ref", "coverage")
+    val samPileup = loadSam(sequilaPileup.schema).select("contig", "pos_start", "pos_end", "ref", "coverage")
     assertDataFrameEquals(samPileup, sequilaPileup)
   }
 

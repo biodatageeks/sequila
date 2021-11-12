@@ -20,14 +20,17 @@ class SequilaConverter (spark: SparkSession) extends Serializable with PileupCon
   }
 
   def generatePerBaseOutput(df: DataFrame, caseSensitive: Boolean): DataFrame = {
+    val altsIncluded = df.schema.contains(Columns.ALTS)
+    val qualsIncluded = df.schema.contains(Columns.QUALS)
     val perBase = df.rdd.flatMap { r => {
         val chr = r.getString(SequilaSchema.contig)
         val start = r.getInt(SequilaSchema.position_start)
         val end = r.getInt(SequilaSchema.position_end) + 1
         val ref = r.getString(SequilaSchema.ref)
         val cov = r.getShort(SequilaSchema.cov)
-        val altsMap = r.getString(SequilaSchema.altsMap)
-        val qualsMap = r.getString(SequilaSchema.qualsMap)
+
+        val altsMap = if (altsIncluded) r.getString(SequilaSchema.altsMap) else null
+        val qualsMap = if (qualsIncluded) r.getString(SequilaSchema.qualsMap) else null
 
         val array = new Array[(String, Int, Int, String, Short, String, String)](end-start)
 
