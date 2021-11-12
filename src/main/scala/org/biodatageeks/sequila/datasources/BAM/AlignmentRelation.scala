@@ -74,9 +74,6 @@ trait BDGAlignFileReaderWriter [T <: BDGAlignInputFormat]{
     setLocalConf(sqlContext)
     setHadoopConf(sqlContext)
 
-
-
-
     val spark = sqlContext
       .sparkSession
 
@@ -120,42 +117,54 @@ trait BDGAlignFileReaderWriter [T <: BDGAlignInputFormat]{
           .hadoopConfiguration
           .set(SAMHeaderReader.VALIDATION_STRINGENCY_PROPERTY, validationStringency.toString)
 
+        refPath match {
+          case Some(path) =>
+            spark
+              .sparkContext
+              .hadoopConfiguration
+              .set("hadoopbam.cram.reference-source-path", path)
+          case _ =>
+            spark
+              .sparkContext
+              .hadoopConfiguration
+            .unset("hadoopbam.cram.reference-source-path")
+        }
         spark.sparkContext
           .newAPIHadoopFile[LongWritable, SAMRecordWritable, T](path)
           .map(r => r._2.get())
       }
       case "disq" => {
         import org.disq_bio.disq.HtsjdkReadsRddStorage
+        val intervals = spark.sqlContext.getConf(InternalParams.AlignmentIntervals,"")
+        @transient lazy val ranges = if (intervals.length > 0) {
+          logger.info(s"Doing interval queries for intervals ${intervals}")
+          intervals
+            .split(",")
+            .map(_.split("[:,-]"))
+            .map(r => new Interval(r(0), r(1).toInt, r(2).toInt))
+            .toList
+        } else List.empty[Interval]
+        val traverseParam = if(ranges.nonEmpty) new HtsjdkReadsTraversalParameters(ranges.asJava, false) else null
+        logger.info(s"disq|TraversalParameters: ${if(traverseParam == null) "N/A" else traverseParam.getIntervalsForTraversal.asScala.mkString("|")}")
         refPath match {
           case Some(ref) => {
           HtsjdkReadsRddStorage
             .makeDefault(sqlContext.sparkContext)
             .validationStringency(validationStringency)
             .referenceSourcePath(ref)
-            .read(resolvedPath)
+            .read(resolvedPath, traverseParam)
             .getReads
             .rdd
           }
           case None => {
-            val intervals = spark.sqlContext.getConf(InternalParams.AlignmentIntervals,"")
-            @transient lazy val ranges = if (intervals.length > 0) {
-              logger.info(s"Doing interval queries for intervals ${intervals}")
-              intervals
-                .split(",")
-                .map(_.split("[:,-]"))
-                .map(r => new Interval(r(0), r(1).toInt, r(2).toInt))
-                .toList
-            } else List.empty[Interval]
 
-            val traverseParam = if(ranges.nonEmpty) new HtsjdkReadsTraversalParameters(ranges.asJava, false) else null
-            logger.info(s"disq|TraversalParameters: ${if(traverseParam == null) "N/A" else traverseParam.getIntervalsForTraversal.asScala.mkString("|")}")
             HtsjdkReadsRddStorage
               .makeDefault(sqlContext.sparkContext)
               .validationStringency(validationStringency)
               .read(resolvedPath, traverseParam)
               .getReads
               .rdd
-          }
+            }
           }
         }
     }

@@ -9,7 +9,7 @@ import org.biodatageeks.sequila.utils.TableFuncs
 import org.seqdoop.hadoop_bam.CRAMBDGInputFormat
 import scala.reflect.ClassTag
 
-class BAMTableReader [T<:BDGAlignInputFormat] (spark:SparkSession, name: String, sampleId: String, fileExt: String) (implicit c: ClassTag[T]) extends BDGAlignFileReaderWriter[T] {
+class BAMTableReader [T<:BDGAlignInputFormat] (spark:SparkSession, name: String, sampleId: String, fileExt: String, refPath: Option[String]) (implicit c: ClassTag[T]) extends BDGAlignFileReaderWriter[T] {
 
   def readFile: RDD[SAMRecord] = {
     val metadata = TableFuncs.getTableMetadata(spark, name)
@@ -19,7 +19,7 @@ class BAMTableReader [T<:BDGAlignInputFormat] (spark:SparkSession, name: String,
         .split('/')
         .dropRight(1) ++ Array(s"$sampleId*.{{fileExtension}}"))
       .mkString("/")
-    readBAMFile(spark.sqlContext, samplePathTemplate.replace("{{fileExtension}}", fileExt), refPath = None)
+    readBAMFile(spark.sqlContext, samplePathTemplate.replace("{{fileExtension}}", fileExt), refPath = refPath)
   }
 
 }

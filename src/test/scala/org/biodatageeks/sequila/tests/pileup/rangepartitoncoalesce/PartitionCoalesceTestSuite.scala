@@ -46,7 +46,7 @@ class PartitionCoalesceTestSuite extends PileupTestBase with RDDComparisons {
         .hadoopConfiguration
         .setInt("mapred.max.split.size", splitSize.toInt)
 
-      val tableReader = new BAMTableReader[BAMBDGInputFormat](ss, tableName, sampleId, "bam")
+      val tableReader = new BAMTableReader[BAMBDGInputFormat](ss, tableName, sampleId, "bam", None)
       val conf = new Conf
 
       val allAlignments = tableReader.readFile
@@ -74,7 +74,7 @@ class PartitionCoalesceTestSuite extends PileupTestBase with RDDComparisons {
           .hadoopConfiguration
           .setInt("mapred.max.split.size", splitSize.toInt)
         val conf = new Conf
-        val tableReader = new BAMTableReader[BAMBDGInputFormat](spark, tableName, sampleId, "bam")
+        val tableReader = new BAMTableReader[BAMBDGInputFormat](spark, tableName, sampleId, "bam", None)
 
         val allAlignments = tableReader.readFile
         allAlignments.getPartitionLowerBound.foreach(r => println(r.record.getReadName))
