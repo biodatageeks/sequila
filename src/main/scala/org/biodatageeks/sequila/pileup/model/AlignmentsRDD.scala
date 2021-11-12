@@ -5,6 +5,7 @@ import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SparkSession
 import org.biodatageeks.sequila.datasources.BAM.BAMTableReader
+import org.biodatageeks.sequila.inputformats.BDGAlignInputFormat
 import org.biodatageeks.sequila.pileup.conf.Conf
 import org.biodatageeks.sequila.pileup.model.Alts.MultiLociAlts
 import org.biodatageeks.sequila.pileup.model.ReadOperations.implicits._
@@ -143,7 +144,7 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
     }.collect()
   }
 
-  def getPartitionBounds(reader: BAMTableReader[BAMBDGInputFormat],
+  def getPartitionBounds(reader: BAMTableReader[BDGAlignInputFormat],
                          conf: Conf,
                          lowerBounds: Array[LowerPartitionBoundAlignmentRecord]
                         ): Array[PartitionBounds] = {
@@ -177,7 +178,7 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
     PartitionUtils.getAdjustedPartitionBounds(lowerBounds, tree, conf, contigsList)
   }
 
-  def repartition(reader:BAMTableReader[BAMBDGInputFormat], conf: Conf): (RDD[SAMRecord], Broadcast[Array[PartitionBounds]]) = {
+  def repartition(reader : BAMTableReader[BDGAlignInputFormat], conf: Conf): (RDD[SAMRecord], Broadcast[Array[PartitionBounds]]) = {
 
     val alignments = this.rdd
     val numPartitions = alignments.getNumPartitions

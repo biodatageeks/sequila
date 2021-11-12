@@ -5,9 +5,12 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions.Attribute
 import org.biodatageeks.sequila.datasources.BAM.BAMTableReader
+import org.biodatageeks.sequila.datasources.InputDataType
+import org.biodatageeks.sequila.inputformats.BDGAlignInputFormat
 import org.biodatageeks.sequila.pileup.conf.Conf
 import org.biodatageeks.sequila.pileup.model.AlignmentsRDDOperations.implicits._
-import org.seqdoop.hadoop_bam.BAMBDGInputFormat
+import org.biodatageeks.sequila.utils.TableFuncs
+import org.seqdoop.hadoop_bam.{BAMBDGInputFormat, CRAMBDGInputFormat}
 import org.slf4j.LoggerFactory
 
 class Pileup(spark:SparkSession) {
@@ -17,13 +20,26 @@ class Pileup(spark:SparkSession) {
     logger.info(s"Calculating pileup on table: $tableName with configuration\n$conf")
 
     val bdConf = spark.sparkContext.broadcast(conf)
-
-    val tableReader = new BAMTableReader[BAMBDGInputFormat](spark, tableName, sampleId)
+    val metadata = TableFuncs.getTableMetadata(spark, tableName)
+    val tableReader = metadata.provider match {
+      case Some(f) =>
+        if (f == InputDataType.BAMInputDataType)
+          new BAMTableReader[BAMBDGInputFormat](spark, tableName, sampleId, "bam")
+        else if (f == InputDataType.CRAMInputDataType) {
+          val refPath = spark.sqlContext
+            .sparkContext
+            .hadoopConfiguration
+            .get(CRAMBDGInputFormat.REFERENCE_SOURCE_PATH_PROPERTY)
+          new BAMTableReader[CRAMBDGInputFormat](spark, tableName, sampleId, "cram")
+        }
+        else throw new Exception("Only BAM and CRAM file formats are supported.")
+      case None => throw new Exception("Wrong file extension - only BAM and CRAM file formats are supported.")
+    }
     val (alignments, bounds) =
       tableReader
       .readFile // all alignments from file
       .filterByConfig(bdConf, spark) // filtered with user defined config
-      .repartition(tableReader, conf)
+      .repartition(tableReader.asInstanceOf[BAMTableReader[BDGAlignInputFormat]], conf)
 
     PileupMethods.calculatePileup(alignments, bounds, spark, refPath, bdConf)
   }
