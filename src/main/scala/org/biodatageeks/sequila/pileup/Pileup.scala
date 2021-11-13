@@ -26,14 +26,10 @@ class Pileup(spark:SparkSession) {
         if (f == InputDataType.BAMInputDataType)
           new BAMTableReader[BAMBDGInputFormat](spark, tableName, sampleId, "bam", None)
         else if (f == InputDataType.CRAMInputDataType) {
-          val refPath = spark.sqlContext
-            .sparkContext
-            .hadoopConfiguration
-            .get(CRAMBDGInputFormat.REFERENCE_SOURCE_PATH_PROPERTY)
           new BAMTableReader[CRAMBDGInputFormat](spark, tableName, sampleId, "cram", Some(refPath))
         }
         else throw new Exception("Only BAM and CRAM file formats are supported.")
-      case None => throw new Exception("Wrong file extension - only BAM and CRAM file formats are supported.")
+      case None => throw new Exception("Empty file extension - BAM and CRAM file formats are supported.")
     }
     val (alignments, bounds) =
       tableReader

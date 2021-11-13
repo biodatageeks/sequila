@@ -111,7 +111,7 @@ trait BDGAlignFileReaderWriter [T <: BDGAlignInputFormat]{
             .hadoopConfiguration
             .unset("hadoopbam.bam.intervals")
 
-        logger.info(s"Setting BAM validation stringency to ${validationStringency.toString}")
+        logger.info(s"Setting BAM/CRAM validation stringency to ${validationStringency.toString}")
         spark
           .sparkContext
           .hadoopConfiguration
@@ -119,6 +119,7 @@ trait BDGAlignFileReaderWriter [T <: BDGAlignInputFormat]{
 
         refPath match {
           case Some(path) =>
+            logger.info(s"Using CRAM reference ${path}")
             spark
               .sparkContext
               .hadoopConfiguration
