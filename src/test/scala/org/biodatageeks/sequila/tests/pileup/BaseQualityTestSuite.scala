@@ -18,7 +18,7 @@ class BaseQualityTestSuite extends PileupTestBase {
        | quals_to_cov(${Columns.QUALS}, ${Columns.COVERAGE}) as $qualCoverageCol,
        | to_charmap(${Columns.QUALS}) as $qualAgg,
        | cov_equals (${Columns.COVERAGE}, ${Columns.COVERAGE} ) as $covEquality
-       |FROM  pileup('$tableName', '${sampleId}', '$referencePath', true)
+       |FROM  pileup('$tableName', '${sampleId}', '$referencePath', true, true)
        |ORDER BY ${Columns.CONTIG}
                  """.stripMargin
   

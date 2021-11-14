@@ -22,7 +22,7 @@ class BinningTestSuite extends PileupTestBase {
        | quals_to_cov(${Columns.QUALS}, ${Columns.COVERAGE}) as $qualCoverageCol,
        | quals_to_map(${Columns.QUALS}) as $qualAgg,
        | cov_equals (${Columns.COVERAGE}, ${Columns.COVERAGE}) as $covEquality
-       |FROM  pileup('$tableName', '${sampleId}', '$referencePath', true, $binSize)
+       |FROM  pileup('$tableName', '${sampleId}', '$referencePath', true, true, $binSize)
        |ORDER BY ${Columns.CONTIG}
                  """.stripMargin
 

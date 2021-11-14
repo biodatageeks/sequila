@@ -13,6 +13,7 @@ import org.apache.commons.lang3.builder.ToStringStyle;
   var maxQualityIndex:Int =  QualityConstants.DEFAULT_MAX_QUAL + 1
 
   var unknownContigName: String = "UCN"
+  var coverageOnly: Boolean = false
 
   override def toString: String = {
     ReflectionToStringBuilder.toString(this, ToStringStyle.SHORT_PREFIX_STYLE)

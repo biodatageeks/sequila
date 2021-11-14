@@ -98,6 +98,58 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
     }.flatMap(r => r)
   }
 
+
+  def toCoverage(refPath: String, bounds: Broadcast[Array[PartitionBounds]] ) : RDD[InternalRow] = {
+
+    this.rdd.mapPartitionsWithIndex { (index, part) =>
+      val reference = new Reference(refPath)
+      val contigMap = reference.getNormalizedContigMap
+      PileupProjection.setContigMap(contigMap)
+
+      part.map { agg => {
+        var cov, ind, i, currPos = 0
+        val allPos = false
+        val maxLen = agg.calculateMaxLength(allPos)
+        val maxIndex = FastMath.findMaxIndex(agg.events)
+        val result = new Array[InternalRow](maxLen)
+        val prev = new BlockProperties()
+        val startPosition = agg.startPosition
+        val partitionBounds = bounds.value(index)
+        val bases = reference.getBasesFromReference(contigMap(agg.contig), agg.startPosition, agg.startPosition + maxIndex)
+
+        breakable {
+          while (i <= maxIndex) {
+            currPos = i + startPosition
+            cov += agg.events(i)
+            if (isInPartitionRange(currPos - 1 , agg.contig, partitionBounds, agg.conf)) {
+              if (currPos == partitionBounds.postStart) {
+                prev.reset(i)
+              }
+              if (isEndOfZeroCoverageRegion(cov, prev.cov, i)) { // coming back from zero coverage. clear block
+                prev.reset(i)
+              } else if (isChangeOfCoverage(cov, prev.cov,  i) || isStartOfZeroCoverageRegion(cov, prev.cov)) { // different cov, add to output previous group
+                addBlockRecord(result, ind, agg, bases, i, prev)
+                ind += 1;
+                prev.reset(i)
+              } else if (currPos == partitionBounds.posEnd + 1) { // last item -> convert it
+                addBlockRecord(result, ind, agg, bases, i, prev)
+                ind += 1;
+                prev.reset(i)
+                break
+              }
+            }
+            prev.cov = cov;
+            prev.len = prev.len + 1;
+            i += 1
+          } // while
+        }
+        result.take(ind)
+      }
+      }
+    }.flatMap(r => r)
+  }
+
+
   private def isStartOfZeroCoverageRegion(cov: Int, prevCov: Int) = cov == 0 && prevCov > 0
   private def isChangeOfCoverage(cov: Int, prevCov: Int, i: Int) = cov != 0 && prevCov >= 0 && prevCov != cov && i > 0
   private def isEndOfZeroCoverageRegion(cov: Int, prevCov: Int, i: Int) = cov != 0 && prevCov == 0 && i > 0

@@ -19,14 +19,14 @@ import scala.reflect.ClassTag
 class PileupStrategy (spark:SparkSession) extends Strategy with Serializable {
   override def apply(plan: LogicalPlan): Seq[SparkPlan] = {
     plan match {
-      case PileupTemplate(tableName, sampleId, refPath, qual, binSize, output) =>
+      case PileupTemplate(tableName, sampleId, refPath, alts, quals, binSize, output) =>
         val inputFormat = TableFuncs.getTableMetadata(spark, tableName).provider
         inputFormat match {
           case Some(f) =>
             if (f == InputDataType.BAMInputDataType)
-              PileupPlan[BAMBDGInputFormat](plan, spark, tableName, sampleId, refPath, qual, binSize, output) :: Nil
+              PileupPlan[BAMBDGInputFormat](plan, spark, tableName, sampleId, refPath, alts, quals, binSize, output) :: Nil
             else if (f == InputDataType.CRAMInputDataType)
-              PileupPlan[CRAMBDGInputFormat](plan, spark, tableName, sampleId, refPath, qual, binSize, output) :: Nil
+              PileupPlan[CRAMBDGInputFormat](plan, spark, tableName, sampleId, refPath, alts, quals, binSize, output) :: Nil
             else Nil
           case None => throw new RuntimeException("Only BAM and CRAM file formats are supported in pileup function.")
         }
@@ -42,7 +42,8 @@ case class PileupPlan [T<:BDGAlignInputFormat](plan:LogicalPlan, spark:SparkSess
                                                tableName:String,
                                                sampleId:String,
                                                refPath: String,
-                                               qual: Boolean,
+                                               alts: Boolean,
+                                               quals: Boolean,
                                                binSize: Option[Int],
                                                output:Seq[Attribute])(implicit c: ClassTag[T])
   extends SparkPlan with Serializable  with BDGAlignFileReaderWriter [T]{
@@ -59,10 +60,14 @@ case class PileupPlan [T<:BDGAlignInputFormat](plan:LogicalPlan, spark:SparkSess
 
   private def setupPileupConfiguration(): Conf = {
     val conf = new Conf
+    if (!alts && !quals ) {// FIXME -> change to Option
+      conf.coverageOnly = true
+      return conf
+    }
     val maxQual = spark.conf.get(InternalParams.maxBaseQualityValue, DEFAULT_MAX_QUAL.toString).toInt
     conf.maxQuality = maxQual
     conf.maxQualityIndex = maxQual + 1
-    conf.includeBaseQualities = qual
+    conf.includeBaseQualities = quals
     if(binSize.isDefined) {
       conf.isBinningEnabled = true
       conf.binSize = binSize.get
