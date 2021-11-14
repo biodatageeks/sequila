@@ -121,6 +121,7 @@ private def getContigsBetween(startContig: String, endContig: String, contigsLis
 
   def boundsToIntervals(a: Array[LowerPartitionBoundAlignmentRecord]): String = {
     a
+      .filter(r => r.record != null)
       .map( r => s"${r.record.getContig}:${r.record.getStart}-${r.record.getStart}")
       .mkString(",")
   }
