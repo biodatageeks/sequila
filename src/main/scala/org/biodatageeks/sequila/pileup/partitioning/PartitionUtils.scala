@@ -9,7 +9,7 @@ import org.biodatageeks.sequila.utils.DataQualityFuncs
 
 import scala.collection.JavaConverters._
 
-case class LowerPartitionBoundAlignmentRecord(idx: Int, record: SAMRecord)
+case class LowerPartitionBoundAlignmentRecord(idx: Int, record: TruncRead)
 case class PartitionBounds(idx: Int, contigStart: String, postStart: Int,
                            contigEnd: String, posEnd: Int,
                            readName: Option[String] = None ,
@@ -34,9 +34,8 @@ object PartitionUtils {
     var i = 0
     var previousMaxPos = Int.MinValue
     while(i < lowerBounds.length - 1){
-      val upperContig = lowerBounds(i + 1).record.getContig
-      val upperPosBound = lowerBounds(i + 1).record.getAlignmentStart
-      val upperReadName = lowerBounds(i + 1).record.getReadName
+      val upperContig = lowerBounds(i + 1).record.contig
+      val upperPosBound = lowerBounds(i + 1).record.posStart
       val treeContig = tree.getIntervalTreeByChromosome(upperContig)
       var rName : Option[String] = None
 
@@ -46,7 +45,6 @@ object PartitionUtils {
             .asScala
             .flatMap(r => r.getValue.asScala)
             .toArray
-//          reads.foreach(r => println(r.rName))
           val maxOverlaps = reads //FIXME: Check if order is preserved!!!
           if (maxOverlaps.isEmpty)
             upperPosBound -1
@@ -72,12 +70,12 @@ object PartitionUtils {
       }
         adjPartitionBounds(i) =  PartitionBounds(
           lowerBounds(i).idx,
-          lowerBounds(i).record.getContig,
-          if(i ==0) lowerBounds(i).record.getAlignmentStart else previousMaxPos + 1,
+          lowerBounds(i).record.contig,
+          if(i ==0) lowerBounds(i).record.posStart else previousMaxPos + 1,
           upperContig,
           maxPos,
           rName,
-          getContigsBetween(lowerBounds(i).record.getContig, upperContig, contigsList )
+          getContigsBetween(lowerBounds(i).record.contig, upperContig, contigsList )
         )
       i += 1
       previousMaxPos = maxPos
@@ -85,11 +83,11 @@ object PartitionUtils {
     val lastIdx = lowerBounds.length - 1
     adjPartitionBounds(lastIdx) = PartitionBounds(
       lowerBounds(lastIdx).idx,
-      lowerBounds(lastIdx).record.getContig,
-      if(lastIdx > 0 && lowerBounds(lastIdx).record.getContig == lowerBounds(lastIdx - 1).record.getContig)
+      lowerBounds(lastIdx).record.contig,
+      if(lastIdx > 0 && lowerBounds(lastIdx).record.contig == lowerBounds(lastIdx - 1).record.contig)
         previousMaxPos + 1
       else
-        lowerBounds(lastIdx).record.getAlignmentStart,
+        lowerBounds(lastIdx).record.posStart,
       conf.unknownContigName,
       Int.MaxValue
     )
@@ -109,8 +107,8 @@ private def getContigsBetween(startContig: String, endContig: String, contigsLis
       r => {
         val maxPos = r.posEnd
         val maxIndex = lowerBounds
-          .filter( l => l.record.getContig == r.contigEnd)
-          .takeWhile( p => p.record.getAlignmentStart <= maxPos)
+          .filter( l => l.record.contig == r.contigEnd)
+          .takeWhile( p => p.record.posStart <= maxPos)
         if (maxIndex.nonEmpty)
           maxIndex.takeRight(1)(0).idx
         else
@@ -122,7 +120,7 @@ private def getContigsBetween(startContig: String, endContig: String, contigsLis
   def boundsToIntervals(a: Array[LowerPartitionBoundAlignmentRecord]): String = {
     a
       .filter(r => r.record != null)
-      .map( r => s"${r.record.getContig}:${r.record.getStart}-${r.record.getStart}")
+      .map( r => s"${r.record.contig}:${r.record.posStart}-${r.record.posStart}")
       .mkString(",")
   }
 
