@@ -5,7 +5,7 @@ import org.apache.hadoop.io.LongWritable
 import org.apache.spark.sql.SparkSession
 import org.biodatageeks.sequila.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
 import org.rogach.scallop.ScallopConf
-import org.seqdoop.hadoop_bam.{BAMInputFormat, SAMRecordWritable}
+import org.seqdoop.hadoop_bam.{BAMBDGInputFormat, SAMRecordWritable}
 import org.seqdoop.hadoop_bam.util.SAMHeaderReader
 import org.apache.spark.sql.SequilaSession
 import org.biodatageeks.sequila.utils.{Columns, InternalParams, SequilaRegister, UDFRegister}

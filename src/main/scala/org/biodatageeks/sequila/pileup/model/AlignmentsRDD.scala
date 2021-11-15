@@ -139,9 +139,9 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
 
 
   def getPartitionLowerBound: Array[LowerPartitionBoundAlignmentRecord] = {
-    this.rdd.mapPartitionsWithIndex{
+    this.rdd.mapPartitionsWithIndex(
       (i, p) => Iterator(LowerPartitionBoundAlignmentRecord(i ,p.next()) )
-    }.collect()
+    ).collect()
   }
 
   def getPartitionBounds(reader: BAMTableReader[BDGAlignInputFormat],
