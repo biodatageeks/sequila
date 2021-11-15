@@ -19,6 +19,7 @@ case class ContigAggregate(
                             conf: Conf
                           ) {
 
+  @inline
   def hasAltOnPosition(pos:Int):Boolean = alts.contains(pos)
 
   def calculateMaxLength(allPositions: Boolean): Int = {
@@ -34,6 +35,7 @@ case class ContigAggregate(
     events(position) = (events(position) + delta).toShort
   }
 
+  @inline
   def addReadToBuffer(rs: ReadSummary): Unit = {
     rsTree.put(rs.start, rs.end, rs)
     ()
