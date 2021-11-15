@@ -102,6 +102,52 @@ class RelativePositionTestSuite extends FunSuite{
     assert (rs.relativePosition(76032265) == 11)
     assert(rs.hasDeletionOnPosition(76032266))
   }
+
+  test("relative test #5") {
+
+    val cElement1 = new CigarElement(3, CigarOperator.S) // 3S
+    val cElement2 = new CigarElement(14, CigarOperator.M) // 14M
+    val cElement3 = new CigarElement(4, CigarOperator.D) // 4D
+    val cElement4 = new CigarElement(14, CigarOperator.M) // 14M
+    val cElement5 = new CigarElement(4, CigarOperator.D) // 4D
+    val cElement6 = new CigarElement(14, CigarOperator.M) // 14M
+
+    val cElement7 = new CigarElement(4, CigarOperator.D) // 4D
+    val cElement8 = new CigarElement(14, CigarOperator.M) // 14M
+    val cElement9 = new CigarElement(4, CigarOperator.D) //  4D
+    val cElement10 = new CigarElement(14, CigarOperator.M) // 14M
+
+    val cElement11 = new CigarElement(4, CigarOperator.D) // 4D
+    val cElement12 = new CigarElement(14, CigarOperator.M) // 14M
+    val cElement13 = new CigarElement(3, CigarOperator.D) // 3D
+    val cElement14 = new CigarElement(9, CigarOperator.M) // 9M
+    val cElement15 = new CigarElement(5, CigarOperator.S) // 5S
+
+    val c = new Cigar(seqAsJavaList(List(
+            cElement1,
+            cElement2,
+            cElement3,
+            cElement4,
+            cElement5,
+            cElement6,
+            cElement7,
+            cElement8,
+            cElement9,
+            cElement10,
+            cElement11,
+            cElement12,
+            cElement13,
+            cElement14,
+            cElement15 )))
+    val len = c.getReadLength
+    val conf = CigarDerivedConf.create(2, c)
+    val rs = ReadSummary(2, 117, new Array[Byte](len), new Array[Byte](len), true, c)
+
+    assert(len==101)
+    assert(conf.hasDel)
+    assert (rs.relativePosition(104) < 101 )
+    assert (rs.relativePosition(117) < 101 )
+  }
 }
 
 

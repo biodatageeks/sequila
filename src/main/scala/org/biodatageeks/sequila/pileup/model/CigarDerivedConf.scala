@@ -3,10 +3,11 @@ package org.biodatageeks.sequila.pileup.model
 import htsjdk.samtools.{Cigar, CigarOperator}
 
 import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
 
 case class InDelPositions(
-                           delPositions: mutable.LinkedHashSet[(Int, Int)],
-                           insertPositions: mutable.LinkedHashSet[(Int,Int)]
+                           delPositions: ListBuffer[(Int, Int)],
+                           insertPositions: ListBuffer[(Int,Int)]
                          )
 case class CigarDerivedConf(
                              hasClip: Boolean,
@@ -19,7 +20,7 @@ case class CigarDerivedConf(
     val pos = position + leftClipLength
     val filtered = indelPositions
       .insertPositions
-      .filter{case (start, _) => (pos >= start )}.toList
+      .filter{case (start, _) => (pos >= start )}
     val lengths = filtered.map(_._2)
     val lenSum = lengths.sum
     lenSum
@@ -28,14 +29,14 @@ case class CigarDerivedConf(
     val pos = position + leftClipLength
     indelPositions
       .delPositions
-      .filter{case (start,_) => (pos >=start)}
+      .filter{case (start,_) => pos >=start}
       .map{case(start,end)=> end-start}
       .sum
   }
 }
 
 object CigarDerivedConf {
-  def create(start: Int, cigar:Cigar) ={
+  def create(start: Int, cigar:Cigar): CigarDerivedConf ={
     val firstCigarElement = cigar.getFirstCigarElement
     val firstCigarElementOp = firstCigarElement.getOperator
     val hasClip = firstCigarElementOp != null && firstCigarElementOp.isClipping
@@ -44,13 +45,13 @@ object CigarDerivedConf {
     } else 0
     val hasDel = cigar.containsOperator(CigarOperator.DELETION)
     val hasIndel =  hasDel || cigar.containsOperator(CigarOperator.INSERTION)
-    CigarDerivedConf(hasClip, hasIndel, hasDel, softClipLength, if (hasIndel) getIndelPostions(start, cigar) else null)
+    CigarDerivedConf(hasClip, hasIndel, hasDel, softClipLength, if (hasIndel) calculateIndelPositions(start, cigar) else null)
   }
 
 
-  private def getIndelPostions(start: Int, cigar:Cigar): InDelPositions = {
-    val delPositions = new mutable.LinkedHashSet[(Int, Int)]()
-    val insertPositions  = new mutable.LinkedHashSet[(Int,Int)]()
+  private def calculateIndelPositions(start: Int, cigar:Cigar): InDelPositions = {
+    val delPositions = new mutable.ListBuffer[(Int, Int)]()
+    val insertPositions  = new mutable.ListBuffer[(Int,Int)]()
     val cigarIterator = cigar.iterator()
     var positionFromCigar = start
     while (cigarIterator.hasNext) {
@@ -61,26 +62,14 @@ object CigarDerivedConf {
         val eventStart = positionFromCigar
         val eventEnd = positionFromCigar + cigarOperatorLen
         if (cigarOperator == CigarOperator.DELETION)
-          delPositions.add((eventStart,eventEnd))
-          //fillPositionSet(eventStart, eventEnd, delPositions)
+          delPositions.append((eventStart,eventEnd))
         else if (cigarOperator == CigarOperator.INSERTION){
-          insertPositions.add((eventStart, cigarOperatorLen))
-         //fillPositionSet(eventStart, eventEnd, insertPositions)
+          insertPositions.append((eventStart, cigarOperatorLen))
         }
       }
       if (cigarOperator != CigarOperator.INSERTION)
         positionFromCigar += cigarOperatorLen
    }
    InDelPositions(delPositions, insertPositions)
-  }
-
-
-  private def fillPositionSet(start:Int, end: Int, set: mutable.LinkedHashSet[Int]): mutable.LinkedHashSet[Int] = {
-    var i = start
-    while(i < end) {
-      set.add(i)
-      i += 1
-    }
-    set
   }
 }
