@@ -5,8 +5,8 @@ import htsjdk.samtools.{Cigar, CigarOperator}
 import scala.collection.mutable
 
 case class InDelPositions(
-                           delPositions: mutable.LinkedHashSet[(Int, Int)],
-                           insertPositions: mutable.LinkedHashSet[(Int,Int)]
+                           delPositions: List[(Int, Int)],
+                           insertPositions: List[(Int,Int)]
                          )
 case class CigarDerivedConf(
                              hasClip: Boolean,
@@ -28,14 +28,14 @@ case class CigarDerivedConf(
     val pos = position + leftClipLength
     indelPositions
       .delPositions
-      .filter{case (start,_) => (pos >=start)}
+      .filter{case (start,_) => pos >=start}
       .map{case(start,end)=> end-start}
       .sum
   }
 }
 
 object CigarDerivedConf {
-  def create(start: Int, cigar:Cigar) ={
+  def create(start: Int, cigar:Cigar): CigarDerivedConf ={
     val firstCigarElement = cigar.getFirstCigarElement
     val firstCigarElementOp = firstCigarElement.getOperator
     val hasClip = firstCigarElementOp != null && firstCigarElementOp.isClipping
@@ -44,11 +44,11 @@ object CigarDerivedConf {
     } else 0
     val hasDel = cigar.containsOperator(CigarOperator.DELETION)
     val hasIndel =  hasDel || cigar.containsOperator(CigarOperator.INSERTION)
-    CigarDerivedConf(hasClip, hasIndel, hasDel, softClipLength, if (hasIndel) getIndelPostions(start, cigar) else null)
+    CigarDerivedConf(hasClip, hasIndel, hasDel, softClipLength, if (hasIndel) calculateIndelPositions(start, cigar) else null)
   }
 
 
-  private def getIndelPostions(start: Int, cigar:Cigar): InDelPositions = {
+  private def calculateIndelPositions(start: Int, cigar:Cigar): InDelPositions = {
     val delPositions = new mutable.LinkedHashSet[(Int, Int)]()
     val insertPositions  = new mutable.LinkedHashSet[(Int,Int)]()
     val cigarIterator = cigar.iterator()
@@ -62,25 +62,13 @@ object CigarDerivedConf {
         val eventEnd = positionFromCigar + cigarOperatorLen
         if (cigarOperator == CigarOperator.DELETION)
           delPositions.add((eventStart,eventEnd))
-          //fillPositionSet(eventStart, eventEnd, delPositions)
         else if (cigarOperator == CigarOperator.INSERTION){
           insertPositions.add((eventStart, cigarOperatorLen))
-         //fillPositionSet(eventStart, eventEnd, insertPositions)
         }
       }
       if (cigarOperator != CigarOperator.INSERTION)
         positionFromCigar += cigarOperatorLen
    }
-   InDelPositions(delPositions, insertPositions)
-  }
-
-
-  private def fillPositionSet(start:Int, end: Int, set: mutable.LinkedHashSet[Int]): mutable.LinkedHashSet[Int] = {
-    var i = start
-    while(i < end) {
-      set.add(i)
-      i += 1
-    }
-    set
+   InDelPositions(delPositions.toList, insertPositions.toList)
   }
 }
