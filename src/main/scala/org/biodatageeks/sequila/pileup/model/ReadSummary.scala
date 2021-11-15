@@ -4,46 +4,55 @@ import htsjdk.samtools.Cigar
 
 
 case class ReadSummary(start: Int, end: Int,
-                       basesArray: Array[Byte],
-                       qualsArray: Array[Byte],
-                       isPositiveStrand: Boolean,
+                       bases: Array[Byte],
+                       quals: Array[Byte],
+                       isPositive: Boolean,
                        cigar: Cigar
                             ) {
-  private var _cigarDerivedConf: CigarDerivedConf = null
+  private var _cigarConf: CigarDerivedConf = null
 
-  def cigarDerivedConf:CigarDerivedConf  = {
-    if (_cigarDerivedConf == null)
-      _cigarDerivedConf = CigarDerivedConf.create(start,cigar)
-    _cigarDerivedConf
+  def cigarConf:CigarDerivedConf  = {
+    if (_cigarConf == null)
+      _cigarConf = CigarDerivedConf.create(start,cigar)
+    _cigarConf
+  }
+
+  def getBaseForAbsPosition (absPosition:Int):Char = {
+    val relPos = relativePosition(absPosition)
+    if (isPositive) bases(relPos).toChar else bases(relPos).toChar.toLower
   }
 
   @inline
   def getBaseQualityForPosition(position: Int): Byte = {
-    qualsArray(relativePosition(position))
+    quals(expensiveRelativePosition(position))
+  }
+  @inline
+  def relativePosition(absPosition:Int):Int = {
+    if (!cigarConf.hasIndel && !cigarConf.hasClip) absPosition - start
+    else expensiveRelativePosition(absPosition)
   }
 
   @inline
-  def relativePosition(absPosition: Int): Int = {
-    absPosition - start + inDelEventsOffset(absPosition) + cigarDerivedConf.leftClipLength
+  def expensiveRelativePosition(absPosition: Int): Int = {
+    absPosition - start + inDelEventsOffset(absPosition) + cigarConf.leftClipLength
   }
 
   @inline
   private def inDelEventsOffset(pos: Int): Int = {
-    if (!cigarDerivedConf.hasIndel)
+    if (!cigarConf.hasIndel)
       return 0
-    cigarDerivedConf.getInsertOffsetForPosition(pos)- cigarDerivedConf.getDelOffsetForPosition(pos)
+    cigarConf.getInsertOffsetForPosition(pos)- cigarConf.getDelOffsetForPosition(pos)
   }
 
   @inline
   def hasDeletionOnPosition(pos: Int): Boolean = {
-    val leftClipLen = cigarDerivedConf.leftClipLength
-    if (!cigarDerivedConf.hasDel)
+    val leftClipLen = cigarConf.leftClipLength
+    if (!cigarConf.hasDel)
       false
-    else {
-      cigarDerivedConf
+    else
+      cigarConf
         .indelPositions
         .delPositions.exists { case (start, end) => pos + leftClipLen >= start && pos + leftClipLen < end }
-    }
   }
 }
 

@@ -69,7 +69,7 @@ object CigarDerivedConf {
       }
       if (cigarOperator != CigarOperator.INSERTION)
         positionFromCigar += cigarOperatorLen
-   }
-   InDelPositions(delPositions, insertPositions)
+    }
+    InDelPositions(delPositions, insertPositions)
   }
 }

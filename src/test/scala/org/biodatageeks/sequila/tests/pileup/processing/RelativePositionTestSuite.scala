@@ -21,8 +21,8 @@ class RelativePositionTestSuite extends FunSuite{
 
     assert(len==101)
     assert(conf.hasDel)
-    assert (rs.relativePosition(7801998) ==0)
-    assert (rs.relativePosition(7802099) ==100)
+    assert (rs.expensiveRelativePosition(7801998) ==0)
+    assert (rs.expensiveRelativePosition(7802099) ==100)
     assert(rs.getBaseQualityForPosition(7801998)==0)
     assert(rs.getBaseQualityForPosition(7801999)==0)
     assert(rs.getBaseQualityForPosition(7802099)==0)
@@ -43,8 +43,8 @@ class RelativePositionTestSuite extends FunSuite{
 
     assert(len==101)
     assert(conf.hasDel)
-    assert (rs.relativePosition(220108224) ==0)
-    assert (rs.relativePosition(220108325) ==100)
+    assert (rs.expensiveRelativePosition(220108224) ==0)
+    assert (rs.expensiveRelativePosition(220108325) ==100)
     assert(rs.getBaseQualityForPosition(220108224)==0)
     assert(rs.getBaseQualityForPosition(220108325)==0)
     assertThrows[java.lang.ArrayIndexOutOfBoundsException](rs.getBaseQualityForPosition(220108326))
@@ -70,13 +70,13 @@ class RelativePositionTestSuite extends FunSuite{
 
     assert(len==101)
     assert(conf.hasDel)
-    assert (rs.relativePosition(813652) ==0)
-    assert (rs.relativePosition(813671) ==19) // 20th base match -> 19th index
-    assert (rs.relativePosition(813672) ==19+4+1) // first insert
-    assert (rs.relativePosition(813673) ==19+4+1+1)
-    assert (rs.relativePosition(813675) ==19+4+1+1+2)
-    assert (rs.relativePosition(813676) ==19+4+1+1+2+4+1) // second insert
-    assert(rs.relativePosition(813744) == 100) // last index from ref
+    assert (rs.expensiveRelativePosition(813652) ==0)
+    assert (rs.expensiveRelativePosition(813671) ==19) // 20th base match -> 19th index
+    assert (rs.expensiveRelativePosition(813672) ==19+4+1) // first insert
+    assert (rs.expensiveRelativePosition(813673) ==19+4+1+1)
+    assert (rs.expensiveRelativePosition(813675) ==19+4+1+1+2)
+    assert (rs.expensiveRelativePosition(813676) ==19+4+1+1+2+4+1) // second insert
+    assert(rs.expensiveRelativePosition(813744) == 100) // last index from ref
 
   }
   test("relative test #4") {
@@ -94,12 +94,12 @@ class RelativePositionTestSuite extends FunSuite{
 
     assert(len==101)
     assert(conf.hasDel)
-    assert (rs.relativePosition(76032260) == 6)
-    assert (rs.relativePosition(76032261) == 7)
-    assert (rs.relativePosition(76032262) == 8)
-    assert (rs.relativePosition(76032263) == 9)
-    assert (rs.relativePosition(76032264) == 10)
-    assert (rs.relativePosition(76032265) == 11)
+    assert (rs.expensiveRelativePosition(76032260) == 6)
+    assert (rs.expensiveRelativePosition(76032261) == 7)
+    assert (rs.expensiveRelativePosition(76032262) == 8)
+    assert (rs.expensiveRelativePosition(76032263) == 9)
+    assert (rs.expensiveRelativePosition(76032264) == 10)
+    assert (rs.expensiveRelativePosition(76032265) == 11)
     assert(rs.hasDeletionOnPosition(76032266))
   }
 

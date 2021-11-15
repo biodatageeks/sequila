@@ -1,6 +1,6 @@
 package org.biodatageeks.sequila.pileup.model
 
-import htsjdk.samtools.{Cigar, CigarOperator, SAMRecord}
+import htsjdk.samtools.{CigarOperator, SAMRecord}
 import org.biodatageeks.sequila.pileup.MDTagParser
 import org.biodatageeks.sequila.pileup.model.Alts._
 
@@ -13,31 +13,23 @@ object ReadOperations {
 case class TruncRead(rName: String, contig: String, posStart: Int, posEnd: Int)
 case class ExtendedReads(read: SAMRecord) {
 
-
-  def addReadToQualsBuffer(agg: ContigAggregate, bases: Array[Byte]): Unit = {
-    val readQualSummary = ReadSummary(read.getStart, read.getEnd, bases, read.getBaseQualities, ! read.getReadNegativeStrandFlag, read.getCigar)
-    agg.rsTree.put(read.getStart, read.getEnd, readQualSummary)
-    ()
-  }
-
   def analyzeRead(agg: ContigAggregate): Unit = {
     val bases = read.getReadBases
     calculateEvents(agg)
     if (agg.conf.coverageOnly)
       return
-    calculateAlts(agg, bases)
-    if (agg.conf.includeBaseQualities)
-      addReadToQualsBuffer(agg, bases)
 
+    val rs = ReadSummary(read.getStart, read.getEnd, bases, read.getBaseQualities, ! read.getReadNegativeStrandFlag, read.getCigar)
+    calculateAlts(agg, rs)
+    if (agg.conf.includeBaseQualities)
+      agg.addReadToBuffer(rs)
   }
 
-  def calculateEvents(aggregate: ContigAggregate): Unit = {
-    val start = read.getStart
+  def calculateEvents(agg: ContigAggregate): Unit = {
     val cigar = read.getCigar
-    val partitionStart = aggregate.startPosition
-    var position = start
+    val partitionStart = agg.startPosition
+    var position = read.getStart
     val cigarIterator = cigar.iterator()
-    var cigarLen = 0
 
     while (cigarIterator.hasNext) {
       val cigarElement = cigarIterator.next()
@@ -49,73 +41,30 @@ case class ExtendedReads(read: SAMRecord) {
         cigarOperator == CigarOperator.EQ ||
         cigarOperator == CigarOperator.N ||
         cigarOperator == CigarOperator.D)
-        cigarLen += cigarOperatorLen
 
       // update events array according to read alignment blocks start/end
       if (cigarOperator == CigarOperator.M || cigarOperator == CigarOperator.X || cigarOperator == CigarOperator.EQ) {
 
-        aggregate.updateEvents(position, partitionStart, delta = 1)
+        agg.updateEvents(position, partitionStart, delta = 1)
         position += cigarOperatorLen
-        aggregate.updateEvents(position, partitionStart, delta = -1)
+        agg.updateEvents(position, partitionStart, delta = -1)
       }
       else if (cigarOperator == CigarOperator.N || cigarOperator == CigarOperator.D)
         position += cigarOperatorLen
-
     }
   }
 
-  def calculatePositionInReadSeq(mdPosition: Int, cigar: Cigar): Int = {
-    if (!cigar.containsOperator(CigarOperator.INSERTION))
-      return mdPosition
-
-    var numInsertions = 0
-    val cigarIterator = cigar.iterator()
-    var position = 0
-
-    while (cigarIterator.hasNext) {
-      if (position > mdPosition + numInsertions)
-        return mdPosition + numInsertions
-      val cigarElement = cigarIterator.next()
-      val cigarOpLength = cigarElement.getLength
-      val cigarOp = cigarElement.getOperator
-
-      if (cigarOp == CigarOperator.INSERTION)
-        numInsertions += cigarOpLength
-      else if (cigarOp != CigarOperator.HARD_CLIP)
-        position = position + cigarOpLength
-    }
-    mdPosition + numInsertions
-  }
-
-  def calculateAlts(aggregate: ContigAggregate, bases: Array[Byte]): Unit = {
-    val start = read.getStart
-    val cigar = read.getCigar
-    val isPositiveStrand = !read.getReadNegativeStrandFlag
-    var position = start
+  def calculateAlts(agg: ContigAggregate, rs: ReadSummary): Unit = {
+    var position = rs.start
     val ops = MDTagParser.parseMDTag(read.getStringAttribute("MD"))
 
-    var delCounter = 0
-    val clipLen =
-      if (cigar.getCigarElement(0).getOperator == CigarOperator.SOFT_CLIP)
-        cigar.getCigarElement(0).getLength else 0
-
-    position += clipLen
-
     for (mdtag <- ops) {
-      if (mdtag.isDeletion) {
-        delCounter += 1
+      if (mdtag.isDeletion)
         position += 1
-      } else if (mdtag.base != 'S') {
+      else if (mdtag.base != 'S') {
+        agg.alts.update(position, rs.getBaseForAbsPosition(position))
         position += 1
-
-        val indexInSeq = calculatePositionInReadSeq(position - start - delCounter, cigar)
-
-        val altBase = if (isPositiveStrand) bases(indexInSeq - 1).toChar else bases(indexInSeq - 1).toChar.toLower
-        val altPosition = position - clipLen - 1
-
-        aggregate.alts.updateAlts(altPosition, altBase)
-      }
-      else if (mdtag.base == 'S')
+      } else if (mdtag.base == 'S')
         position += mdtag.length
     }
   }
