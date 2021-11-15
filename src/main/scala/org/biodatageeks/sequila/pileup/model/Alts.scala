@@ -21,7 +21,7 @@ object Alts {
   implicit class MultiLociAltsExtension (val map: Alts.MultiLociAlts) {
     def ++ (that: Alts.MultiLociAlts): Alts.MultiLociAlts = (map ++ that)
 
-    def updateAlts(position: Int, alt: Char): Unit = {
+    def update(position: Int, alt: Char): Unit = {
       val altByte = alt.toByte
 
       val altMap = map.getOrElse(position, new Alts.SingleLocusAlts())
