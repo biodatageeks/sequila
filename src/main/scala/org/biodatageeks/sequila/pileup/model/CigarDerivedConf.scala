@@ -3,10 +3,11 @@ package org.biodatageeks.sequila.pileup.model
 import htsjdk.samtools.{Cigar, CigarOperator}
 
 import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
 
 case class InDelPositions(
-                           delPositions: List[(Int, Int)],
-                           insertPositions: List[(Int,Int)]
+                           delPositions: ListBuffer[(Int, Int)],
+                           insertPositions: ListBuffer[(Int,Int)]
                          )
 case class CigarDerivedConf(
                              hasClip: Boolean,
@@ -19,7 +20,7 @@ case class CigarDerivedConf(
     val pos = position + leftClipLength
     val filtered = indelPositions
       .insertPositions
-      .filter{case (start, _) => (pos >= start )}.toList
+      .filter{case (start, _) => (pos >= start )}
     val lengths = filtered.map(_._2)
     val lenSum = lengths.sum
     lenSum
@@ -49,8 +50,8 @@ object CigarDerivedConf {
 
 
   private def calculateIndelPositions(start: Int, cigar:Cigar): InDelPositions = {
-    val delPositions = new mutable.LinkedHashSet[(Int, Int)]()
-    val insertPositions  = new mutable.LinkedHashSet[(Int,Int)]()
+    val delPositions = new mutable.ListBuffer[(Int, Int)]()
+    val insertPositions  = new mutable.ListBuffer[(Int,Int)]()
     val cigarIterator = cigar.iterator()
     var positionFromCigar = start
     while (cigarIterator.hasNext) {
@@ -61,14 +62,14 @@ object CigarDerivedConf {
         val eventStart = positionFromCigar
         val eventEnd = positionFromCigar + cigarOperatorLen
         if (cigarOperator == CigarOperator.DELETION)
-          delPositions.add((eventStart,eventEnd))
+          delPositions.append((eventStart,eventEnd))
         else if (cigarOperator == CigarOperator.INSERTION){
-          insertPositions.add((eventStart, cigarOperatorLen))
+          insertPositions.append((eventStart, cigarOperatorLen))
         }
       }
       if (cigarOperator != CigarOperator.INSERTION)
         positionFromCigar += cigarOperatorLen
    }
-   InDelPositions(delPositions.toList, insertPositions.toList)
+   InDelPositions(delPositions, insertPositions)
   }
 }
