@@ -140,7 +140,16 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
 
   def getPartitionLowerBound: Array[LowerPartitionBoundAlignmentRecord] = {
     this.rdd.mapPartitionsWithIndex(
-      (i, p) => Iterator(LowerPartitionBoundAlignmentRecord(i ,p.next()) )
+      (i, p) => Iterator(LowerPartitionBoundAlignmentRecord(i ,
+        if (p.hasNext) {
+
+          val samRecord = p.next()
+          TruncRead(samRecord.getReadName, samRecord.getContig, samRecord.getStart, samRecord.getEnd)
+        }
+
+        else
+
+          null) )
     ).collect()
   }
 

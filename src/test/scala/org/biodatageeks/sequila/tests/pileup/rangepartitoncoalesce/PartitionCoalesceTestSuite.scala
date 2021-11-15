@@ -77,7 +77,7 @@ class PartitionCoalesceTestSuite extends PileupTestBase with RDDComparisons {
         val tableReader = new BAMTableReader[BAMBDGInputFormat](spark, tableName, sampleId, "bam", None)
 
         val allAlignments = tableReader.readFile
-        allAlignments.getPartitionLowerBound.foreach(r => println(r.record.getReadName))
+        allAlignments.getPartitionLowerBound.foreach(r => println(r.record.rName))
 
         allAlignments.foreachPartition(r => println(r.toArray.length))
         val (repartitionedAlignments, bounds) = allAlignments.repartition(tableReader.asInstanceOf[BAMTableReader[BDGAlignInputFormat]], conf)
