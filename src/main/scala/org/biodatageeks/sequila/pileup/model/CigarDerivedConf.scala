@@ -67,7 +67,7 @@ object CigarDerivedConf {
           insertPositions.append((eventStart, cigarOperatorLen))
         }
       }
-      if (cigarOperator != CigarOperator.INSERTION)
+      if (cigarOperator != CigarOperator.INSERTION && cigarOperator != CigarOperator.HARD_CLIP)
         positionFromCigar += cigarOperatorLen
     }
     InDelPositions(delPositions, insertPositions)

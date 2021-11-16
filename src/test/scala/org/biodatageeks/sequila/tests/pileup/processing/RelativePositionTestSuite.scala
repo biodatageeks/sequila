@@ -164,6 +164,22 @@ class RelativePositionTestSuite extends FunSuite{
     assert (rs.expensiveRelativePosition(10001) == 0)
     assert (rs.expensiveRelativePosition(10002) == 1)
   }
+
+  test("cigarderived conf #1") {
+
+    val cElement1 = new CigarElement(100, CigarOperator.H)
+    val cElement2 = new CigarElement(10, CigarOperator.M)
+    val cElement3 = new CigarElement(1, CigarOperator.D)
+
+
+    val c = new Cigar(seqAsJavaList(List(cElement1,cElement2,cElement3 )))
+    val len = c.getReadLength
+    val conf = CigarDerivedConf.create(1000, c)
+    val rs = ReadSummary(1000, 1020, new Array[Byte](len), new Array[Byte](len), true, c)
+    assert(len==10)
+    assert(conf.indelPositions.delPositions.head._1 == 1010)
+    //assert (rs.expensiveRelativePosition(10002) == 1)
+  }
 }
 
 
