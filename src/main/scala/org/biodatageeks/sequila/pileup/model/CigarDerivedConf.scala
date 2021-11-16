@@ -4,9 +4,10 @@ import htsjdk.samtools.{Cigar, CigarOperator}
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
+import org.biodatageeks.sequila.rangejoins.methods.IntervalTree.IntervalTreeRedBlack
 
 case class InDelPositions(
-                           delPositions: ListBuffer[(Int, Int)],
+                           delPositions:IntervalTreeRedBlack[(Int)],
                            insertPositions: ListBuffer[(Int,Int)]
                          )
 case class CigarDerivedConf(
@@ -27,11 +28,13 @@ case class CigarDerivedConf(
   }
   def getDelOffsetForPosition(position:Int): Int = {
     val pos = position + leftClipLength
-    indelPositions
-      .delPositions
-      .filter{case (start,_) => pos >=start}
-      .map{case(start,end)=> end-start}
-      .sum
+    val delIterator = indelPositions.delPositions.overlappersWithoutEnd(pos)
+    var lenSum = 0
+    while (delIterator.hasNext){
+      val next = delIterator.next()
+      lenSum += next.getValue.get(0)
+    }
+    lenSum
   }
 }
 
@@ -50,7 +53,7 @@ object CigarDerivedConf {
 
 
   private def calculateIndelPositions(start: Int, cigar:Cigar): InDelPositions = {
-    val delPositions = new mutable.ListBuffer[(Int, Int)]()
+    val delPositions = new IntervalTreeRedBlack[(Int)]()
     val insertPositions  = new mutable.ListBuffer[(Int,Int)]()
     val cigarIterator = cigar.iterator()
     var positionFromCigar = start
@@ -62,7 +65,7 @@ object CigarDerivedConf {
         val eventStart = positionFromCigar
         val eventEnd = positionFromCigar + cigarOperatorLen
         if (cigarOperator == CigarOperator.DELETION)
-          delPositions.append((eventStart,eventEnd))
+          delPositions.put(eventStart, eventEnd, eventEnd - eventStart)
         else if (cigarOperator == CigarOperator.INSERTION){
           insertPositions.append((eventStart, cigarOperatorLen))
         }
