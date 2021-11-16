@@ -19,9 +19,6 @@ case class ReadSummary(start: Int, end: Int,
 
   def getBaseForAbsPosition (absPosition:Int):Char = {
     val relPos = relativePosition(absPosition)
-    if (relPos >= bases.length)
-      println()
-    val relPos2 = relativePosition(absPosition)
     if (isPositive) bases(relPos).toChar else bases(relPos).toChar.toLower
   }
 
@@ -52,10 +49,15 @@ case class ReadSummary(start: Int, end: Int,
     val leftClipLen = cigarConf.leftClipLength
     if (!cigarConf.hasDel)
       false
-    else
-      cigarConf
+    else {
+      val postition = pos + leftClipLen
+      if (cigarConf
         .indelPositions
-        .delPositions.exists { case (start, end) => pos + leftClipLen >= start && pos + leftClipLen < end }
+        .delPositions.minOverlapperExcludeLeft(postition, postition) != null)
+        true
+      else
+        false
+    }
   }
 }
 
