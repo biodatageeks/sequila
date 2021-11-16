@@ -223,8 +223,6 @@ object PileupProjection {
     val nullRegionLen, fixedRegionIndex = 8
     val numFields = 9 //FIXME constant fields num
     val fixedRegionLen = numFields * wordSize
-    if (contig == null || bases == null)
-      println
     val varRegionLen = roundUp(contig.length, wordSize) + roundUp(bases.length,wordSize)
     val varRegionIndex = nullRegionLen + fixedRegionLen
     val altsMapSize = if (altsMap == null) 0 else calculateAltsMapSizes(altsMap)._1
