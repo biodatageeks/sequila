@@ -269,7 +269,7 @@ public class IntervalTreeRedBlack<V> implements BaseIntervalHolder<V>,  Serializ
                     // no need to consider the right sub-tree:  even if there's an overlapper, if won't be minimal
                     result = node;
                     node = node.getLeft();
-                    if ( node == null || node.getMaxEnd() < start )
+                    if ( node == null  )
                         break; // no left sub-tree or all nodes end too early
                 }
                 else
@@ -285,7 +285,7 @@ public class IntervalTreeRedBlack<V> implements BaseIntervalHolder<V>,  Serializ
                             break; // everything in the right sub-tree is past the end of the query interval
 
                         node = node.getRight();
-                        if ( node == null || node.getMaxEnd() < start )
+                        if ( node == null  )
                             break; // no right sub-tree or all nodes end too early
                     }
                 }
@@ -297,37 +297,37 @@ public class IntervalTreeRedBlack<V> implements BaseIntervalHolder<V>,  Serializ
 
 
 
-    public Node<V> minOverlapperWithoutEnd( final int start)
+    public Node<V> minOverlapperWithoutEnd( final int pos)
     {
         Node<V> result = null;
         Node<V> node = mRoot;
 
-        if ( node != null && start >= node.getStart() )
+        if ( node != null && pos >= node.getStart() )
         {
             while ( true )
             {
-                if (  start >= node.getStart() )
+                if (  pos >= node.getStart() )
                 { // this node overlaps.  there might be a lesser overlapper down the left sub-tree.
                     // no need to consider the right sub-tree:  even if there's an overlapper, if won't be minimal
                     result = node;
                     node = node.getLeft();
-                    if ( node == null || node.getMaxEnd() < start )
+                    if ( node == null )
                         break; // no left sub-tree or all nodes end too early
                 }
                 else
                 { // no overlap.  if there might be a left sub-tree overlapper, consider the left sub-tree.
                     final Node<V> left = node.getLeft();
-                    if ( left != null && left.getMaxEnd() >= start )
+                    if ( left != null && left.getMaxEnd() >= pos )
                     {
                         node = left;
                     }
                     else
                     { // left sub-tree cannot contain an overlapper.  consider the right sub-tree.
-                        if ( node.getStart() > start )
+                        if ( node.getStart() > pos )
                             break; // everything in the right sub-tree is past the end of the query interval
 
                         node = node.getRight();
-                        if ( node == null || node.getMaxEnd() < start )
+                        if ( node == null || node.getMaxEnd() < pos )
                             break; // no right sub-tree or all nodes end too early
                     }
                 }
@@ -467,7 +467,7 @@ public class IntervalTreeRedBlack<V> implements BaseIntervalHolder<V>,  Serializ
     }
     public Iterator<BaseNode<V>> overlappersWithoutEnd( final int start)
     {
-        return new OverlapIterator(start);
+        return new PastOverlapIterator(start);
     }
 
 
@@ -800,6 +800,33 @@ public class IntervalTreeRedBlack<V> implements BaseIntervalHolder<V>,  Serializ
                 result = -1;
 
             return result;
+        }
+
+        @SuppressWarnings("null")
+        static <V1> Node<V1> getNextPastOverlapper( Node<V1> node, final int pos )
+        {
+            do
+            {
+                Node<V1> nextNode = node.mRight;
+                if ( nextNode != null && nextNode.mMaxEnd >= pos )
+                {
+                    node = nextNode;
+                    while ( (nextNode = node.mLeft) != null && nextNode.mMaxEnd >= pos )
+                        node = nextNode;
+                }
+                else
+                {
+                    nextNode = node;
+                    while ( (node = nextNode.mParent) != null && node.mRight == nextNode )
+                        nextNode = node;
+                }
+
+//                if ( node != null && node.mStart > end )
+//                    node = null;
+            }
+            while ( node != null && !(pos <= node.mEnd) ); //node.mStart <= end &&
+
+            return node;
         }
 
         @SuppressWarnings("null")
@@ -1273,12 +1300,6 @@ public class IntervalTreeRedBlack<V> implements BaseIntervalHolder<V>,  Serializ
             mEnd = end;
         }
 
-        public OverlapIterator( final int start)
-        {
-            mNext = minOverlapperWithoutEnd(start);
-            mStart = start;
-            mEnd = start;
-        }
 
 
         @Override
@@ -1322,6 +1343,62 @@ public class IntervalTreeRedBlack<V> implements BaseIntervalHolder<V>,  Serializ
         private final int mStart;
         private final int mEnd;
     }
+
+    public class PastOverlapIterator
+            implements Iterator<BaseNode<V>>
+    {
+
+        public PastOverlapIterator( final int pos)
+        {
+            mNext = minOverlapperWithoutEnd(pos);
+            mStart = pos;
+            mEnd = pos;
+        }
+
+
+        @Override
+        public boolean hasNext()
+        {
+            return mNext != null;
+        }
+
+        @Override
+        public Node<V> next()
+        {
+            if ( mNext == null )
+            {
+                throw new NoSuchElementException("No next element.");
+            }
+
+            if ( mNext.wasRemoved() )
+            {
+                throw new ConcurrentModificationException("Current element was removed.");
+            }
+
+            mLast = mNext;
+            mNext = Node.getNextPastOverlapper(mNext,mStart);
+            return mLast;
+        }
+
+        @Override
+        public void remove()
+        {
+            if ( mLast == null )
+            {
+                throw new IllegalStateException("No entry to remove.");
+            }
+
+            removeNode(mLast);
+            mLast = null;
+        }
+
+        private Node<V> mNext;
+        private Node<V> mLast;
+        private final int mStart;
+        private final int mEnd;
+    }
+
+
 
     public static class ValuesIterator<V1>
             implements Iterator<V1>
