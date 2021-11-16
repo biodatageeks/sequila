@@ -52,8 +52,8 @@ class SamtoolsTestSuite extends PileupTestBase {
 
     val sequilaPileup = calculateSequilaPileup(queryQual, None)
     val samPileup = loadSam(sequilaPileup.schema)
-        PileupWriter.save(samPileup, "samRes.csv")
-        PileupWriter.save(sequilaPileup, "sequilaPileup.csv")
+//        PileupWriter.save(samPileup, "samRes.csv")
+//        PileupWriter.save(sequilaPileup, "sequilaPileup.csv")
     assertDataFrameEquals(samPileup, sequilaPileup)
   }
 
@@ -66,8 +66,8 @@ class SamtoolsTestSuite extends PileupTestBase {
 
   test("COV only") {
 
-    val sequilaPileup = calculateSequilaPileup(queryCov, Some(splitSize)).select("contig", "pos_start", "pos_end", "ref", "coverage")
-    val samPileup = loadSam(sequilaPileup.schema).select("contig", "pos_start", "pos_end", "ref", "coverage")
+    val sequilaPileup = calculateSequilaPileup(queryCov, Some(splitSize)).select("contig", "pos_start", "pos_end", "coverage")
+    val samPileup = loadSam(sequilaPileup.schema).select("contig", "pos_start", "pos_end", "coverage")
     assertDataFrameEquals(samPileup, sequilaPileup)
   }
 

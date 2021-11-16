@@ -218,11 +218,13 @@ object PileupProjection {
     writeNestedArray(data, map.values.toArray[Array[Short]], valuesOffset)
   }
 
-  def convertToRow(contig: String, start: Int, end: Int, bases: String, cov: Short, refCount: Short, altsCount: Short,
+  def convertToRow(contig: String, contigBytes: Array[Byte],   start: Int, end: Int, bases: String, cov: Short, refCount: Short, altsCount: Short,
                    altsMap: mutable.HashMap[Byte, Short], qualsMap: mutable.IntMap[Array[Short]]): UnsafeRow = {
     val nullRegionLen, fixedRegionIndex = 8
     val numFields = 9 //FIXME constant fields num
     val fixedRegionLen = numFields * wordSize
+    if (contig == null || bases == null)
+      println
     val varRegionLen = roundUp(contig.length, wordSize) + roundUp(bases.length,wordSize)
     val varRegionIndex = nullRegionLen + fixedRegionLen
     val altsMapSize = if (altsMap == null) 0 else calculateAltsMapSizes(altsMap)._1
@@ -236,7 +238,7 @@ object PileupProjection {
     val qualMapElementsOffset = if (altsMap == null) altsMapElementsOffset
     else altsMapElementsOffset + calculateAltsMapSizes(altsMap)._1
 
-    writeString(data, contig, fixedRegionIndex + 0 * wordSize, varRegionIndex, contigByteMap(contig))
+    writeString(data, contig, fixedRegionIndex + 0 * wordSize, varRegionIndex, contigBytes)
     writeNumber(data, start, fixedRegionIndex + 1 * wordSize)
     writeNumber(data, end, fixedRegionIndex + 2 * wordSize)
     writeString(data, bases, fixedRegionIndex + 3 * wordSize, varRegionIndex + roundUp(contig.length,wordSize), getBytesForSequence(bases))

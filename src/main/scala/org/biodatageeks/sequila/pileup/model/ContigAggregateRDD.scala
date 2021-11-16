@@ -3,11 +3,12 @@ package org.biodatageeks.sequila.pileup.model
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.catalyst.InternalRow
+import org.apache.spark.unsafe.types.UTF8String
 import org.biodatageeks.sequila.pileup.conf.Conf
 import org.biodatageeks.sequila.pileup.serializers.PileupProjection
 import org.biodatageeks.sequila.pileup.model.Alts._
 import org.biodatageeks.sequila.pileup.partitioning.PartitionBounds
-import org.biodatageeks.sequila.utils.FastMath
+import org.biodatageeks.sequila.utils.{DataQualityFuncs, FastMath}
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.mutable
@@ -37,8 +38,6 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
 
     this.rdd.mapPartitionsWithIndex { (index, part) =>
       val reference = new Reference(refPath)
-      val contigMap = reference.getNormalizedContigMap
-      PileupProjection.setContigMap(contigMap)
 
       part.map { agg => {
         var cov, ind, i, currPos = 0
@@ -49,7 +48,8 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
         val prev = new BlockProperties()
         val startPosition = agg.startPosition
         val partitionBounds = bounds.value(index)
-        val bases = reference.getBasesFromReference(contigMap(agg.contig), agg.startPosition, agg.startPosition + maxIndex)
+        val contigByte = UTF8String.fromString(agg.contig).getBytes
+        val bases = reference.getBasesFromReference(DataQualityFuncs.unCleanContig(agg.contig), agg.startPosition, agg.startPosition + maxIndex)
 
         breakable {
           while (i <= maxIndex) {
@@ -60,7 +60,7 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
                 prev.reset(i)
               }
               if (prev.hasAlt) {
-                addBaseRecord(result, ind, agg, bases, i, prev)
+                addBaseRecord(result, ind, agg, contigByte, bases, i, prev)
                 ind += 1;
                 prev.reset(i)
                 if (agg.hasAltOnPosition(currPos))
@@ -68,7 +68,7 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
               }
               else if (agg.hasAltOnPosition(currPos)) { // there is ALT in this posiion
                 if (prev.isNonZeroCoverage) { // there is previous group non-zero group -> convert it
-                  addBlockRecord(result, ind, agg, bases, i, prev)
+                  addBlockRecord(result, ind, agg, contigByte, bases, i, prev)
                   ind += 1;
                   prev.reset(i)
                 } else if (prev.isZeroCoverage) // previous ZERO group, clear block
@@ -77,11 +77,11 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
               } else if (isEndOfZeroCoverageRegion(cov, prev.cov, i)) { // coming back from zero coverage. clear block
                 prev.reset(i)
               } else if (isChangeOfCoverage(cov, prev.cov,  i) || isStartOfZeroCoverageRegion(cov, prev.cov)) { // different cov, add to output previous group
-                addBlockRecord(result, ind, agg, bases, i, prev)
+                addBlockRecord(result, ind, agg, contigByte, bases, i, prev)
                 ind += 1;
                 prev.reset(i)
               } else if (currPos == partitionBounds.posEnd + 1) { // last item -> convert it
-                addBlockRecord(result, ind, agg, bases, i, prev)
+                addBlockRecord(result, ind, agg, contigByte, bases, i, prev)
                 ind += 1;
                 prev.reset(i)
                 break
@@ -99,14 +99,12 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
   }
 
 
-  def toCoverage(refPath: String, bounds: Broadcast[Array[PartitionBounds]] ) : RDD[InternalRow] = {
+  def toCoverage(bounds: Broadcast[Array[PartitionBounds]] ) : RDD[InternalRow] = {
 
     this.rdd.mapPartitionsWithIndex { (index, part) =>
-      val reference = new Reference(refPath)
-      val contigMap = reference.getNormalizedContigMap
-      PileupProjection.setContigMap(contigMap)
-
       part.map { agg => {
+        val contigByte = UTF8String.fromString(agg.contig).getBytes
+
         var cov, ind, i, currPos = 0
         val allPos = false
         val maxLen = agg.calculateMaxLength(allPos)
@@ -115,7 +113,6 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
         val prev = new BlockProperties()
         val startPosition = agg.startPosition
         val partitionBounds = bounds.value(index)
-        val bases = reference.getBasesFromReference(contigMap(agg.contig), agg.startPosition, agg.startPosition + maxIndex)
 
         breakable {
           while (i <= maxIndex) {
@@ -128,11 +125,11 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
               if (isEndOfZeroCoverageRegion(cov, prev.cov, i)) { // coming back from zero coverage. clear block
                 prev.reset(i)
               } else if (isChangeOfCoverage(cov, prev.cov,  i) || isStartOfZeroCoverageRegion(cov, prev.cov)) { // different cov, add to output previous group
-                addBlockRecord(result, ind, agg, bases, i, prev)
+                addBlockRecord(result, ind, agg, contigByte, "R", i, prev)
                 ind += 1;
                 prev.reset(i)
               } else if (currPos == partitionBounds.posEnd + 1) { // last item -> convert it
-                addBlockRecord(result, ind, agg, bases, i, prev)
+                addBlockRecord(result, ind, agg, contigByte, "R", i, prev)
                 ind += 1;
                 prev.reset(i)
                 break
@@ -155,12 +152,12 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
   private def isEndOfZeroCoverageRegion(cov: Int, prevCov: Int, i: Int) = cov != 0 && prevCov == 0 && i > 0
 
   private def addBaseRecord(result:Array[InternalRow], ind:Int,
-                            agg:ContigAggregate, bases:String, i:Int, prev:BlockProperties): Unit = {
+                            agg:ContigAggregate, contigByte: Array[Byte], bases:String, i:Int, prev:BlockProperties): Unit = {
     val posStart, posEnd = i+agg.startPosition-1
     val ref = bases.substring(prev.pos, i)
     val altsCount = prev.alt.derivedAltsNumber
     val qualsMap = prepareOutputQualMap(agg, posStart, ref)
-    result(ind) = PileupProjection.convertToRow(agg.contig, posStart, posEnd, ref, prev.cov.toShort, (prev.cov-altsCount).toShort,altsCount.toShort, prev.alt, qualsMap)
+    result(ind) = PileupProjection.convertToRow(agg.contig, contigByte, posStart, posEnd, ref, prev.cov.toShort, (prev.cov-altsCount).toShort,altsCount.toShort, prev.alt, qualsMap)
     prev.alt.clear()
   }
 
@@ -202,10 +199,10 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
   }
 
   private def addBlockRecord(result:Array[InternalRow], ind:Int,
-                             agg:ContigAggregate, bases:String, i:Int, prev:BlockProperties): Unit = {
+                             agg:ContigAggregate, contigByte: Array[Byte], bases:String, i:Int, prev:BlockProperties): Unit = {
     val ref = bases.substring(prev.pos, i)
     val posStart=i+agg.startPosition-prev.len
     val posEnd=i+agg.startPosition-1
-    result(ind) = PileupProjection.convertToRow(agg.contig, posStart, posEnd, ref, prev.cov.toShort, prev.cov.toShort, 0.toShort,null,null )
+    result(ind) = PileupProjection.convertToRow(agg.contig, contigByte, posStart, posEnd, ref, prev.cov.toShort, prev.cov.toShort, 0.toShort,null,null )
   }
 }
