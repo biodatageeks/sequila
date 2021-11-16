@@ -39,7 +39,7 @@ object CigarDerivedConf {
   def create(start: Int, cigar:Cigar): CigarDerivedConf ={
     val firstCigarElement = cigar.getFirstCigarElement
     val firstCigarElementOp = firstCigarElement.getOperator
-    val hasClip = firstCigarElementOp != null && firstCigarElementOp.isClipping
+    val hasClip = firstCigarElementOp != null && firstCigarElementOp==CigarOperator.SOFT_CLIP
     val softClipLength = if(hasClip) {
       firstCigarElement.getLength
     } else 0
