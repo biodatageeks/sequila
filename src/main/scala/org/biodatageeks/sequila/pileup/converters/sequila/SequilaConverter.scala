@@ -45,7 +45,8 @@ class SequilaConverter (spark: SparkSession) extends Serializable with PileupCon
         array
       }
       }
-    spark.createDF(perBase.collect().toList, CommonPileupFormat.schemaAltsQualsString.fields.toList )
+    val res = spark.createDF(perBase.collect().toList, CommonPileupFormat.schemaAltsQualsString.fields.toList )
+    res
   }
 
 }

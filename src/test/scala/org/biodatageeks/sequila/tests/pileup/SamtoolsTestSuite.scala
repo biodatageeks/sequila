@@ -65,10 +65,10 @@ class SamtoolsTestSuite extends PileupTestBase {
   }
 
   test("COV only") {
-
-    val sequilaPileup = calculateSequilaPileup(queryCov, Some(splitSize)).select("contig", "pos_start", "pos_end", "coverage")
-    val samPileup = loadSam(sequilaPileup.schema).select("contig", "pos_start", "pos_end", "coverage")
-    assertDataFrameEquals(samPileup, sequilaPileup)
+    val sequilaPileup = calculateSequilaPileup(queryCov, Some(splitSize))
+    val samPileup = loadSam(sequilaPileup.schema)
+    assertDataFrameEquals(samPileup.select("contig", "pos_start", "pos_end", "coverage"),
+      sequilaPileup.select("contig", "pos_start", "pos_end", "coverage"))
   }
 
 }

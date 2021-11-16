@@ -125,11 +125,11 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
               if (isEndOfZeroCoverageRegion(cov, prev.cov, i)) { // coming back from zero coverage. clear block
                 prev.reset(i)
               } else if (isChangeOfCoverage(cov, prev.cov,  i) || isStartOfZeroCoverageRegion(cov, prev.cov)) { // different cov, add to output previous group
-                addBlockRecord(result, ind, agg, contigByte, "R", i, prev)
+                addBlockRecordNoRef(result, ind, agg, contigByte, i, prev)
                 ind += 1;
                 prev.reset(i)
               } else if (currPos == partitionBounds.posEnd + 1) { // last item -> convert it
-                addBlockRecord(result, ind, agg, contigByte, "R", i, prev)
+                addBlockRecordNoRef(result, ind, agg, contigByte, i, prev)
                 ind += 1;
                 prev.reset(i)
                 break
@@ -201,6 +201,13 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
   private def addBlockRecord(result:Array[InternalRow], ind:Int,
                              agg:ContigAggregate, contigByte: Array[Byte], bases:String, i:Int, prev:BlockProperties): Unit = {
     val ref = bases.substring(prev.pos, i)
+    val posStart=i+agg.startPosition-prev.len
+    val posEnd=i+agg.startPosition-1
+    result(ind) = PileupProjection.convertToRow(agg.contig, contigByte, posStart, posEnd, ref, prev.cov.toShort, prev.cov.toShort, 0.toShort,null,null )
+  }
+  private def addBlockRecordNoRef(result:Array[InternalRow], ind:Int,
+                             agg:ContigAggregate, contigByte: Array[Byte], i:Int, prev:BlockProperties): Unit = {
+    val ref = "R"*(i-prev.pos)
     val posStart=i+agg.startPosition-prev.len
     val posEnd=i+agg.startPosition-1
     result(ind) = PileupProjection.convertToRow(agg.contig, contigByte, posStart, posEnd, ref, prev.cov.toShort, prev.cov.toShort, 0.toShort,null,null )
