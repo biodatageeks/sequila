@@ -31,7 +31,7 @@ object PileupMethods {
 
     val result =
       if (conf.value.coverageOnly)
-        aggregates.toCoverage(refPath, bounds)
+        aggregates.toCoverage(bounds)
       else
         aggregates.toPileup(refPath, bounds)
     result

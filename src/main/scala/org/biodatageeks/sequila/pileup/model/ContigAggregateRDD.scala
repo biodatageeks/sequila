@@ -99,14 +99,15 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
   }
 
 
-  def toCoverage(refPath: String, bounds: Broadcast[Array[PartitionBounds]] ) : RDD[InternalRow] = {
+  def toCoverage(bounds: Broadcast[Array[PartitionBounds]] ) : RDD[InternalRow] = {
 
     this.rdd.mapPartitionsWithIndex { (index, part) =>
-      val reference = new Reference(refPath)
-      val contigMap = reference.getNormalizedContigMap
-      PileupProjection.setContigMap(contigMap)
 
       part.map { agg => {
+        val contigMap = new mutable.HashMap[String, String]()
+        contigMap += (agg.contig -> "")
+        PileupProjection.setContigMap(contigMap)
+
         var cov, ind, i, currPos = 0
         val allPos = false
         val maxLen = agg.calculateMaxLength(allPos)
@@ -115,7 +116,7 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
         val prev = new BlockProperties()
         val startPosition = agg.startPosition
         val partitionBounds = bounds.value(index)
-        val bases = reference.getBasesFromReference(contigMap(agg.contig), agg.startPosition, agg.startPosition + maxIndex)
+        val bases = "R"
 
         breakable {
           while (i <= maxIndex) {
@@ -203,7 +204,7 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
 
   private def addBlockRecord(result:Array[InternalRow], ind:Int,
                              agg:ContigAggregate, bases:String, i:Int, prev:BlockProperties): Unit = {
-    val ref = bases.substring(prev.pos, i)
+    val ref = if(agg.conf.coverageOnly) "R" else bases.substring(prev.pos, i)
     val posStart=i+agg.startPosition-prev.len
     val posEnd=i+agg.startPosition-1
     result(ind) = PileupProjection.convertToRow(agg.contig, posStart, posEnd, ref, prev.cov.toShort, prev.cov.toShort, 0.toShort,null,null )
