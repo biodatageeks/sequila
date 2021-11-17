@@ -162,7 +162,9 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
     val ref = bases.substring(prev.pos, i)
     val altsCount = prev.alt.derivedAltsNumber
     val qualsMap = prepareOutputQualMap(agg, posStart, ref)
-    result(ind) = PileupProjection.convertToRow(agg.contig, posStart, posEnd, ref, prev.cov.toShort, (prev.cov-altsCount).toShort,altsCount.toShort, prev.alt, qualsMap)
+    result(ind) = PileupProjection.convertToRow(agg.contig,
+      posStart, posEnd, ref, prev.cov.toShort,
+      (prev.cov-altsCount).toShort,altsCount.toShort, prev.alt, qualsMap, agg.conf.outputFieldsNum)
     prev.alt.clear()
   }
 
@@ -208,6 +210,7 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
     val ref = if(agg.conf.coverageOnly) "R" else bases.substring(prev.pos, i)
     val posStart=i+agg.startPosition-prev.len
     val posEnd=i+agg.startPosition-1
-    result(ind) = PileupProjection.convertToRow(agg.contig, posStart, posEnd, ref, prev.cov.toShort, prev.cov.toShort, 0.toShort,null,null )
+    result(ind) = PileupProjection.convertToRow(agg.contig, posStart,
+      posEnd, ref, prev.cov.toShort, prev.cov.toShort, 0.toShort,null, null, agg.conf.outputFieldsNum )
   }
 }

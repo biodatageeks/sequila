@@ -219,9 +219,9 @@ object PileupProjection {
   }
 
   def convertToRow(contig: String, start: Int, end: Int, bases: String, cov: Short, refCount: Short, altsCount: Short,
-                   altsMap: mutable.HashMap[Byte, Short], qualsMap: mutable.IntMap[Array[Short]]): UnsafeRow = {
+                   altsMap: mutable.HashMap[Byte, Short], qualsMap: mutable.IntMap[Array[Short]], outputFieldsNum: Int): UnsafeRow = {
     val nullRegionLen, fixedRegionIndex = 8
-    val numFields = 9 //FIXME constant fields num
+    val numFields = outputFieldsNum
     val fixedRegionLen = numFields * wordSize
     val varRegionLen = roundUp(contig.length, wordSize) + roundUp(bases.length,wordSize)
     val varRegionIndex = nullRegionLen + fixedRegionLen
@@ -242,7 +242,8 @@ object PileupProjection {
     writeString(data, bases, fixedRegionIndex + 3 * wordSize, varRegionIndex + roundUp(contig.length,wordSize), getBytesForSequence(bases))
     writeNumber(data, cov, fixedRegionIndex + 4 * wordSize)
     writeNumber(data, refCount, fixedRegionIndex + 5 * wordSize)
-    writeNumber(data, altsCount, fixedRegionIndex + 6 * wordSize)
+    if (altsMap != null)
+      writeNumber(data, altsCount, fixedRegionIndex + 6 * wordSize)
 
     if (altsMap != null)
       writeMap(data,altsMap, fixedRegionIndex + 7*wordSize, altsMapElementsOffset)
@@ -252,10 +253,6 @@ object PileupProjection {
 
     val row = new UnsafeRow(numFields)
     row.pointTo(data, data.length)
-    if (altsMap == null)
-      row.setNullAt(7)
-    if (qualsMap == null)
-      row.setNullAt(8)
     row
   }
 }
