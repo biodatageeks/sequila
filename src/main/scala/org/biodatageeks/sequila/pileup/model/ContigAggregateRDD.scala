@@ -3,6 +3,7 @@ package org.biodatageeks.sequila.pileup.model
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.catalyst.InternalRow
+import org.apache.spark.unsafe.types.UTF8String
 import org.biodatageeks.sequila.pileup.conf.Conf
 import org.biodatageeks.sequila.pileup.serializers.PileupProjection
 import org.biodatageeks.sequila.pileup.model.Alts._
@@ -104,9 +105,9 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
     this.rdd.mapPartitionsWithIndex { (index, part) =>
 
       part.map { agg => {
-        val contigMap = new mutable.HashMap[String, String]()
-        contigMap += (agg.contig -> "")
-        PileupProjection.setContigMap(contigMap)
+        val contigMap = new mutable.HashMap[String, Array[Byte]]()
+        contigMap += (agg.contig -> UTF8String.fromString(agg.contig).getBytes)
+        PileupProjection.contigByteMap=contigMap
 
         var cov, ind, i, currPos = 0
         val allPos = false
