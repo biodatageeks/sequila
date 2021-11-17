@@ -37,6 +37,8 @@ case class ContigAggregate(
 
   @inline
   def addReadToBuffer(rs: ReadSummary): Unit = {
+    if (!conf.includeBaseQualities)
+      return
     rsTree.put(rs.start, rs.end, rs)
     ()
   }
