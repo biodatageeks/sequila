@@ -8,7 +8,7 @@ import org.biodatageeks.sequila.pileup.conf.Conf
 import org.biodatageeks.sequila.pileup.serializers.PileupProjection
 import org.biodatageeks.sequila.pileup.model.Alts._
 import org.biodatageeks.sequila.pileup.partitioning.PartitionBounds
-import org.biodatageeks.sequila.utils.FastMath
+import org.biodatageeks.sequila.utils.{AlignmentConstants, FastMath}
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.mutable
@@ -117,7 +117,7 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
         val prev = new BlockProperties()
         val startPosition = agg.startPosition
         val partitionBounds = bounds.value(index)
-        val bases = "R"
+        val bases = AlignmentConstants.REF_SYMBOL
 
         breakable {
           while (i <= maxIndex) {
