@@ -164,7 +164,7 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
     val qualsMap = prepareOutputQualMap(agg, posStart, ref)
     result(ind) = PileupProjection.convertToRow(agg.contig,
       posStart, posEnd, ref, prev.cov.toShort,
-      (prev.cov-altsCount).toShort,altsCount.toShort, prev.alt, qualsMap, agg.conf.outputFieldsNum)
+      (prev.cov-altsCount).toShort,altsCount.toShort, prev.alt, qualsMap, agg.conf)
     prev.alt.clear()
   }
 
@@ -211,6 +211,6 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
     val posStart=i+agg.startPosition-prev.len
     val posEnd=i+agg.startPosition-1
     result(ind) = PileupProjection.convertToRow(agg.contig, posStart,
-      posEnd, ref, prev.cov.toShort, prev.cov.toShort, 0.toShort,null, null, agg.conf.outputFieldsNum )
+      posEnd, ref, prev.cov.toShort, prev.cov.toShort, 0.toShort,null, null, agg.conf)
   }
 }

@@ -2,6 +2,7 @@ package org.biodatageeks.sequila.pileup.serializers
 
 import org.apache.spark.sql.catalyst.expressions.UnsafeRow
 import org.apache.spark.unsafe.types.UTF8String
+import org.biodatageeks.sequila.pileup.conf.Conf
 
 import scala.collection.mutable
 
@@ -219,9 +220,9 @@ object PileupProjection {
   }
 
   def convertToRow(contig: String, start: Int, end: Int, bases: String, cov: Short, refCount: Short, altsCount: Short,
-                   altsMap: mutable.HashMap[Byte, Short], qualsMap: mutable.IntMap[Array[Short]], outputFieldsNum: Int): UnsafeRow = {
+                   altsMap: mutable.HashMap[Byte, Short], qualsMap: mutable.IntMap[Array[Short]], conf: Conf): UnsafeRow = {
     val nullRegionLen, fixedRegionIndex = 8
-    val numFields = outputFieldsNum
+    val numFields = conf.outputFieldsNum
     val fixedRegionLen = numFields * wordSize
     val varRegionLen = roundUp(contig.length, wordSize) + roundUp(bases.length,wordSize)
     val varRegionIndex = nullRegionLen + fixedRegionLen
@@ -253,6 +254,12 @@ object PileupProjection {
 
     val row = new UnsafeRow(numFields)
     row.pointTo(data, data.length)
+    if (altsMap == null && !conf.coverageOnly)
+      row.setNullAt(7)
+    if (qualsMap == null && conf.includeBaseQualities)
+      row.setNullAt(8)
     row
+
+
   }
 }
