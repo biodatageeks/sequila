@@ -225,7 +225,7 @@ object PileupTemplate {
   def apply(table:String, sampleId: String, refPath: String, alts:Boolean, quals: Boolean, binSize: Option[Int]): PileupTemplate = {
 
     val basicOutput = StructType(Seq(
-      StructField(Columns.CONTIG,StringType,nullable = false),
+      StructField(Columns.CONTIG,StringType,nullable = true),
       StructField(Columns.START,IntegerType,nullable = false),
       StructField(Columns.END,IntegerType,nullable = false),
       StructField(Columns.REF,StringType,nullable = false),

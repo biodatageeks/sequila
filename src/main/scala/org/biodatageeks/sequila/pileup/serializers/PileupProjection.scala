@@ -242,7 +242,8 @@ object PileupProjection {
     writeNumber(data, end, fixedRegionIndex + 2 * wordSize)
     writeString(data, bases, fixedRegionIndex + 3 * wordSize, varRegionIndex + roundUp(contig.length,wordSize), getBytesForSequence(bases))
     writeNumber(data, cov, fixedRegionIndex + 4 * wordSize)
-    writeNumber(data, refCount, fixedRegionIndex + 5 * wordSize)
+    if (!conf.coverageOnly)
+      writeNumber(data, refCount, fixedRegionIndex + 5 * wordSize)
     if (altsMap != null)
       writeNumber(data, altsCount, fixedRegionIndex + 6 * wordSize)
 
@@ -256,10 +257,8 @@ object PileupProjection {
     row.pointTo(data, data.length)
     if (altsMap == null && !conf.coverageOnly)
       row.setNullAt(7)
-    if (qualsMap == null && conf.includeBaseQualities)
+    if (qualsMap == null && !conf.coverageOnly && conf.includeBaseQualities)
       row.setNullAt(8)
     row
-
-
   }
 }
