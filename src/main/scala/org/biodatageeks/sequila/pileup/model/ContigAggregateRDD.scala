@@ -3,11 +3,12 @@ package org.biodatageeks.sequila.pileup.model
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.catalyst.InternalRow
+import org.apache.spark.unsafe.types.UTF8String
 import org.biodatageeks.sequila.pileup.conf.Conf
 import org.biodatageeks.sequila.pileup.serializers.PileupProjection
 import org.biodatageeks.sequila.pileup.model.Alts._
 import org.biodatageeks.sequila.pileup.partitioning.PartitionBounds
-import org.biodatageeks.sequila.utils.FastMath
+import org.biodatageeks.sequila.utils.{AlignmentConstants, FastMath}
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.mutable
@@ -99,14 +100,15 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
   }
 
 
-  def toCoverage(refPath: String, bounds: Broadcast[Array[PartitionBounds]] ) : RDD[InternalRow] = {
+  def toCoverage(bounds: Broadcast[Array[PartitionBounds]] ) : RDD[InternalRow] = {
 
     this.rdd.mapPartitionsWithIndex { (index, part) =>
-      val reference = new Reference(refPath)
-      val contigMap = reference.getNormalizedContigMap
-      PileupProjection.setContigMap(contigMap)
 
       part.map { agg => {
+        val contigMap = new mutable.HashMap[String, Array[Byte]]()
+        contigMap += (agg.contig -> UTF8String.fromString(agg.contig).getBytes)
+        PileupProjection.contigByteMap=contigMap
+
         var cov, ind, i, currPos = 0
         val allPos = false
         val maxLen = agg.calculateMaxLength(allPos)
@@ -115,7 +117,7 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
         val prev = new BlockProperties()
         val startPosition = agg.startPosition
         val partitionBounds = bounds.value(index)
-        val bases = reference.getBasesFromReference(contigMap(agg.contig), agg.startPosition, agg.startPosition + maxIndex)
+        val bases = AlignmentConstants.REF_SYMBOL
 
         breakable {
           while (i <= maxIndex) {
@@ -203,7 +205,7 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
 
   private def addBlockRecord(result:Array[InternalRow], ind:Int,
                              agg:ContigAggregate, bases:String, i:Int, prev:BlockProperties): Unit = {
-    val ref = bases.substring(prev.pos, i)
+    val ref = if(agg.conf.coverageOnly) "R" else bases.substring(prev.pos, i)
     val posStart=i+agg.startPosition-prev.len
     val posEnd=i+agg.startPosition-1
     result(ind) = PileupProjection.convertToRow(agg.contig, posStart, posEnd, ref, prev.cov.toShort, prev.cov.toShort, 0.toShort,null,null )
