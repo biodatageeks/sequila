@@ -269,7 +269,7 @@ public class IntervalTreeRedBlack<V> implements BaseIntervalHolder<V>,  Serializ
                     // no need to consider the right sub-tree:  even if there's an overlapper, if won't be minimal
                     result = node;
                     node = node.getLeft();
-                    if ( node == null  )
+                    if ( node == null || node.getMaxEnd() < start )
                         break; // no left sub-tree or all nodes end too early
                 }
                 else
@@ -285,7 +285,7 @@ public class IntervalTreeRedBlack<V> implements BaseIntervalHolder<V>,  Serializ
                             break; // everything in the right sub-tree is past the end of the query interval
 
                         node = node.getRight();
-                        if ( node == null  )
+                        if ( node == null || node.getMaxEnd() < start )
                             break; // no right sub-tree or all nodes end too early
                     }
                 }
@@ -307,12 +307,12 @@ public class IntervalTreeRedBlack<V> implements BaseIntervalHolder<V>,  Serializ
             while ( true )
             {
                 if (  pos >= node.getStart() )
-                { // this node overlaps.  there might be a lesser overlapper down the left sub-tree.
+                { // this node counts.  there might be a lesser overlapper down the left sub-tree.
                     // no need to consider the right sub-tree:  even if there's an overlapper, if won't be minimal
                     result = node;
                     node = node.getLeft();
-                    if ( node == null )
-                        break; // no left sub-tree or all nodes end too early
+                    if ( node == null)
+                        break; // no left sub-tree
                 }
                 else
                 { // no overlap.  if there might be a left sub-tree overlapper, consider the left sub-tree.
@@ -327,8 +327,8 @@ public class IntervalTreeRedBlack<V> implements BaseIntervalHolder<V>,  Serializ
                             break; // everything in the right sub-tree is past the end of the query interval
 
                         node = node.getRight();
-                        if ( node == null || node.getMaxEnd() < pos )
-                            break; // no right sub-tree or all nodes end too early
+                        if ( node == null )
+                            break; // no right sub-tree
                     }
                 }
             }
@@ -808,7 +808,7 @@ public class IntervalTreeRedBlack<V> implements BaseIntervalHolder<V>,  Serializ
             do
             {
                 Node<V1> nextNode = node.mRight;
-                if ( nextNode != null && nextNode.mMaxEnd >= pos )
+                if ( nextNode != null && pos >= nextNode.mMaxEnd  )
                 {
                     node = nextNode;
                     while ( (nextNode = node.mLeft) != null && nextNode.mMaxEnd >= pos )
@@ -821,10 +821,10 @@ public class IntervalTreeRedBlack<V> implements BaseIntervalHolder<V>,  Serializ
                         nextNode = node;
                 }
 
-//                if ( node != null && node.mStart > end )
-//                    node = null;
+                if ( node != null && pos < node.mStart )
+                    node = null;
             }
-            while ( node != null && !(pos <= node.mEnd) ); //node.mStart <= end &&
+            while ( node != null && ! (pos >= node.mEnd) );
 
             return node;
         }
@@ -1300,6 +1300,12 @@ public class IntervalTreeRedBlack<V> implements BaseIntervalHolder<V>,  Serializ
             mEnd = end;
         }
 
+        public OverlapIterator( final int start)
+        {
+            mNext = minOverlapperWithoutEnd(start);
+            mStart = start;
+            mEnd = start;
+        }
 
 
         @Override
