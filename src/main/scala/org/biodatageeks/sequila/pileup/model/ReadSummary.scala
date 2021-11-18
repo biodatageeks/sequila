@@ -19,8 +19,15 @@ case class ReadSummary(start: Int, end: Int,
 
   def getBaseForAbsPosition (absPosition:Int):Char = {
     val relPos = relativePosition(absPosition)
-    if (relPos >= bases.length)
+    if (relPos >= bases.length) {
       println()
+      cigarConf.indelPositions.delPositions.printTree()
+      val it = cigarConf.indelPositions.delPositions.overlappersWithoutEnd(absPosition + cigarConf.leftClipLength)
+      while (it.hasNext) {
+        val node = it.next()
+        println("NODE " + node)
+      }
+    }
     val relPos2 = relativePosition(absPosition)
     if (isPositive) bases(relPos).toChar else bases(relPos).toChar.toLower
   }
