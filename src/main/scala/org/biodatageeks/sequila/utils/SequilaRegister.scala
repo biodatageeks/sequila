@@ -38,6 +38,10 @@ object SequilaRegister {
 
     spark
       .sqlContext
+      .setConf(InternalParams.useVectorizedOrcWriter, "false")
+
+    spark
+      .sqlContext
       .setConf(InternalParams.EnableInstrumentation, "false")
 
     UDFRegister.register(spark)

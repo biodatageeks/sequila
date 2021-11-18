@@ -19,6 +19,7 @@ val DEFAULT_HADOOP_VERSION = "2.7.4"
 lazy val hadoopVersion = Properties.envOrElse("SPARK_HADOOP_VERSION", DEFAULT_HADOOP_VERSION)
 
 dependencyOverrides += "com.google.guava" % "guava" % "15.0"
+dependencyOverrides += "org.apache.orc" % "orc-core" % "1.6.9"
 
 //removing hadoop-bam to used a patched one with support for htsjdk 2.22
 //libraryDependencies += "org.seqdoop" % "hadoop-bam" % "7.10.0"
@@ -47,8 +48,7 @@ libraryDependencies += "io.projectglow" %% "glow-spark3" % "1.0.1" excludeAll (E
 libraryDependencies += "com.intel.gkl" % "gkl" % "0.8.6"
 libraryDependencies += "org.openjdk.jol" % "jol-core" % "0.16" % "provided"
 libraryDependencies += "com.github.jsr203hadoop" % "jsr203hadoop" % "1.0.3"
-libraryDependencies += "org.apache.iceberg" % "iceberg-orc" % "0.12.1"
-libraryDependencies += "org.apache.iceberg" % "iceberg-spark" % "0.12.1"
+
 
 
 

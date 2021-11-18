@@ -192,6 +192,7 @@ public class BAMBDGRecordReader
         SamReaderFactory readerFactory = SamReaderFactory.makeDefault()
                 .setOption(SamReaderFactory.Option.CACHE_FILE_BASED_INDEXES, true)
                 .setOption(SamReaderFactory.Option.EAGERLY_DECODE, false)
+                .setOption(SamReaderFactory.Option.VALIDATE_CRC_CHECKSUMS, false)
                 .setUseAsyncIo(false);
         if (stringency != null) {
             readerFactory.validationStringency(stringency);

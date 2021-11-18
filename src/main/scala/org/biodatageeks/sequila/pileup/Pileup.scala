@@ -37,6 +37,6 @@ class Pileup(spark:SparkSession) {
       .filterByConfig(bdConf, spark) // filtered with user defined config
       .repartition(tableReader.asInstanceOf[BAMTableReader[BDGAlignInputFormat]], conf)
 
-    PileupMethods.calculatePileup(alignments, bounds, spark, refPath, bdConf)
+    PileupMethods.calculatePileup(alignments, bounds, spark, refPath, bdConf, output)
   }
 }

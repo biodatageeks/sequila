@@ -3,7 +3,7 @@ package org.biodatageeks.sequila.tests.pileup.io
 import com.holdenkarau.spark.testing.RDDComparisons
 import org.apache.spark.sql.SequilaSession
 import org.biodatageeks.sequila.tests.pileup.PileupTestBase
-import org.biodatageeks.sequila.utils.SequilaRegister
+import org.biodatageeks.sequila.utils.{InternalParams, SequilaRegister}
 import org.scalatest.BeforeAndAfterAll
 
 import java.io.File
@@ -70,6 +70,30 @@ class PileupSaveOutputTestSuite
       .orc(orcPileupPath)
     assertRDDEquals(pileupRefDF.rdd, pileupTestDF.rdd)
 
+  }
+
+  test("ORC save - vectorized"){
+    val ss = SequilaSession(spark)
+    SequilaRegister.register(ss)
+    ss
+      .sqlContext
+      .setConf(InternalParams.useVectorizedOrcWriter, "true")
+    val orcCoveragePath = s"$coveragePath/orc/"
+    cleanup(orcCoveragePath)
+    var covRefDF = ss.sql(queryCoverage) //using rdd to not fight with nullability/schema just byte equality
+    covRefDF
+      .write
+      .orc(orcCoveragePath)
+    val covTestDF = ss
+      .read
+      .orc(orcCoveragePath)
+    assert(covRefDF.count === 0) //should be 0 since we are bypassing DataFrame API
+    ss
+      .sqlContext
+      .setConf(InternalParams.useVectorizedOrcWriter, "false")
+    covRefDF = ss.sql(queryCoverage)
+    assert(covRefDF.count === covTestDF.count())
+    assertRDDEquals(covRefDF.rdd, covTestDF.rdd)
   }
 
   override def afterAll {
