@@ -4,9 +4,6 @@ import org.biodatageeks.sequila.rangejoins.methods.IntervalTree.IntervalTreeRedB
 import org.scalatest.FunSuite
 import org.sparkproject.guava.collect.Iterators
 
-import java.util
-import java.util.Iterator
-
 
 class SimpleOverlappersTestSuite extends FunSuite {
 
@@ -21,11 +18,14 @@ class SimpleOverlappersTestSuite extends FunSuite {
     dels.put(6, 6, 1) //(10034,10035,[1],1,10035,true)
     dels.put(7, 7, 2) //(10254,10256,[2],1,10256,true)
     dels.put(8, 8, 4) //(10530,10534,[4],3,10537,true)
+    dels.put(9, 9, 4) //(10530,10534,[4],3,10537,true)
+    dels.put(11, 11, 4) //(10530,10534,[4],3,10537,true)
+    dels.put(10, 10, 4) //(10530,10534,[4],3,10537,true)
 
     dels.printTree()
     var it = dels.overlappersWithoutEnd(1)
 
-    var it = dels.overlappersWithoutEnd(1)
+     it = dels.overlappersWithoutEnd(1)
     assert (Iterators.size(it) == 1)
 
     it = dels.overlappersWithoutEnd(2)
@@ -46,8 +46,7 @@ class SimpleOverlappersTestSuite extends FunSuite {
     it = dels.overlappersWithoutEnd(7)
     assert (Iterators.size(it) == 7)
 
-    it = dels.overlappersWithoutEnd(8)
-    assert (Iterators.size(it) == 8)
+
 
   }
 }
