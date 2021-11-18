@@ -4,6 +4,7 @@ import htsjdk.samtools.{Cigar, CigarElement, CigarOperator}
 import org.biodatageeks.sequila.pileup.model.{CigarDerivedConf, InDelPositions, ReadSummary}
 import org.biodatageeks.sequila.rangejoins.methods.IntervalTree.IntervalTreeRedBlack
 import org.scalatest.FunSuite
+import org.sparkproject.guava.collect.Iterators
 
 import scala.collection.JavaConversions.seqAsJavaList
 
@@ -172,40 +173,6 @@ class RelativePositionTestSuite extends FunSuite{
     assert(len==10)
     assert (rs.expensiveRelativePosition(10001) == 0)
     assert (rs.expensiveRelativePosition(10002) == 1)
-  }
-
-  test("cigarderived conf #1") {
-
-    val cElement1 = new CigarElement(100, CigarOperator.H)
-    val cElement2 = new CigarElement(10, CigarOperator.M)
-    val cElement3 = new CigarElement(1, CigarOperator.D)
-
-
-    val c = new Cigar(seqAsJavaList(List(cElement1,cElement2,cElement3 )))
-    val len = c.getReadLength
-    val conf = CigarDerivedConf.create(1000, c)
-    val rs = ReadSummary(1000, 1020, new Array[Byte](len), new Array[Byte](len), true, c)
-    assert(len==10)
-    //assert(conf.indelPositions.delPositions.head._1 == 1010)
-    //assert (rs.expensiveRelativePosition(10002) == 1)
-  }
-  test("dels conf #1") {
-
-    val dels = new IntervalTreeRedBlack[(Int)]()
-    dels.put(8, 20, 5)
-    dels.put(9, 20, 5)
-    dels.put(11, 20, 5)
-    dels.put(12, 20, 5)
-    dels.put(5, 7, 5)
-    dels.put(40, 45, 5)
-
-    dels.printTree()
-    println ("overlappers ")
-    val it = dels.overlappers(13,13)
-    while (it.hasNext) {
-      val node = it.next()
-      println("NODE " + node)
-    }
   }
 
 }

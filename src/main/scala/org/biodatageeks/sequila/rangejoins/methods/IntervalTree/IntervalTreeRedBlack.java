@@ -302,7 +302,7 @@ public class IntervalTreeRedBlack<V> implements BaseIntervalHolder<V>,  Serializ
         Node<V> result = null;
         Node<V> node = mRoot;
 
-        if ( node != null && pos >= node.getStart() )
+        if ( node != null)
         {
             while ( true )
             {
@@ -808,13 +808,13 @@ public class IntervalTreeRedBlack<V> implements BaseIntervalHolder<V>,  Serializ
             do
             {
                 Node<V1> nextNode = node.mRight;
-                if ( nextNode != null && pos >= nextNode.mMaxEnd  )
+                if ( nextNode != null  ) // going to right subtree //&& pos >= nextNode.mEnd
                 {
                     node = nextNode;
-                    while ( (nextNode = node.mLeft) != null && nextNode.mMaxEnd >= pos )
+                    while ( (nextNode = node.mLeft) != null && pos >=nextNode.mMaxEnd)
                         node = nextNode;
                 }
-                else
+                else // going to left  (lesser) subtree
                 {
                     nextNode = node;
                     while ( (node = nextNode.mParent) != null && node.mRight == nextNode )
