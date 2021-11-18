@@ -811,7 +811,7 @@ public class IntervalTreeRedBlack<V> implements BaseIntervalHolder<V>,  Serializ
                 if ( nextNode != null  ) // going to right subtree //&& pos >= nextNode.mEnd
                 {
                     node = nextNode;
-                    while ( (nextNode = node.mLeft) != null && pos >=nextNode.mMaxEnd)
+                    while ( (nextNode = node.mLeft) != null)  //pos >=nextNode.mMaxEnd)
                         node = nextNode;
                 }
                 else // going to left  (lesser) subtree
