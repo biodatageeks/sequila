@@ -1,5 +1,8 @@
 package org.biodatageeks.sequila.pileup.model
 
+import org.apache.hadoop.io.{IntWritable, NullWritable, ShortWritable, Text}
+import org.apache.orc.TypeDescription
+import org.apache.orc.mapred.OrcStruct
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.catalyst.InternalRow
@@ -8,7 +11,7 @@ import org.biodatageeks.sequila.pileup.conf.Conf
 import org.biodatageeks.sequila.pileup.serializers.PileupProjection
 import org.biodatageeks.sequila.pileup.model.Alts._
 import org.biodatageeks.sequila.pileup.partitioning.PartitionBounds
-import org.biodatageeks.sequila.utils.{AlignmentConstants, FastMath}
+import org.biodatageeks.sequila.utils.{AlignmentConstants, Columns, FastMath}
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.mutable
@@ -152,6 +155,64 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
   }
 
 
+  def toCoverageFastMode(bounds: Broadcast[Array[PartitionBounds]] ) : RDD[(NullWritable, OrcStruct)] = {
+
+    this.rdd.mapPartitionsWithIndex { (index, part) =>
+
+      part.map { agg => {
+        val contigMap = new mutable.HashMap[String, Array[Byte]]()
+        contigMap += (agg.contig -> UTF8String.fromString(agg.contig).getBytes)
+        PileupProjection.contigByteMap=contigMap
+
+        var cov, ind, i, currPos = 0
+        val allPos = false
+        val maxLen = agg.calculateMaxLength(allPos)
+        val maxIndex = FastMath.findMaxIndex(agg.events)
+        val result = new Array[(NullWritable, OrcStruct)](maxLen)
+        val prev = new BlockProperties()
+        val startPosition = agg.startPosition
+        val partitionBounds = bounds.value(index)
+        val bases = AlignmentConstants.REF_SYMBOL
+
+
+        val schema = TypeDescription
+        .fromString(s"struct<${Columns.CONTIG}:string,${Columns.START}:int,${Columns.END}:int,${Columns.REF}:String,${Columns.COVERAGE}:smallint>")
+
+        breakable {
+          while (i <= maxIndex) {
+            currPos = i + startPosition
+            cov += agg.events(i)
+            if (isInPartitionRange(currPos - 1 , agg.contig, partitionBounds, agg.conf)) {
+              if (currPos == partitionBounds.postStart) {
+                prev.reset(i)
+              }
+              if (isEndOfZeroCoverageRegion(cov, prev.cov, i)) { // coming back from zero coverage. clear block
+                prev.reset(i)
+              } else if (isChangeOfCoverage(cov, prev.cov,  i) || isStartOfZeroCoverageRegion(cov, prev.cov)) { // different cov, add to output previous group
+                addBlockRecordFastMode(result, ind, agg, bases, i, prev, schema)
+                ind += 1;
+                prev.reset(i)
+              } else if (currPos == partitionBounds.posEnd + 1) { // last item -> convert it
+                addBlockRecordFastMode(result, ind, agg, bases, i, prev, schema)
+                ind += 1;
+                prev.reset(i)
+                break
+              }
+            }
+            prev.cov = cov;
+            prev.len = prev.len + 1;
+            i += 1
+          } // while
+        }
+        result.take(ind)
+      }
+      }
+    }.flatMap(r => r)
+  }
+
+
+
+
   private def isStartOfZeroCoverageRegion(cov: Int, prevCov: Int) = cov == 0 && prevCov > 0
   private def isChangeOfCoverage(cov: Int, prevCov: Int, i: Int) = cov != 0 && prevCov >= 0 && prevCov != cov && i > 0
   private def isEndOfZeroCoverageRegion(cov: Int, prevCov: Int, i: Int) = cov != 0 && prevCov == 0 && i > 0
@@ -212,5 +273,29 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
     val posEnd=i+agg.startPosition-1
     result(ind) = PileupProjection.convertToRow(agg.contig, posStart,
       posEnd, ref, prev.cov.toShort, prev.cov.toShort, 0.toShort,null, null, agg.conf)
+  }
+
+  private def addBlockRecordFastMode(result:Array[(NullWritable, OrcStruct)], ind:Int,
+                             agg:ContigAggregate, bases:String, i:Int, prev:BlockProperties, schema: TypeDescription): Unit = {
+    val ref = if(agg.conf.coverageOnly) "R" else bases.substring(prev.pos, i)
+    val posStart=i+agg.startPosition-prev.len
+    val posEnd=i+agg.startPosition-1
+    val record = OrcStruct.createValue(schema).asInstanceOf[OrcStruct]
+    record.setFieldValue(Columns.CONTIG, new Text(agg.contig) )
+    record.setFieldValue(Columns.START, new IntWritable(posStart))
+    record.setFieldValue(Columns.END, new IntWritable(posEnd))
+    record.setFieldValue(Columns.REF, new Text(ref))
+    record.setFieldValue(Columns.COVERAGE, new ShortWritable((prev.cov.toShort)) )
+    result(ind) = (NullWritable.get(), record)
+
+    //
+    //        StructField(Columns.CONTIG,StringType,nullable = true),
+    //        StructField(Columns.START,IntegerType,nullable = false),
+    //        StructField(Columns.END,IntegerType,nullable = false),
+    //        StructField(Columns.REF,StringType,nullable = false),
+    //        StructField(Columns.COVERAGE,ShortType,nullable = false)
+
+//    result(ind) = PileupProjection.convertToRow(agg.contig, posStart,
+//      posEnd, ref, prev.cov.toShort, prev.cov.toShort, 0.toShort,null, null, agg.conf)
   }
 }

@@ -47,6 +47,8 @@ libraryDependencies += "io.projectglow" %% "glow-spark3" % "1.0.1" excludeAll (E
 libraryDependencies += "com.intel.gkl" % "gkl" % "0.8.6"
 libraryDependencies += "org.openjdk.jol" % "jol-core" % "0.16" % "provided"
 libraryDependencies += "com.github.jsr203hadoop" % "jsr203hadoop" % "1.0.3"
+libraryDependencies += "org.apache.iceberg" % "iceberg-orc" % "0.12.1"
+libraryDependencies += "org.apache.iceberg" % "iceberg-spark" % "0.12.1"
 
 
 
