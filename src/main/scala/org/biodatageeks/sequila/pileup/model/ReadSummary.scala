@@ -1,7 +1,6 @@
 package org.biodatageeks.sequila.pileup.model
 
-import htsjdk.samtools.Cigar
-
+import htsjdk.samtools.{Cigar, CigarOperator}
 
 case class ReadSummary(start: Int, end: Int,
                        bases: Array[Byte],
@@ -19,7 +18,7 @@ case class ReadSummary(start: Int, end: Int,
 
   def getBaseForAbsPosition (absPosition:Int):Char = {
     val relPos = relativePosition(absPosition)
-    if (isPositive) bases(relPos).toChar else bases(relPos).toChar.toLower
+       if (isPositive) bases(relPos).toChar else bases(relPos).toChar.toLower
   }
 
   @inline
@@ -53,6 +52,29 @@ case class ReadSummary(start: Int, end: Int,
       cigarConf
         .indelPositions
         .delPositions.exists { case (start, end) => pos + leftClipLen >= start && pos + leftClipLen < end }
+  }
+
+  def calculatePositionInReadSeq(pos: Int): Int = {
+    if (!cigar.containsOperator(CigarOperator.INSERTION))
+      return pos
+
+    var numInsertions = 0
+    val cigarIterator = cigar.iterator()
+    var position = 0
+
+    while (cigarIterator.hasNext) {
+      if (position > pos + numInsertions)
+        return pos + numInsertions
+      val cigarElement = cigarIterator.next()
+      val cigarOpLength = cigarElement.getLength
+      val cigarOp = cigarElement.getOperator
+
+      if (cigarOp == CigarOperator.INSERTION)
+        numInsertions += cigarOpLength
+      else if (cigarOp != CigarOperator.HARD_CLIP)
+        position = position + cigarOpLength
+    }
+    pos + numInsertions
   }
 }
 
