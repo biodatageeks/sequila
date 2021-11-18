@@ -62,12 +62,14 @@ case class PileupPlan [T<:BDGAlignInputFormat](plan:LogicalPlan, spark:SparkSess
     val conf = new Conf
     if (!alts && !quals ) {// FIXME -> change to Option
       conf.coverageOnly = true
+      conf.outputFieldsNum = output.size
       return conf
     }
     val maxQual = spark.conf.get(InternalParams.maxBaseQualityValue, DEFAULT_MAX_QUAL.toString).toInt
     conf.maxQuality = maxQual
     conf.maxQualityIndex = maxQual + 1
     conf.includeBaseQualities = quals
+    conf.outputFieldsNum = output.size
     if(binSize.isDefined) {
       conf.isBinningEnabled = true
       conf.binSize = binSize.get
