@@ -1,10 +1,8 @@
 package org.biodatageeks.sequila.tests.pileup.processing
 
 import htsjdk.samtools.{Cigar, CigarElement, CigarOperator}
-import org.biodatageeks.sequila.pileup.model.{CigarDerivedConf, InDelPositions, ReadSummary}
-import org.biodatageeks.sequila.rangejoins.methods.IntervalTree.IntervalTreeRedBlack
+import org.biodatageeks.sequila.pileup.model.{CigarDerivedConf, ReadSummary}
 import org.scalatest.FunSuite
-import org.sparkproject.guava.collect.Iterators
 
 import scala.collection.JavaConversions.seqAsJavaList
 
