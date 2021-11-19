@@ -21,6 +21,8 @@ object InternalParams {
 
   final val InputSplitSize = "spark.biodatageeks.bam.splitSize"
 
+  final val useVectorizedOrcWriter = "spark.biodatageeks.pileup.useVectorizedOrcWriter"
+
 
   /*disq support*/
   final val IOReadAlignmentMethod = "spark.biodatageeks.readAligment.method"

@@ -14,7 +14,10 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 
   var unknownContigName: String = "UCN"
   var coverageOnly: Boolean = false
-  var outputFieldsNum = 9
+  var outputFieldsNum: Int = 9
+  var useVectorizedOrcWriter: Boolean = false
+  var vectorizedOrcWriterPath: String = _
+  var orcCompressCodec:String = _
 
   override def toString: String = {
     ReflectionToStringBuilder.toString(this, ToStringStyle.SHORT_PREFIX_STYLE)

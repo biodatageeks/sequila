@@ -1,14 +1,21 @@
 package org.biodatageeks.sequila.pileup.model
 
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.Path
+import org.apache.hadoop.hive.ql.exec.vector.{BytesColumnVector, LongColumnVector, VectorizedRowBatch}
+import org.apache.hadoop.io.{IntWritable, NullWritable, ShortWritable, Text}
+import org.apache.orc.{OrcFile, TypeDescription, Writer}
+import org.apache.orc.mapred.OrcStruct
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.catalyst.InternalRow
+import org.apache.spark.sql.catalyst.expressions.Attribute
 import org.apache.spark.unsafe.types.UTF8String
 import org.biodatageeks.sequila.pileup.conf.Conf
-import org.biodatageeks.sequila.pileup.serializers.PileupProjection
+import org.biodatageeks.sequila.pileup.serializers.{OrcProjection, PileupProjection}
 import org.biodatageeks.sequila.pileup.model.Alts._
 import org.biodatageeks.sequila.pileup.partitioning.PartitionBounds
-import org.biodatageeks.sequila.utils.{AlignmentConstants, FastMath}
+import org.biodatageeks.sequila.utils.{AlignmentConstants, Columns, FastMath}
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.mutable
@@ -152,6 +159,84 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
   }
 
 
+  def toCoverageVectorizedWriter(bounds: Broadcast[Array[PartitionBounds]], output: Seq[Attribute], conf: Broadcast[Conf]) : RDD[Int] = {
+
+    logger.info(s"### Coverage: using Vectorized ORC output optimization with ${conf.value.orcCompressCodec} compression")
+    this.rdd.mapPartitionsWithIndex { (index, part) =>
+
+      part.map { agg => {
+        val contigMap = new mutable.HashMap[String, Array[Byte]]()
+        contigMap += (agg.contig -> UTF8String.fromString(agg.contig).getBytes)
+        PileupProjection.contigByteMap=contigMap
+
+        var cov, ind, i, currPos = 0
+        val maxIndex = FastMath.findMaxIndex(agg.events)
+        val result = 1
+        val prev = new BlockProperties()
+        val startPosition = agg.startPosition
+        val partitionBounds = bounds.value(index)
+        val bases = AlignmentConstants.REF_SYMBOL
+
+        val hadoopConf = new Configuration()
+        hadoopConf.set("orc.compress", conf.value.orcCompressCodec )
+        val path = conf.value.vectorizedOrcWriterPath
+        val schema = OrcProjection.catalystToOrcSchema(output)
+        val writer = OrcFile
+          .createWriter(new Path(s"${path}/part-${index}-${System.currentTimeMillis()}.${conf.value.orcCompressCodec.toLowerCase}.orc"),
+          OrcFile.writerOptions(hadoopConf).setSchema(schema))
+        val batch = schema.createRowBatch
+        val contigVector = batch.cols(0).asInstanceOf[BytesColumnVector]
+        val postStartVector = batch.cols(1).asInstanceOf[LongColumnVector]
+        val postEndVector = batch.cols(2).asInstanceOf[LongColumnVector]
+        val refVector = batch.cols(3).asInstanceOf[BytesColumnVector]
+        val covVector = batch.cols(4).asInstanceOf[LongColumnVector]
+        var row: Int = 0
+
+        breakable {
+          while (i <= maxIndex) {
+            row = batch.size
+            currPos = i + startPosition
+            cov += agg.events(i)
+            if (isInPartitionRange(currPos - 1 , agg.contig, partitionBounds, agg.conf)) {
+              if (currPos == partitionBounds.postStart) {
+                prev.reset(i)
+              }
+              if (isEndOfZeroCoverageRegion(cov, prev.cov, i)) { // coming back from zero coverage. clear block
+                prev.reset(i)
+              } else if (isChangeOfCoverage(cov, prev.cov,  i) || isStartOfZeroCoverageRegion(cov, prev.cov)) { // different cov, add to output previous group
+                addBlockDirectWriteOrc(ind, agg, bases, i, prev,
+                  contigVector, postStartVector, postEndVector, refVector, covVector, writer, batch, row
+                )
+                ind += 1;
+                prev.reset(i)
+              } else if (currPos == partitionBounds.posEnd + 1) { // last item -> convert it
+                addBlockDirectWriteOrc(ind, agg, bases, i, prev,
+                  contigVector, postStartVector, postEndVector, refVector, covVector, writer, batch, row
+                  )
+                ind += 1;
+                prev.reset(i)
+                break
+              }
+            }
+            prev.cov = cov;
+            prev.len = prev.len + 1;
+            i += 1
+          } // while
+        }
+        if (batch.size != 0) {
+          writer.addRowBatch(batch)
+          batch.reset
+        }
+        writer.close
+        result
+      }
+      }
+    }
+  }
+
+
+
+
   private def isStartOfZeroCoverageRegion(cov: Int, prevCov: Int) = cov == 0 && prevCov > 0
   private def isChangeOfCoverage(cov: Int, prevCov: Int, i: Int) = cov != 0 && prevCov >= 0 && prevCov != cov && i > 0
   private def isEndOfZeroCoverageRegion(cov: Int, prevCov: Int, i: Int) = cov != 0 && prevCov == 0 && i > 0
@@ -212,5 +297,32 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
     val posEnd=i+agg.startPosition-1
     result(ind) = PileupProjection.convertToRow(agg.contig, posStart,
       posEnd, ref, prev.cov.toShort, prev.cov.toShort, 0.toShort,null, null, agg.conf)
+  }
+
+  private def addBlockDirectWriteOrc(ind:Int,
+                         agg:ContigAggregate,
+                         bases:String, i:Int, prev:BlockProperties,
+                         contigVector: BytesColumnVector,
+                         postStartVector: LongColumnVector,
+                         postEndVector: LongColumnVector,
+                         refVector: BytesColumnVector,
+                         covVector: LongColumnVector,
+                         writer: Writer,
+                         batch: VectorizedRowBatch, row: Int): Unit = {
+
+    val ref = if(agg.conf.coverageOnly) "R" else bases.substring(prev.pos, i)
+    val posStart=i+agg.startPosition-prev.len
+    val posEnd=i+agg.startPosition-1
+    contigVector.setVal(row, agg.contig.getBytes)
+    postStartVector.vector(row) = posStart
+    postEndVector.vector(row) = posEnd
+    refVector.setVal(row, ref.getBytes())
+    covVector.vector(row) = prev.cov.toShort
+    batch.size+=1
+
+    if (batch.size == batch.getMaxSize) {
+      writer.addRowBatch(batch)
+      batch.reset
+    }
   }
 }
