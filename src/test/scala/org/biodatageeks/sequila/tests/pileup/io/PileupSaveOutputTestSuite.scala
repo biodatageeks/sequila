@@ -72,7 +72,7 @@ class PileupSaveOutputTestSuite
 
   }
 
-  test("ORC - DataFrame save - vectorized"){
+  test("ORC - coverage - DataFrame save - vectorized"){
     val ss = SequilaSession(spark)
     SequilaRegister.register(ss)
     ss
@@ -96,7 +96,7 @@ class PileupSaveOutputTestSuite
     assertRDDEquals(covRefDF.rdd, covTestDF.rdd)
   }
 
-  test("ORC - SQL CTaS - vectorized"){
+  test("ORC - coverage - SQL CTaS - vectorized"){
     val ss = SequilaSession(spark)
     SequilaRegister.register(ss)
     ss
@@ -120,7 +120,30 @@ class PileupSaveOutputTestSuite
       .orc(tableLocation)
         assert(covRefDF.count === covTestDF.count())
         assertRDDEquals(covRefDF.rdd, covTestDF.rdd)
+  }
 
+  test("ORC - pileup - DataFrame save - vectorized"){
+    val ss = SequilaSession(spark)
+    SequilaRegister.register(ss)
+    ss
+      .sqlContext
+      .setConf(InternalParams.useVectorizedOrcWriter, "true")
+    val orcPileupPath = s"$pileupPath/orc/"
+    cleanup(orcPileupPath)
+    var pileupRefDF = ss.sql(queryPileupWithQual) //using rdd to not fight with nullability/schema just byte equality
+    pileupRefDF
+      .write
+      .orc(orcPileupPath)
+    val pileupTestDF = ss
+      .read
+      .orc(orcPileupPath)
+    assert(pileupRefDF.count === 0) //should be 0 since we are bypassing DataFrame API
+    ss
+      .sqlContext
+      .setConf(InternalParams.useVectorizedOrcWriter, "false")
+    pileupRefDF = ss.sql(queryCoverage)
+    assert(pileupRefDF.count === pileupTestDF.count())
+    assertRDDEquals(pileupRefDF.rdd, pileupTestDF.rdd)
   }
   override def afterAll {
     cleanup(baseOutputPath)
