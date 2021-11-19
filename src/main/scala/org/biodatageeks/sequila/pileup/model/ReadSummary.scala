@@ -67,18 +67,20 @@ case class ReadSummary(start: Int, end: Int,
     if (!cigarConf.hasDel)
       return false
     val arr = cigarConf.indelPositions.delPositions
-    var i = Math.max(0, hasDelPos - 1)
+    var i = hasDelPos
     var res = false
     breakable{
-      while(i < arr.length){
+      while(i < cigarConf.delsLen){
         if(pos >= arr(i)._1 && pos < arr(i)._2)
           res = true
-        else
+        else {
+          i += 1
           break
+        }
         i+=1
       }
     }
-    hasDelPos = i
+    hasDelPos = i - 1
     res
   }
 
@@ -88,7 +90,7 @@ case class ReadSummary(start: Int, end: Int,
     var i = insertPos
     var sum = insertCumSum
     breakable{
-      while(i < arr.length){
+      while(i < cigarConf.insertsLen){
         if(pos >= arr(i)._1)
           sum += arr(i)._2
         else
@@ -107,7 +109,7 @@ case class ReadSummary(start: Int, end: Int,
     var i = delPos
     var sum = delCumSum
     breakable {
-      while (i < arr.length) {
+      while (i < cigarConf.delsLen) {
         if (pos >= arr(i)._1)
           sum += (arr(i)._2 - arr(i)._1 )
         else

@@ -6,8 +6,6 @@ import scala.collection.mutable
 
 import scala.collection.mutable.ArrayBuffer
 
-import scala.util.control.Breaks.{break, breakable}
-
 case class InDelPositions(
                            delPositions:ArrayBuffer[(Int, Int)],
                            insertPositions: ArrayBuffer[(Int,Int)]
@@ -17,7 +15,9 @@ case class CigarDerivedConf(
                              hasIndel: Boolean,
                              hasDel: Boolean,
                              leftClipLength: Int,
-                             indelPositions: InDelPositions = null
+                             indelPositions: InDelPositions = null,
+                             insertsLen: Int,
+                             delsLen: Int
                            ) {
 
 }
@@ -32,7 +32,11 @@ object CigarDerivedConf {
     } else 0
     val hasDel = cigar.containsOperator(CigarOperator.DELETION)
     val hasIndel =  hasDel || cigar.containsOperator(CigarOperator.INSERTION)
-    CigarDerivedConf(hasClip, hasIndel, hasDel, softClipLength, if (hasIndel) calculateIndelPositions(start, cigar) else null)
+    val indels = if (hasIndel) calculateIndelPositions(start, cigar) else null
+    val insertsLen = if (hasIndel) indels.insertPositions.length else 0
+    val delsLen = if (hasIndel) indels.delPositions.length else 0
+
+    CigarDerivedConf(hasClip, hasIndel, hasDel, softClipLength, indels, insertsLen, delsLen)
   }
 
 
