@@ -29,19 +29,14 @@ object PileupRunner {
     spark.sparkContext.setLogLevel("INFO")
     //        val bamPath = "/Users/mwiewior/research/data/NA12878.chrom20.ILLUMINA.bwa.CEU.low_coverage.20121211.md.bam"
     //        val referencePath = "/Users/mwiewior/research/data/hs37d5.fa"
-
-
-//    val bamPath = "/Users/mwiewior/research/data/WGS/NA12878.proper.wgs.chr1.md.bam"
-    val referencePath = "/Users/mwiewior/research/data/Homo_sapiens_assembly18.fasta"
-//              val bamPath = "/Users/mwiewior/research/data/WGS/NA12878.proper.wgs.chr1.md.bam"
-//                  val bamPath = "/Users/mwiewior/research/data/WGS/NA12878.proper.wgs.md.bam"
-
-              val bamPath = "/Users/mwiewior/research/data/WES/NA12878.proper.wes.md.bam"
-//                val referencePath = "/Users/mwiewior/research/data/broad/Homo_sapiens_assembly38.fasta"
+//    val bamPath = "/data/workspace/dataset/NA12878.proper.wes.md.bam"
+//    val referencePath = "/data/workspace/dataset/Homo_sapiens_assembly18.fasta"
+          val bamPath = "/Users/mwiewior/research/data/WES/NA12878.proper.wes.md.bam"
+          val referencePath = "/Users/mwiewior/research/data/Homo_sapiens_assembly18.fasta"
     //    val bamPath = "/Users/mwiewior/research/data/rel5-guppy-0.3.0-chunk10k.chr22.bam"
-    //    val referencePath = "/Users/mwiewior/research/data/GRCh38_full_analysis_set_plus_decoy_hla.fa"
-//    val bamPath = "/Users/mwiewior/research/data/long_reads/rel5-guppy-0.3.0-chunk10k.wgs.proper.chr1.bam"
-//    val referencePath = "/Users/mwiewior/research/data/GRCh38_full_analysis_set_plus_decoy_hla.fa"
+//        val referencePath = "/Users/mwiewior/research/data/GRCh38_full_analysis_set_plus_decoy_hla.fa"
+//        val bamPath = "/Users/mwiewior/research/data/long_reads/rel5-guppy-0.3.0-chunk10k.wgs.proper.chr1.bam"
+    //    val referencePath = "/Users/mwiewior/research/data/rel5-guppy-0.3.0-chunk10k.chr1.fasta"
     val tableNameBAM = "reads"
 
     ss.sql(s"""DROP  TABLE IF  EXISTS $tableNameBAM""")
@@ -53,7 +48,24 @@ object PileupRunner {
       """.stripMargin)
 
 
+//        val query =
+//          s"""
+//             |SELECT *
+//             |FROM  pileup('$tableNameBAM', 'rel5-guppy-0.3.0-chunk10k.wgs.proper.chr1', '${referencePath}', true, true)
+//           """.stripMargin
+
+    //    val query =
+    //      s"""
+    //         |SELECT *
+    //         |FROM  pileup('$tableNameBAM', 'NA12878.proper.wes.md', '${referencePath}', false)
+    //       """.stripMargin
+
 //    val query =
+//      s"""
+//         |SELECT *
+//         |FROM  pileup('$tableNameBAM', 'NA12878.proper.wes.md', '${referencePath}', true, true)
+//               """.stripMargin
+////    val query =
 //      s"""
 //         |SELECT *
 //         |FROM  pileup('$tableNameBAM', 'rel5-guppy-0.3.0-chunk10k.chr1', '${referencePath}', true)
@@ -62,7 +74,7 @@ object PileupRunner {
         val query =
           s"""
              |SELECT *
-             |FROM  pileup('$tableNameBAM', 'NA12878.proper.wes.md', '${referencePath}', false, false)
+             |FROM  pileup('$tableNameBAM', 'NA12878.proper.wes.md', '${referencePath}', true, true)
            """.stripMargin
 
 //    val query =
@@ -86,14 +98,23 @@ object PileupRunner {
 //               """.stripMargin
 
 
+//    ss.sql("DROP TABLE IF EXISTS X")
+//    val query =
+//      s"""
+//         |CREATE TABLE X USING ORC LOCATION '/tmp/coverage/x' AS SELECT *
+//         |FROM  pileup('$tableNameBAM', 'NA12878.proper.wes.md', '${referencePath}', false, false)
+//           """.stripMargin
+
     //    ss.sqlContext.setConf("spark.biodatageeks.readAligment.method", "disq")
     ss.sqlContext.setConf(InternalParams.BAMValidationStringency, "SILENT")
+    ss.sqlContext.setConf(InternalParams.useVectorizedOrcWriter, "true")
     ss.sqlContext.setConf("spark.biodatageeks.bam.useGKLInflate","true")
     ss.sparkContext.setLogLevel("INFO")
     ss
       .sparkContext
       .hadoopConfiguration
       .setInt("mapred.min.split.size", 2*67108864)
+
     val results = ss.sql(query)
     ss.time{
       results
