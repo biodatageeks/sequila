@@ -61,40 +61,42 @@ case class ReadSummary(start: Int, end: Int,
     getInsertOffsetForPosition(pos)- getDelOffsetForPosition(pos)
   }
 
+  @inline
+  def hasDeletionOnPosition(position:Int): Boolean = {
+    val pos = position + cigarConf.leftClipLength
+    if (!cigarConf.hasDel)
+      return false
+    val arr = cigarConf.indelPositions.delPositions
+    var i = hasDelPos
+    var res = false
+    breakable {
+      while (i < cigarConf.delsLen) {
+        if (pos < arr(i)._1) {
+         break
+        }
+        else if (pos >= arr(i)._1 && pos < arr(i)._2) {
+          res = true
+          break
+        }
+        i += 1
+      }
+    }
+    hasDelPos = i
+    res
+  }
 
-//  def hasDeletionOnPosition(position:Int): Boolean = {
-//    val pos = position + cigarConf.leftClipLength
+//  @inline
+//  def hasDeletionOnPosition(pos: Int): Boolean = {
+//    val leftClipLen = cigarConf.leftClipLength
 //    if (!cigarConf.hasDel)
-//      return false
-//    val arr = cigarConf.indelPositions.delPositions
-//    var i = hasDelPos
-//    var res = false
-//    breakable{
-//      while(i < cigarConf.delsLen){
-//        if(pos >= arr(i)._1 && pos < arr(i)._2)
-//          res = true
-//        else {
-//          i += 1
-//          break
-//        }
-//        i+=1
-//      }
-//    }
-//    hasDelPos = i - 1
-//    res
+//      false
+//    else
+//      cigarConf
+//        .indelPositions
+//        .delPositions.exists { case (start, end) => pos + leftClipLen >= start && pos + leftClipLen < end }
 //  }
 
   @inline
-  def hasDeletionOnPosition(pos: Int): Boolean = {
-    val leftClipLen = cigarConf.leftClipLength
-    if (!cigarConf.hasDel)
-      false
-    else
-      cigarConf
-        .indelPositions
-        .delPositions.exists { case (start, end) => pos + leftClipLen >= start && pos + leftClipLen < end }
-  }
-
   def getInsertOffsetForPosition(position:Int): Int = {
     val pos = position + cigarConf.leftClipLength
     val arr = cigarConf.indelPositions.insertPositions
@@ -114,6 +116,7 @@ case class ReadSummary(start: Int, end: Int,
     sum
   }
 
+  @inline
   def getDelOffsetForPosition(position:Int): Int = {
     val pos = position + cigarConf.leftClipLength
     val arr = cigarConf.indelPositions.delPositions
