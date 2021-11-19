@@ -182,8 +182,6 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
   }
 
   def fillBaseQualities(rs: ReadSummary, altPos: Int, ref: Char, qualsMap: mutable.IntMap[Array[Short]]): Unit = {
-    if (rs.start == 125 && rs.end == 201  )
-      println()
     if (!rs.hasDeletionOnPosition(altPos)) {
       val relativePos = rs.relativePosition(altPos)
       val base = rs.bases(relativePos)
