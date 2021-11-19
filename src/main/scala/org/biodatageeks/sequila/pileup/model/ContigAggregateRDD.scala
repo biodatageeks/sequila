@@ -107,6 +107,93 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
   }
 
 
+  def toPileupVectorizedWriter(refPath: String, bounds: Broadcast[Array[PartitionBounds]],  output: Seq[Attribute], conf: Broadcast[Conf] ) : RDD[Int] = {
+
+    logger.info(s"### Pileup: using Vectorized ORC output optimization with ${conf.value.orcCompressCodec} compression")
+    this.rdd.mapPartitionsWithIndex { (index, part) =>
+      val reference = new Reference(refPath)
+      val contigMap = reference.getNormalizedContigMap
+      PileupProjection.setContigMap(contigMap)
+
+      part.map { agg => {
+        var cov, ind, i, currPos = 0
+        val allPos = false
+        val maxIndex = FastMath.findMaxIndex(agg.events)
+        val result = 0
+        val prev = new BlockProperties()
+        val startPosition = agg.startPosition
+        val partitionBounds = bounds.value(index)
+        val bases = reference.getBasesFromReference(contigMap(agg.contig), agg.startPosition, agg.startPosition + maxIndex)
+
+        val hadoopConf = new Configuration()
+        hadoopConf.set("orc.compress", conf.value.orcCompressCodec )
+        val path = conf.value.vectorizedOrcWriterPath
+        val schema = OrcProjection.catalystToOrcSchema(output)
+        val writer = OrcFile
+          .createWriter(new Path(s"${path}/part-${index}-${System.currentTimeMillis()}.${conf.value.orcCompressCodec.toLowerCase}.orc"),
+            OrcFile.writerOptions(hadoopConf).setSchema(schema))
+        val batch = schema.createRowBatch
+        val contigVector = batch.cols(0).asInstanceOf[BytesColumnVector]
+        val postStartVector = batch.cols(1).asInstanceOf[LongColumnVector]
+        val postEndVector = batch.cols(2).asInstanceOf[LongColumnVector]
+        val refVector = batch.cols(3).asInstanceOf[BytesColumnVector]
+        val covVector = batch.cols(4).asInstanceOf[LongColumnVector]
+        var row: Int = 0
+        breakable {
+          while (i <= maxIndex) {
+            currPos = i + startPosition
+            cov += agg.events(i)
+            if (isInPartitionRange(currPos - 1 , agg.contig, partitionBounds, agg.conf)) {
+              if (currPos == partitionBounds.postStart) {
+                prev.reset(i)
+              }
+              if (prev.hasAlt) {
+                //////addBaseRecord(result, ind, agg, bases, i, prev)
+                ind += 1;
+                prev.reset(i)
+                if (agg.hasAltOnPosition(currPos))
+                  prev.alt = agg.alts(currPos)
+              }
+              else if (agg.hasAltOnPosition(currPos)) { // there is ALT in this posiion
+                if (prev.isNonZeroCoverage) { // there is previous group non-zero group -> convert it
+                  addBlockVectorizedWriterOrc(ind, agg, bases, i, prev,
+                    contigVector, postStartVector, postEndVector, refVector, covVector, writer, batch, row
+                  )
+                  ind += 1;
+                  prev.reset(i)
+                } else if (prev.isZeroCoverage) // previous ZERO group, clear block
+                  prev.reset(i)
+                prev.alt = agg.alts(currPos)
+              } else if (isEndOfZeroCoverageRegion(cov, prev.cov, i)) { // coming back from zero coverage. clear block
+                prev.reset(i)
+              } else if (isChangeOfCoverage(cov, prev.cov,  i) || isStartOfZeroCoverageRegion(cov, prev.cov)) { // different cov, add to output previous group
+                addBlockVectorizedWriterOrc(ind, agg, bases, i, prev,
+                  contigVector, postStartVector, postEndVector, refVector, covVector, writer, batch, row
+                )
+                ind += 1;
+                prev.reset(i)
+              } else if (currPos == partitionBounds.posEnd + 1) { // last item -> convert it
+                addBlockVectorizedWriterOrc(ind, agg, bases, i, prev,
+                  contigVector, postStartVector, postEndVector, refVector, covVector, writer, batch, row
+                )
+                ind += 1;
+                prev.reset(i)
+                break
+              }
+            }
+            prev.cov = cov;
+            prev.len = prev.len + 1;
+            i += 1
+          } // while
+        }
+        result
+      }
+      }
+    }
+  }
+
+
+
   def toCoverage(bounds: Broadcast[Array[PartitionBounds]] ) : RDD[InternalRow] = {
 
     this.rdd.mapPartitionsWithIndex { (index, part) =>
@@ -171,7 +258,7 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
 
         var cov, ind, i, currPos = 0
         val maxIndex = FastMath.findMaxIndex(agg.events)
-        val result = 1
+        val result = 0
         val prev = new BlockProperties()
         val startPosition = agg.startPosition
         val partitionBounds = bounds.value(index)
@@ -204,13 +291,13 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
               if (isEndOfZeroCoverageRegion(cov, prev.cov, i)) { // coming back from zero coverage. clear block
                 prev.reset(i)
               } else if (isChangeOfCoverage(cov, prev.cov,  i) || isStartOfZeroCoverageRegion(cov, prev.cov)) { // different cov, add to output previous group
-                addBlockDirectWriteOrc(ind, agg, bases, i, prev,
+                addBlockVectorizedWriterOrc(ind, agg, bases, i, prev,
                   contigVector, postStartVector, postEndVector, refVector, covVector, writer, batch, row
                 )
                 ind += 1;
                 prev.reset(i)
               } else if (currPos == partitionBounds.posEnd + 1) { // last item -> convert it
-                addBlockDirectWriteOrc(ind, agg, bases, i, prev,
+                addBlockVectorizedWriterOrc(ind, agg, bases, i, prev,
                   contigVector, postStartVector, postEndVector, refVector, covVector, writer, batch, row
                   )
                 ind += 1;
@@ -252,6 +339,7 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
       (prev.cov-altsCount).toShort,altsCount.toShort, prev.alt, qualsMap, agg.conf)
     prev.alt.clear()
   }
+
 
   def updateQuals(inputBase: Byte, quality: Byte, ref: Char, isPositive: Boolean, map: mutable.IntMap[Array[Short]]):Unit = {
     val base = if (!isPositive && inputBase == ref) ref.toByte else if (!isPositive) inputBase.toChar.toLower.toByte else inputBase
@@ -299,7 +387,7 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
       posEnd, ref, prev.cov.toShort, prev.cov.toShort, 0.toShort,null, null, agg.conf)
   }
 
-  private def addBlockDirectWriteOrc(ind:Int,
+  private def addBlockVectorizedWriterOrc(ind:Int,
                          agg:ContigAggregate,
                          bases:String, i:Int, prev:BlockProperties,
                          contigVector: BytesColumnVector,
@@ -318,6 +406,9 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
     postEndVector.vector(row) = posEnd
     refVector.setVal(row, ref.getBytes())
     covVector.vector(row) = prev.cov.toShort
+    if(!agg.conf.coverageOnly){
+      //add alts/quals
+    }
     batch.size+=1
 
     if (batch.size == batch.getMaxSize) {
