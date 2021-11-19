@@ -25,6 +25,7 @@ class RelativePositionTestSuite extends FunSuite{
     assert(conf.hasDel)
     assert (rs.expensiveRelativePosition(7801998) ==0)
     assert (rs.expensiveRelativePosition(7802099) ==100)
+    rs.cigarConf.resetCumState
     assert(rs.getBaseQualityForPosition(7801998)==0)
     assert(rs.getBaseQualityForPosition(7801999)==0)
     assert(rs.getBaseQualityForPosition(7802099)==0)
@@ -47,6 +48,7 @@ class RelativePositionTestSuite extends FunSuite{
     assert(conf.hasDel)
     assert (rs.expensiveRelativePosition(220108224) ==0)
     assert (rs.expensiveRelativePosition(220108325) ==100)
+    rs.cigarConf.resetCumState
     assert(rs.getBaseQualityForPosition(220108224)==0)
     assert(rs.getBaseQualityForPosition(220108325)==0)
     assertThrows[java.lang.ArrayIndexOutOfBoundsException](rs.getBaseQualityForPosition(220108326))

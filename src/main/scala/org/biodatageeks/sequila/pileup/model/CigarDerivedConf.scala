@@ -4,7 +4,7 @@ import htsjdk.samtools.{Cigar, CigarOperator}
 
 import scala.collection.mutable
 
-import scala.collection.mutable.{ArrayBuffer}
+import scala.collection.mutable.ArrayBuffer
 
 import scala.util.control.Breaks.{break, breakable}
 
@@ -24,6 +24,13 @@ case class CigarDerivedConf(
 
   private var delCumSum: Int = 0
   private var delPos: Int = 0
+
+  def resetCumState: Unit = {
+    delCumSum = 0
+    delPos = 0
+    insertCumSum = 0
+    insertPos = 0
+  }
 
   def getInsertOffsetForPosition(position:Int): Int = {
     val pos = position + leftClipLength
