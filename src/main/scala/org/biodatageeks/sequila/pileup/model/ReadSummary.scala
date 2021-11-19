@@ -1,7 +1,6 @@
 package org.biodatageeks.sequila.pileup.model
 
 import htsjdk.samtools.Cigar
-
 import scala.util.control.Breaks.{break, breakable}
 
 
@@ -68,7 +67,7 @@ case class ReadSummary(start: Int, end: Int,
     if (!cigarConf.hasDel)
       return false
     val arr = cigarConf.indelPositions.delPositions
-    var i = hasDelPos
+    var i = Math.max(0, hasDelPos - 1)
     var res = false
     breakable{
       while(i < arr.length){
