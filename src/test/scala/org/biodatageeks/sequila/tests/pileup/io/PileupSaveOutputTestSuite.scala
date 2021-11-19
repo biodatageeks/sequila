@@ -72,7 +72,7 @@ class PileupSaveOutputTestSuite
 
   }
 
-  test("ORC save - vectorized"){
+  test("ORC - DataFrame save - vectorized"){
     val ss = SequilaSession(spark)
     SequilaRegister.register(ss)
     ss
@@ -96,6 +96,32 @@ class PileupSaveOutputTestSuite
     assertRDDEquals(covRefDF.rdd, covTestDF.rdd)
   }
 
+  test("ORC - SQL CTaS - vectorized"){
+    val ss = SequilaSession(spark)
+    SequilaRegister.register(ss)
+    ss
+      .sqlContext
+      .setConf(InternalParams.useVectorizedOrcWriter, "true")
+    val orcCoveragePath = s"$coveragePath/orc/"
+    cleanup(orcCoveragePath)
+    val tableLocation = s"${orcCoveragePath}/x"
+    val ctasQuery =
+      s"""
+         |CREATE TABLE X USING ORC LOCATION '${tableLocation}' AS SELECT *
+         |FROM  pileup('$tableName', '${sampleId}', '${referencePath}', false, false)
+           """.stripMargin
+    ss.sql(ctasQuery)
+    ss
+      .sqlContext
+      .setConf(InternalParams.useVectorizedOrcWriter, "false")
+    val covRefDF = ss.sql(queryCoverage)
+    val covTestDF = ss
+      .read
+      .orc(tableLocation)
+        assert(covRefDF.count === covTestDF.count())
+        assertRDDEquals(covRefDF.rdd, covTestDF.rdd)
+
+  }
   override def afterAll {
     cleanup(baseOutputPath)
   }

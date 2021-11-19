@@ -5,6 +5,7 @@ import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions.Attribute
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.execution.SparkPlan
+import org.apache.spark.sql.execution.command.CreateDataSourceTableAsSelectCommand
 import org.apache.spark.sql.execution.datasources.InsertIntoHadoopFsRelationCommand
 import org.apache.spark.sql.{PileupTemplate, SparkSession, Strategy}
 import org.biodatageeks.sequila.datasources.BAM.BDGAlignFileReaderWriter
@@ -22,9 +23,15 @@ class PileupStrategy (spark:SparkSession) extends Strategy with Serializable {
   var vectorizedOrcWritePath: String = null
   override def apply(plan: LogicalPlan): Seq[SparkPlan] = {
     plan match {
-
+      case CreateDataSourceTableAsSelectCommand(table, mode, query, outputColumnNames) => {
+         table.storage.locationUri match {
+           case Some(path) => vectorizedOrcWritePath = path.getPath
+           case None => None
+         }
+        Nil
+      }
       case InsertIntoHadoopFsRelationCommand(outputPath, staticPartitions, ifPartitionNotExists, partitionColumns, bucketSpec, fileFormat, options, query, mode, catalogTable, fileIndex, outputColumnNames) => {
-        vectorizedOrcWritePath = outputPath.toString //FIXME: Add support for CTAS and other not just .save()
+        vectorizedOrcWritePath = outputPath.toString
         Nil
       }
       case PileupTemplate(tableName, sampleId, refPath, alts, quals, binSize, output) =>
@@ -82,6 +89,8 @@ case class PileupPlan [T<:BDGAlignInputFormat](plan:LogicalPlan, spark:SparkSess
         conf.orcCompressCodec = orcCompressCodec
         conf.vectorizedOrcWriterPath = directOrcWritePath
       }
+      else
+        conf.vectorizedOrcWriterPath = null
       conf.coverageOnly = true
       conf.outputFieldsNum = output.size
       return conf
