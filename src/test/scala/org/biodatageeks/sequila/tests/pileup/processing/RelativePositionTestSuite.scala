@@ -149,14 +149,8 @@ class RelativePositionTestSuite extends FunSuite{
 //    assert(conf.hasDel)
 //    assert (rs.relativePosition(104) < 101 )
 //    assert (rs.relativePosition(117) < 101 )
-    conf.indelPositions.delPositions.printTree()
 
-    println ("overlappers withoutEnd")
-    val it = conf.indelPositions.delPositions.overlappersWithoutEnd(116)
-    while (it.hasNext) {
-      val node = it.next()
-      println("NODE " + node)
-    }
+
   }
 
   test("relative test #6") {

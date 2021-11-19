@@ -14,6 +14,7 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 
   var unknownContigName: String = "UCN"
   var coverageOnly: Boolean = false
+  var outputFieldsNum = 9
 
   override def toString: String = {
     ReflectionToStringBuilder.toString(this, ToStringStyle.SHORT_PREFIX_STYLE)

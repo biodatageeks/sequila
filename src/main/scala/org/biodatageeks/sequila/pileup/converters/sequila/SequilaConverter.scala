@@ -4,7 +4,7 @@ import com.github.mrpowers.spark.daria.sql.SparkSessionExt._
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.biodatageeks.sequila.pileup.PileupReader
 import org.biodatageeks.sequila.pileup.converters.common.{CommonPileupFormat, PileupConverter}
-import org.biodatageeks.sequila.utils.Columns
+import org.biodatageeks.sequila.utils.{AlignmentConstants, Columns}
 
 
 class SequilaConverter (spark: SparkSession) extends Serializable with PileupConverter {
@@ -38,7 +38,10 @@ class SequilaConverter (spark: SparkSession) extends Serializable with PileupCon
         var position = start
 
         while (position < end) {
-          array(cnt) = (chr, position, position, ref.substring(cnt, cnt + 1), cov, altsMap, qualsMap)
+          if (ref==AlignmentConstants.REF_SYMBOL)
+            array(cnt) = (chr, position, position, "R", cov, altsMap, qualsMap)
+            else
+            array(cnt) = (chr, position, position, ref.substring(cnt, cnt + 1), cov, altsMap, qualsMap)
           cnt +=1
           position+=1
         }

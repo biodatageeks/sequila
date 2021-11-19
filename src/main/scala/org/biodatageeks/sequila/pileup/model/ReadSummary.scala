@@ -50,13 +50,9 @@ case class ReadSummary(start: Int, end: Int,
     if (!cigarConf.hasDel)
       false
     else {
-      val postition = pos + leftClipLen
-      if (cigarConf
+      cigarConf
         .indelPositions
-        .delPositions.minOverlapperExcludeLeft(postition, postition) != null)
-        true
-      else
-        false
+        .delPositions.exists { case (start, end) => pos + leftClipLen >= start && pos + leftClipLen < end }
     }
   }
 }

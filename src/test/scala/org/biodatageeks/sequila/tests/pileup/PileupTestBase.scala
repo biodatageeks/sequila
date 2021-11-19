@@ -5,6 +5,9 @@ import org.apache.spark.storage.StorageLevel
 import org.biodatageeks.sequila.utils.InternalParams
 import org.scalatest.{BeforeAndAfter, FunSuite}
 
+import java.io.File
+import scala.reflect.io.Directory
+
 
 class PileupTestBase extends FunSuite
   with DataFrameSuiteBase
@@ -20,6 +23,27 @@ class PileupTestBase extends FunSuite
   val cramPath : String = getClass.getResource(s"/multichrom/mdcram/${sampleId}.cram").getPath
   val tableName = "reads_bam"
   val tableNameCRAM = "reads_cram"
+
+  def cleanup(dir: String) = {
+    val directory = new Directory(new File(dir))
+    directory.deleteRecursively()
+  }
+
+  val queryCoverage =
+    s"""
+       |SELECT *
+       |FROM  pileup('$tableName', '${sampleId}', '$referencePath', false, false)
+                         """.stripMargin
+
+  val queryPileupWithQual =
+    s"""
+       |SELECT *
+       |FROM  pileup('$tableName', '${sampleId}', '$referencePath', true, true)
+                         """.stripMargin
+
+
+
+  def randomString(length: Int) = scala.util.Random.alphanumeric.take(length).mkString
 
   before {
     System.setProperty("spark.kryo.registrator", "org.biodatageeks.sequila.pileup.serializers.CustomKryoRegistrator")
