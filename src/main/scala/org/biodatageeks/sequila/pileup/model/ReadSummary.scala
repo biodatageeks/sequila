@@ -19,6 +19,8 @@ case class ReadSummary(start: Int, end: Int,
   private var delPos: Int = 0
 
   private var hasDelPos: Int = 0
+  private var hasDelLowerBound: Int = 0
+  private var hasDelUpperBound: Int = 0
 
   def resetCumState(): Unit = {
     delCumSum = 0
@@ -61,39 +63,40 @@ case class ReadSummary(start: Int, end: Int,
     getInsertOffsetForPosition(pos)- getDelOffsetForPosition(pos)
   }
 
-
-//  def hasDeletionOnPosition(position:Int): Boolean = {
-//    val pos = position + cigarConf.leftClipLength
-//    if (!cigarConf.hasDel)
-//      return false
-//    val arr = cigarConf.indelPositions.delPositions
-//    var i = hasDelPos
-//    var res = false
-//    breakable{
-//      while(i < cigarConf.delsLen){
-//        if(pos >= arr(i)._1 && pos < arr(i)._2)
-//          res = true
-//        else {
-//          i += 1
-//          break
-//        }
-//        i+=1
-//      }
-//    }
-//    hasDelPos = i - 1
-//    res
-//  }
-
   @inline
-  def hasDeletionOnPosition(pos: Int): Boolean = {
-    val leftClipLen = cigarConf.leftClipLength
+  def hasDeletionOnPosition(position:Int): Boolean = {
+    val pos = position + cigarConf.leftClipLength
     if (!cigarConf.hasDel)
-      false
-    else
-      cigarConf
-        .indelPositions
-        .delPositions.exists { case (start, end) => pos + leftClipLen >= start && pos + leftClipLen < end }
+      return false
+    val arr = cigarConf.indelPositions.delPositions
+    var i = hasDelPos
+    var res = false
+    breakable {
+      while (i < cigarConf.delsLen) {
+        if (pos < arr(i)._1) {
+         break
+        }
+        else if (pos >= arr(i)._1 && pos < arr(i)._2) {
+          res = true
+          break
+        }
+        i += 1
+      }
+    }
+    hasDelPos = i
+    res
   }
+
+//  @inline
+//  def hasDeletionOnPosition(pos: Int): Boolean = {
+//    val leftClipLen = cigarConf.leftClipLength
+//    if (!cigarConf.hasDel)
+//      false
+//    else
+//      cigarConf
+//        .indelPositions
+//        .delPositions.exists { case (start, end) => pos + leftClipLen >= start && pos + leftClipLen < end }
+//  }
 
   def getInsertOffsetForPosition(position:Int): Int = {
     val pos = position + cigarConf.leftClipLength
