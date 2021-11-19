@@ -19,8 +19,6 @@ case class ReadSummary(start: Int, end: Int,
   private var delPos: Int = 0
 
   private var hasDelPos: Int = 0
-  private var hasDelLowerBound: Int = 0
-  private var hasDelUpperBound: Int = 0
 
   def resetCumState(): Unit = {
     delCumSum = 0
@@ -98,6 +96,7 @@ case class ReadSummary(start: Int, end: Int,
 //        .delPositions.exists { case (start, end) => pos + leftClipLen >= start && pos + leftClipLen < end }
 //  }
 
+  @inline
   def getInsertOffsetForPosition(position:Int): Int = {
     val pos = position + cigarConf.leftClipLength
     val arr = cigarConf.indelPositions.insertPositions
@@ -117,6 +116,7 @@ case class ReadSummary(start: Int, end: Int,
     sum
   }
 
+  @inline
   def getDelOffsetForPosition(position:Int): Int = {
     val pos = position + cigarConf.leftClipLength
     val arr = cigarConf.indelPositions.delPositions
