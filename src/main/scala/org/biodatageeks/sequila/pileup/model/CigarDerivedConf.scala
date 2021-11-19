@@ -19,56 +19,7 @@ case class CigarDerivedConf(
                              leftClipLength: Int,
                              indelPositions: InDelPositions = null
                            ) {
-  private var insertCumSum: Int = 0
-  private var insertPos: Int = 0
 
-  private var delCumSum: Int = 0
-  private var delPos: Int = 0
-
-  def resetCumState: Unit = {
-    delCumSum = 0
-    delPos = 0
-    insertCumSum = 0
-    insertPos = 0
-  }
-
-  def getInsertOffsetForPosition(position:Int): Int = {
-    val pos = position + leftClipLength
-    val arr = indelPositions.insertPositions
-    var i = insertPos
-    var sum = insertCumSum
-    breakable{
-      while(i < arr.length){
-        if(pos >= arr(i)._1)
-          sum += arr(i)._2
-        else
-          break
-        i+=1
-      }
-    }
-    insertCumSum = sum
-    insertPos = i
-    sum
-  }
-
-  def getDelOffsetForPosition(position:Int): Int = {
-    val pos = position + leftClipLength
-    val arr = indelPositions.delPositions
-    var i = delPos
-    var sum = delCumSum
-    breakable {
-      while (i < arr.length) {
-        if (pos >= arr(i)._1)
-          sum += (arr(i)._2 - arr(i)._1 )
-        else
-          break
-        i += 1
-      }
-    }
-    delCumSum = sum
-    delPos = i
-    sum
-  }
 }
 
 object CigarDerivedConf {

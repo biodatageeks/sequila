@@ -39,7 +39,7 @@ case class ContigAggregate(
   def addReadToBuffer(rs: ReadSummary): Unit = {
     if (!conf.includeBaseQualities)
       return
-    rs.cigarConf.resetCumState
+    rs.resetCumState
     rsTree.put(rs.start, rs.end, rs)
     ()
   }
