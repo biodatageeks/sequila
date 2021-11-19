@@ -3,12 +3,14 @@ package org.biodatageeks.sequila.pileup.model
 import htsjdk.samtools.{Cigar, CigarOperator}
 
 import scala.collection.mutable
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import org.biodatageeks.sequila.rangejoins.methods.IntervalTree.IntervalTreeRedBlack
 
+import scala.util.control.Breaks.{break, breakable}
+
 case class InDelPositions(
-                           delPositions:IntervalTreeRedBlack[(Int)],
-                           insertPositions: ListBuffer[(Int,Int)]
+                           delPositions:ArrayBuffer[(Int, Int)],
+                           insertPositions: ArrayBuffer[(Int,Int)]
                          )
 case class CigarDerivedConf(
                              hasClip: Boolean,
@@ -17,24 +19,48 @@ case class CigarDerivedConf(
                              leftClipLength: Int,
                              indelPositions: InDelPositions = null
                            ) {
+  private var insertCumSum: Int = 0
+  private var insertPos: Int = 0
+
+  private var delCumSum: Int = 0
+  private var delPos: Int = 0
+
   def getInsertOffsetForPosition(position:Int): Int = {
     val pos = position + leftClipLength
-    val filtered = indelPositions
-      .insertPositions
-      .filter{case (start, _) => (pos >= start )}
-    val lengths = filtered.map(_._2)
-    val lenSum = lengths.sum
-    lenSum
+    val arr = indelPositions.insertPositions
+    var i = insertPos
+    var sum = insertCumSum
+    breakable{
+      while(i < arr.length){
+        if(pos >= arr(i)._1)
+          sum += arr(i)._2
+        else
+          break
+        i+=1
+      }
+    }
+    insertCumSum = sum
+    insertPos = i
+    sum
   }
+
   def getDelOffsetForPosition(position:Int): Int = {
     val pos = position + leftClipLength
-    val delIterator = indelPositions.delPositions.overlappersWithoutEnd(pos)
-    var lenSum = 0
-    while (delIterator.hasNext){
-      val next = delIterator.next()
-      lenSum += next.getValue.get(0)
+    val arr = indelPositions.delPositions
+    var i = delPos
+    var sum = delCumSum
+    breakable {
+      while (i < arr.length) {
+        if (pos >= arr(i)._1)
+          sum += (arr(i)._2 - arr(i)._1 )
+        else
+          break
+        i += 1
+      }
     }
-    lenSum
+    delCumSum = sum
+    delPos = i
+    sum
   }
 }
 
@@ -53,8 +79,8 @@ object CigarDerivedConf {
 
 
   private def calculateIndelPositions(start: Int, cigar:Cigar): InDelPositions = {
-    val delPositions = new IntervalTreeRedBlack[(Int)]()
-    val insertPositions  = new mutable.ListBuffer[(Int,Int)]()
+    val delPositions = new ArrayBuffer[(Int, Int)]()
+    val insertPositions  = new ArrayBuffer[(Int,Int)]()
     val cigarIterator = cigar.iterator()
     var positionFromCigar = start
     while (cigarIterator.hasNext) {
@@ -65,7 +91,7 @@ object CigarDerivedConf {
         val eventStart = positionFromCigar
         val eventEnd = positionFromCigar + cigarOperatorLen
         if (cigarOperator == CigarOperator.DELETION)
-          delPositions.put(eventStart, eventEnd, eventEnd - eventStart)
+          delPositions.append((eventStart, eventEnd) )
         else if (cigarOperator == CigarOperator.INSERTION){
           insertPositions.append((eventStart, cigarOperatorLen))
         }
