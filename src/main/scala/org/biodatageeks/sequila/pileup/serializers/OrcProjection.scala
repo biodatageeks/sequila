@@ -15,7 +15,7 @@ object OrcProjection {
         case MapType(k, v, valueContainsNull) => {
           v match {
             case ArrayType(elementType, containsNull) =>{
-              schema.addField(a.name, TypeDescription.createMap(convertBasicType(k), TypeDescription.createBinary()) )
+              schema.addField(a.name, TypeDescription.createMap(convertBasicType(k), TypeDescription.createList(convertBasicType(ShortType)) ) ) //FIMXE: take array type from v
             }
             case _ => schema.addField(a.name, TypeDescription.createMap(convertBasicType(k), convertBasicType(v)))
           }

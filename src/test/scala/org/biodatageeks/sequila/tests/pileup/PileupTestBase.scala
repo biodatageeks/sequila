@@ -38,7 +38,7 @@ class PileupTestBase extends FunSuite
   val queryPileupWithQual =
     s"""
        |SELECT *
-       |FROM  pileup('$tableName', '${sampleId}', '$referencePath', true, true)
+       |FROM  pileup('$tableName', '${sampleId}', '$referencePath', true, false)
                          """.stripMargin
 
 

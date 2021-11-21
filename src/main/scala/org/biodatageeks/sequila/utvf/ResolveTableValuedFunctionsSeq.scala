@@ -243,8 +243,8 @@ object PileupTemplate {
               basicOutput
               .add(StructField(Columns.COUNT_REF,ShortType,nullable = false))
               .add(StructField(Columns.COUNT_NONREF,ShortType,nullable = false))
-             .add(StructField(Columns.ALTS,MapType(ByteType,ShortType),nullable = true))
-             .add(StructField(Columns.QUALS,MapType(IntegerType,ArrayType(ShortType)),nullable = true))
+              .add(StructField(Columns.ALTS,MapType(ByteType,ShortType),nullable = true))
+              .add(StructField(Columns.QUALS,MapType(IntegerType,ArrayType(ShortType)),nullable = true))
 
     val outputAttrs = output.toAttributes
 
