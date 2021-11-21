@@ -258,7 +258,7 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
 
     map.get(base) match {
       case None =>
-        val arr =  new Array[Short](41)
+        val arr =  new Array[Short](100)
         arr(quality) = 1
         map.put(base, arr)
       case Some(baseQuals) =>

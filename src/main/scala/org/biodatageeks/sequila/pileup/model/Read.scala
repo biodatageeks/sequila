@@ -14,14 +14,15 @@ case class TruncRead(rName: String, contig: String, posStart: Int, posEnd: Int)
 case class ExtendedReads(read: SAMRecord) {
 
   def analyzeRead(agg: ContigAggregate): Unit = {
-    calculateEvents(agg)
+    if(read.getStart < read.getEnd) {
+      calculateEvents(agg)
+      if (agg.conf.coverageOnly)
+        return
+      val rs = ReadSummary(read.getStart, read.getEnd, read.getReadBases, read.getBaseQualities, !read.getReadNegativeStrandFlag, read.getCigar)
+      calculateAlts(agg, rs)
+      agg.addReadToBuffer(rs)
+    }
 
-    if (agg.conf.coverageOnly)
-      return
-
-    val rs = ReadSummary(read.getStart, read.getEnd, read.getReadBases, read.getBaseQualities, ! read.getReadNegativeStrandFlag, read.getCigar)
-    calculateAlts(agg, rs)
-    agg.addReadToBuffer(rs)
   }
 
   def calculateEvents(agg: ContigAggregate): Unit = {
