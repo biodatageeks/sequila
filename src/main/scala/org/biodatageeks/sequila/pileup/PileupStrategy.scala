@@ -95,9 +95,6 @@ case class PileupPlan [T<:BDGAlignInputFormat](plan:LogicalPlan, spark:SparkSess
       conf.outputFieldsNum = output.size
       return conf
     }
-
-    else
-      conf.vectorizedOrcWriterPath = null
     val maxQual = spark.conf.get(InternalParams.maxBaseQualityValue, DEFAULT_MAX_QUAL.toString).toInt
     conf.maxQuality = maxQual
     conf.maxQualityIndex = maxQual + 1

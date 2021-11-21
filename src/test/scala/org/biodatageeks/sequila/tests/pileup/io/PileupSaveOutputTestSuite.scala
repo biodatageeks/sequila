@@ -141,7 +141,7 @@ class PileupSaveOutputTestSuite
     ss
       .sqlContext
       .setConf(InternalParams.useVectorizedOrcWriter, "false")
-    pileupRefDF = ss.sql(queryCoverage)
+    pileupRefDF = ss.sql(queryPileupWithQual)
     assert(pileupRefDF.count === pileupTestDF.count())
     assertRDDEquals(pileupRefDF.rdd, pileupTestDF.rdd)
   }
