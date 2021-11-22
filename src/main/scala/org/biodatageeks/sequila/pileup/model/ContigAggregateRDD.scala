@@ -2,7 +2,7 @@ package org.biodatageeks.sequila.pileup.model
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
-import org.apache.hadoop.hive.ql.exec.vector.{BytesColumnVector, ListColumnVector, LongColumnVector, MapColumnVector, VectorizedRowBatch}
+import org.apache.hadoop.hive.ql.exec.vector.{BytesColumnVector, ColumnVector, ListColumnVector, LongColumnVector, MapColumnVector, VectorizedRowBatch}
 import org.apache.hadoop.io.{IntWritable, NullWritable, ShortWritable, Text}
 import org.apache.orc.{OrcFile, TypeDescription, Writer}
 import org.apache.orc.mapred.OrcStruct
@@ -29,6 +29,8 @@ object AggregateRDDOperations {
 
 case class AggregateRDD(rdd: RDD[ContigAggregate]) {
   val logger: Logger = LoggerFactory.getLogger(this.getClass.getCanonicalName)
+  val QUALITY_ARRAY_SIZE = 41
+  val ALTS_MAP_SIZE = 10
 
   def isInPartitionRange(currPos: Int, contig: String, bound: PartitionBounds,conf:Conf): Boolean = {
     if (contig == bound.contigStart && contig == bound.contigEnd)
@@ -140,14 +142,21 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
         val covVector = batch.cols(4).asInstanceOf[LongColumnVector]
         val countRefVector = batch.cols(5).asInstanceOf[LongColumnVector]
         val countNonRefVector = batch.cols(6).asInstanceOf[LongColumnVector]
+
+        val BATCH_SIZE = batch.getMaxSize
         //alts
         val altsMapVector = batch.cols(7).asInstanceOf[MapColumnVector]
         val altsMapKey = altsMapVector.keys.asInstanceOf[LongColumnVector]
         val altsMapValue = altsMapVector.values.asInstanceOf[LongColumnVector]
-        val ALTS_MAP_SIZE = 10
-        val BATCH_SIZE = batch.getMaxSize
         altsMapKey.ensureSize(BATCH_SIZE * ALTS_MAP_SIZE, false)
         altsMapValue.ensureSize(BATCH_SIZE * ALTS_MAP_SIZE, false)
+        //quals
+        val qualsMapVector = batch.cols(8).asInstanceOf[MapColumnVector]
+        val qualsMapKey = qualsMapVector.keys.asInstanceOf[LongColumnVector]
+        val qualsMapValue = qualsMapVector.values.asInstanceOf[ListColumnVector]
+        qualsMapKey.ensureSize(BATCH_SIZE * ALTS_MAP_SIZE, false)
+        qualsMapValue.ensureSize(BATCH_SIZE * ALTS_MAP_SIZE, false)
+        qualsMapVector.values.asInstanceOf[ListColumnVector].child.ensureSize(BATCH_SIZE * ALTS_MAP_SIZE * QUALITY_ARRAY_SIZE, false)
 
         var row: Int = 0
         breakable {
@@ -168,7 +177,9 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
                   covVector,
                   countRefVector,
                   countNonRefVector,
-                  altsMapVector, writer, batch, row)
+                  altsMapVector,
+                  qualsMapVector,
+                  writer, batch, row)
                 ind += 1;
                 prev.reset(i)
                 if (agg.hasAltOnPosition(currPos))
@@ -180,7 +191,9 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
                     contigVector, postStartVector, postEndVector, refVector, covVector,
                     countRefVector,
                     countNonRefVector,
-                    altsMapVector, writer, batch, row
+                    altsMapVector,
+                    qualsMapVector,
+                    writer, batch, row
                   )
                   ind += 1;
                   prev.reset(i)
@@ -194,7 +207,9 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
                   contigVector, postStartVector, postEndVector, refVector, covVector,
                   countRefVector,
                   countNonRefVector,
-                  altsMapVector,  writer, batch, row
+                  altsMapVector,
+                  qualsMapVector,
+                  writer, batch, row
                 )
                 ind += 1;
                 prev.reset(i)
@@ -203,7 +218,9 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
                   contigVector, postStartVector, postEndVector, refVector, covVector,
                   countRefVector,
                   countNonRefVector,
-                  altsMapVector, writer, batch, row
+                  altsMapVector,
+                  qualsMapVector,
+                  writer, batch, row
                 )
                 ind += 1;
                 prev.reset(i)
@@ -330,6 +347,7 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
                   null,
                   null,
                   null,
+                  null,
                    writer, batch, row
                 )
                 ind += 1;
@@ -337,6 +355,7 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
               } else if (currPos == partitionBounds.posEnd + 1) { // last item -> convert it
                 addBlockVectorizedWriterOrc(ind, agg, bases, i, prev,
                   contigVector, postStartVector, postEndVector, refVector, covVector,
+                  null,
                   null,
                   null,
                   null,
@@ -392,6 +411,7 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
                             countRefVector: LongColumnVector = null,
                             countNonRefVector: LongColumnVector = null,
                             altsMapVector: MapColumnVector = null,
+                            qualsMapVector: MapColumnVector = null,
                             writer: Writer,
                             batch: VectorizedRowBatch,
                             row: Int,
@@ -411,15 +431,40 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
     altsMapVector.offsets(row) = altsMapVector.childCount
     altsMapVector.lengths(row) = prev.alt.size
     altsMapVector.childCount  += prev.alt.size
-    val mapOffset = altsMapVector.offsets(row).toInt
-    var mapElem: Int = mapOffset
+    val altsMapOffset = altsMapVector.offsets(row).toInt
+    var altsMapElem: Int = altsMapOffset
     val alts = prev.alt.toIterator
     while(alts.hasNext){
       val alt = alts.next()
-      altsMapVector.keys.asInstanceOf[LongColumnVector].vector(mapElem) = alt._1
-      altsMapVector.values.asInstanceOf[LongColumnVector].vector(mapElem) = alt._2
-      mapElem += 1
+      altsMapVector.keys.asInstanceOf[LongColumnVector].vector(altsMapElem) = alt._1
+      altsMapVector.values.asInstanceOf[LongColumnVector].vector(altsMapElem) = alt._2
+      altsMapElem += 1
     }
+
+    qualsMapVector.offsets(row) = qualsMapVector.childCount
+    qualsMapVector.lengths(row) = qualsMap.size
+    qualsMapVector.childCount  += qualsMap.size
+    val qualsMapOffset = qualsMapVector.offsets(row).toInt
+    val quals = qualsMap.toIterator
+    var qualMapElem: Int = qualsMapOffset
+    while(quals.hasNext){
+      val qual = quals.next()
+      qualsMapVector.keys.asInstanceOf[LongColumnVector].vector(qualMapElem) = qual._1
+      qualsMapVector.values.asInstanceOf[ListColumnVector].offsets(qualMapElem) = qualsMapVector.values.asInstanceOf[ListColumnVector].childCount
+      qualsMapVector.values.asInstanceOf[ListColumnVector].lengths(qualMapElem) = QUALITY_ARRAY_SIZE
+      qualsMapVector.values.asInstanceOf[ListColumnVector].childCount += QUALITY_ARRAY_SIZE
+      val offset = qualsMapVector.values.asInstanceOf[ListColumnVector].offsets(qualMapElem).toInt
+      var i = 0
+      while(i < QUALITY_ARRAY_SIZE) {
+        qualsMapVector.values.asInstanceOf[ListColumnVector].child.asInstanceOf[LongColumnVector].vector(i+offset) = qual._2(i)
+        i+=1
+      }
+      qualMapElem += 1
+    }
+
+
+
+
     batch.size += 1
 
     if (batch.size == batch.getMaxSize) {
@@ -493,6 +538,7 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
                          countRefVector: LongColumnVector = null,
                          countNonRefVector: LongColumnVector = null,
                          altsMapVector: MapColumnVector = null,
+                         qualsMapVector: MapColumnVector = null,
                          writer: Writer,
                          batch: VectorizedRowBatch, row: Int, altsMapSize: Int = 10): Unit = {
 
@@ -510,6 +556,8 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
       countNonRefVector.vector(row) = 0.toShort
       altsMapVector.isNull(row) = true
       altsMapVector.noNulls = false
+      qualsMapVector.isNull(row) = true
+      qualsMapVector.noNulls = false
     }
     batch.size += 1
 

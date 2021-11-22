@@ -146,8 +146,8 @@ class PileupSaveOutputTestSuite
       .setConf(InternalParams.useVectorizedOrcWriter, "false")
     pileupRefDF = ss.sql(queryPileupWithQual)
     assert(pileupRefDF.count === pileupTestDF.count)
-    pileupRefDF.where("pos_start==25").show()
-    pileupTestDF.where("pos_start==25").show()
+    pileupRefDF.where("pos_start==25").show(false)
+    pileupTestDF.where("pos_start==25").show(false)
     assertRDDEquals(pileupRefDF.rdd, pileupTestDF.rdd)
   }
   override def afterAll {
