@@ -144,7 +144,6 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
         val altsMapVector = batch.cols(7).asInstanceOf[MapColumnVector]
         val altsMapKey = altsMapVector.keys.asInstanceOf[LongColumnVector]
         val altsMapValue = altsMapVector.values.asInstanceOf[LongColumnVector]
-        altsMapVector.noNulls = false
         val ALTS_MAP_SIZE = 10
         val BATCH_SIZE = batch.getMaxSize
         altsMapKey.ensureSize(BATCH_SIZE * ALTS_MAP_SIZE, false)
@@ -410,19 +409,17 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
     countRefVector.vector(row) = (prev.cov-altsCount).toShort
     countNonRefVector.vector(row) = altsCount.toShort
     altsMapVector.offsets(row) = altsMapVector.childCount
-    altsMapVector.lengths(row) = altsMapSize
-    altsMapVector.childCount  += altsMapSize
+    altsMapVector.lengths(row) = prev.alt.size
+    altsMapVector.childCount  += prev.alt.size
     val mapOffset = altsMapVector.offsets(row).toInt
     var mapElem: Int = mapOffset
     val alts = prev.alt.toIterator
-    while(mapElem < mapOffset + altsMapSize && alts.hasNext){
+    while(alts.hasNext){
       val alt = alts.next()
       altsMapVector.keys.asInstanceOf[LongColumnVector].vector(mapElem) = alt._1
       altsMapVector.values.asInstanceOf[LongColumnVector].vector(mapElem) = alt._2
       mapElem += 1
     }
-
-
     batch.size += 1
 
     if (batch.size == batch.getMaxSize) {
@@ -512,6 +509,7 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
       countRefVector.vector(row) = prev.cov.toShort
       countNonRefVector.vector(row) = 0.toShort
       altsMapVector.isNull(row) = true
+      altsMapVector.noNulls = false
     }
     batch.size += 1
 
