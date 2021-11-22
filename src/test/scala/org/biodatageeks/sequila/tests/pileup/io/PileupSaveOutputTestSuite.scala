@@ -124,6 +124,9 @@ class PileupSaveOutputTestSuite
 
   test("ORC - pileup - DataFrame save - vectorized"){
     val ss = SequilaSession(spark)
+    ss
+      .sqlContext
+      .setConf("spark.sql.orc.compression.codec", "ZLIB")
     SequilaRegister.register(ss)
     ss
       .sqlContext
@@ -142,7 +145,9 @@ class PileupSaveOutputTestSuite
       .sqlContext
       .setConf(InternalParams.useVectorizedOrcWriter, "false")
     pileupRefDF = ss.sql(queryPileupWithQual)
-    assert(pileupRefDF.count === pileupTestDF.count())
+    assert(pileupRefDF.count === pileupTestDF.count)
+    pileupRefDF.where("pos_start==25").show()
+    pileupTestDF.where("pos_start==25").show()
     assertRDDEquals(pileupRefDF.rdd, pileupTestDF.rdd)
   }
   override def afterAll {
