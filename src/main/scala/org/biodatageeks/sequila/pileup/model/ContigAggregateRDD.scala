@@ -385,12 +385,12 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
 
 
 
-  def updateQuals(inputBase: Byte, quality: Byte, ref: Char, isPositive: Boolean, map: mutable.IntMap[Array[Short]]):Unit = {
+  def updateQuals(inputBase: Byte, quality: Byte, ref: Char, isPositive: Boolean, map: mutable.IntMap[Array[Short]],maxQuality: Int):Unit = {
     val base = if (!isPositive && inputBase == ref) ref.toByte else if (!isPositive) inputBase.toChar.toLower.toByte else inputBase
 
     map.get(base) match {
       case None =>
-        val arr =  new Array[Short](VectorizedPileup.QUALITY_ARRAY_SIZE)
+        val arr =  new Array[Short](maxQuality)
         arr(quality) = 1
         map.put(base, arr)
       case Some(baseQuals) =>
