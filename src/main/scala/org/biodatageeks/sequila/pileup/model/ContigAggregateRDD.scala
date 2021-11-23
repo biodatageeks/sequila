@@ -1,21 +1,16 @@
 package org.biodatageeks.sequila.pileup.model
 
-import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.Path
-import org.apache.hadoop.hive.ql.exec.vector.{BytesColumnVector, ColumnVector, ListColumnVector, LongColumnVector, MapColumnVector, VectorizedRowBatch}
-import org.apache.hadoop.io.{IntWritable, NullWritable, ShortWritable, Text}
-import org.apache.orc.{OrcFile, TypeDescription, Writer}
-import org.apache.orc.mapred.OrcStruct
+import org.apache.hadoop.hive.ql.exec.vector.{ListColumnVector, LongColumnVector}
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions.Attribute
 import org.apache.spark.unsafe.types.UTF8String
 import org.biodatageeks.sequila.pileup.conf.Conf
-import org.biodatageeks.sequila.pileup.serializers.{OrcProjection, PileupProjection}
+import org.biodatageeks.sequila.pileup.serializers.PileupProjection
 import org.biodatageeks.sequila.pileup.model.Alts._
 import org.biodatageeks.sequila.pileup.partitioning.PartitionBounds
-import org.biodatageeks.sequila.utils.{AlignmentConstants, Columns, FastMath}
+import org.biodatageeks.sequila.utils.{AlignmentConstants, FastMath}
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.mutable
@@ -29,8 +24,7 @@ object AggregateRDDOperations {
 
 case class AggregateRDD(rdd: RDD[ContigAggregate]) {
   val logger: Logger = LoggerFactory.getLogger(this.getClass.getCanonicalName)
-  val QUALITY_ARRAY_SIZE = 41
-  val ALTS_MAP_SIZE = 10
+
 
   def isInPartitionRange(currPos: Int, contig: String, bound: PartitionBounds,conf:Conf): Boolean = {
     if (contig == bound.contigStart && contig == bound.contigEnd)
@@ -127,41 +121,12 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
         val partitionBounds = bounds.value(index)
         val bases = reference.getBasesFromReference(contigMap(agg.contig), agg.startPosition, agg.startPosition + maxIndex)
 
-        val hadoopConf = new Configuration()
-        hadoopConf.set("orc.compress", conf.value.orcCompressCodec )
-        val path = conf.value.vectorizedOrcWriterPath
-        val schema = OrcProjection.catalystToOrcSchema(output)
-        val writer = OrcFile
-          .createWriter(new Path(s"${path}/part-${index}-${System.currentTimeMillis()}.${conf.value.orcCompressCodec.toLowerCase}.orc"),
-            OrcFile.writerOptions(hadoopConf).setSchema(schema))
-        val batch = schema.createRowBatch
-        val contigVector = batch.cols(0).asInstanceOf[BytesColumnVector]
-        val postStartVector = batch.cols(1).asInstanceOf[LongColumnVector]
-        val postEndVector = batch.cols(2).asInstanceOf[LongColumnVector]
-        val refVector = batch.cols(3).asInstanceOf[BytesColumnVector]
-        val covVector = batch.cols(4).asInstanceOf[LongColumnVector]
-        val countRefVector = batch.cols(5).asInstanceOf[LongColumnVector]
-        val countNonRefVector = batch.cols(6).asInstanceOf[LongColumnVector]
-
-        val BATCH_SIZE = batch.getMaxSize
-        //alts
-        val altsMapVector = batch.cols(7).asInstanceOf[MapColumnVector]
-        val altsMapKey = altsMapVector.keys.asInstanceOf[LongColumnVector]
-        val altsMapValue = altsMapVector.values.asInstanceOf[LongColumnVector]
-        altsMapKey.ensureSize(BATCH_SIZE * ALTS_MAP_SIZE, false)
-        altsMapValue.ensureSize(BATCH_SIZE * ALTS_MAP_SIZE, false)
-        //quals
-        val qualsMapVector = batch.cols(8).asInstanceOf[MapColumnVector]
-        val qualsMapKey = qualsMapVector.keys.asInstanceOf[LongColumnVector]
-        val qualsMapValue = qualsMapVector.values.asInstanceOf[ListColumnVector]
-        qualsMapKey.ensureSize(BATCH_SIZE * ALTS_MAP_SIZE, false)
-        qualsMapValue.ensureSize(BATCH_SIZE * ALTS_MAP_SIZE, false)
-        qualsMapVector.values.asInstanceOf[ListColumnVector].child.ensureSize(BATCH_SIZE * ALTS_MAP_SIZE * QUALITY_ARRAY_SIZE, false)
+        val vp = VectorizedPileup.create(true, agg.conf, output, index)
 
         var row: Int = 0
         breakable {
           while (i <= maxIndex) {
-            row = batch.size
+            row = vp.batch.size
             currPos = i + startPosition
             cov += agg.events(i)
             if (isInPartitionRange(currPos - 1 , agg.contig, partitionBounds, agg.conf)) {
@@ -169,17 +134,7 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
                 prev.reset(i)
               }
               if (prev.hasAlt) {
-                addBaseRecordVectorizedWriterOrc(ind, agg, bases, i, prev,
-                  contigVector,
-                  postStartVector,
-                  postEndVector,
-                  refVector,
-                  covVector,
-                  countRefVector,
-                  countNonRefVector,
-                  altsMapVector,
-                  qualsMapVector,
-                  writer, batch, row)
+                addBaseRecordVectorizedWriterOrc(ind, agg, bases, i, prev, vp, row)
                 ind += 1;
                 prev.reset(i)
                 if (agg.hasAltOnPosition(currPos))
@@ -187,14 +142,7 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
               }
               else if (agg.hasAltOnPosition(currPos)) { // there is ALT in this posiion
                 if (prev.isNonZeroCoverage) { // there is previous group non-zero group -> convert it
-                  addBlockVectorizedWriterOrc(ind, agg, bases, i, prev,
-                    contigVector, postStartVector, postEndVector, refVector, covVector,
-                    countRefVector,
-                    countNonRefVector,
-                    altsMapVector,
-                    qualsMapVector,
-                    writer, batch, row
-                  )
+                  addBlockVectorizedWriterOrc(ind, agg, bases, i, prev, vp, row)
                   ind += 1;
                   prev.reset(i)
                 } else if (prev.isZeroCoverage) // previous ZERO group, clear block
@@ -203,25 +151,11 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
               } else if (isEndOfZeroCoverageRegion(cov, prev.cov, i)) { // coming back from zero coverage. clear block
                 prev.reset(i)
               } else if (isChangeOfCoverage(cov, prev.cov,  i) || isStartOfZeroCoverageRegion(cov, prev.cov)) { // different cov, add to output previous group
-                addBlockVectorizedWriterOrc(ind, agg, bases, i, prev,
-                  contigVector, postStartVector, postEndVector, refVector, covVector,
-                  countRefVector,
-                  countNonRefVector,
-                  altsMapVector,
-                  qualsMapVector,
-                  writer, batch, row
-                )
+                addBlockVectorizedWriterOrc(ind, agg, bases, i, prev, vp, row)
                 ind += 1;
                 prev.reset(i)
               } else if (currPos == partitionBounds.posEnd + 1) { // last item -> convert it
-                addBlockVectorizedWriterOrc(ind, agg, bases, i, prev,
-                  contigVector, postStartVector, postEndVector, refVector, covVector,
-                  countRefVector,
-                  countNonRefVector,
-                  altsMapVector,
-                  qualsMapVector,
-                  writer, batch, row
-                )
+                addBlockVectorizedWriterOrc(ind, agg, bases, i, prev, vp, row)
                 ind += 1;
                 prev.reset(i)
                 break
@@ -232,18 +166,16 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
             i += 1
           } // while
         }
-        if (batch.size != 0) {
-          writer.addRowBatch(batch)
-          batch.reset
+        if (vp.batch.size != 0) {
+          vp.writer.addRowBatch(vp.batch)
+          vp.batch.reset
         }
-        writer.close
+        vp.writer.close
         result
       }
       }
     }
   }
-
-
 
   def toCoverage(bounds: Broadcast[Array[PartitionBounds]] ) : RDD[InternalRow] = {
 
@@ -315,24 +247,13 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
         val partitionBounds = bounds.value(index)
         val bases = AlignmentConstants.REF_SYMBOL
 
-        val hadoopConf = new Configuration()
-        hadoopConf.set("orc.compress", conf.value.orcCompressCodec )
-        val path = conf.value.vectorizedOrcWriterPath
-        val schema = OrcProjection.catalystToOrcSchema(output)
-        val writer = OrcFile
-          .createWriter(new Path(s"${path}/part-${index}-${System.currentTimeMillis()}.${conf.value.orcCompressCodec.toLowerCase}.orc"),
-          OrcFile.writerOptions(hadoopConf).setSchema(schema))
-        val batch = schema.createRowBatch
-        val contigVector = batch.cols(0).asInstanceOf[BytesColumnVector]
-        val postStartVector = batch.cols(1).asInstanceOf[LongColumnVector]
-        val postEndVector = batch.cols(2).asInstanceOf[LongColumnVector]
-        val refVector = batch.cols(3).asInstanceOf[BytesColumnVector]
-        val covVector = batch.cols(4).asInstanceOf[LongColumnVector]
+        val vp = VectorizedPileup.create(false, agg.conf, output, index)
+
         var row: Int = 0
 
         breakable {
           while (i <= maxIndex) {
-            row = batch.size
+            row = vp.batch.size
             currPos = i + startPosition
             cov += agg.events(i)
             if (isInPartitionRange(currPos - 1 , agg.contig, partitionBounds, agg.conf)) {
@@ -343,23 +264,13 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
                 prev.reset(i)
               } else if (isChangeOfCoverage(cov, prev.cov,  i) || isStartOfZeroCoverageRegion(cov, prev.cov)) { // different cov, add to output previous group
                 addBlockVectorizedWriterOrc(ind, agg, bases, i, prev,
-                  contigVector, postStartVector, postEndVector, refVector, covVector,
-                  null,
-                  null,
-                  null,
-                  null,
-                   writer, batch, row
+                  vp, row
                 )
                 ind += 1;
                 prev.reset(i)
               } else if (currPos == partitionBounds.posEnd + 1) { // last item -> convert it
                 addBlockVectorizedWriterOrc(ind, agg, bases, i, prev,
-                  contigVector, postStartVector, postEndVector, refVector, covVector,
-                  null,
-                  null,
-                  null,
-                  null,
-                  writer, batch, row
+                  vp, row
                   )
                 ind += 1;
                 prev.reset(i)
@@ -371,11 +282,11 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
             i += 1
           } // while
         }
-        if (batch.size != 0) {
-          writer.addRowBatch(batch)
-          batch.reset
+        if (vp.batch.size != 0) {
+          vp.writer.addRowBatch(vp.batch)
+          vp.batch.reset
         }
-        writer.close
+        vp.writer.close
         result
       }
       }
@@ -403,17 +314,7 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
 
   private def addBaseRecordVectorizedWriterOrc(ind:Int,
                             agg:ContigAggregate, bases:String, i:Int, prev:BlockProperties,
-                            contigVector: BytesColumnVector,
-                            postStartVector: LongColumnVector,
-                            postEndVector: LongColumnVector,
-                            refVector: BytesColumnVector,
-                            covVector: LongColumnVector,
-                            countRefVector: LongColumnVector = null,
-                            countNonRefVector: LongColumnVector = null,
-                            altsMapVector: MapColumnVector = null,
-                            qualsMapVector: MapColumnVector = null,
-                            writer: Writer,
-                            batch: VectorizedRowBatch,
+                            vp: VectorizedPileup,
                             row: Int,
                             altsMapSize: Int = 10
                                               ): Unit = {
@@ -421,55 +322,52 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
     val ref = bases.substring(prev.pos, i)
     val altsCount = prev.alt.derivedAltsNumber
     val qualsMap = prepareOutputQualMap(agg, posStart, ref)
-    contigVector.setVal(row, agg.contig.getBytes)
-    postStartVector.vector(row) = posStart
-    postEndVector.vector(row) = posEnd
-    refVector.setVal(row, ref.getBytes())
-    covVector.vector(row) = prev.cov.toShort
-    countRefVector.vector(row) = (prev.cov-altsCount).toShort
-    countNonRefVector.vector(row) = altsCount.toShort
-    altsMapVector.offsets(row) = altsMapVector.childCount
-    altsMapVector.lengths(row) = prev.alt.size
-    altsMapVector.childCount  += prev.alt.size
-    val altsMapOffset = altsMapVector.offsets(row).toInt
+    vp.contigVector.setVal(row, agg.contig.getBytes)
+    vp.postStartVector.vector(row) = posStart
+    vp.postEndVector.vector(row) = posEnd
+    vp.refVector.setVal(row, ref.getBytes())
+    vp.covVector.vector(row) = prev.cov.toShort
+    vp.countRefVector.vector(row) = (prev.cov-altsCount).toShort
+    vp.countNonRefVector.vector(row) = altsCount.toShort
+    vp.altsMapVector.offsets(row) = vp.altsMapVector.childCount
+    vp.altsMapVector.lengths(row) = prev.alt.size
+    vp.altsMapVector.childCount  += prev.alt.size
+    val altsMapOffset = vp.altsMapVector.offsets(row).toInt
     var altsMapElem: Int = altsMapOffset
     val alts = prev.alt.toIterator
     while(alts.hasNext){
       val alt = alts.next()
-      altsMapVector.keys.asInstanceOf[LongColumnVector].vector(altsMapElem) = alt._1
-      altsMapVector.values.asInstanceOf[LongColumnVector].vector(altsMapElem) = alt._2
+      vp.altsMapVector.keys.asInstanceOf[LongColumnVector].vector(altsMapElem) = alt._1
+      vp.altsMapVector.values.asInstanceOf[LongColumnVector].vector(altsMapElem) = alt._2
       altsMapElem += 1
     }
 
-    qualsMapVector.offsets(row) = qualsMapVector.childCount
-    qualsMapVector.lengths(row) = qualsMap.size
-    qualsMapVector.childCount  += qualsMap.size
-    val qualsMapOffset = qualsMapVector.offsets(row).toInt
+    vp.qualsMapVector.offsets(row) = vp.qualsMapVector.childCount
+    vp.qualsMapVector.lengths(row) = qualsMap.size
+    vp.qualsMapVector.childCount  += qualsMap.size
+    val qualsMapOffset = vp.qualsMapVector.offsets(row).toInt
     val quals = qualsMap.toIterator
     var qualMapElem: Int = qualsMapOffset
     while(quals.hasNext){
       val qual = quals.next()
-      qualsMapVector.keys.asInstanceOf[LongColumnVector].vector(qualMapElem) = qual._1
-      qualsMapVector.values.asInstanceOf[ListColumnVector].offsets(qualMapElem) = qualsMapVector.values.asInstanceOf[ListColumnVector].childCount
-      qualsMapVector.values.asInstanceOf[ListColumnVector].lengths(qualMapElem) = QUALITY_ARRAY_SIZE
-      qualsMapVector.values.asInstanceOf[ListColumnVector].childCount += QUALITY_ARRAY_SIZE
-      val offset = qualsMapVector.values.asInstanceOf[ListColumnVector].offsets(qualMapElem).toInt
+      vp.qualsMapVector.keys.asInstanceOf[LongColumnVector].vector(qualMapElem) = qual._1
+      vp.qualsMapVector.values.asInstanceOf[ListColumnVector].offsets(qualMapElem) = vp.qualsMapVector.values.asInstanceOf[ListColumnVector].childCount
+      vp.qualsMapVector.values.asInstanceOf[ListColumnVector].lengths(qualMapElem) = VectorizedPileup.QUALITY_ARRAY_SIZE
+      vp.qualsMapVector.values.asInstanceOf[ListColumnVector].childCount += VectorizedPileup.QUALITY_ARRAY_SIZE
+      val offset = vp.qualsMapVector.values.asInstanceOf[ListColumnVector].offsets(qualMapElem).toInt
       var i = 0
-      while(i < QUALITY_ARRAY_SIZE) {
-        qualsMapVector.values.asInstanceOf[ListColumnVector].child.asInstanceOf[LongColumnVector].vector(i+offset) = qual._2(i)
+      while(i < VectorizedPileup.QUALITY_ARRAY_SIZE) {
+        vp.qualsMapVector.values.asInstanceOf[ListColumnVector].child.asInstanceOf[LongColumnVector].vector(i+offset) = qual._2(i)
         i+=1
       }
       qualMapElem += 1
     }
 
+    vp.batch.size += 1
 
-
-
-    batch.size += 1
-
-    if (batch.size == batch.getMaxSize) {
-      writer.addRowBatch(batch)
-      batch.reset
+    if (vp.batch.size == vp.batch.getMaxSize) {
+      vp.writer.addRowBatch(vp.batch)
+      vp.batch.reset
     }
 
 //    result(ind) = PileupProjection.convertToRow(agg.contig,
@@ -484,7 +382,7 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
 
     map.get(base) match {
       case None =>
-        val arr =  new Array[Short](QUALITY_ARRAY_SIZE)
+        val arr =  new Array[Short](VectorizedPileup.QUALITY_ARRAY_SIZE)
         arr(quality) = 1
         map.put(base, arr)
       case Some(baseQuals) =>
@@ -528,40 +426,30 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
   private def addBlockVectorizedWriterOrc(ind:Int,
                          agg:ContigAggregate,
                          bases:String, i:Int, prev:BlockProperties,
-                         contigVector: BytesColumnVector,
-                         postStartVector: LongColumnVector,
-                         postEndVector: LongColumnVector,
-                         refVector: BytesColumnVector,
-                         covVector: LongColumnVector,
-                         countRefVector: LongColumnVector = null,
-                         countNonRefVector: LongColumnVector = null,
-                         altsMapVector: MapColumnVector = null,
-                         qualsMapVector: MapColumnVector = null,
-                         writer: Writer,
-                         batch: VectorizedRowBatch, row: Int, altsMapSize: Int = 10): Unit = {
+                         vp: VectorizedPileup, row: Int, altsMapSize: Int = 10): Unit = {
 
     val ref = if(agg.conf.coverageOnly) "R" else bases.substring(prev.pos, i)
     val posStart=i+agg.startPosition-prev.len
     val posEnd=i+agg.startPosition-1
-    contigVector.setVal(row, agg.contig.getBytes)
-    postStartVector.vector(row) = posStart
-    postEndVector.vector(row) = posEnd
-    refVector.setVal(row, ref.getBytes())
-    covVector.vector(row) = prev.cov.toShort
+    vp.contigVector.setVal(row, agg.contig.getBytes)
+    vp.postStartVector.vector(row) = posStart
+    vp.postEndVector.vector(row) = posEnd
+    vp.refVector.setVal(row, ref.getBytes())
+    vp.covVector.vector(row) = prev.cov.toShort
 
     if(!agg.conf.coverageOnly) {
-      countRefVector.vector(row) = prev.cov.toShort
-      countNonRefVector.vector(row) = 0.toShort
-      altsMapVector.isNull(row) = true
-      altsMapVector.noNulls = false
-      qualsMapVector.isNull(row) = true
-      qualsMapVector.noNulls = false
+      vp.countRefVector.vector(row) = prev.cov.toShort
+      vp.countNonRefVector.vector(row) = 0.toShort
+      vp.altsMapVector.isNull(row) = true
+      vp.altsMapVector.noNulls = false
+      vp.qualsMapVector.isNull(row) = true
+      vp.qualsMapVector.noNulls = false
     }
-    batch.size += 1
+    vp.batch.size += 1
 
-    if (batch.size == batch.getMaxSize) {
-      writer.addRowBatch(batch)
-      batch.reset
+    if (vp.batch.size == vp.batch.getMaxSize) {
+      vp.writer.addRowBatch(vp.batch)
+      vp.batch.reset
     }
   }
 }
