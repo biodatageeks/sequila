@@ -25,16 +25,21 @@ case class VectorizedPileup (
                               altsMapValue: LongColumnVector,
                               qualsMapVector: MapColumnVector,
                               qualsMapKey: LongColumnVector,
-                              qualsMapValue: ListColumnVector
+                              qualsMapValue: ListColumnVector,
+                              altsMapSize: Int,
+                              qualityArraySize: Int
                             ) {
+
+  def QUALITY_ARRAY_SIZE: Int = qualityArraySize
+  def ALTS_MAP_SIZE: Int = altsMapSize
+
 
 }
 
 object VectorizedPileup {
-  val QUALITY_ARRAY_SIZE = 41
-  val ALTS_MAP_SIZE = 10
 
   def create(fullMode: Boolean, conf:Conf, output: Seq[Attribute], index:Int):VectorizedPileup = {
+
     val hadoopConf = new Configuration()
     hadoopConf.set("orc.compress", conf.orcCompressCodec)
     val path = conf.vectorizedOrcWriterPath
@@ -50,6 +55,9 @@ object VectorizedPileup {
     val covVector = batch.cols(4).asInstanceOf[LongColumnVector]
 
     val BATCH_SIZE = batch.getMaxSize
+    val ALTS_MAP_SIZE = conf.altsMapSize
+    val QUALITY_ARRAY_SIZE = conf.maxQualityIndex
+
     if (fullMode) {
       val countRefVector = batch.cols(5).asInstanceOf[LongColumnVector]
       val countNonRefVector = batch.cols(6).asInstanceOf[LongColumnVector]
@@ -67,10 +75,13 @@ object VectorizedPileup {
       qualsMapValue.ensureSize(BATCH_SIZE * ALTS_MAP_SIZE, false)
       qualsMapVector.values.asInstanceOf[ListColumnVector].child.ensureSize(BATCH_SIZE * ALTS_MAP_SIZE * QUALITY_ARRAY_SIZE, false)
       new VectorizedPileup(fullMode, writer, batch, contigVector, postStartVector, postEndVector, refVector, covVector, countRefVector, countNonRefVector,
-        altsMapVector, altsMapKey, altsMapValue, qualsMapVector, qualsMapKey, qualsMapValue)
+        altsMapVector, altsMapKey, altsMapValue, qualsMapVector, qualsMapKey, qualsMapValue, ALTS_MAP_SIZE, QUALITY_ARRAY_SIZE)
     } else
-      new VectorizedPileup(fullMode, writer, batch, contigVector, postStartVector, postEndVector, refVector, covVector, null, null,
-        null, null, null, null, null, null)
+      new VectorizedPileup(
+        fullMode, writer, batch, contigVector, postStartVector,
+        postEndVector, refVector, covVector, null, null,
+        null, null, null,
+        null, null, null, ALTS_MAP_SIZE, QUALITY_ARRAY_SIZE)
   }
 
 }

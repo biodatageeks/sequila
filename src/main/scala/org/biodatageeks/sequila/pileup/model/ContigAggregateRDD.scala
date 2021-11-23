@@ -316,8 +316,8 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
   }
 
   private def addBaseRecordVectorizedWriterOrc(ind:Int,
-                            agg:ContigAggregate, bases:String, i:Int, prev:BlockProperties,
-
+                            agg:ContigAggregate, bases:String,
+                            i:Int, prev:BlockProperties,
                             vp: VectorizedPileup,
                             row: Int,
                             altsMapSize: Int = 10
@@ -359,11 +359,11 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
       val qual = quals.next()
       vp.qualsMapVector.keys.asInstanceOf[LongColumnVector].vector(qualMapElem) = qual._1
       vp.qualsMapVector.values.asInstanceOf[ListColumnVector].offsets(qualMapElem) = vp.qualsMapVector.values.asInstanceOf[ListColumnVector].childCount
-      vp.qualsMapVector.values.asInstanceOf[ListColumnVector].lengths(qualMapElem) = VectorizedPileup.QUALITY_ARRAY_SIZE
-      vp.qualsMapVector.values.asInstanceOf[ListColumnVector].childCount += VectorizedPileup.QUALITY_ARRAY_SIZE
+      vp.qualsMapVector.values.asInstanceOf[ListColumnVector].lengths(qualMapElem) = vp.QUALITY_ARRAY_SIZE
+      vp.qualsMapVector.values.asInstanceOf[ListColumnVector].childCount += vp.QUALITY_ARRAY_SIZE
       val offset = vp.qualsMapVector.values.asInstanceOf[ListColumnVector].offsets(qualMapElem).toInt
       var i = 0
-      while(i < VectorizedPileup.QUALITY_ARRAY_SIZE) {
+      while(i < vp.QUALITY_ARRAY_SIZE) {
         vp.qualsMapVector.values.asInstanceOf[ListColumnVector].child.asInstanceOf[LongColumnVector].vector(i+offset) = qual._2(i)
         i+=1
       }
