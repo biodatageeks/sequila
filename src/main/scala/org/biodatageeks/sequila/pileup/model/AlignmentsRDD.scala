@@ -132,7 +132,13 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
   def filterByConfig(conf : Broadcast[Conf], spark: SparkSession): RDD[SAMRecord] = {
     // any other filtering conditions should go here
     val filterFlag = spark.conf.get(InternalParams.filterReadsByFlag, conf.value.filterFlag).toInt
-    val cleaned = this.rdd.filter(read => read.getContig != null && (read.getFlags & filterFlag) == 0)
+    val cleaned = this
+      .rdd
+      .filter(
+        read => read.getContig != null &&
+        (read.getFlags & filterFlag) == 0 &&
+        read.getStart < read.getEnd
+      )
     if(logger.isDebugEnabled()) logger.debug("Processing {} cleaned reads in total", cleaned.count() )
     cleaned
   }
