@@ -253,12 +253,14 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
     prev.alt.clear()
   }
 
-  def updateQuals(inputBase: Byte, quality: Byte, ref: Char, isPositive: Boolean, map: mutable.IntMap[Array[Short]]):Unit = {
+  def updateQuals(inputBase: Byte, quality: Byte, ref: Char, isPositive: Boolean,
+                  map: mutable.IntMap[Array[Short]],
+                  maxQuality: Int):Unit = {
     val base = if (!isPositive && inputBase == ref) ref.toByte else if (!isPositive) inputBase.toChar.toLower.toByte else inputBase
 
     map.get(base) match {
       case None =>
-        val arr =  new Array[Short](100)
+        val arr =  new Array[Short](maxQuality)
         arr(quality) = 1
         map.put(base, arr)
       case Some(baseQuals) =>
@@ -266,11 +268,11 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
     }
   }
 
-  def fillBaseQualities(rs: ReadSummary, altPos: Int, ref: Char, qualsMap: mutable.IntMap[Array[Short]]): Unit = {
+  def fillBaseQualities(rs: ReadSummary, altPos: Int, ref: Char, qualsMap: mutable.IntMap[Array[Short]], maxQuality: Int): Unit = {
     if (!rs.hasDeletionOnPosition(altPos)) {
       val relativePos = rs.relativePosition(altPos)
       val base = rs.bases(relativePos)
-      updateQuals(base, rs.quals(relativePos), ref,  rs.isPositive, qualsMap)
+      updateQuals(base, rs.quals(relativePos), ref,  rs.isPositive, qualsMap, maxQuality)
     }
   }
 
@@ -284,7 +286,7 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
     while (rsIterator.hasNext) {
       val nodeIterator = rsIterator.next().getValue.iterator()
       while (nodeIterator.hasNext) {
-        fillBaseQualities(nodeIterator.next(), posStart, ref(0), newMap)
+        fillBaseQualities(nodeIterator.next(), posStart, ref(0), newMap, agg.conf.maxQuality + 1)
       }
     }
     newMap
