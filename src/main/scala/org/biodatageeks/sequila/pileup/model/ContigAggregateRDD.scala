@@ -1,5 +1,6 @@
 package org.biodatageeks.sequila.pileup.model
 
+
 import org.apache.hadoop.hive.ql.exec.vector.{ListColumnVector, LongColumnVector}
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
@@ -134,6 +135,7 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
                 prev.reset(i)
               }
               if (prev.hasAlt) {
+
                 addBaseRecordVectorizedWriterOrc(ind, agg, bases, i, prev, vp, row)
                 ind += 1;
                 prev.reset(i)
@@ -142,6 +144,7 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
               }
               else if (agg.hasAltOnPosition(currPos)) { // there is ALT in this posiion
                 if (prev.isNonZeroCoverage) { // there is previous group non-zero group -> convert it
+
                   addBlockVectorizedWriterOrc(ind, agg, bases, i, prev, vp, row)
                   ind += 1;
                   prev.reset(i)
@@ -314,6 +317,7 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
 
   private def addBaseRecordVectorizedWriterOrc(ind:Int,
                             agg:ContigAggregate, bases:String, i:Int, prev:BlockProperties,
+
                             vp: VectorizedPileup,
                             row: Int,
                             altsMapSize: Int = 10
@@ -322,6 +326,7 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
     val ref = bases.substring(prev.pos, i)
     val altsCount = prev.alt.derivedAltsNumber
     val qualsMap = prepareOutputQualMap(agg, posStart, ref)
+
     vp.contigVector.setVal(row, agg.contig.getBytes)
     vp.postStartVector.vector(row) = posStart
     vp.postEndVector.vector(row) = posEnd
@@ -337,6 +342,7 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
     val alts = prev.alt.toIterator
     while(alts.hasNext){
       val alt = alts.next()
+
       vp.altsMapVector.keys.asInstanceOf[LongColumnVector].vector(altsMapElem) = alt._1
       vp.altsMapVector.values.asInstanceOf[LongColumnVector].vector(altsMapElem) = alt._2
       altsMapElem += 1
@@ -346,6 +352,7 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
     vp.qualsMapVector.lengths(row) = qualsMap.size
     vp.qualsMapVector.childCount  += qualsMap.size
     val qualsMapOffset = vp.qualsMapVector.offsets(row).toInt
+
     val quals = qualsMap.toIterator
     var qualMapElem: Int = qualsMapOffset
     while(quals.hasNext){
@@ -377,6 +384,7 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
   }
 
 
+
   def updateQuals(inputBase: Byte, quality: Byte, ref: Char, isPositive: Boolean, map: mutable.IntMap[Array[Short]]):Unit = {
     val base = if (!isPositive && inputBase == ref) ref.toByte else if (!isPositive) inputBase.toChar.toLower.toByte else inputBase
 
@@ -390,11 +398,11 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
     }
   }
 
-  def fillBaseQualities(rs: ReadSummary, altPos: Int, ref: Char, qualsMap: mutable.IntMap[Array[Short]]): Unit = {
+  def fillBaseQualities(rs: ReadSummary, altPos: Int, ref: Char, qualsMap: mutable.IntMap[Array[Short]], maxQuality: Int): Unit = {
     if (!rs.hasDeletionOnPosition(altPos)) {
       val relativePos = rs.relativePosition(altPos)
       val base = rs.bases(relativePos)
-      updateQuals(base, rs.quals(relativePos), ref,  rs.isPositive, qualsMap)
+      updateQuals(base, rs.quals(relativePos), ref,  rs.isPositive, qualsMap, maxQuality)
     }
   }
 
@@ -408,7 +416,7 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
     while (rsIterator.hasNext) {
       val nodeIterator = rsIterator.next().getValue.iterator()
       while (nodeIterator.hasNext) {
-        fillBaseQualities(nodeIterator.next(), posStart, ref(0), newMap)
+        fillBaseQualities(nodeIterator.next(), posStart, ref(0), newMap, agg.conf.maxQuality + 1)
       }
     }
     newMap
@@ -431,6 +439,7 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
     val ref = if(agg.conf.coverageOnly) "R" else bases.substring(prev.pos, i)
     val posStart=i+agg.startPosition-prev.len
     val posEnd=i+agg.startPosition-1
+
     vp.contigVector.setVal(row, agg.contig.getBytes)
     vp.postStartVector.vector(row) = posStart
     vp.postEndVector.vector(row) = posEnd
@@ -450,6 +459,7 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
     if (vp.batch.size == vp.batch.getMaxSize) {
       vp.writer.addRowBatch(vp.batch)
       vp.batch.reset
+
     }
   }
 }

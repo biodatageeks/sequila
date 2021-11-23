@@ -11,6 +11,7 @@ import org.apache.commons.lang3.builder.ToStringStyle;
   var qualityArrayLength: Int = 0
   var maxQuality:Int = QualityConstants.DEFAULT_MAX_QUAL
   var maxQualityIndex:Int =  QualityConstants.DEFAULT_MAX_QUAL + 1
+  val altsMapSize = 10
 
   var unknownContigName: String = "UCN"
   var coverageOnly: Boolean = false
