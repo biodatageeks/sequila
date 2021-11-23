@@ -29,8 +29,6 @@ object AggregateRDDOperations {
 
 case class AggregateRDD(rdd: RDD[ContigAggregate]) {
   val logger: Logger = LoggerFactory.getLogger(this.getClass.getCanonicalName)
-  val QUALITY_ARRAY_SIZE = 41
-  val ALTS_MAP_SIZE = 10
 
   def isInPartitionRange(currPos: Int, contig: String, bound: PartitionBounds,conf:Conf): Boolean = {
     if (contig == bound.contigStart && contig == bound.contigEnd)
@@ -144,6 +142,8 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
         val countNonRefVector = batch.cols(6).asInstanceOf[LongColumnVector]
 
         val BATCH_SIZE = batch.getMaxSize
+        val QUALITY_ARRAY_SIZE = agg.conf.maxQuality + 1
+        val ALTS_MAP_SIZE = agg.conf.altsMapSize
         //alts
         val altsMapVector = batch.cols(7).asInstanceOf[MapColumnVector]
         val altsMapKey = altsMapVector.keys.asInstanceOf[LongColumnVector]
@@ -417,6 +417,7 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
                             row: Int,
                             altsMapSize: Int = 10
                                               ): Unit = {
+    val QUALITY_ARRAY_SIZE = agg.conf.maxQuality + 1
     val posStart, posEnd = i+agg.startPosition-1
     val ref = bases.substring(prev.pos, i)
     val altsCount = prev.alt.derivedAltsNumber
