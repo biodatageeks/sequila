@@ -79,18 +79,18 @@ case class PileupPlan [T<:BDGAlignInputFormat](plan:LogicalPlan, spark:SparkSess
   private def setupPileupConfiguration(spark: SparkSession): Conf = {
     val conf = new Conf
     val isLocal = spark.sparkContext.isLocal
+    conf.useVectorizedOrcWriter =  spark.sqlContext.getConf(InternalParams.useVectorizedOrcWriter, "false") match {
+      case t: String if t.toLowerCase() == "true" && isLocal => true //FIXME: vectorized Writer supported only in local mode
+      case _ => false
+    }
+
+    if(conf.useVectorizedOrcWriter && directOrcWritePath != null) {
+      val orcCompressCodec = spark.conf.get("spark.sql.orc.compression.codec")
+      conf.orcCompressCodec = orcCompressCodec
+      conf.vectorizedOrcWriterPath = directOrcWritePath
+    }
+
     if (!alts && !quals ) {// FIXME -> change to Option
-      conf.useVectorizedOrcWriter =  spark.sqlContext.getConf(InternalParams.useVectorizedOrcWriter, "false") match {
-        case t: String if t.toLowerCase() == "true" && isLocal => true //FIXME: vectorized Writer supported only in local mode
-        case _ => false
-      }
-      if(conf.useVectorizedOrcWriter && directOrcWritePath != null) {
-        val orcCompressCodec = spark.conf.get("spark.sql.orc.compression.codec")
-        conf.orcCompressCodec = orcCompressCodec
-        conf.vectorizedOrcWriterPath = directOrcWritePath
-      }
-      else
-        conf.vectorizedOrcWriterPath = null
       conf.coverageOnly = true
       conf.outputFieldsNum = output.size
       return conf

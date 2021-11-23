@@ -4,23 +4,40 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.spark.sql.catalyst.expressions.Attribute
 import org.biodatageeks.sequila.utils.Columns
 import org.apache.orc.TypeDescription
-import org.apache.spark.sql.types.{IntegerType, ShortType, StringType}
+import org.apache.spark.sql.types.{ArrayType, ByteType, DataType, IntegerType, MapType, ShortType, StringType}
 
 object OrcProjection {
 
-  def catalystToOrcSchema(attrs: Seq[Attribute]) ={
+  def catalystToOrcSchema(attrs: Seq[Attribute]) = {
     val schema = TypeDescription.createStruct
-    for(a <- attrs) {
-      if(a.dataType == StringType)
-        schema.addField(a.name, TypeDescription.createString())
-      else if (a.dataType == IntegerType)
-        schema.addField(a.name, TypeDescription.createInt())
-      else if (a.dataType == ShortType)
-        schema.addField(a.name, TypeDescription.createShort())
-      else
-        throw new Exception("Unsupported CatalystType")
+    for (a <- attrs) {
+      a.dataType match {
+        case MapType(k, v, valueContainsNull) => {
+          v match {
+            case ArrayType(elementType, containsNull) =>{
+              schema.addField(a.name, TypeDescription.createMap(convertBasicType(k), TypeDescription.createList(convertBasicType(ShortType)) ) ) //FIMXE: take array type from v
+            }
+            case _ => schema.addField(a.name, TypeDescription.createMap(convertBasicType(k), convertBasicType(v)))
+          }
+        }
+        case _ => addField(schema, a )
+      }
     }
     schema
+  }
+
+  private def addField(schema: TypeDescription, attr: Attribute ) = {
+    schema.addField(attr.name, convertBasicType(attr.dataType))
+  }
+
+  private def convertBasicType(dataType: DataType) = {
+    dataType match {
+      case StringType => TypeDescription.createString()
+      case IntegerType => TypeDescription.createInt()
+      case ShortType => TypeDescription.createShort()
+      case ByteType => TypeDescription.createByte()
+      case _ => throw new Exception("Unsupported CatalystType")
+    }
   }
 
 }
