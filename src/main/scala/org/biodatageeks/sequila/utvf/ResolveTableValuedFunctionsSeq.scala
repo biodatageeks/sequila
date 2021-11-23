@@ -111,16 +111,10 @@ object ResolveTableValuedFunctionsSeq extends Rule[LogicalPlan] {
 
     "coverage" -> Map(
       /* coverage(tableName) */
-      tvf("table" -> StringType, "sampleId" -> StringType, "result" -> StringType)
-      { case Seq(table: Any,sampleId:Any, result:Any) =>
-        BDGCoverage(table.toString,sampleId.toString,result.toString, None)
-      },
-      /* coverage(tableName) */
-      tvf("table" -> StringType, "sampleId" -> StringType, "result" -> StringType, "target" -> StringType)
-      { case Seq(table: Any,sampleId:Any, result:Any, target: Any) =>
-        BDGCoverage(table.toString,sampleId.toString,result.toString, Some(target.toString))
+      tvf("table" -> StringType, "sampleId" -> StringType, "refPath" -> StringType)
+      { case Seq(table: Any, sampleId: Any, refPath: Any) =>
+        PileupTemplate(table.toString, sampleId.toString, refPath.toString, false, false, None)
       }),
-
     "range" -> Map(
       /* range(end) */
       tvf("end" -> LongType) { case Seq(end: Long) =>
@@ -176,49 +170,6 @@ object ResolveTableValuedFunctionsSeq extends Rule[LogicalPlan] {
   }
 }
 
-
-
-
-object BDGCoverage {
-  def apply(tableName:String, sampleId:String, result: String, target: Option[String]): BDGCoverage = {
-
-    val output = StructType(Seq(
-      StructField(Columns.CONTIG,StringType,nullable = true),
-      StructField(Columns.START,IntegerType,nullable = false),
-      StructField(Columns.END,IntegerType,nullable = false),
-      target match {
-        case Some(t) =>  StructField(Columns.COVERAGE,FloatType,nullable = false)
-        case None =>     StructField(Columns.COVERAGE,ShortType,nullable = false)
-   })).toAttributes
-
-    new BDGCoverage(tableName:String,sampleId.toString, result, target, output)
-  }
-
-}
-
-case class BDGCoverage(tableName:String, sampleId:String, result: String, target:Option[String],
-                       output: Seq[Attribute])
-  extends LeafNode with MultiInstanceRelation {
-
-
-  val numElements: BigInt = 1
-
-  def toSQL(): String = {
-
-    s"SELECT contigName,start,end,coverage AS `${output.head.name}` FROM coverage('$tableName')"
-  }
-
-  override def newInstance(): BDGCoverage = copy(output = output.map(_.newInstance()))
-
-  def computeStats(conf: SQLConf): Statistics = {
-    val sizeInBytes = LongType.defaultSize * numElements
-    Statistics( sizeInBytes = sizeInBytes )
-  }
-
-  override def toString: String = {
-    s"BDGCoverage ('$tableName')"
-  }
-}
 
 object PileupTemplate {
 
