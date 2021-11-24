@@ -80,7 +80,7 @@ case class PileupPlan [T<:BDGAlignInputFormat](plan:LogicalPlan, spark:SparkSess
     val conf = new Conf
     val isLocal = spark.sparkContext.isLocal
     conf.useVectorizedOrcWriter =  spark.sqlContext.getConf(InternalParams.useVectorizedOrcWriter, "false") match {
-      case t: String if t.toLowerCase() == "true" && isLocal => true //FIXME: vectorized Writer supported only in local mode
+      case t: String if t.toLowerCase() == "true" && isLocal => true && directOrcWritePath != null //FIXME: vectorized Writer supported only in local mode
       case _ => false
     }
 
