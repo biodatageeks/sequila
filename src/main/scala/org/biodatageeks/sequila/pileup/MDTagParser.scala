@@ -32,12 +32,14 @@ object MDTagParser{
         .findAllIn(t)
       while (matches.hasNext) {
         val m = matches.next()
-        if(m.last.isLetter && !m.contains('^') ){
+        val hasHat = m.contains('^')
+        val isLastLetter = m.last.isLetter
+        if(isLastLetter && !hasHat ){
           val skipPos = m.dropRight(1).toInt
           ab.append(MDOperator(skipPos, 'S') )
           ab.append(MDOperator(0, m.last.toUpper))
         }
-        else if (m.last.isLetter && m.contains('^') ){ //encoding deletions as lowercase
+        else if (isLastLetter && hasHat ){ //encoding deletions as lowercase
           val arr =  m.split('^')
           val skipPos = arr.head.toInt
           ab.append(MDOperator(skipPos, 'S') )
