@@ -41,7 +41,7 @@ case class SequilaSession(sparkSession: SparkSession) extends SparkSession(spark
     * @param path BAM/CRAM file (with an index file)
     * @param refPath Reference file (with an index file)
     * @param quals Include/exclude quality map in case of alts (default: true )
-    * @return pileup as Dataset[Row]
+    * @return pileup as Dataset[Pileup]
     */
   def pileup(path: String, refPath: String, quals: Boolean = true) : Dataset[Pileup] ={
     if(!quals) {
