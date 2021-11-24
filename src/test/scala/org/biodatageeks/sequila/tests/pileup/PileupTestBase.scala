@@ -41,6 +41,11 @@ class PileupTestBase extends FunSuite
        |FROM  pileup('$tableName', '${sampleId}', '$referencePath', true, true)
                          """.stripMargin
 
+  val queryPileupWithoutQual =
+    s"""
+       |SELECT *
+       |FROM  pileup('$tableName', '${sampleId}', '$referencePath', true, false)
+                         """.stripMargin
 
 
   def randomString(length: Int) = scala.util.Random.alphanumeric.take(length).mkString

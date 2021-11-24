@@ -4,7 +4,7 @@ import htsjdk.samtools.SAMRecord
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SparkSession
-import org.biodatageeks.sequila.datasources.BAM.BAMTableReader
+import org.biodatageeks.sequila.datasources.BAM.{BAMTableReader, BDGAlignFileReaderWriter}
 import org.biodatageeks.sequila.inputformats.BDGAlignInputFormat
 import org.biodatageeks.sequila.pileup.conf.Conf
 import org.biodatageeks.sequila.pileup.model.Alts.MultiLociAlts
@@ -159,7 +159,7 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
     ).collect()
   }
 
-  def getPartitionBounds(reader: BAMTableReader[BDGAlignInputFormat],
+  def getPartitionBounds(reader: BDGAlignFileReaderWriter[BDGAlignInputFormat],
                          conf: Conf,
                          lowerBounds: Array[LowerPartitionBoundAlignmentRecord]
                         ): Array[PartitionBounds] = {
@@ -174,12 +174,22 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
       .map(r => r.getContig)
       .toArray
 
+      val reads = reader.readFile
+      computePartitionBounds(contigsList, reads, lowerBounds, conf)
+  }
 
+
+
+  private def computePartitionBounds(contigs: Array[String],
+                                     reads:RDD[SAMRecord],
+                                     lowerBounds: Array[LowerPartitionBoundAlignmentRecord],
+                                      conf: Conf
+                                    ) ={
     SparkSession.builder.config(this.rdd.sparkContext.getConf).getOrCreate()
       .sqlContext
       .setConf(InternalParams.AlignmentIntervals, PartitionUtils.boundsToIntervals(lowerBounds))
     logger.info(s"Getting bounds overlapping reads for intervals: ${PartitionUtils.boundsToIntervals(lowerBounds)}")
-    val boundsOverlappingReads = reader.readFile
+    val boundsOverlappingReads = reads
       .filter(r => !r.getReadUnmappedFlag )
       .map( r => (r.getContig, Interval(r.getStart, r.getEnd), TruncRead(r.getReadName, r.getContig, r.getStart, r.getEnd)) )
       .collect()
@@ -189,11 +199,10 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
       .setConf(InternalParams.AlignmentIntervals, "")
     logger.info(s"Found ${boundsOverlappingReads.length} overlapping reads")
     val tree = new IntervalHolderChromosome[TruncRead](boundsOverlappingReads, "org.biodatageeks.sequila.rangejoins.methods.IntervalTree.IntervalTreeRedBlack")
-
-    PartitionUtils.getAdjustedPartitionBounds(lowerBounds, tree, conf, contigsList)
+    PartitionUtils.getAdjustedPartitionBounds(lowerBounds, tree, conf, contigs)
   }
 
-  def repartition(reader : BAMTableReader[BDGAlignInputFormat], conf: Conf): (RDD[SAMRecord], Broadcast[Array[PartitionBounds]]) = {
+  def repartition(reader : BDGAlignFileReaderWriter[BDGAlignInputFormat], conf: Conf): (RDD[SAMRecord], Broadcast[Array[PartitionBounds]]) = {
 
     val alignments = this.rdd
     val numPartitions = alignments.getNumPartitions
