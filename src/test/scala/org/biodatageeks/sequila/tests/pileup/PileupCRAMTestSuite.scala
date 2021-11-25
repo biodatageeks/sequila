@@ -1,13 +1,12 @@
 package org.biodatageeks.sequila.tests.pileup
 
 import org.apache.spark.sql.SequilaSession
-import org.biodatageeks.sequila.utils.{Columns, SequilaRegister}
+import org.biodatageeks.sequila.utils.{Columns}
 
 class PileupCRAMTestSuite extends PileupTestBase {
 
   test("Compare BAM and CRAM results") {
     val ss = SequilaSession(spark)
-    SequilaRegister.register(ss)
     val query =
       s"""
          |SELECT ${Columns.CONTIG}, ${Columns.START}, ${Columns.END}, ${Columns.REF}, ${Columns.COVERAGE},${Columns.ALTS}

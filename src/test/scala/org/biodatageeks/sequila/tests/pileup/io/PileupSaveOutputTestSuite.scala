@@ -3,11 +3,9 @@ package org.biodatageeks.sequila.tests.pileup.io
 import com.holdenkarau.spark.testing.RDDComparisons
 import org.apache.spark.sql.SequilaSession
 import org.biodatageeks.sequila.tests.pileup.PileupTestBase
-import org.biodatageeks.sequila.utils.{InternalParams, SequilaRegister}
+import org.biodatageeks.sequila.utils.{InternalParams}
 import org.scalatest.BeforeAndAfterAll
 
-import java.io.File
-import scala.reflect.io.Directory
 
 class PileupSaveOutputTestSuite
   extends PileupTestBase
@@ -22,7 +20,6 @@ class PileupSaveOutputTestSuite
 
   test("Parquet save"){
     val ss = SequilaSession(spark)
-    SequilaRegister.register(ss)
     val parquetCoveragePath = s"$coveragePath/parquet/"
     val parquetPileupPath = s"$pileupPath/parquet/"
     val covRefDF = ss.sql(queryCoverage) //using rdd to not fight with nullability/schema just byte equality
@@ -48,7 +45,6 @@ class PileupSaveOutputTestSuite
   test("ORC save") {
 
     val ss = SequilaSession(spark)
-    SequilaRegister.register(ss)
     val orcCoveragePath = s"$coveragePath/orc/"
     val orcPileupPath = s"$pileupPath/orc/"
     val covRefDF = ss.sql(queryCoverage) //using rdd to not fight with nullability/schema just byte equality
@@ -74,7 +70,6 @@ class PileupSaveOutputTestSuite
 
   test("ORC - coverage - DataFrame save - vectorized"){
     val ss = SequilaSession(spark)
-    SequilaRegister.register(ss)
     ss
       .sqlContext
       .setConf(InternalParams.useVectorizedOrcWriter, "true")
@@ -98,7 +93,6 @@ class PileupSaveOutputTestSuite
 
   test("ORC - coverage - SQL CTaS - vectorized"){
     val ss = SequilaSession(spark)
-    SequilaRegister.register(ss)
     ss
       .sqlContext
       .setConf(InternalParams.useVectorizedOrcWriter, "true")
@@ -127,7 +121,6 @@ class PileupSaveOutputTestSuite
     ss
       .sqlContext
       .setConf("spark.sql.orc.compression.codec", "ZLIB")
-    SequilaRegister.register(ss)
     ss
       .sqlContext
       .setConf(InternalParams.useVectorizedOrcWriter, "true")

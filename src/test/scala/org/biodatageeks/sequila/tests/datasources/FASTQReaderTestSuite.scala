@@ -3,14 +3,12 @@ package org.biodatageeks.sequila.tests.datasources
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.spark.sql.SequilaSession
 import org.biodatageeks.sequila.tests.base.FASTQBaseTestSuite
-import org.biodatageeks.sequila.utils.SequilaRegister
 
 class FASTQReaderTestSuite extends FASTQBaseTestSuite with SharedSparkContext {
 
   test("Read FASTQ file"){
 
     val ss = SequilaSession(spark)
-    SequilaRegister.register(ss)
     val sqlText =  s"SELECT * FROM ${tableNameFASTQ}"
     ss
       .sql(sqlText)

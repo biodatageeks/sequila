@@ -1,14 +1,11 @@
 package org.biodatageeks.sequila.apps
 
 import htsjdk.samtools.ValidationStringency
-import org.apache.hadoop.io.LongWritable
 import org.apache.spark.sql.SparkSession
-import org.biodatageeks.sequila.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
 import org.rogach.scallop.ScallopConf
-import org.seqdoop.hadoop_bam.{BAMBDGInputFormat, SAMRecordWritable}
 import org.seqdoop.hadoop_bam.util.SAMHeaderReader
 import org.apache.spark.sql.SequilaSession
-import org.biodatageeks.sequila.utils.{Columns, InternalParams, SequilaRegister, UDFRegister}
+import org.biodatageeks.sequila.utils.Columns
 
 
 
@@ -45,9 +42,6 @@ object DepthOfCoverage {
 
 
     val ss = SequilaSession(spark)
-    SequilaRegister.register(ss)
-
-
     ss.sql(s"""CREATE TABLE IF NOT EXISTS reads_tmp  USING org.biodatageeks.sequila.datasources.BAM.BAMDataSource  OPTIONS(path '${runConf.reads()}')""")
 
     val sample = ss.sql(s"SELECT DISTINCT (${Columns.SAMPLE}) from reads_tmp").first().get(0)

@@ -1,7 +1,6 @@
 package org.biodatageeks.sequila.apps
 
 import org.apache.spark.sql.{SequilaSession, SparkSession}
-import org.biodatageeks.sequila.utils.SequilaRegister
 
 trait SequilaApp {
   def createSequilaSession(): SequilaSession = {
@@ -13,7 +12,6 @@ trait SequilaApp {
       .getOrCreate()
 
     val ss = SequilaSession(spark)
-    SequilaRegister.register(ss)
     spark.sparkContext.setLogLevel("WARN")
     ss
   }

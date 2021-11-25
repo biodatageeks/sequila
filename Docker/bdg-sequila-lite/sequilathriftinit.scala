@@ -1,12 +1,12 @@
 import org.apache.spark.sql.SequilaSession
-import org.biodatageeks.sequila.utils.{SequilaRegister, UDFRegister}
+import org.biodatageeks.sequila.utils.{SequilaSession, UDFRegister}
 
 
 val ss = SequilaSession(spark)
 UDFRegister.register(ss)
 
 /*inject bdg-granges strategy*/
-SequilaRegister.register(ss)
+SequilaSession.register(ss)
 
 ss.sqlContext.setConf("spark.sql.warehouse.dir","/data/output")
 

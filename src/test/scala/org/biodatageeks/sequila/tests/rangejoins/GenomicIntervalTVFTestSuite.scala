@@ -2,7 +2,7 @@ package org.biodatageeks.sequila.tests.rangejoins
 
 import org.apache.spark.sql.SequilaSession
 import org.biodatageeks.sequila.tests.base.BAMBaseTestSuite
-import org.biodatageeks.sequila.utils.{Columns, SequilaRegister}
+import org.biodatageeks.sequila.utils.{Columns}
 
 class GenomicIntervalTVFTestSuite  extends  BAMBaseTestSuite {
 
@@ -10,7 +10,6 @@ class GenomicIntervalTVFTestSuite  extends  BAMBaseTestSuite {
 test("Test bdg_grange TVF"){
 
   val  ss = SequilaSession(spark)
-  SequilaRegister.register(ss)
   ss.sparkContext.setLogLevel("WARN")
 
   val query =

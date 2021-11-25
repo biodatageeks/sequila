@@ -1,5 +1,5 @@
 import org.apache.spark.sql.SequilaSession
-import org.biodatageeks.sequila.utils.{Columns, SequilaRegister, UDFRegister}
+import org.biodatageeks.sequila.utils.{Columns, SequilaSession, UDFRegister}
 import org.biodatageeks.BDGPerf
 import org.biodatageeks.BDGPerf.{BDGPerfRunner, BDGQuery, BDGTestParams}
 
@@ -12,7 +12,7 @@ val ss = SequilaSession(spark)
 UDFRegister.register(ss)
 
 /*inject strategies and data sources*/
-SequilaRegister.register(ss)
+SequilaSession.register(ss)
 
 
 

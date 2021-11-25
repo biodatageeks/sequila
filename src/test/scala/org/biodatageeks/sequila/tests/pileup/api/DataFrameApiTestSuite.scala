@@ -3,13 +3,12 @@ package org.biodatageeks.sequila.tests.pileup.api
 import org.apache.spark.sql.SequilaSession
 import org.apache.spark.sql.functions.typedLit
 import org.biodatageeks.sequila.tests.pileup.PileupTestBase
-import org.biodatageeks.sequila.utils.SequilaRegister
+
 
 class DataFrameApiTestSuite extends PileupTestBase{
 
   test("Coverage - DataFrame API test"){
     val ss = SequilaSession(spark)
-    SequilaRegister.register(ss)
     val testCovDS = ss
       .coverage(bamPath, referencePath)
       .toDF()
@@ -19,7 +18,6 @@ class DataFrameApiTestSuite extends PileupTestBase{
 
   test("Pileup - without quals - DataFrame API test"){
     val ss = SequilaSession(spark)
-    SequilaRegister.register(ss)
     val testPileup = ss
       .pileup(bamPath, referencePath, quals = false)
       .toDF()
@@ -30,7 +28,6 @@ class DataFrameApiTestSuite extends PileupTestBase{
 
   test("Pileup - with quals - DataFrame API test"){
     val ss = SequilaSession(spark)
-    SequilaRegister.register(ss)
     val testPileup = ss
       .pileup(bamPath, referencePath)
       .toDF()

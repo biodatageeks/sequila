@@ -5,7 +5,7 @@ import org.apache.spark.sql.types.StructType
 import org.biodatageeks.sequila.pileup.{PileupReader, PileupWriter}
 import org.biodatageeks.sequila.pileup.converters.samtools.{SamtoolsConverter, SamtoolsSchema}
 import org.biodatageeks.sequila.pileup.converters.sequila.SequilaConverter
-import org.biodatageeks.sequila.utils.{Columns, InternalParams, SequilaRegister}
+import org.biodatageeks.sequila.utils.{Columns, InternalParams}
 
 
 class SamtoolsTestSuite extends PileupTestBase {
@@ -40,7 +40,6 @@ class SamtoolsTestSuite extends PileupTestBase {
       spark.sqlContext.setConf(InternalParams.InputSplitSize, splitSize.get)
 
     val ss = SequilaSession(spark)
-    SequilaRegister.register(ss)
     val sequilaRaw = ss.sql(query).orderBy("contig", "pos_start")
 
     val converter = new SequilaConverter(spark)

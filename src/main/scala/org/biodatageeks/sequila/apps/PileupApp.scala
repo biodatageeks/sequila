@@ -1,9 +1,5 @@
 package org.biodatageeks.sequila.apps
 
-import java.io.{OutputStreamWriter, PrintWriter}
-
-import org.apache.spark.sql.{SequilaSession, SparkSession}
-import org.biodatageeks.sequila.utils.{InternalParams, SequilaRegister}
 
 object PileupApp extends App with SequilaApp {
   override def main(args: Array[String]): Unit = {
