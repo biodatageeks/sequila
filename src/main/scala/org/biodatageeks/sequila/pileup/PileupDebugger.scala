@@ -8,7 +8,6 @@ import org.apache.orc.mapreduce.OrcOutputFormat
 import org.apache.spark.rdd.RDD.rddToPairRDDFunctions
 import org.apache.spark.sql.{SequilaSession, SparkSession}
 import org.biodatageeks.sequila.pileup.partitioning.LowerPartitionBoundAlignmentRecord
-import org.biodatageeks.sequila.utils.SequilaRegister
 import org.seqdoop.hadoop_bam.{BAMInputFormat, CRAMBDGInputFormat, CRAMInputFormat, SAMRecordWritable}
 
 
@@ -24,7 +23,6 @@ object PileupDebugger {
       .getOrCreate()
 
     val ss = SequilaSession(spark)
-    SequilaRegister.register(ss)
 
     val bamPath = "/Users/mwiewior/research/data/WES/NA12878.proper.wes.md.bam"
     val referencePath = "/Users/mwiewior/research/data/Homo_sapiens_assembly18.fasta"

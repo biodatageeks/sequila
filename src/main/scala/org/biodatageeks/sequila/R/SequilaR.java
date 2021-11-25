@@ -3,7 +3,6 @@ package org.biodatageeks.sequila.R;
 import org.apache.spark.SparkContext;
 import org.apache.spark.sql.SequilaSession;
 import org.apache.spark.sql.SparkSession;
-import org.biodatageeks.sequila.utils.SequilaRegister;
 import org.biodatageeks.sequila.utils.UDFRegister;
 
 public class SequilaR {
@@ -21,7 +20,6 @@ public class SequilaR {
         SparkSession spark = SparkSession.builder().getOrCreate();
         SequilaSession ss = new SequilaSession(spark);
         UDFRegister.register(ss);
-        SequilaRegister.register(ss);
         return ss;
 
     }

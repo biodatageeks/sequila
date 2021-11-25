@@ -2,7 +2,7 @@ package org.biodatageeks.sequila.tests.pileup
 
 import org.apache.spark.sql.SequilaSession
 import org.biodatageeks.sequila.pileup.conf.Conf
-import org.biodatageeks.sequila.utils.{Columns, InternalParams, SequilaRegister}
+import org.biodatageeks.sequila.utils.{Columns, InternalParams}
 
 class BinningTestSuite extends PileupTestBase {
 
@@ -31,7 +31,6 @@ class BinningTestSuite extends PileupTestBase {
     conf.isBinningEnabled = true
     conf.binSize = binSize
     val ss = SequilaSession(spark)
-    SequilaRegister.register(ss)
     ss.sparkContext.setLogLevel("ERROR")
 
     val result = ss.sql(pileupQuery)
@@ -49,7 +48,6 @@ class BinningTestSuite extends PileupTestBase {
     conf.binSize = binSize
     spark.sqlContext.setConf(InternalParams.InputSplitSize, splitSize)
     val ss = SequilaSession(spark)
-    SequilaRegister.register(ss)
     ss.sparkContext.setLogLevel("ERROR")
 
     val result = ss.sql(pileupQuery)

@@ -2,7 +2,7 @@ package org.biodatageeks.sequila.tests.pileup
 
 import org.apache.spark.sql.{DataFrame, SequilaSession}
 import org.biodatageeks.sequila.pileup.conf.Conf
-import org.biodatageeks.sequila.utils.{Columns, InternalParams, SequilaRegister}
+import org.biodatageeks.sequila.utils.{Columns, InternalParams}
 
 class BaseQualityTestSuite extends PileupTestBase {
 
@@ -25,7 +25,6 @@ class BaseQualityTestSuite extends PileupTestBase {
   test("Simple Quals lookup Single partition") {
     val conf = new Conf
     val ss = SequilaSession(spark)
-    SequilaRegister.register(ss)
     ss.sparkContext.setLogLevel("ERROR")
 
     val result = ss.sql(pileupQuery)
@@ -42,7 +41,6 @@ class BaseQualityTestSuite extends PileupTestBase {
     val conf = new Conf
     spark.sqlContext.setConf(InternalParams.InputSplitSize, splitSize)
     val ss = SequilaSession(spark)
-    SequilaRegister.register(ss)
     ss.sparkContext.setLogLevel("ERROR")
 
     val result = ss.sql(pileupQuery)

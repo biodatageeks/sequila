@@ -1,5 +1,5 @@
 import org.apache.spark.sql.SequilaSession
-import org.biodatageeks.sequila.utils.{InternalParams, SequilaRegister, UDFRegister}
+import org.biodatageeks.sequila.utils.{InternalParams, SequilaSession, UDFRegister}
 
 /*set params*/
 
@@ -25,7 +25,7 @@ ss.sqlContext.setConf("spark.biodatageeks.bam.useSparkBAM","false")
 UDFRegister.register(ss)
 
 /*inject bdg-granges strategy*/
-SequilaRegister.register(ss)
+SequilaSession.register(ss)
 
 ss.sql(
   """

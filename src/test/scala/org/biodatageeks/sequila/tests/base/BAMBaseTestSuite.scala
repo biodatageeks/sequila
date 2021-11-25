@@ -2,7 +2,6 @@ package org.biodatageeks.sequila.tests.base
 
 import com.holdenkarau.spark.testing.{DataFrameSuiteBase, SharedSparkContext}
 import org.apache.spark.sql.SequilaSession
-import org.biodatageeks.sequila.utils.SequilaRegister
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, FunSuite}
 
 class BAMBaseTestSuite

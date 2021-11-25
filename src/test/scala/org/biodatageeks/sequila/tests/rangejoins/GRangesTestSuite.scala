@@ -5,7 +5,7 @@ import java.io.{OutputStreamWriter, PrintWriter}
 import com.holdenkarau.spark.testing.{DataFrameSuiteBase, SharedSparkContext}
 import org.apache.spark.sql.{Row, SequilaSession}
 import org.biodatageeks.sequila.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
-import org.biodatageeks.sequila.utils.{Columns, InternalParams, Interval, SequilaRegister, UDFRegister}
+import org.biodatageeks.sequila.utils.{Columns, InternalParams, Interval, UDFRegister}
 import org.scalatest.{BeforeAndAfter, FunSuite}
 
 class GRangesTestSuite
@@ -18,7 +18,6 @@ class GRangesTestSuite
   var ss: SequilaSession = _
   before {
     ss = SequilaSession(spark)
-    SequilaRegister.register(ss)
     UDFRegister.register(ss)
     System.setSecurityManager(null)
     val rdd1 = ss.sparkContext

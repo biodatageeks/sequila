@@ -7,7 +7,7 @@ import org.biodatageeks.sequila.inputformats.BDGAlignInputFormat
 import org.biodatageeks.sequila.pileup.Pileup
 import org.biodatageeks.sequila.pileup.conf.Conf
 import org.biodatageeks.sequila.tests.pileup.PileupTestBase
-import org.biodatageeks.sequila.utils.{InternalParams, SequilaRegister}
+import org.biodatageeks.sequila.utils.{InternalParams}
 import org.seqdoop.hadoop_bam.BAMBDGInputFormat
 import org.biodatageeks.sequila.pileup.model.AlignmentsRDDOperations.implicits._
 
@@ -37,7 +37,6 @@ class PartitionCoalesceTestSuite extends PileupTestBase with RDDComparisons {
     Array("hadoopBAM", "disq").foreach ( m => {
       val splitSize = "1000000"
       val ss = SequilaSession(spark)
-      SequilaRegister.register(ss)
       ss
         .sqlContext
         .setConf(InternalParams.IOReadAlignmentMethod, m)
@@ -65,7 +64,6 @@ class PartitionCoalesceTestSuite extends PileupTestBase with RDDComparisons {
 
     Array("hadoopBAM", "disq").foreach ( m => {
         val ss = SequilaSession(spark)
-        SequilaRegister.register(ss)
         ss
           .sqlContext
           .setConf(InternalParams.IOReadAlignmentMethod, m)

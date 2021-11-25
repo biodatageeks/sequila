@@ -3,14 +3,12 @@ package org.biodatageeks.sequila.tests.datasources
 import com.holdenkarau.spark.testing.SharedSparkContext
 import org.apache.spark.sql.SequilaSession
 import org.biodatageeks.sequila.tests.base.BEDBaseTestSuite
-import org.biodatageeks.sequila.utils.SequilaRegister
 
 class BEDReaderTestSuite extends BEDBaseTestSuite with SharedSparkContext {
 
   test("Read BED file") {
 
     val ss = SequilaSession(spark)
-    SequilaRegister.register(ss)
     val sqlText = s"SELECT * FROM ${tableNameBED}"
     ss
       .sql(sqlText)
@@ -28,7 +26,6 @@ class BEDReaderTestSuite extends BEDBaseTestSuite with SharedSparkContext {
 
   test("Read Simple BED file") {
     val ss = SequilaSession(spark)
-    SequilaRegister.register(ss)
     val sqlText = s"SELECT * FROM ${tableNameSimpleBED}"
     ss
       .sql(sqlText)
@@ -50,7 +47,6 @@ class BEDReaderTestSuite extends BEDBaseTestSuite with SharedSparkContext {
     ss
       .sparkContext
       .setLogLevel("INFO")
-    SequilaRegister.register(ss)
     val sqlText = s"SELECT * FROM ${tableNameBED} LIMIT 1"
     ss
       .sql(sqlText)

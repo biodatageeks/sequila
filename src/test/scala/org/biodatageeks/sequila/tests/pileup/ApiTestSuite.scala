@@ -3,7 +3,7 @@ package org.biodatageeks.sequila.tests.pileup
 import org.apache.spark.sql.{DataFrame, SequilaSession}
 import org.apache.spark.storage.StorageLevel
 import org.biodatageeks.sequila.pileup.PileupPlan
-import org.biodatageeks.sequila.utils.{Columns, InternalParams, SequilaRegister}
+import org.biodatageeks.sequila.utils.{Columns, InternalParams}
 
 class ApiTestSuite extends PileupTestBase {
 
@@ -34,7 +34,7 @@ class ApiTestSuite extends PileupTestBase {
 
   test("Cov only") {
     val ss = SequilaSession(spark)
-    SequilaRegister.register(ss)
+    SequilaSession.register(ss)
 
     val result = ss.sql(covQuery)
 
@@ -45,7 +45,6 @@ class ApiTestSuite extends PileupTestBase {
 
   test("Alts") {
     val ss = SequilaSession(spark)
-    SequilaRegister.register(ss)
 
     val result = ss.sql(altsQuery)
     assert(result.columns.contains(Columns.COVERAGE))
@@ -55,7 +54,6 @@ class ApiTestSuite extends PileupTestBase {
 
   test("Alts quals") {
     val ss = SequilaSession(spark)
-    SequilaRegister.register(ss)
 
     val result = ss.sql(altsQualsQuery)
     assert(result.columns.contains(Columns.COVERAGE))

@@ -1,7 +1,7 @@
 package org.biodatageeks.sequila.apps
 
 import org.apache.spark.sql.{SequilaSession, SparkSession}
-import org.biodatageeks.sequila.utils.SequilaRegister
+
 
 object CovRun {
 
@@ -17,7 +17,6 @@ object CovRun {
       .master("local[4]")
       .getOrCreate()
     val ss = new SequilaSession(spark)
-    SequilaRegister.register(ss)
     ss.sqlContext.setConf("spark.biodatageeks.bam.useGKLInflate","false")
     ss.sqlContext.setConf("spark.biodatageeks.bam.useSparkBAM","true")
     ss.sql(s"DROP TABLE IF EXISTS ${tableNameBAM}")

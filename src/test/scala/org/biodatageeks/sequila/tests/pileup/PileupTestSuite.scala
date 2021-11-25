@@ -3,7 +3,7 @@ package org.biodatageeks.sequila.tests.pileup
 import org.apache.spark.sql.{DataFrame, SequilaSession}
 import org.apache.spark.storage.StorageLevel
 import org.biodatageeks.sequila.pileup.PileupPlan
-import org.biodatageeks.sequila.utils.{Columns, InternalParams, SequilaRegister}
+import org.biodatageeks.sequila.utils.{Columns, InternalParams}
 
 class PileupTestSuite extends PileupTestBase {
 
@@ -19,7 +19,6 @@ class PileupTestSuite extends PileupTestBase {
   
   test("Normal split") {
     val ss = SequilaSession(spark)
-    SequilaRegister.register(ss)
     ss.sparkContext.setLogLevel("ERROR")
 
     val result = ss.sql(pileupQuery)
@@ -32,7 +31,6 @@ class PileupTestSuite extends PileupTestBase {
     spark.sqlContext.setConf(InternalParams.InputSplitSize, splitSize)
 
     val ss = SequilaSession(spark)
-    SequilaRegister.register(ss)
     val result = ss.sql(pileupQuery)
 //    Writer.saveToFile(ss, result, "bdgSplit.csv")
 //    result.where(s"${Columns.CONTIG}='MT' and ${Columns.START} >= 7 and ${Columns.START} <= 50").show(20)

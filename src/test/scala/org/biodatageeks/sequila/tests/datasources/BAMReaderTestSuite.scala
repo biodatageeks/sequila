@@ -2,7 +2,7 @@ package org.biodatageeks.sequila.tests.datasources
 
 import com.holdenkarau.spark.testing.{DataFrameSuiteBase, SharedSparkContext}
 import org.apache.spark.sql.SequilaSession
-import org.biodatageeks.sequila.utils.{Columns, InternalParams, SequilaRegister}
+import org.biodatageeks.sequila.utils.{Columns, InternalParams}
 import org.scalatest.{BeforeAndAfter, FunSuite}
 
 class BAMReaderTestSuite
@@ -28,7 +28,6 @@ class BAMReaderTestSuite
 
   test("Test point query predicate pushdown") {
     val ss = SequilaSession(spark)
-    SequilaRegister.register(ss)
     ss.sqlContext.setConf("spark.biodatageeks.bam.predicatePushdown", "false")
 
     val query =
@@ -52,7 +51,6 @@ class BAMReaderTestSuite
 
   test("Test interval query predicate pushdown") {
     val ss = SequilaSession(spark)
-    SequilaRegister.register(ss)
     ss.sqlContext.setConf("spark.biodatageeks.bam.predicatePushdown", "false")
     val query =
       s"""
@@ -75,7 +73,6 @@ class BAMReaderTestSuite
 
   test("Read BAM wide record") {
     val ss = SequilaSession(spark)
-    SequilaRegister.register(ss)
     val df = ss.sql(
       s"""
          |SELECT * FROM $tableNameBAM
@@ -89,7 +86,6 @@ class BAMReaderTestSuite
   test("Repartitioning") {
     spark.sqlContext.setConf(InternalParams.InputSplitSize, "100000")
     val ss = SequilaSession(spark)
-    SequilaRegister.register(ss)
 
     val a = ss.sql(
       s"""
@@ -102,7 +98,6 @@ class BAMReaderTestSuite
 
   test("Simple select over a BAM table group by") {
     val ss = SequilaSession(spark)
-    SequilaRegister.register(ss)
     assert(
       ss.sql(
         s"SELECT ${Columns.SAMPLE},count(*) FROM $tableNameBAM group by ${Columns.SAMPLE}")
@@ -113,7 +108,6 @@ class BAMReaderTestSuite
   test("Read BAM file with LIMIT") {
     val ss = SequilaSession(spark)
     ss.sparkContext.setLogLevel("INFO")
-    SequilaRegister.register(ss)
     val df = ss.sql(
       s"""
          |SELECT * FROM $tableNameBAM LIMIT 1
