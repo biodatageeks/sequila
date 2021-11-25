@@ -18,7 +18,8 @@ variables:
   SCALA_MAJOR_VERSION: 2
   SCALA_MINOR_VERSION: 12
   GKL_VERSION: 0.8.5-1
-  HADOOP_BAM_VERSION: 8.0.0-SNAPSHOT
+  HADOOP_BAM_VERSION: 8.0.1-SNAPSHOT
+  DISQ_VERSION: 0.3.9-SNAPSHOT
 
 
 # --------------------------------- STAGE: version ---------------------------------------------------------------------
@@ -89,6 +90,9 @@ build:
       /builds/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/target/scala-$SCALA_MAJOR_VERSION.$SCALA_MINOR_VERSION/sequila_$SCALA_MAJOR_VERSION.$SCALA_MINOR_VERSION-$VERSION.jar
     - ./merge_jars.sh
       /builds/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/lib/hadoop-bam-$HADOOP_BAM_VERSION.jar
+      /builds/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/target/scala-$SCALA_MAJOR_VERSION.$SCALA_MINOR_VERSION/sequila_$SCALA_MAJOR_VERSION.$SCALA_MINOR_VERSION-$VERSION.jar
+    - ./merge_jars.sh
+      /builds/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/lib/disq-$DISQ_VERSION.jar
       /builds/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/target/scala-$SCALA_MAJOR_VERSION.$SCALA_MINOR_VERSION/sequila_$SCALA_MAJOR_VERSION.$SCALA_MINOR_VERSION-$VERSION.jar
 
   artifacts:
