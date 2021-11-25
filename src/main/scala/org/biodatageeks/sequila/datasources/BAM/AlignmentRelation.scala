@@ -34,6 +34,8 @@ case class Interval(contig: String, posStart: Int, posEnd: Int) extends Locatabl
 //TODO refactor rename to AlignmentsFileReaderWriter
 trait BDGAlignFileReaderWriter [T <: BDGAlignInputFormat]{
 
+  def readFile: RDD[SAMRecord] = ???
+
   val confMap = new mutable.HashMap[String,String]()
 
   def setLocalConf(@transient sqlContext: SQLContext): confMap.type = {
@@ -44,6 +46,7 @@ trait BDGAlignFileReaderWriter [T <: BDGAlignInputFormat]{
     confMap += ("spark.biodatageeks.bam.useGKLInflate" -> gklInflate)
 
   }
+
 
   def setConf(key:String,value:String): confMap.type = confMap += (key -> value)
 

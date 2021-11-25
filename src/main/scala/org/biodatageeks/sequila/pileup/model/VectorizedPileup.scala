@@ -41,7 +41,8 @@ object VectorizedPileup {
   def create(fullMode: Boolean, conf:Conf, output: Seq[Attribute], index:Int):VectorizedPileup = {
 
     val hadoopConf = new Configuration()
-    hadoopConf.set("orc.compress", conf.orcCompressCodec)
+    if(conf.orcCompressCodec != null)
+      hadoopConf.set("orc.compress", conf.orcCompressCodec)
     val path = conf.vectorizedOrcWriterPath
     val schema = OrcProjection.catalystToOrcSchema(output)
     val writer = OrcFile

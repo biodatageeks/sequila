@@ -13,7 +13,7 @@ import org.biodatageeks.sequila.datasources.InputDataType
 import org.biodatageeks.sequila.inputformats.BDGAlignInputFormat
 import org.biodatageeks.sequila.pileup.conf.QualityConstants.{DEFAULT_BIN_SIZE, DEFAULT_MAX_QUAL}
 import org.biodatageeks.sequila.pileup.conf.Conf
-import org.biodatageeks.sequila.utils.{InternalParams, TableFuncs}
+import org.biodatageeks.sequila.utils.{FileFuncs, InternalParams, TableFuncs}
 import org.seqdoop.hadoop_bam.{BAMBDGInputFormat, CRAMBDGInputFormat}
 
 import scala.reflect.ClassTag
@@ -34,19 +34,26 @@ class PileupStrategy (spark:SparkSession) extends Strategy with Serializable {
         vectorizedOrcWritePath = outputPath.toString
         Nil
       }
-      case PileupTemplate(tableName, sampleId, refPath, alts, quals, binSize, output) =>
-        val inputFormat = TableFuncs.getTableMetadata(spark, tableName).provider
+      case PileupTemplate(tableNameOrPath, sampleId, refPath, alts, quals, binSize, output) => {
+        val inputFormat = {
+          if (sampleId != null)
+                TableFuncs.getTableMetadata(spark, tableNameOrPath).provider
+          else if (FileFuncs.getFileExtension(tableNameOrPath) == "bam") Some(InputDataType.BAMInputDataType)
+          else if (FileFuncs.getFileExtension(tableNameOrPath) == "cram") Some(InputDataType.CRAMInputDataType)
+          else None
+        }
         inputFormat match {
           case Some(f) =>
             if (f == InputDataType.BAMInputDataType)
-              PileupPlan[BAMBDGInputFormat](plan, spark, tableName, sampleId,
+              PileupPlan[BAMBDGInputFormat](plan, spark, tableNameOrPath, sampleId,
                 refPath, alts, quals, binSize, output,vectorizedOrcWritePath) :: Nil
             else if (f == InputDataType.CRAMInputDataType)
-              PileupPlan[CRAMBDGInputFormat](plan, spark, tableName, sampleId,
+              PileupPlan[CRAMBDGInputFormat](plan, spark, tableNameOrPath, sampleId,
                 refPath, alts, quals, binSize, output,  vectorizedOrcWritePath) :: Nil
             else Nil
           case None => throw new RuntimeException("Only BAM and CRAM file formats are supported in pileup function.")
         }
+      }
       case _ => Nil
     }
   }
@@ -56,7 +63,7 @@ object PileupPlan extends Serializable {
 
 }
 case class PileupPlan [T<:BDGAlignInputFormat](plan:LogicalPlan, spark:SparkSession,
-                                               tableName:String,
+                                               tableNameOrPath:String,
                                                sampleId:String,
                                                refPath: String,
                                                alts: Boolean,
@@ -72,7 +79,7 @@ case class PileupPlan [T<:BDGAlignInputFormat](plan:LogicalPlan, spark:SparkSess
 
   override protected def doExecute(): RDD[InternalRow] = {
     val conf = setupPileupConfiguration(spark)
-    new Pileup(spark).handlePileup(tableName, sampleId, refPath, output, conf)
+    new Pileup(spark).handlePileup(tableNameOrPath, sampleId, refPath, output, conf)
   }
 
 
@@ -80,7 +87,7 @@ case class PileupPlan [T<:BDGAlignInputFormat](plan:LogicalPlan, spark:SparkSess
     val conf = new Conf
     val isLocal = spark.sparkContext.isLocal
     conf.useVectorizedOrcWriter =  spark.sqlContext.getConf(InternalParams.useVectorizedOrcWriter, "false") match {
-      case t: String if t.toLowerCase() == "true" && isLocal => true //FIXME: vectorized Writer supported only in local mode
+      case t: String if t.toLowerCase() == "true" && isLocal => true && directOrcWritePath != null //FIXME: vectorized Writer supported only in local mode
       case _ => false
     }
 
