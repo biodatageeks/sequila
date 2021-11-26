@@ -45,7 +45,7 @@ libraryDependencies += "org.eclipse.jetty" % "jetty-servlet" % "9.3.24.v20180605
 libraryDependencies += "org.apache.derby" % "derbyclient" % "10.14.2.0"
 //libraryDependencies += "org.disq-bio" % "disq" % "0.3.8" <-disabled since we use patched version of HtsjdkReadsTraversalParameters
 libraryDependencies += "io.projectglow" %% "glow-spark3" % "1.0.1" excludeAll (ExclusionRule("com.github.samtools")) excludeAll (ExclusionRule("org.seqdoop")) //FIXME:: remove togehter with disq
-libraryDependencies += "com.intel.gkl" % "gkl" % "0.8.6"
+libraryDependencies += "com.intel.gkl" % "gkl" % "0.8.8"
 libraryDependencies += "org.openjdk.jol" % "jol-core" % "0.16" % "provided"
 libraryDependencies += "com.github.jsr203hadoop" % "jsr203hadoop" % "1.0.3"
 
