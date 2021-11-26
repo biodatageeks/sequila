@@ -20,6 +20,8 @@ lazy val hadoopVersion = Properties.envOrElse("SPARK_HADOOP_VERSION", DEFAULT_HA
 
 dependencyOverrides += "com.google.guava" % "guava" % "15.0"
 dependencyOverrides += "org.apache.orc" % "orc-core" % "1.6.9"
+dependencyOverrides += "org.apache.logging.log4j" % "log4j-core" % "2.3"
+
 
 //removing hadoop-bam to used a patched one with support for htsjdk 2.22
 //libraryDependencies += "org.seqdoop" % "hadoop-bam" % "7.10.0"
@@ -37,15 +39,13 @@ libraryDependencies += "org.rogach" %% "scallop" % "3.1.2"
 libraryDependencies += "com.github.samtools" % "htsjdk" % "2.24.1"
 libraryDependencies += "ch.cern.sparkmeasure" %% "spark-measure" % "0.17" excludeAll (ExclusionRule("org.apache.hadoop"))
 libraryDependencies += "org.broadinstitute" % "gatk-native-bindings" % "1.0.0" excludeAll (ExclusionRule("org.apache.hadoop"))
-libraryDependencies += "org.apache.logging.log4j" % "log4j-core" % "2.11.0"
-libraryDependencies += "org.apache.logging.log4j" % "log4j-api" % "2.11.0"
 libraryDependencies += "de.ruedigermoeller" % "fst" % "2.57"
 libraryDependencies += "org.apache.commons" % "commons-lang3" % "3.7"
 libraryDependencies += "org.eclipse.jetty" % "jetty-servlet" % "9.3.24.v20180605"
 libraryDependencies += "org.apache.derby" % "derbyclient" % "10.14.2.0"
 //libraryDependencies += "org.disq-bio" % "disq" % "0.3.8" <-disabled since we use patched version of HtsjdkReadsTraversalParameters
 libraryDependencies += "io.projectglow" %% "glow-spark3" % "1.0.1" excludeAll (ExclusionRule("com.github.samtools")) excludeAll (ExclusionRule("org.seqdoop")) //FIXME:: remove togehter with disq
-libraryDependencies += "com.intel.gkl" % "gkl" % "0.8.6"
+libraryDependencies += "com.intel.gkl" % "gkl" % "0.8.8"
 libraryDependencies += "org.openjdk.jol" % "jol-core" % "0.16" % "provided"
 libraryDependencies += "com.github.jsr203hadoop" % "jsr203hadoop" % "1.0.3"
 
