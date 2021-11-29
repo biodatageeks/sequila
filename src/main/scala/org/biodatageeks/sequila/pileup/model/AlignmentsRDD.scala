@@ -174,7 +174,10 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
       .map(r => r.getContig)
       .toArray
 
-      val reads = reader.readFile
+      SparkSession.builder.config(this.rdd.sparkContext.getConf).getOrCreate()
+      .sqlContext
+      .setConf(InternalParams.AlignmentIntervals, PartitionUtils.boundsToIntervals(lowerBounds))
+      lazy val reads = reader.readFile
       computePartitionBounds(contigsList, reads, lowerBounds, conf)
   }
 
@@ -185,9 +188,7 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
                                      lowerBounds: Array[LowerPartitionBoundAlignmentRecord],
                                       conf: Conf
                                     ) ={
-    SparkSession.builder.config(this.rdd.sparkContext.getConf).getOrCreate()
-      .sqlContext
-      .setConf(InternalParams.AlignmentIntervals, PartitionUtils.boundsToIntervals(lowerBounds))
+
     logger.info(s"Getting bounds overlapping reads for intervals: ${PartitionUtils.boundsToIntervals(lowerBounds)}")
     val boundsOverlappingReads = reads
       .filter(r => !r.getReadUnmappedFlag )
