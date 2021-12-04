@@ -85,6 +85,10 @@ javaOptions in Test ++= Seq(
 
 javaOptions ++= Seq("-Xms512M", "-Xmx8192M", "-XX:+CMSClassUnloadingEnabled" , "-Dlog4j.configuration=log4j.properties")
 
+javacOptions ++= Seq("--release", "8")
+
+
+
 //fix for using with hdp warehouse connector
 updateOptions := updateOptions.value.withLatestSnapshots(false)
 outputStrategy := Some(StdoutOutput)
