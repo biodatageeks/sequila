@@ -14,7 +14,7 @@ scalaVersion := "2.12.13"
 val isSnapshotVersion = settingKey[Boolean]("Is snapshot")
 isSnapshotVersion := version.value.toLowerCase.contains("snapshot")
 
-val DEFAULT_HADOOP_VERSION = "2.7.4"
+val DEFAULT_HADOOP_VERSION = "3.2.2"
 
 lazy val hadoopVersion = Properties.envOrElse("SPARK_HADOOP_VERSION", DEFAULT_HADOOP_VERSION)
 
