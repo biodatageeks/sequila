@@ -14,7 +14,7 @@ scalaVersion := "2.12.13"
 val isSnapshotVersion = settingKey[Boolean]("Is snapshot")
 isSnapshotVersion := version.value.toLowerCase.contains("snapshot")
 
-val DEFAULT_HADOOP_VERSION = "2.7.4"
+val DEFAULT_HADOOP_VERSION = "3.1.2"
 
 lazy val hadoopVersion = Properties.envOrElse("SPARK_HADOOP_VERSION", DEFAULT_HADOOP_VERSION)
 
@@ -84,6 +84,10 @@ javaOptions in Test ++= Seq(
   "-Dlog4j.configuration=log4j.properties")
 
 javaOptions ++= Seq("-Xms512M", "-Xmx8192M", "-XX:+CMSClassUnloadingEnabled" , "-Dlog4j.configuration=log4j.properties")
+
+javacOptions ++= Seq("--release", "8")
+
+
 
 //fix for using with hdp warehouse connector
 updateOptions := updateOptions.value.withLatestSnapshots(false)
