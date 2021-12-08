@@ -347,27 +347,28 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
       vp.altsMapVector.values.asInstanceOf[LongColumnVector].vector(altsMapElem) = alt._2
       altsMapElem += 1
     }
+    if(agg.conf.includeBaseQualities) {
+      vp.qualsMapVector.offsets(row) = vp.qualsMapVector.childCount
+      vp.qualsMapVector.lengths(row) = qualsMap.size
+      vp.qualsMapVector.childCount += qualsMap.size
+      val qualsMapOffset = vp.qualsMapVector.offsets(row).toInt
 
-    vp.qualsMapVector.offsets(row) = vp.qualsMapVector.childCount
-    vp.qualsMapVector.lengths(row) = qualsMap.size
-    vp.qualsMapVector.childCount  += qualsMap.size
-    val qualsMapOffset = vp.qualsMapVector.offsets(row).toInt
-
-    val quals = qualsMap.toIterator
-    var qualMapElem: Int = qualsMapOffset
-    while(quals.hasNext){
-      val qual = quals.next()
-      vp.qualsMapVector.keys.asInstanceOf[LongColumnVector].vector(qualMapElem) = qual._1
-      vp.qualsMapVector.values.asInstanceOf[ListColumnVector].offsets(qualMapElem) = vp.qualsMapVector.values.asInstanceOf[ListColumnVector].childCount
-      vp.qualsMapVector.values.asInstanceOf[ListColumnVector].lengths(qualMapElem) = vp.QUALITY_ARRAY_SIZE
-      vp.qualsMapVector.values.asInstanceOf[ListColumnVector].childCount += vp.QUALITY_ARRAY_SIZE
-      val offset = vp.qualsMapVector.values.asInstanceOf[ListColumnVector].offsets(qualMapElem).toInt
-      var i = 0
-      while(i < vp.QUALITY_ARRAY_SIZE) {
-        vp.qualsMapVector.values.asInstanceOf[ListColumnVector].child.asInstanceOf[LongColumnVector].vector(i+offset) = qual._2(i)
-        i+=1
+      val quals = qualsMap.toIterator
+      var qualMapElem: Int = qualsMapOffset
+      while (quals.hasNext) {
+        val qual = quals.next()
+        vp.qualsMapVector.keys.asInstanceOf[LongColumnVector].vector(qualMapElem) = qual._1
+        vp.qualsMapVector.values.asInstanceOf[ListColumnVector].offsets(qualMapElem) = vp.qualsMapVector.values.asInstanceOf[ListColumnVector].childCount
+        vp.qualsMapVector.values.asInstanceOf[ListColumnVector].lengths(qualMapElem) = vp.QUALITY_ARRAY_SIZE
+        vp.qualsMapVector.values.asInstanceOf[ListColumnVector].childCount += vp.QUALITY_ARRAY_SIZE
+        val offset = vp.qualsMapVector.values.asInstanceOf[ListColumnVector].offsets(qualMapElem).toInt
+        var i = 0
+        while (i < vp.QUALITY_ARRAY_SIZE) {
+          vp.qualsMapVector.values.asInstanceOf[ListColumnVector].child.asInstanceOf[LongColumnVector].vector(i + offset) = qual._2(i)
+          i += 1
+        }
+        qualMapElem += 1
       }
-      qualMapElem += 1
     }
 
     vp.batch.size += 1
