@@ -143,6 +143,38 @@ class PileupSaveOutputTestSuite
     pileupTestDF.where("pos_start==25").show(false)
     assertRDDEquals(pileupRefDF.rdd, pileupTestDF.rdd)
   }
+
+  test("ORC - pileup - DataFrame API without quals save - vectorized"){
+    val ss = SequilaSession(spark)
+    ss
+      .sqlContext
+      .setConf("spark.sql.orc.compression.codec", "ZLIB")
+    ss
+      .sqlContext
+      .setConf(InternalParams.useVectorizedOrcWriter, "true")
+    val orcPileupPath = s"$pileupPath/orc/"
+    cleanup(orcPileupPath)
+    var pileupRefDF = ss
+      .pileup(bamPath, referencePath,false)
+      .toDF
+      .drop("quals")
+    //using rdd to not fight with nullability/schema just byte equality
+    pileupRefDF
+      .write
+      .orc(orcPileupPath)
+    val pileupTestDF = ss
+      .read
+      .orc(orcPileupPath)
+    assert(pileupRefDF.count === 0) //should be 0 since we are bypassing DataFrame API
+    ss
+      .sqlContext
+      .setConf(InternalParams.useVectorizedOrcWriter, "false")
+    pileupRefDF = ss.sql(queryPileupWithoutQual)
+    assert(pileupRefDF.count === pileupTestDF.count)
+    pileupRefDF.where("pos_start==25").show(false)
+    pileupTestDF.where("pos_start==25").show(false)
+    assertRDDEquals(pileupRefDF.rdd, pileupTestDF.rdd)
+  }
   override def afterAll {
     cleanup(baseOutputPath)
   }

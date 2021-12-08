@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+  xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  
+  <url>
+    <loc>//biodatageeks.org/pysequila/docs/overview/</loc>
+  </url>
+  
+  <url>
+    <loc>//biodatageeks.org/pysequila/docs/tasks/beds/</loc>
+    <lastmod>2017-01-05T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>//biodatageeks.org/pysequila/docs/tasks/ponycopters/configuring-ponycopters/</loc>
+    <lastmod>2017-01-05T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>//biodatageeks.org/pysequila/docs/getting-started/</loc>
+    <lastmod>2017-01-05T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>//biodatageeks.org/pysequila/docs/examples/</loc>
+    <lastmod>2017-01-05T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>//biodatageeks.org/pysequila/docs/tasks/ponycopters/launching-ponycopters/</loc>
+    <lastmod>2017-01-05T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>//biodatageeks.org/pysequila/docs/tutorials/multi-bear/</loc>
+    <lastmod>2017-01-05T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>//biodatageeks.org/pysequila/docs/tasks/porridge/</loc>
+    <lastmod>2017-01-05T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>//biodatageeks.org/pysequila/docs/concepts/</loc>
+  </url>
+  
+  <url>
+    <loc>//biodatageeks.org/pysequila/docs/tasks/task/</loc>
+    <lastmod>2017-01-05T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>//biodatageeks.org/pysequila/docs/tutorials/tutorial2/</loc>
+    <lastmod>2017-01-05T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>//biodatageeks.org/pysequila/docs/tasks/</loc>
+    <lastmod>2017-01-05T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>//biodatageeks.org/pysequila/docs/tutorials/</loc>
+    <lastmod>2017-01-04T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>//biodatageeks.org/pysequila/docs/reference/</loc>
+    <lastmod>2017-01-05T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>//biodatageeks.org/pysequila/docs/contribution-guidelines/</loc>
+  </url>
+  
+  <url>
+    <loc>//biodatageeks.org/pysequila/blog/news/</loc>
+    <lastmod>2018-10-06T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>//biodatageeks.org/pysequila/blog/releases/</loc>
+    <lastmod>2018-01-04T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>//biodatageeks.org/pysequila/docs/</loc>
+    <lastmod>2017-01-05T00:00:00+00:00</lastmod>
+    <xhtml:link
+                rel="alternate"
+                hreflang="no"
+                href="//biodatageeks.org/pysequila/no/docs/"
+                />
+    <xhtml:link
+                rel="alternate"
+                hreflang="en"
+                href="//biodatageeks.org/pysequila/docs/"
+                />
+  </url>
+  
+  <url>
+    <loc>//biodatageeks.org/pysequila/blog/2018/10/06/easy-documentation-with-docsy/</loc>
+    <lastmod>2018-10-06T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>//biodatageeks.org/pysequila/blog/</loc>
+    <lastmod>2018-10-06T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>//biodatageeks.org/pysequila/</loc>
+    <lastmod>2018-10-06T00:00:00+00:00</lastmod>
+    <xhtml:link
+                rel="alternate"
+                hreflang="no"
+                href="//biodatageeks.org/pysequila/no/"
+                />
+    <xhtml:link
+                rel="alternate"
+                hreflang="en"
+                href="//biodatageeks.org/pysequila/"
+                />
+  </url>
+  
+  <url>
+    <loc>//biodatageeks.org/pysequila/blog/2018/10/06/the-second-blog-post/</loc>
+    <lastmod>2018-10-06T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>//biodatageeks.org/pysequila/blog/2018/01/04/another-great-release/</loc>
+    <lastmod>2018-01-04T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>//biodatageeks.org/pysequila/docs/getting-started/example-page/</loc>
+    <lastmod>2017-01-05T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>//biodatageeks.org/pysequila/docs/reference/parameter-reference/</loc>
+    <lastmod>2017-01-05T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>//biodatageeks.org/pysequila/docs/tasks/ponycopters/</loc>
+    <lastmod>2017-01-05T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>//biodatageeks.org/pysequila/about/</loc>
+  </url>
+  
+  <url>
+    <loc>//biodatageeks.org/pysequila/community/</loc>
+  </url>
+  
+  <url>
+    <loc>//biodatageeks.org/pysequila/search/</loc>
+    <xhtml:link
+                rel="alternate"
+                hreflang="no"
+                href="//biodatageeks.org/pysequila/no/search/"
+                />
+    <xhtml:link
+                rel="alternate"
+                hreflang="en"
+                href="//biodatageeks.org/pysequila/search/"
+                />
+  </url>
+  
+</urlset>
