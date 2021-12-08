@@ -451,8 +451,10 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
       vp.countNonRefVector.vector(row) = 0.toShort
       vp.altsMapVector.isNull(row) = true
       vp.altsMapVector.noNulls = false
-      vp.qualsMapVector.isNull(row) = true
-      vp.qualsMapVector.noNulls = false
+      if(agg.conf.includeBaseQualities) {
+        vp.qualsMapVector.isNull(row) = true
+        vp.qualsMapVector.noNulls = false
+      }
     }
     vp.batch.size += 1
 
