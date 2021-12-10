@@ -1,0 +1,16 @@
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>sequila – SeQuiLa</title>
+    <link>https://biodatageeks.github.io/sequila/</link>
+    <description>Recent content in SeQuiLa on sequila</description>
+    <generator>Hugo -- gohugo.io</generator>
+    
+	  <atom:link href="https://biodatageeks.github.io/sequila/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+      
+      
+    
+    
+  </channel>
+</rss>
