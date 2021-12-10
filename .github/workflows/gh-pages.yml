@@ -26,20 +26,13 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v2
         with:
-          node-version: '14'
-        - run: npm install autoprefixer postcss-cli postcss
-
-      - name: Cache dependencies
-        uses: actions/cache@v2
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
+          node-version: '12.x'
+          cache: 'npm'
+          cache-dependency-path: page/package-lock.json
 
       - name: Build
         working-directory: ./page
-        run: hugo
+        run: npm ci && hugo
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
