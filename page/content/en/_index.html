@@ -1,0 +1,205 @@
++++
+title = "SeQuiLa"
+linkTitle = "SeQuiLa"
+
++++
+
+{{< blocks/cover title="SeQuiLa: Distributed analytics for genomics!" image_anchor="top" height="full" color="orange" >}}
+
+<div class="mx-auto">
+	<a class="btn btn-lg btn-primary mr-3 mb-4" href="{{< param "doc_url" >}}">
+		Learn More <i class="fas fa-arrow-alt-circle-right ml-2"></i>
+	</a>
+	<a class="btn btn-lg btn-secondary mr-3 mb-4" href="https://github.com/biodatageeks/sequila">
+		Source code <i class="fab fa-github ml-2 "></i>
+	</a>
+	<a class="btn btn-lg btn-info mr-3 mb-4" href="https://pypi.org/project/pysequila/">
+		PyPI package <i class="fab fa-python ml-2 "></i>
+	</a>
+	<a class="btn btn-lg btn-success mr-3 mb-4" href="https://search.maven.org/artifact/org.biodatageeks/sequila_2.12">
+		Maven central <i class="fab fa-java ml-2 "></i>
+	</a>
+	</br>
+	<a class="btn btn-lg btn-danger mr-3 mb-4" href="https://scholar.google.pl/scholar?q=sequila">
+		Research papers<i class="fas fa-book ml-2 "></i>
+	</a>
+	<a class="btn btn-lg btn-dark mr-3 mb-4" href="https://github.com/biodatageeks/sequila-cloud-recipes">
+		Try it in cloud <i class="fas fa-cloud ml-2 "></i>
+	</a>
+	<p class="display-4">Analyze population-scale datasets seamlessly - in the cloud!</p>
+	{{< blocks/link-down color="info" >}}
+</div>
+
+{{< /blocks/cover >}}
+
+{{< blocks/lead >}}
+<div class="col">
+	<h2 class="text-center">SeQuiLa extends Apache Spark with highly efficient implementations of common bioinformatics operations such as
+		interval joins, depth of coverage or pileup.</h2>
+</div>
+
+{{< /blocks/lead >}}
+{{< blocks/lead >}}
+<div class="col">
+	<h2 class="text-center">SeQuiLa is an ANSI-SQL compliant solution for distributed processing of next generation sequencing data in formats such as BAM/CRAM/FASTQ built on top of Apache Spark.</h2>
+</div>
+
+{{< /blocks/lead >}}
+{{< blocks/lead color="dark">}}
+<div class="col">
+	<h2 class="text-center">Getting started</h2>
+	<div class="text-left">
+	{{< highlight bash>}}
+# ensure you have Apache Spark and GraalVM installed
+sdk install spark 3.1.2
+sdk install java 21.3.0.r11-grl
+# set Apache Spark and JDK using sdkman
+sdk use spark 3.1.2
+# use GraalVM for best performance
+sdk use java 21.3.0.r11-grl
+# in case you prefer to use a Python interface
+pip install pysequila==0.3.3
+	{{< / highlight >}}
+	{{< tabpane >}}
+	{{< tab header="SQL" >}}
+		{{< highlight sql>}}
+-- remember to initialize SeQuiLaSession in Python or Scala REPL first !
+-- create a table over a BAM file
+CREATE TABLE IF NOT EXISTS reads
+USING org.biodatageeks.sequila.datasources.BAM.BAMDataSource
+OPTIONS(path "/features/data/NA12878.bam");
+-- calculate pileup
+SELECT * FROM pileup('reads', 'NA12878','/features/data/hg18.fasta', false);
+		{{< / highlight >}}
+		{{< highlight bash>}}
+		+------+---------+-------+---------+--------+--------+-----------+----+-----+
+		|contig|pos_start|pos_end|      ref|coverage|countRef|countNonRef|alts|quals|
+		+------+---------+-------+---------+--------+--------+-----------+----+-----+
+		|     1|       34|     34|        C|       1|       1|          0|null| null|
+		|     1|       35|     35|        C|       2|       2|          0|null| null|
+		|     1|       36|     37|       CT|       3|       3|          0|null| null|
+		|     1|       38|     40|      AAC|       4|       4|          0|null| null|
+		|     1|       41|     49|CCTAACCCT|       5|       5|          0|null| null|
+		+------+---------+-------+---------+--------+--------+-----------+----+-----+
+		only showing top 5 rows
+		{{< / highlight >}}
+	{{< /tab >}}
+	{{< tab header="Python" >}}
+		{{< highlight bash>}}
+pyspark --master local[1] \
+		--driver-memory 4g \
+		--packages org.biodatageeks:sequila_2.12:0.7.8
+		{{< / highlight >}}
+		{{< highlight python>}}
+from pysequila import SequilaSession
+# initialize an extended SparkSession
+ss = SequilaSession \
+.builder \
+.getOrCreate()
+# calculate pileup (set paths accordingly)
+ss.pileup("/features/data/NA12878.bam", "/features/data/hg18.fasta", False).show()
+		{{< / highlight >}}
+		{{< highlight bash>}}
+		+------+---------+-------+---------+--------+--------+-----------+----+-----+
+		|contig|pos_start|pos_end|      ref|coverage|countRef|countNonRef|alts|quals|
+		+------+---------+-------+---------+--------+--------+-----------+----+-----+
+		|     1|       34|     34|        C|       1|       1|          0|null| null|
+		|     1|       35|     35|        C|       2|       2|          0|null| null|
+		|     1|       36|     37|       CT|       3|       3|          0|null| null|
+		|     1|       38|     40|      AAC|       4|       4|          0|null| null|
+		|     1|       41|     49|CCTAACCCT|       5|       5|          0|null| null|
+		+------+---------+-------+---------+--------+--------+-----------+----+-----+
+		only showing top 5 rows
+		{{< / highlight >}}
+		{{< /tab >}}
+	{{< tab header="Scala" >}}
+{{< highlight bash>}}
+spark-shell --master local[1] \
+--driver-memory 4g \
+--packages org.biodatageeks:sequila_2.12:0.7.8
+{{< / highlight >}}
+		{{< highlight scala>}}
+import org.apache.spark.sql.SequilaSession
+# initialize an extended SparkSession
+val ss = SequilaSession(spark)
+# calculate pileup (set paths accordingly)
+ss.pileup("/features/data/NA12878.bam", "/features/data/hg18.fasta", false).show(5)
+		{{< / highlight >}}
+		{{< highlight bash>}}
+		+------+---------+-------+---------+--------+--------+-----------+----+-----+
+		|contig|pos_start|pos_end|      ref|coverage|countRef|countNonRef|alts|quals|
+		+------+---------+-------+---------+--------+--------+-----------+----+-----+
+		|     1|       34|     34|        C|       1|       1|          0|null| null|
+		|     1|       35|     35|        C|       2|       2|          0|null| null|
+		|     1|       36|     37|       CT|       3|       3|          0|null| null|
+		|     1|       38|     40|      AAC|       4|       4|          0|null| null|
+		|     1|       41|     49|CCTAACCCT|       5|       5|          0|null| null|
+		+------+---------+-------+---------+--------+--------+-----------+----+-----+
+		only showing top 5 rows
+		{{< / highlight >}}
+	{{< /tab >}}
+	{{< /tabpane >}}
+	</div>
+</div>
+{{< /blocks/lead >}}
+
+{{< blocks/lead >}}
+<div class="col">
+	<h2 class="text-center">It combines analytical power of Python with SQL syntax for almost unlimited querying and processing of NGS data.</h2>
+</div>
+{{< /blocks/lead >}}
+
+{{< blocks/lead >}}
+<div class="col">
+	<h2 class="text-center">Big data ready, cloud-native</h2>
+</div>
+{{< /blocks/lead >}}
+
+
+{{< blocks/section color="dark" >}}
+
+{{% blocks/feature icon="fab fa-slack" title="Join us on Slack!" url="https://join.slack.com/t/biodatageeksworkspace/shared_invite/zt-hc9amrcn-1LnFZIHW7TVs2WgRHeFeew"%}}
+
+{{% /blocks/feature %}}
+
+
+{{% blocks/feature icon="fab fa-github" title="Contributions welcome!" url="https://github.com/biodatageeks/pysequila" %}}
+We do a [Pull Request](https://github.com/biodatageeks/pysequila/pulls) contributions workflow on **GitHub**. New users are always welcome!
+{{% /blocks/feature %}}
+
+
+{{% blocks/feature icon="fab fa-twitter" title="Follow us on Twitter!" url="https://twitter.com/biodatageeks" %}}
+For announcement of latest features etc.
+{{% /blocks/feature %}}
+
+
+{{< /blocks/section >}}
+
+
+
+
+<!--{{< blocks/section >}}-->
+<!--{{% blocks/feature icon="fab fa-app-store-ios" title="Download **from AppStore**" %}}-->
+<!--Get the Goldydocs app!-->
+<!--{{% /blocks/feature %}}-->
+
+
+<!--{{% blocks/feature icon="fab fa-github" title="Contributions welcome!" url="https://github.com/google/docsy-example" %}}-->
+<!--We do a [Pull Request](https://github.com/google/docsy-example/pulls) contributions workflow on **GitHub**. New users are always welcome!-->
+<!--{{% /blocks/feature %}}-->
+
+
+<!--{{% blocks/feature icon="fab fa-twitter" title="Follow us on Twitter!" url="https://twitter.com/GoHugoIO" %}}-->
+<!--For announcement of latest features etc.-->
+<!--{{% /blocks/feature %}}-->
+
+
+<!--{{< /blocks/section >}}-->
+
+<!--{{< blocks/section >}}-->
+
+<!--&lt;!&ndash;<div class="col-12">&ndash;&gt;-->
+<!--&lt;!&ndash;<h1 class="text-center">This is another Section</h1>&ndash;&gt;-->
+<!--&lt;!&ndash;</div>&ndash;&gt;-->
+
+<!--{{< /blocks/section >}}-->
