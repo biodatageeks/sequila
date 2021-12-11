@@ -27,6 +27,10 @@ linkTitle = "SeQuiLa"
 		Try it in cloud <i class="fas fa-cloud ml-2 "></i>
 	</a>
 	<p class="display-4">Analyze population-scale datasets seamlessly - in the cloud!</p>
+	<a class="btn btn-lg btn-dark mr-3 mb-4" href="index.html#getting_started">
+		Getting started <i class="fas fa-play ml-2 "></i>
+	</a>
+	</br>
 	{{< blocks/link-down color="info" >}}
 </div>
 
@@ -34,7 +38,7 @@ linkTitle = "SeQuiLa"
 
 {{< blocks/lead >}}
 <div class="col">
-	<h2 class="text-center">SeQuiLa extends Apache Spark with highly efficient implementations of common bioinformatics operations such as
+	<h2 class="text-center">SeQuiLa extends Apache Spark with highly efficient implementations of common bioinformatics operations including
 		interval joins, depth of coverage or pileup.</h2>
 </div>
 
@@ -44,8 +48,10 @@ linkTitle = "SeQuiLa"
 	<h2 class="text-center">SeQuiLa is an ANSI-SQL compliant solution for distributed processing of next generation sequencing data in formats such as BAM/CRAM/FASTQ built on top of Apache Spark.</h2>
 </div>
 
+<a id="getting_started">
 {{< /blocks/lead >}}
 {{< blocks/lead color="dark">}}
+
 <div class="col">
 	<h2 class="text-center">Getting started</h2>
 	<div class="text-left">
@@ -59,17 +65,28 @@ sdk use spark 3.1.2
 sdk use java 21.3.0.r11-grl
 # in case you prefer to use a Python interface
 pip install pysequila==0.3.3
-	{{< / highlight >}}
+# download sample data
+mkdir -p data
+#BAM
+wget -nc https://github.com/biodatageeks/pysequila/raw/master/features/data/NA12878.multichrom.md.bam -O data/NA12878.bam
+wget -nc https://github.com/biodatageeks/pysequila/raw/master/features/data/NA12878.multichrom.md.bam.bai -O data/NA12878.bam.bai
+#Reference
+wget -nc https://github.com/biodatageeks/pysequila/raw/master/features/data/Homo_sapiens_assembly18_chr1_chrM.small.fasta -O data/hg18.fasta
+wget -nc https://github.com/biodatageeks/pysequila/raw/master/features/data/Homo_sapiens_assembly18_chr1_chrM.small.fasta.fai -O data/hg18.fasta.fai
+# targets
+wget -nc https://github.com/biodatageeks/pysequila/raw/master/features/data/targets.bed -O data/targets.bed
+		{{< / highlight >}}
 	{{< tabpane >}}
-	{{< tab header="SQL" >}}
+	{{< tab header="SQL-pileup" >}}
 		{{< highlight sql>}}
 -- remember to initialize SeQuiLaSession in Python or Scala REPL first !
 -- create a table over a BAM file
+-- replace {{ PWD }} with your location
 CREATE TABLE IF NOT EXISTS reads
 USING org.biodatageeks.sequila.datasources.BAM.BAMDataSource
-OPTIONS(path "/features/data/NA12878.bam");
+OPTIONS(path "{{ PWD }}/data/NA12878.bam");
 -- calculate pileup
-SELECT * FROM pileup('reads', 'NA12878','/features/data/hg18.fasta', false);
+SELECT * FROM pileup('reads', 'NA12878','{{ PWD }}/data/hg18.fasta', false) LIMIT 5;
 		{{< / highlight >}}
 		{{< highlight bash>}}
 		+------+---------+-------+---------+--------+--------+-----------+----+-----+
@@ -84,7 +101,7 @@ SELECT * FROM pileup('reads', 'NA12878','/features/data/hg18.fasta', false);
 		only showing top 5 rows
 		{{< / highlight >}}
 	{{< /tab >}}
-	{{< tab header="Python" >}}
+	{{< tab header="Python-pileup" >}}
 		{{< highlight bash>}}
 pyspark --master local[1] \
 		--driver-memory 4g \
@@ -96,8 +113,9 @@ from pysequila import SequilaSession
 ss = SequilaSession \
 .builder \
 .getOrCreate()
-# calculate pileup (set paths accordingly)
-ss.pileup("/features/data/NA12878.bam", "/features/data/hg18.fasta", False).show()
+# calculate pileup
+# replace {{ PWD }} with your location
+ss.pileup("{{ PWD }}/data/NA12878.bam", "{{ PWD }}/data/hg18.fasta", False).show(5)
 		{{< / highlight >}}
 		{{< highlight bash>}}
 		+------+---------+-------+---------+--------+--------+-----------+----+-----+
@@ -112,37 +130,143 @@ ss.pileup("/features/data/NA12878.bam", "/features/data/hg18.fasta", False).show
 		only showing top 5 rows
 		{{< / highlight >}}
 		{{< /tab >}}
-	{{< tab header="Scala" >}}
-{{< highlight bash>}}
-spark-shell --master local[1] \
---driver-memory 4g \
---packages org.biodatageeks:sequila_2.12:0.7.8
-{{< / highlight >}}
-		{{< highlight scala>}}
-import org.apache.spark.sql.SequilaSession
-# initialize an extended SparkSession
-val ss = SequilaSession(spark)
-# calculate pileup (set paths accordingly)
-ss.pileup("/features/data/NA12878.bam", "/features/data/hg18.fasta", false).show(5)
+		{{< tab header="SQL-coverage" >}}
+		{{< highlight sql>}}
+-- remember to initialize SeQuiLaSession in Python or Scala REPL first !
+-- create a table over a BAM file
+CREATE TABLE IF NOT EXISTS reads
+USING org.biodatageeks.sequila.datasources.BAM.BAMDataSource
+OPTIONS(path "{{ PWD }}/data/NA12878.bam");
+-- calculate coverage
+SELECT * FROM coverage('reads', 'NA12878','{{ PWD }}/data/hg18.fasta') LIMIT 10;
 		{{< / highlight >}}
 		{{< highlight bash>}}
-		+------+---------+-------+---------+--------+--------+-----------+----+-----+
-		|contig|pos_start|pos_end|      ref|coverage|countRef|countNonRef|alts|quals|
-		+------+---------+-------+---------+--------+--------+-----------+----+-----+
-		|     1|       34|     34|        C|       1|       1|          0|null| null|
-		|     1|       35|     35|        C|       2|       2|          0|null| null|
-		|     1|       36|     37|       CT|       3|       3|          0|null| null|
-		|     1|       38|     40|      AAC|       4|       4|          0|null| null|
-		|     1|       41|     49|CCTAACCCT|       5|       5|          0|null| null|
-		+------+---------+-------+---------+--------+--------+-----------+----+-----+
-		only showing top 5 rows
+		+------+---------+-------+---+--------+
+		|contig|pos_start|pos_end|ref|coverage|
+		+------+---------+-------+---+--------+
+		|     1|       34|     34|  R|       1|
+		|     1|       35|     35|  R|       2|
+		|     1|       36|     37|  R|       3|
+		|     1|       38|     40|  R|       4|
+		|     1|       41|     49|  R|       5|
+		|     1|       50|     67|  R|       6|
+		|     1|       68|    109|  R|       7|
+		|     1|      110|    110|  R|       6|
+		|     1|      111|    111|  R|       5|
+		|     1|      112|    113|  R|       4|
+		+------+---------+-------+---+--------+
+		only showing top 10 rows
 		{{< / highlight >}}
-	{{< /tab >}}
+		{{< /tab >}}
+		{{< tab header="Python-coverage" >}}
+		{{< highlight bash>}}
+pyspark --master local[1] \
+--driver-memory 4g \
+--packages org.biodatageeks:sequila_2.12:0.7.8
+		{{< / highlight >}}
+{{< highlight python>}}
+from pysequila import SequilaSession
+# initialize an extended SparkSession
+ss = SequilaSession \
+.builder \
+.getOrCreate()
+# calculate pileup
+# replace {{ PWD }} with your location
+ss.coverage("{{ PWD }}/data/NA12878.bam", "{{ PWD }}/data/hg18.fasta").show(10)
+{{< / highlight >}}
+		{{< highlight bash>}}
+		+------+---------+-------+---+--------+
+		|contig|pos_start|pos_end|ref|coverage|
+		+------+---------+-------+---+--------+
+		|     1|       34|     34|  R|       1|
+		|     1|       35|     35|  R|       2|
+		|     1|       36|     37|  R|       3|
+		|     1|       38|     40|  R|       4|
+		|     1|       41|     49|  R|       5|
+		|     1|       50|     67|  R|       6|
+		|     1|       68|    109|  R|       7|
+		|     1|      110|    110|  R|       6|
+		|     1|      111|    111|  R|       5|
+		|     1|      112|    113|  R|       4|
+		+------+---------+-------+---+--------+
+		only showing top 10 rows
+		{{< / highlight >}}
+		{{< /tab >}}
+		{{< tab header="SQL-join" >}}
+		{{< highlight sql>}}
+-- remember to initialize SeQuiLaSession in Python or Scala REPL first !
+-- create a table over a BED file
+CREATE TABLE IF NOT EXISTS targets
+USING org.biodatageeks.sequila.datasources.BED.BEDDataSource
+OPTIONS(path "{{ PWD }}/data/targets.bed")
+-- create a table over a BAM file
+CREATE TABLE IF NOT EXISTS reads
+USING org.biodatageeks.sequila.datasources.BAM.BAMDataSource
+OPTIONS(path "{{ PWD }}/data/NA12878.bam");
+-- interval join
+EXPLAIN SELECT distinct  reads.contig FROM reads JOIN targets ON
+(
+targets.contig=reads.contig
+AND
+reads.pos_end >= targets.pos_start
+AND
+reads.pos_start <= targets.pos_end
+)
+		{{< / highlight >}}
+		{{< highlight sql "linenos=table,hl_lines=6">}}
+|== Physical Plan ==
+*(4) HashAggregate(keys=[contig#538], functions=[])
++- Exchange hashpartitioning(contig#538, 200), ENSURE_REQUIREMENTS, [id=#167]
++- *(3) HashAggregate(keys=[contig#538], functions=[])
++- *(3) Project [contig#538]
++- IntervalTreeJoinOptimChromosome [pos_start#540, pos_end#541, pos_start#638, pos_end#639, contig#538, contig#637], SequilaSession(org.apache.spark.sql.SparkSession@1323e240), 1, 0, false, org.biodatageeks.sequila.rangejoins.methods.IntervalTree.IntervalTreeRedBlack
+:- *(1) Filter isnotnull(contig#538)
+:  +- *(1) Scan org.biodatageeks.sequila.datasources.BAM.BDGAlignmentRelation@2e108b3e default.reads[contig#538,pos_start#540,pos_end#541] PushedFilters: [], ReadSchema: struct<contig:string,pos_start:int,pos_end:int>
++- *(2) Filter isnotnull(contig#637)
++- *(2) Scan org.biodatageeks.sequila.datasources.BED.BEDRelation@10ee96c5 default.targets[contig#637,pos_start#638,pos_end#639] PushedFilters: [], ReadSchema: struct<contig:string,pos_start:int,pos_end:int>
+		{{< / highlight >}}
+
+		{{< /tab >}}
+		{{< tab header="Python-join" >}}
+		{{< highlight bash>}}
+pyspark --master local[1] \
+--driver-memory 4g \
+--packages org.biodatageeks:sequila_2.12:0.7.8
+		{{< / highlight >}}
+		{{< highlight python>}}
+targets_df = ss.read\
+		.format("org.biodatageeks.sequila.datasources.BED.BEDDataSource")\
+		.load("{{ PWD }}/data/targets.bed")
+reads_df=ss.read\
+		.format("org.biodatageeks.sequila.datasources.BAM.BAMDataSource")\
+		.load("/tmp/data/NA12878.bam")
+reads_df.join(targets_df,\
+		(reads_df.contig == targets_df.contig)\
+		& (reads_df.pos_end >= targets_df.pos_start)\
+		& (reads_df.pos_start <= targets_df.pos_end),\
+		).select(reads_df.contig)\
+		.distinct()\
+		.explain()
+		{{< / highlight >}}
+		{{< highlight sql "linenos=table,hl_lines=6">}}
+== Physical Plan ==
+*(4) HashAggregate(keys=[contig#1096], functions=[])
++- Exchange hashpartitioning(contig#1096, 200), ENSURE_REQUIREMENTS, [id=#267]
++- *(3) HashAggregate(keys=[contig#1096], functions=[])
++- *(3) Project [contig#1096]
++- IntervalTreeJoinOptimChromosome [pos_start#1098, pos_end#1099, pos_start#816, pos_end#817, contig#1096, contig#815], SequilaSession(org.apache.spark.sql.SparkSession@1323e240), 1, 0, false, org.biodatageeks.sequila.rangejoins.methods.IntervalTree.IntervalTreeRedBlack
+:- *(1) Filter isnotnull(contig#1096)
+:  +- *(1) Scan org.biodatageeks.sequila.datasources.BAM.BDGAlignmentRelation@3ae2bfd0 [contig#1096,pos_start#1098,pos_end#1099] PushedFilters: [], ReadSchema: struct<contig:string,pos_start:int,pos_end:int>
++- *(2) Filter isnotnull(contig#815)
++- *(2) Scan org.biodatageeks.sequila.datasources.BED.BEDRelation@502849e0 [contig#815,pos_start#816,pos_end#817] PushedFilters: [], ReadSchema: struct<contig:string,pos_start:int,pos_end:int>
+		{{< / highlight >}}
+		{{< /tab >}}
 	{{< /tabpane >}}
 	</div>
 </div>
-{{< /blocks/lead >}}
 
+{{< /blocks/lead >}}
+</a>
 {{< blocks/lead >}}
 <div class="col">
 	<h2 class="text-center">It combines analytical power of Python with SQL syntax for almost unlimited querying and processing of NGS data.</h2>
