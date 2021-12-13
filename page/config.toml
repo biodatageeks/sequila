@@ -167,7 +167,7 @@ enable = false
 # Developer relevant links. These will show up on right side of footer and in the community page if you have one.
 [[params.links.developer]]
 	name = "GitHub"
-	url = "https://github.com/biodatageeks/pysequila"
+	url = "https://github.com/biodatageeks/sequila"
 	icon = "fab fa-github"
         desc = "Development takes place here!"
 [[params.links.developer]]
@@ -184,5 +184,12 @@ enable = false
 [[menu.main]]
     name = "Documentation"
     weight = 20
-    identifier = "Documentation"
-    url = "https://pysequila.biodatageeks.org/doc/snapshot/"
+    identifier = "documentation"
+	pre = "<i class='fas fa-book'></i>"
+	url = "docs/"
+
+[[menu.main]]
+name = "GitHub"
+weight = 50
+url = "https://github.com/biodatageeks/sequila/"
+pre = "<i class='fab fa-github'></i>"
