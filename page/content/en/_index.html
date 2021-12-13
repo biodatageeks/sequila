@@ -3,6 +3,8 @@ title = "SeQuiLa"
 linkTitle = "SeQuiLa"
 
 +++
+<script src="js/medium-zoom.min.js"></script>
+
 
 {{< blocks/cover title="SeQuiLa: Distributed analytics for genomics!" image_anchor="top" height="full" color="orange" >}}
 
@@ -27,6 +29,9 @@ linkTitle = "SeQuiLa"
 		Try it in cloud <i class="fas fa-cloud ml-2 "></i>
 	</a>
 	<p class="display-4">Analyze population-scale datasets seamlessly - in the cloud!</p>
+	<a class="btn btn-lg btn-success mr-3 mb-4" href="index.html#benchmarks">
+		Benchmarks <i class="fas fa-signal ml-2"></i>
+	</a>
 	<a class="btn btn-lg btn-dark mr-3 mb-4" href="index.html#getting_started">
 		Getting started <i class="fas fa-play ml-2 "></i>
 	</a>
@@ -41,12 +46,31 @@ linkTitle = "SeQuiLa"
 	<h2 class="text-center">SeQuiLa extends Apache Spark with highly efficient implementations of common bioinformatics operations including
 		interval joins, depth of coverage or pileup.</h2>
 </div>
-
+<a id="benchmarks">
 {{< /blocks/lead >}}
+{{< blocks/lead >}}
+<h2 class="text-center">Benchmarks</h2>
+{{< cardpane >}}
+{{< card>}}
+<h4 class="text-dark">Interval joins</h4>
+<img src="bench-interval.png" width="300" data-zoomable="true">
+{{< /card >}}
+{{< card>}}
+<h4 class="text-dark">Coverage</h4>
+<img src="bench-coverage.png" width="300" data-zoomable="true">
+{{< /card >}}
+{{< card>}}
+<h4 class="text-dark">Pileup</h4>
+Content card 3
+{{< /card >}}
+{{< /cardpane >}}
+{{< /blocks/lead >}}
+</a>
 {{< blocks/lead >}}
 <div class="col">
 	<h2 class="text-center">SeQuiLa is an ANSI-SQL compliant solution for distributed processing of next generation sequencing data in formats such as BAM/CRAM/FASTQ built on top of Apache Spark.</h2>
 </div>
+
 
 <a id="getting_started">
 {{< /blocks/lead >}}
@@ -298,32 +322,18 @@ For announcement of latest features etc.
 
 
 {{< /blocks/section >}}
+<script>
+	const images = Array.from(document.querySelectorAll("[data-zoomable='true']"));
+	console.log(images);
+	console.log(document)
+	images.forEach(img => {
+		mediumZoom(img, {
+			margin: 0, /* The space outside the zoomed image */
+			scrollOffset: 40, /* The number of pixels to scroll to close the zoom */
+			container: null, /* The viewport to render the zoom in */
+			template: null /* The template element to display on zoom */
+		});
+	});
+</script>
 
 
-
-
-<!--{{< blocks/section >}}-->
-<!--{{% blocks/feature icon="fab fa-app-store-ios" title="Download **from AppStore**" %}}-->
-<!--Get the Goldydocs app!-->
-<!--{{% /blocks/feature %}}-->
-
-
-<!--{{% blocks/feature icon="fab fa-github" title="Contributions welcome!" url="https://github.com/google/docsy-example" %}}-->
-<!--We do a [Pull Request](https://github.com/google/docsy-example/pulls) contributions workflow on **GitHub**. New users are always welcome!-->
-<!--{{% /blocks/feature %}}-->
-
-
-<!--{{% blocks/feature icon="fab fa-twitter" title="Follow us on Twitter!" url="https://twitter.com/GoHugoIO" %}}-->
-<!--For announcement of latest features etc.-->
-<!--{{% /blocks/feature %}}-->
-
-
-<!--{{< /blocks/section >}}-->
-
-<!--{{< blocks/section >}}-->
-
-<!--&lt;!&ndash;<div class="col-12">&ndash;&gt;-->
-<!--&lt;!&ndash;<h1 class="text-center">This is another Section</h1>&ndash;&gt;-->
-<!--&lt;!&ndash;</div>&ndash;&gt;-->
-
-<!--{{< /blocks/section >}}-->

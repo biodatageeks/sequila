@@ -1,3 +1,6 @@
 [submodule "page/themes/docsy"]
 	path = page/themes/docsy
 	url = https://github.com/google/docsy.git
+[submodule "page/themes/hugo-Papermod"]
+	path = page/themes/hugo-Papermod
+	url = https://github.com/adityatelange/hugo-PaperMod.git
