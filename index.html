@@ -36,6 +36,8 @@
 
 
 
+
+
 ">
 <meta property="og:title" content="SeQuiLa" />
 <meta property="og:description" content="A distributed SQL engine for genomics" />
@@ -105,6 +107,8 @@ if (!doNotTrack) {
       <main role="main" class="td-main">
         
 
+<script src="js/medium-zoom.min.js"></script>
+
 
 
 
@@ -164,6 +168,9 @@ if (!doNotTrack) {
 		Try it in cloud <i class="fas fa-cloud ml-2 "></i>
 	</a>
 	<p class="display-4">Analyze population-scale datasets seamlessly - in the cloud!</p>
+	<a class="btn btn-lg btn-success mr-3 mb-4" href="index.html#benchmarks">
+		Benchmarks <i class="fas fa-signal ml-2"></i>
+	</a>
 	<a class="btn btn-lg btn-dark mr-3 mb-4" href="index.html#getting_started">
 		Getting started <i class="fas fa-play ml-2 "></i>
 	</a>
@@ -200,7 +207,7 @@ if (!doNotTrack) {
 	<h2 class="text-center">SeQuiLa extends Apache Spark with highly efficient implementations of common bioinformatics operations including
 		interval joins, depth of coverage or pileup.</h2>
 </div>
-
+<a id="benchmarks">
 
 			
 		</span>
@@ -217,9 +224,87 @@ if (!doNotTrack) {
 		<span class="h4 mb-0">
 			
 				
+<h2 class="text-center">Benchmarks</h2>
+<div class="card-deck mb-4">
+<div class="card mb-4">
+  
+  <div class="card-body">
+    
+    
+    
+      <p class="card-text">
+        
+          
+<h4 class="text-dark">Interval joins</h4>
+<img src="bench-interval.png" width="300" data-zoomable="true">
+
+        
+      </p>
+    
+  </div>
+  
+</div>
+
+<div class="card mb-4">
+  
+  <div class="card-body">
+    
+    
+    
+      <p class="card-text">
+        
+          
+<h4 class="text-dark">Coverage</h4>
+<img src="bench-coverage.png" width="300" data-zoomable="true">
+
+        
+      </p>
+    
+  </div>
+  
+</div>
+
+<div class="card mb-4">
+  
+  <div class="card-body">
+    
+    
+    
+      <p class="card-text">
+        
+          
+<h4 class="text-dark">Pileup</h4>
+Content card 3
+
+        
+      </p>
+    
+  </div>
+  
+</div>
+
+</div>
+
+			
+		</span>
+	</div>
+</section>
+
+</a>
+
+
+
+
+<a id="td-block-3" class="td-offset-anchor"></a>
+<section class="row td-box td-box--3 position-relative td-box--gradient td-box--height-auto">
+	<div class="container text-center td-arrow-down">
+		<span class="h4 mb-0">
+			
+				
 <div class="col">
 	<h2 class="text-center">SeQuiLa is an ANSI-SQL compliant solution for distributed processing of next generation sequencing data in formats such as BAM/CRAM/FASTQ built on top of Apache Spark.</h2>
 </div>
+
 
 <a id="getting_started">
 
@@ -232,7 +317,7 @@ if (!doNotTrack) {
 
 
 
-<a id="td-block-3" class="td-offset-anchor"></a>
+<a id="td-block-4" class="td-offset-anchor"></a>
 <section class="row td-box td-box--dark position-relative td-box--gradient td-box--height-auto">
 	<div class="container text-center td-arrow-down">
 		<span class="h4 mb-0">
@@ -611,8 +696,8 @@ wget -nc https://github.com/biodatageeks/pysequila/raw/master/features/data/targ
 
 
 
-<a id="td-block-4" class="td-offset-anchor"></a>
-<section class="row td-box td-box--4 position-relative td-box--gradient td-box--height-auto">
+<a id="td-block-5" class="td-offset-anchor"></a>
+<section class="row td-box td-box--5 position-relative td-box--gradient td-box--height-auto">
 	<div class="container text-center td-arrow-down">
 		<span class="h4 mb-0">
 			
@@ -631,8 +716,8 @@ wget -nc https://github.com/biodatageeks/pysequila/raw/master/features/data/targ
 
 
 
-<a id="td-block-5" class="td-offset-anchor"></a>
-<section class="row td-box td-box--5 position-relative td-box--gradient td-box--height-auto">
+<a id="td-block-6" class="td-offset-anchor"></a>
+<section class="row td-box td-box--6 position-relative td-box--gradient td-box--height-auto">
 	<div class="container text-center td-arrow-down">
 		<span class="h4 mb-0">
 			
@@ -652,7 +737,7 @@ wget -nc https://github.com/biodatageeks/pysequila/raw/master/features/data/targ
 
 
  
-<a id="td-block-6" class="td-offset-anchor"></a>
+<a id="td-block-7" class="td-offset-anchor"></a>
 <section class="row td-box td-box--dark td-box--gradient td-box--height-auto">
 	<div class="col">
 		<div class="row ">
@@ -706,93 +791,21 @@ wget -nc https://github.com/biodatageeks/pysequila/raw/master/features/data/targ
 	</div>
 </section>
 
+<script>
+	const images = Array.from(document.querySelectorAll("[data-zoomable='true']"));
+	console.log(images);
+	console.log(document)
+	images.forEach(img => {
+		mediumZoom(img, {
+			margin: 0, /* The space outside the zoomed image */
+			scrollOffset: 40, /* The number of pixels to scroll to close the zoom */
+			container: null, /* The viewport to render the zoom in */
+			template: null /* The template element to display on zoom */
+		});
+	});
+</script>
 
 
-
-
-<!--
-
-
- 
-<a id="td-block-7" class="td-offset-anchor"></a>
-<section class="row td-box td-box--7 td-box--gradient td-box--height-auto">
-	<div class="col">
-		<div class="row ">
-			
-				-->
-<!--<div class="col-lg-4 mb-5 mb-lg-0 text-center">
-<div class="mb-4 h1">
-  <i class="fab fa-app-store-ios"></i>
-</div>
-<h4 class="h3">Download <strong>from AppStore</strong></h4>
-<div class="mb-0">
-<p>–></p>
-<!--Get the Goldydocs app!-->
-<!--
-</div>
-
-</div>
--->
-
-
-<!--<div class="col-lg-4 mb-5 mb-lg-0 text-center">
-<div class="mb-4 h1">
-  <i class="fab fa-github"></i>
-</div>
-<h4 class="h3">Contributions welcome!</h4>
-<div class="mb-0">
-<p>–></p>
-<!--We do a [Pull Request](https://github.com/google/docsy-example/pulls) contributions workflow on **GitHub**. New users are always welcome!-->
-<!--
-</div>
-<p><a href="https://github.com/google/docsy-example">Read more …</a></p>
-</div>
--->
-
-
-<!--<div class="col-lg-4 mb-5 mb-lg-0 text-center">
-<div class="mb-4 h1">
-  <i class="fab fa-twitter"></i>
-</div>
-<h4 class="h3">Follow us on Twitter!</h4>
-<div class="mb-0">
-<p>–></p>
-<!--For announcement of latest features etc.-->
-<!--
-</div>
-<p><a href="https://twitter.com/GoHugoIO">Read more …</a></p>
-</div>
--->
-
-
-<!--
-			
-		</div>
-	</div>
-</section>
--->
-
-<!--
-
-
- 
-<a id="td-block-8" class="td-offset-anchor"></a>
-<section class="row td-box td-box--8 td-box--gradient td-box--height-auto">
-	<div class="col">
-		<div class="row ">
-			
-				-->
-
-<!--<!–<div class="col-12">–>-->
-<!--<!–<h1 class="text-center">This is another Section</h1>–>-->
-<!--<!–</div>–>-->
-
-<!--
-			
-		</div>
-	</div>
-</section>
--->
 
 
 
