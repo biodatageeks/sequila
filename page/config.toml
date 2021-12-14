@@ -193,3 +193,5 @@ name = "GitHub"
 weight = 50
 url = "https://github.com/biodatageeks/sequila/"
 pre = "<i class='fab fa-github'></i>"
+[params.katex]
+enable = true
