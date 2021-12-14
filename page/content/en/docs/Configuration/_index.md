@@ -1,7 +1,7 @@
 
 ---
-title: "Parameters"
-linkTitle: "Parameters"
+title: "Configuration"
+linkTitle: "Configuration"
 weight: 3
 description: >
     Glossary of SeQuiLa's parameters and configuration options
