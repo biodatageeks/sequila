@@ -4,7 +4,7 @@
     <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <meta name="generator" content="Hugo 0.90.0" />
-<link rel="alternate" type="application/rss&#43;xml" href="https://biodatageeks.github.io/sequila/docs/data-formats/index.xml">
+<link rel="alternate" type="application/rss&#43;xml" href="https://biodatageeks.github.io/sequila/docs/configuration/index.xml">
 <meta name="robots" content="index, follow">
 
 
@@ -19,20 +19,20 @@
 <link rel="icon" type="image/png" href="/sequila/favicons/android-144x144.png" sizes="144x144">
 <link rel="icon" type="image/png" href="/sequila/favicons/android-192x192.png" sizes="192x192">
 
-<title>Data formats | sequila</title>
-<meta name="description" content="How to use SeQuiLa&#39;s bioinformatics data formats
+<title>Configuration | sequila</title>
+<meta name="description" content="Glossary of SeQuiLa&#39;s parameters and configuration options
 ">
-<meta property="og:title" content="Data formats" />
-<meta property="og:description" content="How to use SeQuiLa&#39;s bioinformatics data formats
+<meta property="og:title" content="Configuration" />
+<meta property="og:description" content="Glossary of SeQuiLa&#39;s parameters and configuration options
 " />
 <meta property="og:type" content="website" />
-<meta property="og:url" content="https://biodatageeks.github.io/sequila/docs/data-formats/" /><meta property="og:site_name" content="sequila" />
+<meta property="og:url" content="https://biodatageeks.github.io/sequila/docs/configuration/" /><meta property="og:site_name" content="sequila" />
 
-<meta itemprop="name" content="Data formats">
-<meta itemprop="description" content="How to use SeQuiLa&#39;s bioinformatics data formats
+<meta itemprop="name" content="Configuration">
+<meta itemprop="description" content="Glossary of SeQuiLa&#39;s parameters and configuration options
 "><meta name="twitter:card" content="summary"/>
-<meta name="twitter:title" content="Data formats"/>
-<meta name="twitter:description" content="How to use SeQuiLa&#39;s bioinformatics data formats
+<meta name="twitter:title" content="Configuration"/>
+<meta name="twitter:description" content="Glossary of SeQuiLa&#39;s parameters and configuration options
 "/>
 
 
@@ -122,10 +122,10 @@ if (!doNotTrack) {
   <a href="/sequila/docs/algorithms/pileup/" class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id="m-sequiladocsalgorithmspileup"><span class="">Pileup</span></a>
 </li>
   </ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child active-path" id="m-sequiladocsdata-formats-li">
-  <a href="/sequila/docs/data-formats/" class="align-left pl-0 active td-sidebar-link td-sidebar-link__section" id="m-sequiladocsdata-formats"><span class="td-sidebar-nav-active-item">Data formats</span></a>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id="m-sequiladocsconfiguration-li">
-  <a href="/sequila/docs/configuration/" class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id="m-sequiladocsconfiguration"><span class="">Configuration</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id="m-sequiladocsdata-formats-li">
+  <a href="/sequila/docs/data-formats/" class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id="m-sequiladocsdata-formats"><span class="">Data formats</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child active-path" id="m-sequiladocsconfiguration-li">
+  <a href="/sequila/docs/configuration/" class="align-left pl-0 active td-sidebar-link td-sidebar-link__section" id="m-sequiladocsconfiguration"><span class="td-sidebar-nav-active-item">Configuration</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id="m-sequiladocsapi-li">
   <a href="/sequila/docs/api/" class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id="m-sequiladocsapi"><span class="">API</span></a>
   <ul class="ul-2 foldable">
@@ -148,16 +148,25 @@ if (!doNotTrack) {
           <aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
             
 <div class="td-page-meta ml-2 pb-1 pt-2 mb-0">
-<a href="https://github.com/biodatageeks/sequila/tree/master/content/en/docs/Data%20formats/_index.md" class="td-page-meta--view" target="_blank" rel="noopener"><i class="fa fa-file-alt fa-fw"></i> View page source</a>
-  <a href="https://github.com/biodatageeks/sequila/edit/master/content/en/docs/Data%20formats/_index.md" class="td-page-meta--edit" target="_blank" rel="noopener"><i class="fa fa-edit fa-fw"></i> Edit this page</a>
-  <a href="https://github.com/biodatageeks/sequila/new/master/content/en/docs/Data%20formats/_index.md?filename=change-me.md&amp;value=---%0Atitle%3A&#43;%22Long&#43;Page&#43;Title%22%0AlinkTitle%3A&#43;%22Short&#43;Nav&#43;Title%22%0Aweight%3A&#43;100%0Adescription%3A&#43;%3E-%0A&#43;&#43;&#43;&#43;&#43;Page&#43;description&#43;for&#43;heading&#43;and&#43;indexes.%0A---%0A%0A%23%23&#43;Heading%0A%0AEdit&#43;this&#43;template&#43;to&#43;create&#43;your&#43;new&#43;page.%0A%0A%2A&#43;Give&#43;it&#43;a&#43;good&#43;name%2C&#43;ending&#43;in&#43;%60.md%60&#43;-&#43;e.g.&#43;%60getting-started.md%60%0A%2A&#43;Edit&#43;the&#43;%22front&#43;matter%22&#43;section&#43;at&#43;the&#43;top&#43;of&#43;the&#43;page&#43;%28weight&#43;controls&#43;how&#43;its&#43;ordered&#43;amongst&#43;other&#43;pages&#43;in&#43;the&#43;same&#43;directory%3B&#43;lowest&#43;number&#43;first%29.%0A%2A&#43;Add&#43;a&#43;good&#43;commit&#43;message&#43;at&#43;the&#43;bottom&#43;of&#43;the&#43;page&#43;%28%3C80&#43;characters%3B&#43;use&#43;the&#43;extended&#43;description&#43;field&#43;for&#43;more&#43;detail%29.%0A%2A&#43;Create&#43;a&#43;new&#43;branch&#43;so&#43;you&#43;can&#43;preview&#43;your&#43;new&#43;file&#43;and&#43;request&#43;a&#43;review&#43;via&#43;Pull&#43;Request.%0A" class="td-page-meta--child" target="_blank" rel="noopener"><i class="fa fa-edit fa-fw"></i> Create child page</a>
-  <a href="https://github.com/biodatageeks/sequila/issues/new?title=Data%20formats" class="td-page-meta--issue" target="_blank" rel="noopener"><i class="fab fa-github fa-fw"></i> Create documentation issue</a>
+<a href="https://github.com/biodatageeks/sequila/tree/master/content/en/docs/Configuration/_index.md" class="td-page-meta--view" target="_blank" rel="noopener"><i class="fa fa-file-alt fa-fw"></i> View page source</a>
+  <a href="https://github.com/biodatageeks/sequila/edit/master/content/en/docs/Configuration/_index.md" class="td-page-meta--edit" target="_blank" rel="noopener"><i class="fa fa-edit fa-fw"></i> Edit this page</a>
+  <a href="https://github.com/biodatageeks/sequila/new/master/content/en/docs/Configuration/_index.md?filename=change-me.md&amp;value=---%0Atitle%3A&#43;%22Long&#43;Page&#43;Title%22%0AlinkTitle%3A&#43;%22Short&#43;Nav&#43;Title%22%0Aweight%3A&#43;100%0Adescription%3A&#43;%3E-%0A&#43;&#43;&#43;&#43;&#43;Page&#43;description&#43;for&#43;heading&#43;and&#43;indexes.%0A---%0A%0A%23%23&#43;Heading%0A%0AEdit&#43;this&#43;template&#43;to&#43;create&#43;your&#43;new&#43;page.%0A%0A%2A&#43;Give&#43;it&#43;a&#43;good&#43;name%2C&#43;ending&#43;in&#43;%60.md%60&#43;-&#43;e.g.&#43;%60getting-started.md%60%0A%2A&#43;Edit&#43;the&#43;%22front&#43;matter%22&#43;section&#43;at&#43;the&#43;top&#43;of&#43;the&#43;page&#43;%28weight&#43;controls&#43;how&#43;its&#43;ordered&#43;amongst&#43;other&#43;pages&#43;in&#43;the&#43;same&#43;directory%3B&#43;lowest&#43;number&#43;first%29.%0A%2A&#43;Add&#43;a&#43;good&#43;commit&#43;message&#43;at&#43;the&#43;bottom&#43;of&#43;the&#43;page&#43;%28%3C80&#43;characters%3B&#43;use&#43;the&#43;extended&#43;description&#43;field&#43;for&#43;more&#43;detail%29.%0A%2A&#43;Create&#43;a&#43;new&#43;branch&#43;so&#43;you&#43;can&#43;preview&#43;your&#43;new&#43;file&#43;and&#43;request&#43;a&#43;review&#43;via&#43;Pull&#43;Request.%0A" class="td-page-meta--child" target="_blank" rel="noopener"><i class="fa fa-edit fa-fw"></i> Create child page</a>
+  <a href="https://github.com/biodatageeks/sequila/issues/new?title=Configuration" class="td-page-meta--issue" target="_blank" rel="noopener"><i class="fab fa-github fa-fw"></i> Create documentation issue</a>
   <a href="https://github.com/biodatageeks/sequila/issues/new" class="td-page-meta--project-issue" target="_blank" rel="noopener"><i class="fas fa-tasks fa-fw"></i> Create project issue</a>
   
 </div>
 
             
 
+
+<div class="td-toc"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#how-to-set-parameters">How to set parameters</a></li>
+    <li><a href="#general">General</a></li>
+    <li><a href="#coverage-and-pileup">Coverage and Pileup</a></li>
+    <li><a href="#interval-joins">Interval joins</a></li>
+  </ul>
+</nav></div>
 
 
 
@@ -192,14 +201,14 @@ if (!doNotTrack) {
     <a href="https://biodatageeks.github.io/sequila/docs/">Documentation</a>
   </li>
   <li class="breadcrumb-item active" aria-current="page">
-    <a href="https://biodatageeks.github.io/sequila/docs/data-formats/">Data formats</a>
+    <a href="https://biodatageeks.github.io/sequila/docs/configuration/">Configuration</a>
   </li>
   </ol>
 </nav>
             
 <div class="td-content">
-	<h1>Data formats</h1>
-  <div class="lead">How to use SeQuiLa&rsquo;s bioinformatics data formats</div>
+	<h1>Configuration</h1>
+  <div class="lead">Glossary of SeQuiLa&rsquo;s parameters and configuration options</div>
 	<header class="article-meta">
 		
 		
@@ -215,7 +224,164 @@ if (!doNotTrack) {
 		
 		
 	</header>
-	<p>TBD</p>
+	<h2 id="how-to-set-parameters">How to set parameters</h2>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<ul class="nav nav-tabs" id="tabs-0" role="tablist"><li class="nav-item">
+      <a class="nav-link active tab-SQL"
+        id="tabs-0-0-tab" data-toggle="tab" href="#tabs-0-0" role="tab" onclick="handleClick(&#34;SQL&#34;);"
+        aria-controls="tabs-0-0" aria-selected="true">
+        SQL
+      </a>
+    </li><li class="nav-item">
+      <a class="nav-link tab-Python"
+        id="tabs-0-1-tab" data-toggle="tab" href="#tabs-0-1" role="tab" onclick="handleClick(&#34;Python&#34;);"
+        aria-controls="tabs-0-1" aria-selected="false">
+        Python
+      </a>
+    </li></ul>
+
+
+<div class="tab-content" id="tabs-0-content"><div class="tab-pane fade show active"
+        id="tabs-0-0" role="tabpanel" aria-labelled-by="tabs-0-0-tab"><div class="highlight"><pre tabindex="0" style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql"><span style="color:#204a87;font-weight:bold">SET</span><span style="color:#f8f8f8;text-decoration:underline"> </span><span style="color:#000">spark</span><span style="color:#000;font-weight:bold">.</span><span style="color:#000">biodatageeks</span><span style="color:#000;font-weight:bold">.</span><span style="color:#000">readAligment</span><span style="color:#000;font-weight:bold">.</span><span style="color:#204a87;font-weight:bold">method</span><span style="color:#ce5c00;font-weight:bold">=</span><span style="color:#000">disq</span><span style="color:#000;font-weight:bold">;</span></code></pre></div></div>
+  <div class="tab-pane fade"
+        id="tabs-0-1" role="tabpanel" aria-labelled-by="tabs-0-1-tab"><div class="highlight"><pre tabindex="0" style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#204a87;font-weight:bold">from</span> <span style="color:#000">pysequila</span> <span style="color:#204a87;font-weight:bold">import</span> <span style="color:#000">SequilaSession</span>
+<span style="color:#000">ss</span> <span style="color:#ce5c00;font-weight:bold">=</span> <span style="color:#000">SequilaSession</span> \
+<span style="color:#ce5c00;font-weight:bold">.</span><span style="color:#000">builder</span> \
+<span style="color:#ce5c00;font-weight:bold">.</span><span style="color:#000">getOrCreate</span><span style="color:#000;font-weight:bold">()</span>
+<span style="color:#000">ss</span><span style="color:#ce5c00;font-weight:bold">.</span><span style="color:#000">sql</span><span style="color:#000;font-weight:bold">(</span><span style="color:#4e9a06">&#34;SET spark.biodatageeks.readAligment.method=disq&#34;</span><span style="color:#000;font-weight:bold">)</span></code></pre></div></div>
+  
+</div>
+
+<h2 id="general">General</h2>
+<table>
+<thead>
+<tr>
+<th>Property Name</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>spark.biodatageeks.readAligment.method</td>
+<td>hadoopBAM</td>
+<td>Whether to use <a href="https://github.com/HadoopGenomics/Hadoop-BAM"><code>hadoopBAM</code></a> or <a href="https://github.com/disq-bio/disq"><code>disq</code></a>. Hadoop-BAM seems to be more performant in local mode but has worse horizontal scalability characteristic(~50+ executors).</td>
+</tr>
+<tr>
+<td>spark.biodatageeks.bam.useGKLInflate</td>
+<td>true</td>
+<td>Whether to use Intel GKL deflater when using HadoopBAM (for disq it is always on)</td>
+</tr>
+<tr>
+<td>spark.biodatageeks.bam.validation</td>
+<td>SILENT</td>
+<td>Method of BAM records <a href="https://github.com/samtools/htsjdk/blob/master/src/main/java/htsjdk/samtools/ValidationStringency.java">validation</a></td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="coverage-and-pileup">Coverage and Pileup</h2>
+<table>
+<thead>
+<tr>
+<th>Property Name</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>spark.biodatageeks.coverage.filterFlag</td>
+<td>1796</td>
+<td>Which SAM flags to use for filtering records. Check <a href="https://broadinstitute.github.io/picard/explain-flags.html">SAM explainer</a> for details.</td>
+</tr>
+<tr>
+<td>spark.biodatageeks.pileup.useVectorizedOrcWriter</td>
+<td>false</td>
+<td>Whether to use vectorized ORC writer and to bypass Spark&rsquo;s InternalRow serialization and write directly to the ouput file. This option is still experimental but speeds up saving results substantially.</td>
+</tr>
+<tr>
+<td>spark.biodatageeks.pileup.maxBaseQuality</td>
+<td>40</td>
+<td>Specify the number of base quality values - internally used for allocating BQ counters.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="interval-joins">Interval joins</h2>
+<table>
+<thead>
+<tr>
+<th>Property Name</th>
+<th>Default</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>spark.biodatageeks.rangejoin.useJoinOrder</td>
+<td>false</td>
+<td>Whether to always broadcast the right table of a join or to computer row counts and pick up the smaller one.</td>
+</tr>
+<tr>
+<td>spark.biodatageeks.rangejoin.maxBroadcastSize</td>
+<td>0.1*spark.driver.memory</td>
+<td>The maximum allowed size of the broadcasted intverval structure which is used by the SeQuiLa&rsquo;s optimizer to chose interval join <a href="http://biodatageeks.ii.pw.edu.pl/sequila/architecture/architecture.html#optimizations">algorithm</a>.</td>
+</tr>
+<tr>
+<td>spark.biodatageeks.rangejoin.maxGap</td>
+<td>0</td>
+<td>The maximum gap between between regions</td>
+</tr>
+<tr>
+<td>spark.biodatageeks.rangejoin.minOverlap</td>
+<td>1</td>
+<td>The minimal length of the overlap between regions</td>
+</tr>
+<tr>
+<td>spark.biodatageeks.rangejoin.intervalHolderClass</td>
+<td><a href="https://github.com/biodatageeks/sequila/blob/master/src/main/scala/org/biodatageeks/sequila/rangejoins/methods/IntervalTree/IntervalTreeRedBlack.java"><code>IntervalTreeRedBlack</code></a></td>
+<td><a href="http://biodatageeks.ii.pw.edu.pl/sequila/architecture/architecture.html#custom-interval-structure">Pluggable</a> mechanism for implementing custom interval structures.</td>
+</tr>
+</tbody>
+</table>
 
         <div class="section-index">
     
