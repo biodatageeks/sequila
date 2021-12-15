@@ -22,7 +22,102 @@ wget -nc https://github.com/biodatageeks/pysequila/raw/master/features/data/Homo
 
 {{< tabpane >}}
 {{< tab header="SQL" lang="sql" >}}
+CREATE TABLE IF NOT EXISTS reads
+USING org.biodatageeks.sequila.datasources.BAM.CRAMDataSource
+OPTIONS(path "/tmp/data/NA12878.cram", refPath "/tmp/data/hg18.fasta");
 
+DESCRIBE TABLE reads;
+
++---------+---------+-------+
+| col_name|data_type|comment|
++---------+---------+-------+
+|sample_id|   string|   null|
+|    qname|   string|   null|
+|     flag|      int|   null|
+|   contig|   string|   null|
+|      pos|      int|   null|
+|pos_start|      int|   null|
+|  pos_end|      int|   null|
+|     mapq|      int|   null|
+|    cigar|   string|   null|
+|    rnext|   string|   null|
+|    pnext|      int|   null|
+|     tlen|      int|   null|
+|      seq|   string|   null|
+|     qual|   string|   null|
+|   tag_AM|      int|   null|
+|   tag_AS|      int|   null|
+|   tag_BC|   string|   null|
+|   tag_BQ|   string|   null|
+|   tag_BZ|   string|   null|
+|   tag_CB|   string|   null|
+|   tag_CC|   string|   null|
+|   tag_CG|   string|   null|
+|   tag_CM|      int|   null|
+|   tag_CO|   string|   null|
+|   tag_CP|      int|   null|
+|   tag_CQ|   string|   null|
+|   tag_CR|   string|   null|
+|   tag_CS|   string|   null|
+|   tag_CT|   string|   null|
+|   tag_CY|   string|   null|
+|   tag_E2|   string|   null|
+|   tag_FI|      int|   null|
+|   tag_FS|   string|   null|
+|   tag_FZ|   string|   null|
+|   tag_H0|      int|   null|
+|   tag_H1|      int|   null|
+|   tag_H2|      int|   null|
+|   tag_HI|      int|   null|
+|   tag_IH|      int|   null|
+|   tag_LB|   string|   null|
+|   tag_MC|   string|   null|
+|   tag_MD|   string|   null|
+|   tag_MI|   string|   null|
+|   tag_MQ|      int|   null|
+|   tag_NH|      int|   null|
+|   tag_NM|      int|   null|
+|   tag_OA|   string|   null|
+|   tag_OC|   string|   null|
+|   tag_OP|      int|   null|
+|   tag_OQ|   string|   null|
+|   tag_OX|   string|   null|
+|   tag_PG|   string|   null|
+|   tag_PQ|      int|   null|
+|   tag_PT|   string|   null|
+|   tag_PU|   string|   null|
+|   tag_Q2|   string|   null|
+|   tag_QT|   string|   null|
+|   tag_QX|   string|   null|
+|   tag_R2|   string|   null|
+|   tag_RG|   string|   null|
+|   tag_RX|   string|   null|
+|   tag_SA|   string|   null|
+|   tag_SM|      int|   null|
+|   tag_TC|      int|   null|
+|   tag_U2|   string|   null|
+|   tag_UQ|      int|   null|
++---------+---------+-------+
+
+SELECT qname, contig, pos_start, pos_end, cigar, seq FROM reads LIMIT 5;
+
++--------------------+------+---------+-------+-----+--------------------+
+|               qname|contig|pos_start|pos_end|cigar|                 seq|
++--------------------+------+---------+-------+-----+--------------------+
+|61DC0AAXX100127:8...|    MT|        7|    107| 101M|AGGTCTATCACCCTATT...|
+|61DC0AAXX100127:8...|    MT|        9|    109| 101M|GTCTGTCACCCTTGTAG...|
+|61DC0AAXX100127:8...|    MT|       10|    110| 101M|TCTATCCCCCTATTAAC...|
+|61DC0AAXX100127:8...|    MT|       20|    120| 101M|TATTATCCACTCACGGG...|
+|61CC3AAXX100125:5...|    MT|       25|    100|  76M|ACCACTCACGGGAGCTC...|
++--------------------+------+---------+-------+-----+--------------------+
+
+SELECT count(*) AS cnt FROM reads;
+
++-----+
+|  cnt|
++-----+
+|22607|
++-----+
 {{< /tab >}}
 {{< tab header="Python" lang="python">}}
 >>> from pysequila import SequilaSession
