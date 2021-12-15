@@ -17,6 +17,37 @@ wget -nc https://github.com/biodatageeks/pysequila/raw/master/features/data/targ
 
 {{< tabpane >}}
 {{< tab header="SQL" lang="sql" >}}
+CREATE TABLE IF NOT EXISTS targets
+USING org.biodatageeks.sequila.datasources.BED.BEDDataSource
+OPTIONS(path "/tmp/data/targets.bed");
+
+DESCRIBE TABLE targets;
+
++------------+----------+-------+
+|    col_name| data_type|comment|
++------------+----------+-------+
+|      contig|    string|   null|
+|   pos_start|       int|   null|
+|     pos_end|       int|   null|
+|        name|    string|   null|
+|       score|       int|   null|
+|      strand|    string|   null|
+| thick_start|       int|   null|
+|   thick_end|       int|   null|
+|    item_rgb|array<int>|   null|
+| block_count|       int|   null|
+| block_sizes|array<int>|   null|
+|block_starts|array<int>|   null|
++------------+----------+-------+
+
+SELECT * FROM targets;
+
++------+---------+-------+----+-----+------+-----------+---------+--------+-----------+-----------+------------+
+|contig|pos_start|pos_end|name|score|strand|thick_start|thick_end|item_rgb|block_count|block_sizes|block_starts|
++------+---------+-------+----+-----+------+-----------+---------+--------+-----------+-----------+------------+
+|    MT|       11|     50|null| null|  null|       null|     null|    null|       null|       null|        null|
+|    MT|      201|    300|null| null|  null|       null|     null|    null|       null|       null|        null|
++------+---------+-------+----+-----+------+-----------+---------+--------+-----------+-----------+------------+
 
 {{< /tab >}}
 {{< tab header="Python" lang="python">}}
