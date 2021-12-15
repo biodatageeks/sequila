@@ -130,7 +130,7 @@ SELECT * FROM pileup('reads', 'NA12878','{{ PWD }}/data/hg18.fasta', false) LIMI
 		{{< highlight bash>}}
 pyspark --master local[1] \
 		--driver-memory 4g \
-		--packages org.biodatageeks:sequila_2.12:0.7.8
+		--packages org.biodatageeks:sequila_2.12:0.7.9
 		{{< / highlight >}}
 		{{< highlight python>}}
 from pysequila import SequilaSession
@@ -187,7 +187,7 @@ SELECT * FROM coverage('reads', 'NA12878','{{ PWD }}/data/hg18.fasta') LIMIT 10;
 		{{< highlight bash>}}
 pyspark --master local[1] \
 --driver-memory 4g \
---packages org.biodatageeks:sequila_2.12:0.7.8
+--packages org.biodatageeks:sequila_2.12:0.7.9
 		{{< / highlight >}}
 {{< highlight python>}}
 from pysequila import SequilaSession
@@ -256,7 +256,7 @@ reads.pos_start <= targets.pos_end
 		{{< highlight bash>}}
 pyspark --master local[1] \
 --driver-memory 4g \
---packages org.biodatageeks:sequila_2.12:0.7.8
+--packages org.biodatageeks:sequila_2.12:0.7.9
 		{{< / highlight >}}
 		{{< highlight python>}}
 targets_df = ss.read\
@@ -264,7 +264,7 @@ targets_df = ss.read\
 		.load("{{ PWD }}/data/targets.bed")
 reads_df=ss.read\
 		.format("org.biodatageeks.sequila.datasources.BAM.BAMDataSource")\
-		.load("/tmp/data/NA12878.bam")
+		.load("/{{ PWD }}/data/NA12878.bam")
 reads_df.join(targets_df,\
 		(reads_df.contig == targets_df.contig)\
 		& (reads_df.pos_end >= targets_df.pos_start)\
