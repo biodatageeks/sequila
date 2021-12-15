@@ -106,7 +106,7 @@ publish:
   image:
     name: biodatageeks/jdk-sbt:$JDK_VERSION-$SBT_VERSION
   variables:
-    SBT_OPTS: "-Dsbt.ivy.home=sbt-cache/ivy"
+    SBT_OPTS: "-Dsbt.ivy.home=sbt-cache/ivy -Dcom.sun.net.ssl.checkRevocation=false"
   cache:
     key: $CI_PROJECT_PATH
     paths:
