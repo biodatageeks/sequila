@@ -181,6 +181,8 @@ enable = false
 	icon = "fa fa-envelope"
         desc = "Discuss development issues around the project"
 
+
+
 [[menu.main]]
     name = "Documentation"
     weight = 20
@@ -193,5 +195,12 @@ name = "GitHub"
 weight = 50
 url = "https://github.com/biodatageeks/sequila/"
 pre = "<i class='fab fa-github'></i>"
+
+[[menu.main]]
+name = "Publications"
+weight = 10
+url = "publication/"
+pre = "<i class='fas fa-book'></i>"
+
 [params.katex]
 enable = true
