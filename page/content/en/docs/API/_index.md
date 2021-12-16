@@ -2,7 +2,7 @@
 ---
 title: "API"
 linkTitle: "API"
-weight: 4
+weight: 13
 description: >
     SeQuiLa's API
 ---

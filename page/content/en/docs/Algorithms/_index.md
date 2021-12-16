@@ -2,7 +2,7 @@
 ---
 title: "Algorithms"
 linkTitle: "Algorithms"
-weight: 1
+weight: 11
 description: >
     SeQuiLa's Algorithms
 ---

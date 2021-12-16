@@ -2,7 +2,7 @@
 ---
 title: "Benchmarks"
 linkTitle: "Benchmarks"
-weight: 4
+weight: 16
 description: >
     SeQuiLa's Benchmarks
 ---
