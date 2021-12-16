@@ -156,7 +156,7 @@ publishTo := {
   if (!version.value.toLowerCase.contains("snapshot")) {
     sonatypePublishToBundle.value
   } else {
-    val nexus = "https://zsibio.ii.pw.edu.pl/nexus/repository/"
+    val nexus = "http://zsibio.ii.pw.edu.pl/nexus/repository/"
     Some("snapshots" at nexus + "maven-snapshots")
   }
 }

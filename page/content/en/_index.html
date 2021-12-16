@@ -22,8 +22,8 @@ linkTitle = "SeQuiLa"
 		Maven central <i class="fab fa-java ml-2 "></i>
 	</a>
 	</br>
-	<a class="btn btn-lg btn-danger mr-3 mb-4" href="https://scholar.google.pl/scholar?q=sequila">
-		Research papers<i class="fas fa-book ml-2 "></i>
+	<a class="btn btn-lg btn-danger mr-3 mb-4" href="publication">
+		Publications<i class="fas fa-book ml-2 "></i>
 	</a>
 	<a class="btn btn-lg btn-dark mr-3 mb-4" href="https://github.com/biodatageeks/sequila-cloud-recipes">
 		Try it in cloud <i class="fas fa-cloud ml-2 "></i>
@@ -45,7 +45,7 @@ linkTitle = "SeQuiLa"
 {{< blocks/lead >}}
 <div class="col">
 	<h2 class="text-center">SeQuiLa extends Apache Spark with highly efficient implementations of common bioinformatics operations including
-		interval joins, depth of coverage or pileup.</h2>
+		interval joins, depth of coverage and pileup.</h2>
 </div>
 <a id="benchmarks">
 {{< /blocks/lead >}}
@@ -130,7 +130,7 @@ SELECT * FROM pileup('reads', 'NA12878','{{ PWD }}/data/hg18.fasta', false) LIMI
 		{{< highlight bash>}}
 pyspark --master local[1] \
 		--driver-memory 4g \
-		--packages org.biodatageeks:sequila_2.12:0.7.8
+		--packages org.biodatageeks:sequila_2.12:0.7.9
 		{{< / highlight >}}
 		{{< highlight python>}}
 from pysequila import SequilaSession
@@ -187,7 +187,7 @@ SELECT * FROM coverage('reads', 'NA12878','{{ PWD }}/data/hg18.fasta') LIMIT 10;
 		{{< highlight bash>}}
 pyspark --master local[1] \
 --driver-memory 4g \
---packages org.biodatageeks:sequila_2.12:0.7.8
+--packages org.biodatageeks:sequila_2.12:0.7.9
 		{{< / highlight >}}
 {{< highlight python>}}
 from pysequila import SequilaSession
@@ -256,7 +256,7 @@ reads.pos_start <= targets.pos_end
 		{{< highlight bash>}}
 pyspark --master local[1] \
 --driver-memory 4g \
---packages org.biodatageeks:sequila_2.12:0.7.8
+--packages org.biodatageeks:sequila_2.12:0.7.9
 		{{< / highlight >}}
 		{{< highlight python>}}
 targets_df = ss.read\
@@ -264,7 +264,7 @@ targets_df = ss.read\
 		.load("{{ PWD }}/data/targets.bed")
 reads_df=ss.read\
 		.format("org.biodatageeks.sequila.datasources.BAM.BAMDataSource")\
-		.load("/tmp/data/NA12878.bam")
+		.load("/{{ PWD }}/data/NA12878.bam")
 reads_df.join(targets_df,\
 		(reads_df.contig == targets_df.contig)\
 		& (reads_df.pos_end >= targets_df.pos_start)\

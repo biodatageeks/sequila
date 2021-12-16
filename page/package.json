@@ -17,6 +17,10 @@
   },
   "homepage": "https://github.com/google/docsy-example#readme",
   "dependencies": {
+    "@citation-js/plugin-bibtex": "^0.5.4",
+    "@citation-js/plugin-csl": "^0.5.4",
+    "biblatex-csl-converter": "^2.0.4",
+    "bibtex-to-csl-json": "^0.1.13",
     "postcss": "^8.4.4"
   },
   "devDependencies": {
