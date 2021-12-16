@@ -171,8 +171,8 @@ if (!doNotTrack) {
 		Maven central <i class="fab fa-java ml-2 "></i>
 	</a>
 	</br>
-	<a class="btn btn-lg btn-danger mr-3 mb-4" href="https://scholar.google.pl/scholar?q=sequila">
-		Research papers<i class="fas fa-book ml-2 "></i>
+	<a class="btn btn-lg btn-danger mr-3 mb-4" href="publication">
+		Publications<i class="fas fa-book ml-2 "></i>
 	</a>
 	<a class="btn btn-lg btn-dark mr-3 mb-4" href="https://github.com/biodatageeks/sequila-cloud-recipes">
 		Try it in cloud <i class="fas fa-cloud ml-2 "></i>
@@ -216,7 +216,7 @@ if (!doNotTrack) {
 				
 <div class="col">
 	<h2 class="text-center">SeQuiLa extends Apache Spark with highly efficient implementations of common bioinformatics operations including
-		interval joins, depth of coverage or pileup.</h2>
+		interval joins, depth of coverage and pileup.</h2>
 </div>
 <a id="benchmarks">
 
@@ -513,7 +513,7 @@ wget -nc https://github.com/biodatageeks/pysequila/raw/master/features/data/targ
   <div class="tab-pane fade"
         id="tabs-1-1" role="tabpanel" aria-labelled-by="tabs-1-1-tab"><pre tabindex="0"><code class="language-en" data-lang="en">		<div class="highlight"><pre tabindex="0" style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">pyspark --master local<span style="color:#ce5c00;font-weight:bold">[</span>1<span style="color:#ce5c00;font-weight:bold">]</span> <span style="color:#4e9a06">\
 </span><span style="color:#4e9a06"></span>		--driver-memory 4g <span style="color:#4e9a06">\
-</span><span style="color:#4e9a06"></span>		--packages org.biodatageeks:sequila_2.12:0.7.8
+</span><span style="color:#4e9a06"></span>		--packages org.biodatageeks:sequila_2.12:0.7.9
 		</code></pre></div>
 		<div class="highlight"><pre tabindex="0" style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#204a87;font-weight:bold">from</span> <span style="color:#000">pysequila</span> <span style="color:#204a87;font-weight:bold">import</span> <span style="color:#000">SequilaSession</span>
 <span style="color:#8f5902;font-style:italic"># initialize an extended SparkSession</span>
@@ -565,7 +565,7 @@ wget -nc https://github.com/biodatageeks/pysequila/raw/master/features/data/targ
   <div class="tab-pane fade"
         id="tabs-1-3" role="tabpanel" aria-labelled-by="tabs-1-3-tab"><pre tabindex="0"><code class="language-en" data-lang="en">		<div class="highlight"><pre tabindex="0" style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">pyspark --master local<span style="color:#ce5c00;font-weight:bold">[</span>1<span style="color:#ce5c00;font-weight:bold">]</span> <span style="color:#4e9a06">\
 </span><span style="color:#4e9a06"></span>--driver-memory 4g <span style="color:#4e9a06">\
-</span><span style="color:#4e9a06"></span>--packages org.biodatageeks:sequila_2.12:0.7.8
+</span><span style="color:#4e9a06"></span>--packages org.biodatageeks:sequila_2.12:0.7.9
 		</code></pre></div>
 <div class="highlight"><pre tabindex="0" style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#204a87;font-weight:bold">from</span> <span style="color:#000">pysequila</span> <span style="color:#204a87;font-weight:bold">import</span> <span style="color:#000">SequilaSession</span>
 <span style="color:#8f5902;font-style:italic"># initialize an extended SparkSession</span>
@@ -645,14 +645,14 @@ wget -nc https://github.com/biodatageeks/pysequila/raw/master/features/data/targ
   <div class="tab-pane fade"
         id="tabs-1-5" role="tabpanel" aria-labelled-by="tabs-1-5-tab"><pre tabindex="0"><code class="language-en" data-lang="en">		<div class="highlight"><pre tabindex="0" style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">pyspark --master local<span style="color:#ce5c00;font-weight:bold">[</span>1<span style="color:#ce5c00;font-weight:bold">]</span> <span style="color:#4e9a06">\
 </span><span style="color:#4e9a06"></span>--driver-memory 4g <span style="color:#4e9a06">\
-</span><span style="color:#4e9a06"></span>--packages org.biodatageeks:sequila_2.12:0.7.8
+</span><span style="color:#4e9a06"></span>--packages org.biodatageeks:sequila_2.12:0.7.9
 		</code></pre></div>
 		<div class="highlight"><pre tabindex="0" style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#000">targets_df</span> <span style="color:#ce5c00;font-weight:bold">=</span> <span style="color:#000">ss</span><span style="color:#ce5c00;font-weight:bold">.</span><span style="color:#000">read</span>\
 		<span style="color:#ce5c00;font-weight:bold">.</span><span style="color:#000">format</span><span style="color:#000;font-weight:bold">(</span><span style="color:#4e9a06">&#34;org.biodatageeks.sequila.datasources.BED.BEDDataSource&#34;</span><span style="color:#000;font-weight:bold">)</span>\
 		<span style="color:#ce5c00;font-weight:bold">.</span><span style="color:#000">load</span><span style="color:#000;font-weight:bold">(</span><span style="color:#4e9a06">&#34;{{ PWD }}/data/targets.bed&#34;</span><span style="color:#000;font-weight:bold">)</span>
 <span style="color:#000">reads_df</span><span style="color:#ce5c00;font-weight:bold">=</span><span style="color:#000">ss</span><span style="color:#ce5c00;font-weight:bold">.</span><span style="color:#000">read</span>\
 		<span style="color:#ce5c00;font-weight:bold">.</span><span style="color:#000">format</span><span style="color:#000;font-weight:bold">(</span><span style="color:#4e9a06">&#34;org.biodatageeks.sequila.datasources.BAM.BAMDataSource&#34;</span><span style="color:#000;font-weight:bold">)</span>\
-		<span style="color:#ce5c00;font-weight:bold">.</span><span style="color:#000">load</span><span style="color:#000;font-weight:bold">(</span><span style="color:#4e9a06">&#34;/tmp/data/NA12878.bam&#34;</span><span style="color:#000;font-weight:bold">)</span>
+		<span style="color:#ce5c00;font-weight:bold">.</span><span style="color:#000">load</span><span style="color:#000;font-weight:bold">(</span><span style="color:#4e9a06">&#34;/{{ PWD }}/data/NA12878.bam&#34;</span><span style="color:#000;font-weight:bold">)</span>
 <span style="color:#000">reads_df</span><span style="color:#ce5c00;font-weight:bold">.</span><span style="color:#000">join</span><span style="color:#000;font-weight:bold">(</span><span style="color:#000">targets_df</span><span style="color:#000;font-weight:bold">,</span>\
 		<span style="color:#000;font-weight:bold">(</span><span style="color:#000">reads_df</span><span style="color:#ce5c00;font-weight:bold">.</span><span style="color:#000">contig</span> <span style="color:#ce5c00;font-weight:bold">==</span> <span style="color:#000">targets_df</span><span style="color:#ce5c00;font-weight:bold">.</span><span style="color:#000">contig</span><span style="color:#000;font-weight:bold">)</span>\
 		<span style="color:#ce5c00;font-weight:bold">&amp;</span> <span style="color:#000;font-weight:bold">(</span><span style="color:#000">reads_df</span><span style="color:#ce5c00;font-weight:bold">.</span><span style="color:#000">pos_end</span> <span style="color:#ce5c00;font-weight:bold">&gt;=</span> <span style="color:#000">targets_df</span><span style="color:#ce5c00;font-weight:bold">.</span><span style="color:#000">pos_start</span><span style="color:#000;font-weight:bold">)</span>\
@@ -774,7 +774,7 @@ wget -nc https://github.com/biodatageeks/pysequila/raw/master/features/data/targ
 </div>
 <h4 class="h3">Contributions welcome!</h4>
 <div class="mb-0">
-<p>We do a <a href="https://github.com/biodatageeks/pysequila/pulls">Pull Request</a> contributions workflow on <strong>GitHub</strong>. New users are always welcome!</p>
+<p>We do a <a href="https://github.com/biodatageeks/pysequila/pulls" target="_blank" rel="noopener">Pull Request</a> contributions workflow on <strong>GitHub</strong>. New users are always welcome!</p>
 
 </div>
 <p><a href="https://github.com/biodatageeks/pysequila">Read more …</a></p>

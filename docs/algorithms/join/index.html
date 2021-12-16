@@ -4,7 +4,6 @@
     <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <meta name="generator" content="Hugo 0.90.0" />
-<link rel="alternate" type="application/rss&#43;xml" href="https://biodatageeks.github.io/sequila/docs/configuration/index.xml">
 <meta name="robots" content="index, follow">
 
 
@@ -19,20 +18,25 @@
 <link rel="icon" type="image/png" href="/sequila/favicons/android-144x144.png" sizes="144x144">
 <link rel="icon" type="image/png" href="/sequila/favicons/android-192x192.png" sizes="192x192">
 
-<title>Configuration | sequila</title>
-<meta name="description" content="Glossary of SeQuiLa&#39;s parameters and configuration options
+<title>Interval joins | sequila</title>
+<meta name="description" content="SeQuiLa&#39;s interval join algorithm description
 ">
-<meta property="og:title" content="Configuration" />
-<meta property="og:description" content="Glossary of SeQuiLa&#39;s parameters and configuration options
+<meta property="og:title" content="Interval joins" />
+<meta property="og:description" content="SeQuiLa&#39;s interval join algorithm description
 " />
-<meta property="og:type" content="website" />
-<meta property="og:url" content="https://biodatageeks.github.io/sequila/docs/configuration/" /><meta property="og:site_name" content="sequila" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://biodatageeks.github.io/sequila/docs/algorithms/join/" /><meta property="article:section" content="docs" />
 
-<meta itemprop="name" content="Configuration">
-<meta itemprop="description" content="Glossary of SeQuiLa&#39;s parameters and configuration options
-"><meta name="twitter:card" content="summary"/>
-<meta name="twitter:title" content="Configuration"/>
-<meta name="twitter:description" content="Glossary of SeQuiLa&#39;s parameters and configuration options
+<meta property="article:modified_time" content="2021-12-16T15:43:38+01:00" /><meta property="og:site_name" content="sequila" />
+
+<meta itemprop="name" content="Interval joins">
+<meta itemprop="description" content="SeQuiLa&#39;s interval join algorithm description
+">
+<meta itemprop="dateModified" content="2021-12-16T15:43:38+01:00" />
+<meta itemprop="wordCount" content="693">
+<meta itemprop="keywords" content="" /><meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Interval joins"/>
+<meta name="twitter:description" content="SeQuiLa&#39;s interval join algorithm description
 "/>
 
 
@@ -58,7 +62,7 @@ if (!doNotTrack) {
 <script async src='https://www.google-analytics.com/analytics.js'></script>
 
   </head>
-  <body class="td-section">
+  <body class="td-page">
     <header>
       
 <nav class="js-navbar-scroll navbar navbar-expand navbar-dark flex-column flex-md-row td-navbar">
@@ -115,13 +119,13 @@ if (!doNotTrack) {
       <li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id="m-sequiladocs-li">
   <a href="/sequila/docs/" class="align-left pl-0 td-sidebar-link td-sidebar-link__section tree-root" id="m-sequiladocs"><span class="">Documentation</span></a>
   <ul class="ul-1">
-    <li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id="m-sequiladocsalgorithms-li">
+    <li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id="m-sequiladocsalgorithms-li">
   <a href="/sequila/docs/algorithms/" class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id="m-sequiladocsalgorithms"><span class="">Algorithms</span></a>
   <ul class="ul-2 foldable">
     <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id="m-sequiladocsalgorithmspileup-li">
   <a href="/sequila/docs/algorithms/pileup/" class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id="m-sequiladocsalgorithmspileup"><span class="">Pileup and coverage</span></a>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id="m-sequiladocsalgorithmsjoin-li">
-  <a href="/sequila/docs/algorithms/join/" class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id="m-sequiladocsalgorithmsjoin"><span class="">Interval joins</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child active-path" id="m-sequiladocsalgorithmsjoin-li">
+  <a href="/sequila/docs/algorithms/join/" class="align-left pl-0 active td-sidebar-link td-sidebar-link__page" id="m-sequiladocsalgorithmsjoin"><span class="td-sidebar-nav-active-item">Interval joins</span></a>
 </li>
   </ul>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id="m-sequiladocsdata-formats-li">
@@ -137,8 +141,8 @@ if (!doNotTrack) {
   <a href="/sequila/docs/data-formats/vcf/" class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id="m-sequiladocsdata-formatsvcf"><span class="">VCF</span></a>
 </li>
   </ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id="m-sequiladocsconfiguration-li">
-  <a href="/sequila/docs/configuration/" class="align-left pl-0 active td-sidebar-link td-sidebar-link__section" id="m-sequiladocsconfiguration"><span class="td-sidebar-nav-active-item">Configuration</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id="m-sequiladocsconfiguration-li">
+  <a href="/sequila/docs/configuration/" class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id="m-sequiladocsconfiguration"><span class="">Configuration</span></a>
   <ul class="ul-2 foldable">
     <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id="m-sequiladocsconfigurationgeneral-li">
   <a href="/sequila/docs/configuration/general/" class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id="m-sequiladocsconfigurationgeneral"><span class="">General</span></a>
@@ -177,16 +181,25 @@ if (!doNotTrack) {
           <aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
             
 <div class="td-page-meta ml-2 pb-1 pt-2 mb-0">
-<a href="https://github.com/biodatageeks/sequila/tree/master/content/en/docs/Configuration/_index.md" class="td-page-meta--view" target="_blank" rel="noopener"><i class="fa fa-file-alt fa-fw"></i> View page source</a>
-  <a href="https://github.com/biodatageeks/sequila/edit/master/content/en/docs/Configuration/_index.md" class="td-page-meta--edit" target="_blank" rel="noopener"><i class="fa fa-edit fa-fw"></i> Edit this page</a>
-  <a href="https://github.com/biodatageeks/sequila/new/master/content/en/docs/Configuration/_index.md?filename=change-me.md&amp;value=---%0Atitle%3A&#43;%22Long&#43;Page&#43;Title%22%0AlinkTitle%3A&#43;%22Short&#43;Nav&#43;Title%22%0Aweight%3A&#43;100%0Adescription%3A&#43;%3E-%0A&#43;&#43;&#43;&#43;&#43;Page&#43;description&#43;for&#43;heading&#43;and&#43;indexes.%0A---%0A%0A%23%23&#43;Heading%0A%0AEdit&#43;this&#43;template&#43;to&#43;create&#43;your&#43;new&#43;page.%0A%0A%2A&#43;Give&#43;it&#43;a&#43;good&#43;name%2C&#43;ending&#43;in&#43;%60.md%60&#43;-&#43;e.g.&#43;%60getting-started.md%60%0A%2A&#43;Edit&#43;the&#43;%22front&#43;matter%22&#43;section&#43;at&#43;the&#43;top&#43;of&#43;the&#43;page&#43;%28weight&#43;controls&#43;how&#43;its&#43;ordered&#43;amongst&#43;other&#43;pages&#43;in&#43;the&#43;same&#43;directory%3B&#43;lowest&#43;number&#43;first%29.%0A%2A&#43;Add&#43;a&#43;good&#43;commit&#43;message&#43;at&#43;the&#43;bottom&#43;of&#43;the&#43;page&#43;%28%3C80&#43;characters%3B&#43;use&#43;the&#43;extended&#43;description&#43;field&#43;for&#43;more&#43;detail%29.%0A%2A&#43;Create&#43;a&#43;new&#43;branch&#43;so&#43;you&#43;can&#43;preview&#43;your&#43;new&#43;file&#43;and&#43;request&#43;a&#43;review&#43;via&#43;Pull&#43;Request.%0A" class="td-page-meta--child" target="_blank" rel="noopener"><i class="fa fa-edit fa-fw"></i> Create child page</a>
-  <a href="https://github.com/biodatageeks/sequila/issues/new?title=Configuration" class="td-page-meta--issue" target="_blank" rel="noopener"><i class="fab fa-github fa-fw"></i> Create documentation issue</a>
+<a href="https://github.com/biodatageeks/sequila/tree/master/content/en/docs/Algorithms/join.md" class="td-page-meta--view" target="_blank" rel="noopener"><i class="fa fa-file-alt fa-fw"></i> View page source</a>
+  <a href="https://github.com/biodatageeks/sequila/edit/master/content/en/docs/Algorithms/join.md" class="td-page-meta--edit" target="_blank" rel="noopener"><i class="fa fa-edit fa-fw"></i> Edit this page</a>
+  <a href="https://github.com/biodatageeks/sequila/new/master/content/en/docs/Algorithms/join.md?filename=change-me.md&amp;value=---%0Atitle%3A&#43;%22Long&#43;Page&#43;Title%22%0AlinkTitle%3A&#43;%22Short&#43;Nav&#43;Title%22%0Aweight%3A&#43;100%0Adescription%3A&#43;%3E-%0A&#43;&#43;&#43;&#43;&#43;Page&#43;description&#43;for&#43;heading&#43;and&#43;indexes.%0A---%0A%0A%23%23&#43;Heading%0A%0AEdit&#43;this&#43;template&#43;to&#43;create&#43;your&#43;new&#43;page.%0A%0A%2A&#43;Give&#43;it&#43;a&#43;good&#43;name%2C&#43;ending&#43;in&#43;%60.md%60&#43;-&#43;e.g.&#43;%60getting-started.md%60%0A%2A&#43;Edit&#43;the&#43;%22front&#43;matter%22&#43;section&#43;at&#43;the&#43;top&#43;of&#43;the&#43;page&#43;%28weight&#43;controls&#43;how&#43;its&#43;ordered&#43;amongst&#43;other&#43;pages&#43;in&#43;the&#43;same&#43;directory%3B&#43;lowest&#43;number&#43;first%29.%0A%2A&#43;Add&#43;a&#43;good&#43;commit&#43;message&#43;at&#43;the&#43;bottom&#43;of&#43;the&#43;page&#43;%28%3C80&#43;characters%3B&#43;use&#43;the&#43;extended&#43;description&#43;field&#43;for&#43;more&#43;detail%29.%0A%2A&#43;Create&#43;a&#43;new&#43;branch&#43;so&#43;you&#43;can&#43;preview&#43;your&#43;new&#43;file&#43;and&#43;request&#43;a&#43;review&#43;via&#43;Pull&#43;Request.%0A" class="td-page-meta--child" target="_blank" rel="noopener"><i class="fa fa-edit fa-fw"></i> Create child page</a>
+  <a href="https://github.com/biodatageeks/sequila/issues/new?title=Interval%20joins" class="td-page-meta--issue" target="_blank" rel="noopener"><i class="fab fa-github fa-fw"></i> Create documentation issue</a>
   <a href="https://github.com/biodatageeks/sequila/issues/new" class="td-page-meta--project-issue" target="_blank" rel="noopener"><i class="fas fa-tasks fa-fw"></i> Create project issue</a>
   
 </div>
 
             
 
+
+<div class="td-toc"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#overview">Overview</a></li>
+    <li><a href="#algorithm">Algorithm</a></li>
+    <li><a href="#optimizations">Optimizations</a></li>
+    <li><a href="#custom-interval-structure">Custom interval structure</a></li>
+  </ul>
+</nav></div>
 
 
 
@@ -220,15 +233,18 @@ if (!doNotTrack) {
   <li class="breadcrumb-item">
     <a href="https://biodatageeks.github.io/sequila/docs/">Documentation</a>
   </li>
+  <li class="breadcrumb-item">
+    <a href="https://biodatageeks.github.io/sequila/docs/algorithms/">Algorithms</a>
+  </li>
   <li class="breadcrumb-item active" aria-current="page">
-    <a href="https://biodatageeks.github.io/sequila/docs/configuration/">Configuration</a>
+    <a href="https://biodatageeks.github.io/sequila/docs/algorithms/join/">Interval joins</a>
   </li>
   </ol>
 </nav>
             
 <div class="td-content">
-	<h1>Configuration</h1>
-  <div class="lead">Glossary of SeQuiLa&rsquo;s parameters and configuration options</div>
+	<h1>Interval joins</h1>
+	<div class="lead">SeQuiLa&rsquo;s interval join algorithm description</div>
 	<header class="article-meta">
 		
 		
@@ -243,107 +259,81 @@ if (!doNotTrack) {
 			
 		
 		
-	</header>
-	<h2 id="how-to-set-parameters">How to set parameters</h2>
+	</header>    
+	<h2 id="overview">Overview</h2>
+<p>Consider datasets <code>s1</code> and <code>s2</code>, storing genomic intervals, such as <code>|s1|&lt;|s2|</code>. Let&rsquo;s assume that their structure contains necessary genomic coordinates (<code>chromosome</code>, <code>start position</code>, <code>end position</code>) along with optional additional interval annotations (e.g. targetId).</p>
 
+<figure>
+    <img src="../../images/algorithms/join/structure.png"/> <figcaption>
+            <h4>Tables structure</h4>
+        </figcaption>
+</figure>
 
+<pre><code>Dataset `s1` and `s2`. Both storing genomic intervals with necessary genomic coordinates and optional annotations
+</code></pre>
+<p>Our goal is to efficiently execute a query as shown below:</p>
+<div class="highlight"><pre tabindex="0" style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql"><span style="color:#f8f8f8;text-decoration:underline">    </span><span style="color:#204a87;font-weight:bold">SELECT</span><span style="color:#f8f8f8;text-decoration:underline"> </span><span style="color:#000">s2</span><span style="color:#000;font-weight:bold">.</span><span style="color:#000">targetId</span><span style="color:#000;font-weight:bold">,</span><span style="color:#204a87;font-weight:bold">count</span><span style="color:#000;font-weight:bold">(</span><span style="color:#ce5c00;font-weight:bold">*</span><span style="color:#000;font-weight:bold">)</span><span style="color:#f8f8f8;text-decoration:underline">
+</span><span style="color:#f8f8f8;text-decoration:underline">    </span><span style="color:#204a87;font-weight:bold">FROM</span><span style="color:#f8f8f8;text-decoration:underline"> </span><span style="color:#204a87;font-weight:bold">reads</span><span style="color:#f8f8f8;text-decoration:underline"> </span><span style="color:#000">s1</span><span style="color:#f8f8f8;text-decoration:underline"> </span><span style="color:#204a87;font-weight:bold">JOIN</span><span style="color:#f8f8f8;text-decoration:underline"> </span><span style="color:#000">targets</span><span style="color:#f8f8f8;text-decoration:underline"> </span><span style="color:#000">s2</span><span style="color:#f8f8f8;text-decoration:underline">
+</span><span style="color:#f8f8f8;text-decoration:underline">    </span><span style="color:#204a87;font-weight:bold">ON</span><span style="color:#f8f8f8;text-decoration:underline"> </span><span style="color:#000">s1</span><span style="color:#000;font-weight:bold">.</span><span style="color:#000">chr</span><span style="color:#f8f8f8;text-decoration:underline"> </span><span style="color:#ce5c00;font-weight:bold">=</span><span style="color:#f8f8f8;text-decoration:underline"> </span><span style="color:#000">s2</span><span style="color:#000;font-weight:bold">.</span><span style="color:#000">chr</span><span style="color:#f8f8f8;text-decoration:underline">
+</span><span style="color:#f8f8f8;text-decoration:underline">    </span><span style="color:#204a87;font-weight:bold">AND</span><span style="color:#f8f8f8;text-decoration:underline"> </span><span style="color:#000">s1</span><span style="color:#000;font-weight:bold">.</span><span style="color:#204a87;font-weight:bold">end</span><span style="color:#f8f8f8;text-decoration:underline"> </span><span style="color:#ce5c00;font-weight:bold">&gt;=</span><span style="color:#f8f8f8;text-decoration:underline"> </span><span style="color:#000">s2</span><span style="color:#000;font-weight:bold">.</span><span style="color:#204a87;font-weight:bold">start</span><span style="color:#f8f8f8;text-decoration:underline">
+</span><span style="color:#f8f8f8;text-decoration:underline">    </span><span style="color:#204a87;font-weight:bold">AND</span><span style="color:#f8f8f8;text-decoration:underline"> </span><span style="color:#000">s1</span><span style="color:#000;font-weight:bold">.</span><span style="color:#204a87;font-weight:bold">start</span><span style="color:#f8f8f8;text-decoration:underline"> </span><span style="color:#ce5c00;font-weight:bold">&lt;=</span><span style="color:#f8f8f8;text-decoration:underline"> </span><span style="color:#000">s2</span><span style="color:#000;font-weight:bold">.</span><span style="color:#204a87;font-weight:bold">end</span><span style="color:#f8f8f8;text-decoration:underline">
+</span><span style="color:#f8f8f8;text-decoration:underline">    </span><span style="color:#204a87;font-weight:bold">GROUP</span><span style="color:#f8f8f8;text-decoration:underline"> </span><span style="color:#204a87;font-weight:bold">BY</span><span style="color:#f8f8f8;text-decoration:underline"> </span><span style="color:#000">targetId</span><span style="color:#000;font-weight:bold">;</span><span style="color:#f8f8f8;text-decoration:underline">
+</span></code></pre></div><h2 id="algorithm">Algorithm</h2>
+<p>At it&rsquo;s core SeQuiLa&rsquo;s range joins are based on IntervalTree data structure. The main idea of the algorithm is to transform dataset <code>s1</code> into a broadcastable structure of an interval forest (a hash map of interval trees, each representing one chromosome). The intervals from dataset <code>s2</code> can be efficiently intersected with the constructed interval forest.</p>
+<p>An interval tree is a tree data structure to hold intervals. It is a augmented, balanced red-black tree with low endpoint as node key and additional max value of any endpoint stored in subtree.
+Each node contains following fields: parent, left subtree, right subtree, color, low endpoint, high endpoint and max endpoint of subtree.
+It can be proved that this structure allows for correct interval insertion, deletion and search in :math:<code>O(lg n)</code> time ([CLR]_)</p>
 
+<figure>
+    <img src="../../images/algorithms/join/inttree.png"
+         alt="An interval tree. On the top: A set of 10 intervals, shown sorted bottom to top by left endpoint. On  the bottom the interval tree that represents them. An inorder tree walk of the tree lists the nodes in sorted order by left endpoint."/> <figcaption>
+            <h4>Interval tree</h4><p>An interval tree. On the top: A set of 10 intervals, shown sorted bottom to top by left endpoint. On  the bottom the interval tree that represents them. An inorder tree walk of the tree lists the nodes in sorted order by left endpoint.</p>
+        </figcaption>
+</figure>
 
+<p>Our implementation of IntervalTree is based on explanations in [CLR]_ although it is extended in the following ways:</p>
+<ul>
+<li>data structure allows storing non-unique intervals</li>
+<li>data structure allows storing in the tree nodes additional interval annotations if they fit into dedicated Spark driver&rsquo;s memory fraction</li>
+</ul>
+<p>Let&rsquo;s presume that we have a cluster with a Spark driver, three worker nodes and that the tables are partitioned between worker nodes. When interval query is performed, all dataset&rsquo;s :math:<code>s1</code> partitions are sent to the driver node on which interval forest is constructed (for each chromosome a separate interval tree is created).  The forest is subsequently sent back to worker nodes on which efficient interval operations based on interval trees are performed. Depending on the strategy chosen by rule-based optimizer different set of columns are stored in tree nodes</p>
 
+<figure>
+    <img src="../../images/algorithms/join/broadcast.png"
+         alt="Broadcasting interval forest to worker nodes."/> <figcaption>
+            <h4>Broadcasting mechanism</h4><p>Broadcasting interval forest to worker nodes.</p>
+        </figcaption>
+</figure>
 
+<p>.. [CLR] Cormen, Thomas H.; Leiserson, Charles E., Rivest, Ronald L. (1990). Introduction to Algorithms (1st ed.). MIT Press and McGraw-Hill. ISBN 0-262-03141-8</p>
+<h2 id="optimizations">Optimizations</h2>
+<p>SeQuiLa package introduces a new rule based optimizer (RBO) that chooses most efficient join strategy based on
+input data statistics computed in the runtime. The first step of the algorithm is to obtain value of <code>maxBroadcastSize</code> parameter. It can set explicitly by the end user or computed as a fraction of the Apache Spark Driver memory.
+In the next step table row counts are computed and based on that table with the fewer rows is selected for constructing interval forest. This is the default approach - it can be overridden by setting
+<code>spark.biodatageeks.rangejoin.useJoinOrder</code> to <code>true</code>. In this scenario no row counts are computed and the right join table is used for creating interval forest. Such an strategy can be useful in situation when it is known upfront which table should be used for creating a broadcast structure.
+The final step of the optimization procedure is to estimate the row size and the size of the whole projected table.
+If it fits into dedicated Spark Driver&rsquo;s memory (controlled by maxBroadcastSize parameter) the interval forest is augmented with all columns from s1 (SeQuiLa_it_all strategy) completing map-side join procedure in one stage. Otherwise an interval tree is used as an index for additional lookup step before the equi-shuffle-join operation between s1 and s2 (SeQuiLa_it_int strategy).</p>
 
+<figure>
+    <img src="../../images/algorithms/join/rbo.jpg"
+         alt="Rule-based optimizer&amp;rsquo;s algorithm chooses the most efficient join strategy."/> <figcaption>
+            <h4>Optimization algorithm</h4><p>Rule-based optimizer&rsquo;s algorithm chooses the most efficient join strategy.</p>
+        </figcaption>
+</figure>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<ul class="nav nav-tabs" id="tabs-0" role="tablist"><li class="nav-item">
-      <a class="nav-link active tab-SQL"
-        id="tabs-0-0-tab" data-toggle="tab" href="#tabs-0-0" role="tab" onclick="handleClick(&#34;SQL&#34;);"
-        aria-controls="tabs-0-0" aria-selected="true">
-        SQL
-      </a>
-    </li><li class="nav-item">
-      <a class="nav-link tab-Python"
-        id="tabs-0-1-tab" data-toggle="tab" href="#tabs-0-1" role="tab" onclick="handleClick(&#34;Python&#34;);"
-        aria-controls="tabs-0-1" aria-selected="false">
-        Python
-      </a>
-    </li></ul>
-
-
-<div class="tab-content" id="tabs-0-content"><div class="tab-pane fade show active"
-        id="tabs-0-0" role="tabpanel" aria-labelled-by="tabs-0-0-tab"><div class="highlight"><pre tabindex="0" style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql"><span style="color:#204a87;font-weight:bold">SET</span><span style="color:#f8f8f8;text-decoration:underline"> </span><span style="color:#000">spark</span><span style="color:#000;font-weight:bold">.</span><span style="color:#000">biodatageeks</span><span style="color:#000;font-weight:bold">.</span><span style="color:#000">readAligment</span><span style="color:#000;font-weight:bold">.</span><span style="color:#204a87;font-weight:bold">method</span><span style="color:#ce5c00;font-weight:bold">=</span><span style="color:#000">disq</span><span style="color:#000;font-weight:bold">;</span></code></pre></div></div>
-  <div class="tab-pane fade"
-        id="tabs-0-1" role="tabpanel" aria-labelled-by="tabs-0-1-tab"><div class="highlight"><pre tabindex="0" style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-python" data-lang="python"><span style="color:#204a87;font-weight:bold">from</span> <span style="color:#000">pysequila</span> <span style="color:#204a87;font-weight:bold">import</span> <span style="color:#000">SequilaSession</span>
-<span style="color:#000">ss</span> <span style="color:#ce5c00;font-weight:bold">=</span> <span style="color:#000">SequilaSession</span> \
-<span style="color:#ce5c00;font-weight:bold">.</span><span style="color:#000">builder</span> \
-<span style="color:#ce5c00;font-weight:bold">.</span><span style="color:#000">getOrCreate</span><span style="color:#000;font-weight:bold">()</span>
-<span style="color:#000">ss</span><span style="color:#ce5c00;font-weight:bold">.</span><span style="color:#000">sql</span><span style="color:#000;font-weight:bold">(</span><span style="color:#4e9a06">&#34;SET spark.biodatageeks.readAligment.method=disq&#34;</span><span style="color:#000;font-weight:bold">)</span></code></pre></div></div>
-  
-</div>
-
-
-        <div class="section-index">
-    
-    
-    
-    
-    
-    
-    
-    
-    <hr class="panel-line">
-        
-            
-            <div class="entry">
-                <h5>
-                    <a href="/sequila/docs/configuration/general/">General</a>
-                </h5>
-                <p>General parameters</p>
-            </div>
-        
-            
-            <div class="entry">
-                <h5>
-                    <a href="/sequila/docs/configuration/pileup/">Pileup and coverage</a>
-                </h5>
-                <p>Pileup and coverage</p>
-            </div>
-        
-            
-            <div class="entry">
-                <h5>
-                    <a href="/sequila/docs/configuration/join/">Interval joins</a>
-                </h5>
-                <p>Interval joins</p>
-            </div>
-        
-    
-</div>
+<h2 id="custom-interval-structure">Custom interval structure</h2>
+<p>By default SeQuiLa uses Red-Black tree with intervals implemented in <code>org.biodatageeks.sequila.rangejoins.methods.IntervalTree.IntervalTreeRedBlack&lt;V&gt;</code>
+class. However, it is possible to provide a custom interval structure and set it using <code>spark.biodatageeks.rangejoin.intervalHolderClass</code>
+parameter. There are 2 prerequisites:</p>
+<ol>
+<li>
+<p>custom class must implement interface provided by the trait: <code>org.biodatageeks.sequila.rangejoins.methods.base.BaseIntervalHolder[V]</code></p>
+</li>
+<li>
+<p>node class used for storing intervals must extend <code>org.biodatageeks.sequila.rangejoins.methods.base.BaseNode[V]</code></p>
+</li>
+</ol>
+<p>Both Scala and Java classes are supported. Please use default interval tree implementation for reference.</p>
 
 	
 		<style>
@@ -414,6 +404,7 @@ if (!doNotTrack) {
 </div>
 
 </div>
+
 
           </main>
         </div>

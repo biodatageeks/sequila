@@ -1,17 +1,132 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>sequila – Configuration</title>
+    <title>Configuration | sequila</title>
     <link>https://biodatageeks.github.io/sequila/docs/configuration/</link>
-    <description>Recent content in Configuration on sequila</description>
-    <generator>Hugo -- gohugo.io</generator>
+      <atom:link href="https://biodatageeks.github.io/sequila/docs/configuration/index.xml" rel="self" type="application/rss+xml" />
+    <description>Configuration</description>
+    <generator>Wowchemy (https://wowchemy.com)</generator>
+    <item>
+      <title>General</title>
+      <link>https://biodatageeks.github.io/sequila/docs/configuration/general/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://biodatageeks.github.io/sequila/docs/configuration/general/</guid>
+      <description>&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;Property Name&lt;/th&gt;
+&lt;th&gt;Default&lt;/th&gt;
+&lt;th&gt;Meaning&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;spark.biodatageeks.readAligment.method&lt;/td&gt;
+&lt;td&gt;hadoopBAM&lt;/td&gt;
+&lt;td&gt;Whether to use &lt;a href=&#34;https://github.com/HadoopGenomics/Hadoop-BAM&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;&lt;code&gt;hadoopBAM&lt;/code&gt;&lt;/a&gt; or &lt;a href=&#34;https://github.com/disq-bio/disq&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;&lt;code&gt;disq&lt;/code&gt;&lt;/a&gt;. Hadoop-BAM seems to be more performant in local mode but has worse horizontal scalability characteristic(~50+ executors).&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;spark.biodatageeks.bam.useGKLInflate&lt;/td&gt;
+&lt;td&gt;true&lt;/td&gt;
+&lt;td&gt;Whether to use Intel GKL deflater when using HadoopBAM (for disq it is always on)&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;spark.biodatageeks.bam.validation&lt;/td&gt;
+&lt;td&gt;SILENT&lt;/td&gt;
+&lt;td&gt;Method of BAM records &lt;a href=&#34;https://github.com/samtools/htsjdk/blob/master/src/main/java/htsjdk/samtools/ValidationStringency.java&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;validation&lt;/a&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;td&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+</description>
+    </item>
     
-	  <atom:link href="https://biodatageeks.github.io/sequila/docs/configuration/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Pileup and coverage</title>
+      <link>https://biodatageeks.github.io/sequila/docs/configuration/pileup/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://biodatageeks.github.io/sequila/docs/configuration/pileup/</guid>
+      <description>&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;Property Name&lt;/th&gt;
+&lt;th&gt;Default&lt;/th&gt;
+&lt;th&gt;Meaning&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;spark.biodatageeks.coverage.filterFlag&lt;/td&gt;
+&lt;td&gt;1796&lt;/td&gt;
+&lt;td&gt;Which SAM flags to use for filtering records. Check &lt;a href=&#34;https://broadinstitute.github.io/picard/explain-flags.html&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;SAM explainer&lt;/a&gt; for details.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;spark.biodatageeks.coverage.minMapQual&lt;/td&gt;
+&lt;td&gt;0&lt;/td&gt;
+&lt;td&gt;Minimal value of reads&#39; mapping quality to be included in coverage/pileup calculations&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;spark.biodatageeks.pileup.useVectorizedOrcWriter&lt;/td&gt;
+&lt;td&gt;false&lt;/td&gt;
+&lt;td&gt;Whether to use vectorized ORC writer and to bypass Spark&amp;rsquo;s InternalRow serialization and write directly to the ouput file. This option is still experimental but speeds up saving results substantially.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;spark.biodatageeks.pileup.maxBaseQuality&lt;/td&gt;
+&lt;td&gt;40&lt;/td&gt;
+&lt;td&gt;Specify the number of base quality values - internally used for allocating BQ counters.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+</description>
+    </item>
     
-    
-      
-        
-      
-    
+    <item>
+      <title>Interval joins</title>
+      <link>https://biodatageeks.github.io/sequila/docs/configuration/join/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://biodatageeks.github.io/sequila/docs/configuration/join/</guid>
+      <description>&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;Property Name&lt;/th&gt;
+&lt;th&gt;Default&lt;/th&gt;
+&lt;th&gt;Meaning&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;spark.biodatageeks.rangejoin.useJoinOrder&lt;/td&gt;
+&lt;td&gt;false&lt;/td&gt;
+&lt;td&gt;Whether to always broadcast the right table of a join or to computer row counts and pick up the smaller one.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;spark.biodatageeks.rangejoin.maxBroadcastSize&lt;/td&gt;
+&lt;td&gt;0.1*spark.driver.memory&lt;/td&gt;
+&lt;td&gt;The maximum allowed size of the broadcasted intverval structure which is used by the SeQuiLa&amp;rsquo;s optimizer to chose interval join &lt;a href=&#34;http://biodatageeks.ii.pw.edu.pl/sequila/architecture/architecture.html#optimizations&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;algorithm&lt;/a&gt;.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;spark.biodatageeks.rangejoin.maxGap&lt;/td&gt;
+&lt;td&gt;0&lt;/td&gt;
+&lt;td&gt;The maximum gap between between regions&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;spark.biodatageeks.rangejoin.minOverlap&lt;/td&gt;
+&lt;td&gt;1&lt;/td&gt;
+&lt;td&gt;The minimal length of the overlap between regions&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;spark.biodatageeks.rangejoin.intervalHolderClass&lt;/td&gt;
+&lt;td&gt;&lt;a href=&#34;https://github.com/biodatageeks/sequila/blob/master/src/main/scala/org/biodatageeks/sequila/rangejoins/methods/IntervalTree/IntervalTreeRedBlack.java&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;&lt;code&gt;IntervalTreeRedBlack&lt;/code&gt;&lt;/a&gt;&lt;/td&gt;
+&lt;td&gt;&lt;a href=&#34;http://biodatageeks.ii.pw.edu.pl/sequila/architecture/architecture.html#custom-interval-structure&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;Pluggable&lt;/a&gt; mechanism for implementing custom interval structures.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+</description>
+    </item>
     
   </channel>
 </rss>

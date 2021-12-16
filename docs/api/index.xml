@@ -1,28 +1,17 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>sequila – API</title>
+    <title>API | sequila</title>
     <link>https://biodatageeks.github.io/sequila/docs/api/</link>
-    <description>Recent content in API on sequila</description>
-    <generator>Hugo -- gohugo.io</generator>
-    
-	  <atom:link href="https://biodatageeks.github.io/sequila/docs/api/index.xml" rel="self" type="application/rss+xml" />
-    
-    
-      
-        
-      
-    
-    
+      <atom:link href="https://biodatageeks.github.io/sequila/docs/api/index.xml" rel="self" type="application/rss+xml" />
+    <description>API</description>
+    <generator>Wowchemy (https://wowchemy.com)</generator>
     <item>
-      <title>Docs: Python</title>
+      <title>Python</title>
       <link>https://biodatageeks.github.io/sequila/docs/api/pysequila/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
       <guid>https://biodatageeks.github.io/sequila/docs/api/pysequila/</guid>
-      <description>
-        
-        
-        &lt;h1 id=&#34;table-of-contents&#34;&gt;Table of Contents&lt;/h1&gt;
+      <description>&lt;h1 id=&#34;table-of-contents&#34;&gt;Table of Contents&lt;/h1&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;a href=&#34;#sequila&#34;&gt;sequila&lt;/a&gt;
 &lt;ul&gt;
@@ -146,20 +135,15 @@ only showing top &lt;span style=&#34;color:#0000cf;font-weight:bold&#34;&gt;1&lt
 &lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;|&lt;/span&gt;     1&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;|&lt;/span&gt;       69&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;|&lt;/span&gt;     69&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;|&lt;/span&gt;  A&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;|&lt;/span&gt;       7&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;|&lt;/span&gt;       6&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;|&lt;/span&gt;          1&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;|&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;{&lt;/span&gt;&lt;span style=&#34;color:#0000cf;font-weight:bold&#34;&gt;99&lt;/span&gt; -&amp;gt; 1&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;}&lt;/span&gt;&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;|&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;{&lt;/span&gt;&lt;span style=&#34;color:#0000cf;font-weight:bold&#34;&gt;65&lt;/span&gt; -&amp;gt; &lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;[&lt;/span&gt;0, 0, 0, ...&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;|&lt;/span&gt;
 +------+---------+-------+---+--------+--------+-----------+---------+--------------------+
 only showing top &lt;span style=&#34;color:#0000cf;font-weight:bold&#34;&gt;1&lt;/span&gt; row
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-      </description>
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</description>
     </item>
     
     <item>
-      <title>Docs: SQL</title>
+      <title>SQL</title>
       <link>https://biodatageeks.github.io/sequila/docs/api/sql/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
       <guid>https://biodatageeks.github.io/sequila/docs/api/sql/</guid>
-      <description>
-        
-        
-        &lt;h1 id=&#34;table-of-contents&#34;&gt;Table of Contents&lt;/h1&gt;
+      <description>&lt;h1 id=&#34;table-of-contents&#34;&gt;Table of Contents&lt;/h1&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;a href=&#34;#sequila.SequilaSession.coverage&#34;&gt;coverage&lt;/a&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a href=&#34;#sequila.SequilaSession.pileup&#34;&gt;pileup&lt;/a&gt;&lt;/li&gt;
@@ -277,8 +261,7 @@ only showing top &lt;span style=&#34;color:#0000cf;font-weight:bold&#34;&gt;1&lt
 &lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;|&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;     &lt;/span&gt;&lt;span style=&#34;color:#0000cf;font-weight:bold&#34;&gt;1&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;|&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;       &lt;/span&gt;&lt;span style=&#34;color:#0000cf;font-weight:bold&#34;&gt;41&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;|&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;     &lt;/span&gt;&lt;span style=&#34;color:#0000cf;font-weight:bold&#34;&gt;49&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;|&lt;/span&gt;&lt;span style=&#34;color:#000&#34;&gt;CCTAACCCT&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;|&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;       &lt;/span&gt;&lt;span style=&#34;color:#0000cf;font-weight:bold&#34;&gt;5&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;|&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;       &lt;/span&gt;&lt;span style=&#34;color:#0000cf;font-weight:bold&#34;&gt;5&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;|&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;          &lt;/span&gt;&lt;span style=&#34;color:#0000cf;font-weight:bold&#34;&gt;0&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;|&lt;/span&gt;&lt;span style=&#34;color:#204a87;font-weight:bold&#34;&gt;null&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;|&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;&lt;span style=&#34;color:#204a87;font-weight:bold&#34;&gt;null&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;|&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
 &lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;+&lt;/span&gt;&lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;------+---------+-------+---------+--------+--------+-----------+----+-----+
 &lt;/span&gt;&lt;span style=&#34;color:#8f5902;font-style:italic&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#204a87;font-weight:bold&#34;&gt;only&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;&lt;span style=&#34;color:#000&#34;&gt;showing&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;&lt;span style=&#34;color:#000&#34;&gt;top&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;&lt;span style=&#34;color:#0000cf;font-weight:bold&#34;&gt;5&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;&lt;span style=&#34;color:#204a87;font-weight:bold&#34;&gt;rows&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
-&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
-      </description>
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</description>
     </item>
     
   </channel>

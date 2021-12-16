@@ -1,30 +1,100 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>sequila – Algorithms</title>
+    <title>Algorithms | sequila</title>
     <link>https://biodatageeks.github.io/sequila/docs/algorithms/</link>
-    <description>Recent content in Algorithms on sequila</description>
-    <generator>Hugo -- gohugo.io</generator>
-    
-	  <atom:link href="https://biodatageeks.github.io/sequila/docs/algorithms/index.xml" rel="self" type="application/rss+xml" />
-    
-    
-      
-        
-      
-    
-    
+      <atom:link href="https://biodatageeks.github.io/sequila/docs/algorithms/index.xml" rel="self" type="application/rss+xml" />
+    <description>Algorithms</description>
+    <generator>Wowchemy (https://wowchemy.com)</generator>
     <item>
-      <title>Docs: Pileup</title>
+      <title>Pileup and coverage</title>
       <link>https://biodatageeks.github.io/sequila/docs/algorithms/pileup/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
       <guid>https://biodatageeks.github.io/sequila/docs/algorithms/pileup/</guid>
-      <description>
-        
-        
-        &lt;p&gt;TBD&lt;/p&gt;
+      <description>&lt;p&gt;TBD&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Interval joins</title>
+      <link>https://biodatageeks.github.io/sequila/docs/algorithms/join/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://biodatageeks.github.io/sequila/docs/algorithms/join/</guid>
+      <description>&lt;h2 id=&#34;overview&#34;&gt;Overview&lt;/h2&gt;
+&lt;p&gt;Consider datasets &lt;code&gt;s1&lt;/code&gt; and &lt;code&gt;s2&lt;/code&gt;, storing genomic intervals, such as &lt;code&gt;|s1|&amp;lt;|s2|&lt;/code&gt;. Let&amp;rsquo;s assume that their structure contains necessary genomic coordinates (&lt;code&gt;chromosome&lt;/code&gt;, &lt;code&gt;start position&lt;/code&gt;, &lt;code&gt;end position&lt;/code&gt;) along with optional additional interval annotations (e.g. targetId).&lt;/p&gt;
 
-      </description>
+&lt;figure&gt;
+    &lt;img src=&#34;../../images/algorithms/join/structure.png&#34;/&gt; &lt;figcaption&gt;
+            &lt;h4&gt;Tables structure&lt;/h4&gt;
+        &lt;/figcaption&gt;
+&lt;/figure&gt;
+
+&lt;pre&gt;&lt;code&gt;Dataset `s1` and `s2`. Both storing genomic intervals with necessary genomic coordinates and optional annotations
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Our goal is to efficiently execute a query as shown below:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-sql&#34; data-lang=&#34;sql&#34;&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;    &lt;/span&gt;&lt;span style=&#34;color:#204a87;font-weight:bold&#34;&gt;SELECT&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;&lt;span style=&#34;color:#000&#34;&gt;s2&lt;/span&gt;&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color:#000&#34;&gt;targetId&lt;/span&gt;&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;,&lt;/span&gt;&lt;span style=&#34;color:#204a87;font-weight:bold&#34;&gt;count&lt;/span&gt;&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;*&lt;/span&gt;&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;)&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;    &lt;/span&gt;&lt;span style=&#34;color:#204a87;font-weight:bold&#34;&gt;FROM&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;&lt;span style=&#34;color:#204a87;font-weight:bold&#34;&gt;reads&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;&lt;span style=&#34;color:#000&#34;&gt;s1&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;&lt;span style=&#34;color:#204a87;font-weight:bold&#34;&gt;JOIN&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;&lt;span style=&#34;color:#000&#34;&gt;targets&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;&lt;span style=&#34;color:#000&#34;&gt;s2&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;    &lt;/span&gt;&lt;span style=&#34;color:#204a87;font-weight:bold&#34;&gt;ON&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;&lt;span style=&#34;color:#000&#34;&gt;s1&lt;/span&gt;&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color:#000&#34;&gt;chr&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;&lt;span style=&#34;color:#000&#34;&gt;s2&lt;/span&gt;&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color:#000&#34;&gt;chr&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;    &lt;/span&gt;&lt;span style=&#34;color:#204a87;font-weight:bold&#34;&gt;AND&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;&lt;span style=&#34;color:#000&#34;&gt;s1&lt;/span&gt;&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color:#204a87;font-weight:bold&#34;&gt;end&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;&amp;gt;=&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;&lt;span style=&#34;color:#000&#34;&gt;s2&lt;/span&gt;&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color:#204a87;font-weight:bold&#34;&gt;start&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;    &lt;/span&gt;&lt;span style=&#34;color:#204a87;font-weight:bold&#34;&gt;AND&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;&lt;span style=&#34;color:#000&#34;&gt;s1&lt;/span&gt;&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color:#204a87;font-weight:bold&#34;&gt;start&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;&lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;&amp;lt;=&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;&lt;span style=&#34;color:#000&#34;&gt;s2&lt;/span&gt;&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color:#204a87;font-weight:bold&#34;&gt;end&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;    &lt;/span&gt;&lt;span style=&#34;color:#204a87;font-weight:bold&#34;&gt;GROUP&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;&lt;span style=&#34;color:#204a87;font-weight:bold&#34;&gt;BY&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt; &lt;/span&gt;&lt;span style=&#34;color:#000&#34;&gt;targetId&lt;/span&gt;&lt;span style=&#34;color:#000;font-weight:bold&#34;&gt;;&lt;/span&gt;&lt;span style=&#34;color:#f8f8f8;text-decoration:underline&#34;&gt;
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id=&#34;algorithm&#34;&gt;Algorithm&lt;/h2&gt;
+&lt;p&gt;At it&amp;rsquo;s core SeQuiLa&amp;rsquo;s range joins are based on IntervalTree data structure. The main idea of the algorithm is to transform dataset &lt;code&gt;s1&lt;/code&gt; into a broadcastable structure of an interval forest (a hash map of interval trees, each representing one chromosome). The intervals from dataset &lt;code&gt;s2&lt;/code&gt; can be efficiently intersected with the constructed interval forest.&lt;/p&gt;
+&lt;p&gt;An interval tree is a tree data structure to hold intervals. It is a augmented, balanced red-black tree with low endpoint as node key and additional max value of any endpoint stored in subtree.
+Each node contains following fields: parent, left subtree, right subtree, color, low endpoint, high endpoint and max endpoint of subtree.
+It can be proved that this structure allows for correct interval insertion, deletion and search in :math:&lt;code&gt;O(lg n)&lt;/code&gt; time ([CLR]_)&lt;/p&gt;
+
+&lt;figure&gt;
+    &lt;img src=&#34;../../images/algorithms/join/inttree.png&#34;
+         alt=&#34;An interval tree. On the top: A set of 10 intervals, shown sorted bottom to top by left endpoint. On  the bottom the interval tree that represents them. An inorder tree walk of the tree lists the nodes in sorted order by left endpoint.&#34;/&gt; &lt;figcaption&gt;
+            &lt;h4&gt;Interval tree&lt;/h4&gt;&lt;p&gt;An interval tree. On the top: A set of 10 intervals, shown sorted bottom to top by left endpoint. On  the bottom the interval tree that represents them. An inorder tree walk of the tree lists the nodes in sorted order by left endpoint.&lt;/p&gt;
+        &lt;/figcaption&gt;
+&lt;/figure&gt;
+
+&lt;p&gt;Our implementation of IntervalTree is based on explanations in [CLR]_ although it is extended in the following ways:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;data structure allows storing non-unique intervals&lt;/li&gt;
+&lt;li&gt;data structure allows storing in the tree nodes additional interval annotations if they fit into dedicated Spark driver&amp;rsquo;s memory fraction&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Let&amp;rsquo;s presume that we have a cluster with a Spark driver, three worker nodes and that the tables are partitioned between worker nodes. When interval query is performed, all dataset&amp;rsquo;s :math:&lt;code&gt;s1&lt;/code&gt; partitions are sent to the driver node on which interval forest is constructed (for each chromosome a separate interval tree is created).  The forest is subsequently sent back to worker nodes on which efficient interval operations based on interval trees are performed. Depending on the strategy chosen by rule-based optimizer different set of columns are stored in tree nodes&lt;/p&gt;
+
+&lt;figure&gt;
+    &lt;img src=&#34;../../images/algorithms/join/broadcast.png&#34;
+         alt=&#34;Broadcasting interval forest to worker nodes.&#34;/&gt; &lt;figcaption&gt;
+            &lt;h4&gt;Broadcasting mechanism&lt;/h4&gt;&lt;p&gt;Broadcasting interval forest to worker nodes.&lt;/p&gt;
+        &lt;/figcaption&gt;
+&lt;/figure&gt;
+
+&lt;p&gt;.. [CLR] Cormen, Thomas H.; Leiserson, Charles E., Rivest, Ronald L. (1990). Introduction to Algorithms (1st ed.). MIT Press and McGraw-Hill. ISBN 0-262-03141-8&lt;/p&gt;
+&lt;h2 id=&#34;optimizations&#34;&gt;Optimizations&lt;/h2&gt;
+&lt;p&gt;SeQuiLa package introduces a new rule based optimizer (RBO) that chooses most efficient join strategy based on
+input data statistics computed in the runtime. The first step of the algorithm is to obtain value of &lt;code&gt;maxBroadcastSize&lt;/code&gt; parameter. It can set explicitly by the end user or computed as a fraction of the Apache Spark Driver memory.
+In the next step table row counts are computed and based on that table with the fewer rows is selected for constructing interval forest. This is the default approach - it can be overridden by setting
+&lt;code&gt;spark.biodatageeks.rangejoin.useJoinOrder&lt;/code&gt; to &lt;code&gt;true&lt;/code&gt;. In this scenario no row counts are computed and the right join table is used for creating interval forest. Such an strategy can be useful in situation when it is known upfront which table should be used for creating a broadcast structure.
+The final step of the optimization procedure is to estimate the row size and the size of the whole projected table.
+If it fits into dedicated Spark Driver&amp;rsquo;s memory (controlled by maxBroadcastSize parameter) the interval forest is augmented with all columns from s1 (SeQuiLa_it_all strategy) completing map-side join procedure in one stage. Otherwise an interval tree is used as an index for additional lookup step before the equi-shuffle-join operation between s1 and s2 (SeQuiLa_it_int strategy).&lt;/p&gt;
+
+&lt;figure&gt;
+    &lt;img src=&#34;../../images/algorithms/join/rbo.jpg&#34;
+         alt=&#34;Rule-based optimizer&amp;amp;rsquo;s algorithm chooses the most efficient join strategy.&#34;/&gt; &lt;figcaption&gt;
+            &lt;h4&gt;Optimization algorithm&lt;/h4&gt;&lt;p&gt;Rule-based optimizer&amp;rsquo;s algorithm chooses the most efficient join strategy.&lt;/p&gt;
+        &lt;/figcaption&gt;
+&lt;/figure&gt;
+
+&lt;h2 id=&#34;custom-interval-structure&#34;&gt;Custom interval structure&lt;/h2&gt;
+&lt;p&gt;By default SeQuiLa uses Red-Black tree with intervals implemented in &lt;code&gt;org.biodatageeks.sequila.rangejoins.methods.IntervalTree.IntervalTreeRedBlack&amp;lt;V&amp;gt;&lt;/code&gt;
+class. However, it is possible to provide a custom interval structure and set it using &lt;code&gt;spark.biodatageeks.rangejoin.intervalHolderClass&lt;/code&gt;
+parameter. There are 2 prerequisites:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;custom class must implement interface provided by the trait: &lt;code&gt;org.biodatageeks.sequila.rangejoins.methods.base.BaseIntervalHolder[V]&lt;/code&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;node class used for storing intervals must extend &lt;code&gt;org.biodatageeks.sequila.rangejoins.methods.base.BaseNode[V]&lt;/code&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;Both Scala and Java classes are supported. Please use default interval tree implementation for reference.&lt;/p&gt;
+</description>
     </item>
     
   </channel>
