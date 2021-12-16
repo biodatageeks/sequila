@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Cloud | sequila</title>
+    <link>https://biodatageeks.github.io/sequila/docs/cloud/</link>
+      <atom:link href="https://biodatageeks.github.io/sequila/docs/cloud/index.xml" rel="self" type="application/rss+xml" />
+    <description>Cloud</description>
+    <generator>Wowchemy (https://wowchemy.com)</generator>
+  </channel>
+</rss>
