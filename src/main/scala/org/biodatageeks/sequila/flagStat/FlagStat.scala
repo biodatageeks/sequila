@@ -130,7 +130,15 @@ class FlagStat(spark:SparkSession) {
 				"WIaMM" -> WIaMM,
 				"Singletons" -> Singletons
 			)/*.toList/toSeq*/)
-		}).reduceByKey();
+		})
+			.reduce{
+				(a,b) => {
+					for (k <- a.keys) {
+						a(k) = a(k) + b(k)
+					}
+				}
+			  a
+			}
 	}
 
 
