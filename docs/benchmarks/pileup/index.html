@@ -27,13 +27,13 @@
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://biodatageeks.github.io/sequila/docs/benchmarks/pileup/" /><meta property="article:section" content="docs" />
 
-<meta property="article:modified_time" content="2021-12-21T17:08:37+01:00" /><meta property="og:site_name" content="sequila" />
+<meta property="article:modified_time" content="2021-12-21T21:49:16+01:00" /><meta property="og:site_name" content="sequila" />
 
 <meta itemprop="name" content="Pileup and coverage">
 <meta itemprop="description" content="SeQuiLa&#39;s Pileup and coverage benchmarks
 ">
-<meta itemprop="dateModified" content="2021-12-21T17:08:37+01:00" />
-<meta itemprop="wordCount" content="0">
+<meta itemprop="dateModified" content="2021-12-21T21:49:16+01:00" />
+<meta itemprop="wordCount" content="306">
 <meta itemprop="keywords" content="" /><meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="Pileup and coverage"/>
 <meta name="twitter:description" content="SeQuiLa&#39;s Pileup and coverage benchmarks
@@ -206,6 +206,20 @@ if (!doNotTrack) {
             
 
 
+<div class="td-toc"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#testing-environment">Testing environment</a>
+      <ul>
+        <li><a href="#tools">Tools</a></li>
+        <li><a href="#single-node-specification">Single node specification</a></li>
+        <li><a href="#hadoop-cluster">Hadoop cluster</a></li>
+        <li><a href="#results-single-node">Results single node</a></li>
+        <li><a href="#results-hadoop-cluster">Results Hadoop cluster</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav></div>
+
 
 
             
@@ -265,7 +279,336 @@ if (!doNotTrack) {
 		
 		
 	</header>    
-	
+	<h2 id="testing-environment">Testing environment</h2>
+<h3 id="tools">Tools</h3>
+<table>
+<thead>
+<tr>
+<th>Software</th>
+<th>Version</th>
+<th>Pileup</th>
+<th>Coverage</th>
+<th>Multi-threaded</th>
+<th>Distributed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://github.com/bigdatagenomics/adam" target="_blank" rel="noopener">ADAM</a></td>
+<td>0.36.0</td>
+<td>no</td>
+<td>yes</td>
+<td>yes</td>
+<td>yes</td>
+</tr>
+<tr>
+<td><a href="https://github.com/broadinstitute/gatk" target="_blank" rel="noopener">GATK</a></td>
+<td>4.2.3.0</td>
+<td>yes</td>
+<td>yes(only intervals)</td>
+<td>no</td>
+<td>no</td>
+</tr>
+<tr>
+<td><a href="https://github.com/broadinstitute/gatk" target="_blank" rel="noopener">GATK-Spark</a></td>
+<td>4.2.3.0</td>
+<td>yes</td>
+<td>yes(only intervals)</td>
+<td>yes</td>
+<td>yes</td>
+</tr>
+<tr>
+<td><a href="https://github.com/ChristopherWilks/megadepth" target="_blank" rel="noopener">megadepth</a></td>
+<td>1.1.1</td>
+<td>no</td>
+<td>yes</td>
+<td>yes(only I/O)</td>
+<td>no</td>
+</tr>
+<tr>
+<td><a href="https://github.com/brentp/mosdepth" target="_blank" rel="noopener">mosdepth</a></td>
+<td>0.3.2</td>
+<td>no</td>
+<td>yes</td>
+<td>yes(only I/O)</td>
+<td>no</td>
+</tr>
+<tr>
+<td><a href="https://github.com/biod/sambamba" target="_blank" rel="noopener">sambamba</a></td>
+<td>0.8.1</td>
+<td>no</td>
+<td>yes</td>
+<td>no</td>
+<td>no</td>
+</tr>
+<tr>
+<td><a href="https://github.com/samtools/samtools" target="_blank" rel="noopener">samtools</a></td>
+<td>1.9</td>
+<td>yes</td>
+<td>yes</td>
+<td>no</td>
+<td>no</td>
+</tr>
+<tr>
+<td><a href="https://github.com/samtools/samtools" target="_blank" rel="noopener">samtools</a></td>
+<td>1.14</td>
+<td>yes</td>
+<td>yes</td>
+<td>yes(only coverage, I/O)</td>
+<td>no</td>
+</tr>
+<tr>
+<td><a href="https://github.com/biodatageeks/sequila" target="_blank" rel="noopener">SeQuiLa-cov</a></td>
+<td>0.6.11</td>
+<td>no</td>
+<td>yes</td>
+<td>yes</td>
+<td>yes</td>
+</tr>
+<tr>
+<td><a href="https://github.com/biodatageeks/sequila" target="_blank" rel="noopener">SeQuiLa</a></td>
+<td>0.7.9</td>
+<td>yes</td>
+<td>yes</td>
+<td>yes</td>
+<td>yes</td>
+</tr>
+</tbody>
+</table>
+<h3 id="single-node-specification">Single node specification</h3>
+<table>
+<thead>
+<tr>
+<th>Processor</th>
+<th>Base freq [GHz]</th>
+<th>CPUs</th>
+<th>Total cores</th>
+<th>Memory [GB]</th>
+<th>OS Version</th>
+<th>Disk</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Intel(R) Xeon(R) E5-2618L v4</td>
+<td>2.20</td>
+<td>2</td>
+<td>20(40)</td>
+<td>256</td>
+<td>RHEL 7.8(Maipo)</td>
+<td>3TB(RAID1)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="hadoop-cluster">Hadoop cluster</h3>
+<table>
+<thead>
+<tr>
+<th>Masters</th>
+<th>Workers</th>
+<th>Hadoop distribution</th>
+<th>Total disk HDFS [TB]</th>
+<th>Total YARN cores</th>
+<th>Total YARN RAM [TB]</th>
+<th>Net [Gbits]</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>6</td>
+<td>34</td>
+<td>HDP 3.1.4</td>
+<td>700</td>
+<td>1360(680)</td>
+<td>6.8</td>
+<td>100</td>
+</tr>
+</tbody>
+</table>
+<h4 id="sequila-adam-and-gatkspark-parameters">SeQuiLa, ADAM and GATK(Spark) parameters</h4>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Value</th>
+<th>SeQuiLa only</th>
+<th>Local-test</th>
+<th>Cluster-test</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>spark.biodatageeks.pileup.useVectorizedOrcWriter</td>
+<td>true</td>
+<td>yes</td>
+<td>yes</td>
+<td>no</td>
+</tr>
+<tr>
+<td>spark.sql.orc.compression.codec</td>
+<td>snappy</td>
+<td>no</td>
+<td>yes</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>spark.biodatageeks.readAligment.method</td>
+<td>hadoopBAM</td>
+<td>yes</td>
+<td>yes</td>
+<td>no</td>
+</tr>
+<tr>
+<td>spark.biodatageeks.readAligment.method</td>
+<td>disq</td>
+<td>yes</td>
+<td>no</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>spark.serializer</td>
+<td>org.apache.spark.serializer.KryoSerializer</td>
+<td>yes<sup id="fnref:1"><a href="#fn:1" class="footnote-ref" role="doc-noteref">1</a></sup></td>
+<td>yes</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>spark.kryo.registrator</td>
+<td>org.biodatageeks.sequila.pileup.serializers.CustomKryoRegistrator</td>
+<td>yes</td>
+<td>yes</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>spark.kryoserializer.buffer.max</td>
+<td>1024m</td>
+<td>yes</td>
+<td>yes</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>spark.hadoop.mapred.min.split.size</td>
+<td>268435456</td>
+<td>yes</td>
+<td>no</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>spark.hadoop.mapred.min.split.size</td>
+<td>134217728</td>
+<td>yes</td>
+<td>yes</td>
+<td>no</td>
+</tr>
+<tr>
+<td>spark.driver.memory</td>
+<td>8g</td>
+<td>no</td>
+<td>no</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>spark.driver.memory</td>
+<td>16g</td>
+<td>no</td>
+<td>yes</td>
+<td>no</td>
+</tr>
+<tr>
+<td>spark.executor.memory</td>
+<td>4g<sup id="fnref:2"><a href="#fn:2" class="footnote-ref" role="doc-noteref">2</a></sup></td>
+<td>no</td>
+<td>yes</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>spark.dynamicAllocation.enabled</td>
+<td>false</td>
+<td>no</td>
+<td>yes</td>
+<td>yes</td>
+</tr>
+</tbody>
+</table>
+<h4 id="other-parameters">Other parameters</h4>
+<table>
+<thead>
+<tr>
+<th>Software</th>
+<th>Operation</th>
+<th>Command line options</th>
+<th>Multithreading options</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ADAM</td>
+<td>coverage</td>
+<td><code>-- coverage -collapse</code></td>
+<td><code>--spark-master local[$n]</code></td>
+</tr>
+<tr>
+<td>GATK</td>
+<td>pileup</td>
+<td><code>PileupSpark</code></td>
+<td><code>--spark-master local[$n]</code></td>
+</tr>
+<tr>
+<td>megadepth</td>
+<td>coverage</td>
+<td><code>--coverage --require-mdz --keep-order</code></td>
+<td><code>--threads $(n-1)</code></td>
+</tr>
+<tr>
+<td>mosdepth</td>
+<td>coverage</td>
+<td><code>-x</code></td>
+<td><code>--threads $(n-1)</code></td>
+</tr>
+<tr>
+<td>sambamba</td>
+<td>coverage</td>
+<td><code>depth base</code></td>
+<td>&ndash;nthreads=$n<sup id="fnref:3"><a href="#fn:3" class="footnote-ref" role="doc-noteref">3</a></sup></td>
+</tr>
+<tr>
+<td>samtools</td>
+<td>coverage</td>
+<td><code>depth</code></td>
+<td><code>--threads $(n-1)</code><sup id="fnref:4"><a href="#fn:4" class="footnote-ref" role="doc-noteref">4</a></sup></td>
+</tr>
+<tr>
+<td>samtools</td>
+<td>pileup</td>
+<td><code>mpileup -B -x  -A -q 0 -Q 0</code></td>
+<td>&ndash;</td>
+</tr>
+</tbody>
+</table>
+<h3 id="results-single-node">Results single node</h3>
+<h4 id="coverage">Coverage</h4>
+<h4 id="pileup">Pileup</h4>
+<h3 id="results-hadoop-cluster">Results Hadoop cluster</h3>
+<h4 id="coverage-1">Coverage</h4>
+<h4 id="pileup-1">Pileup</h4>
+<section class="footnotes" role="doc-endnotes">
+<hr>
+<ol>
+<li id="fn:1" role="doc-endnote">
+<p>GATK-Spark and ADAM also use fast serialization using Kryo lib and custom registrators.&#160;<a href="#fnref:1" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
+</li>
+<li id="fn:2" role="doc-endnote">
+<p>In case of GATK and WGS tests needed to be increased to 8g&#160;<a href="#fnref:2" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
+</li>
+<li id="fn:3" role="doc-endnote">
+<p>Does not result in increasing parallelism level&#160;<a href="#fnref:3" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
+</li>
+<li id="fn:4" role="doc-endnote">
+<p>Available in version &gt;= 1.13&#160;<a href="#fnref:4" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
+</li>
+</ol>
+</section>
+
 	
 		<style>
   .feedback--answer {
@@ -331,7 +674,7 @@ if (!doNotTrack) {
 	
 	
 	<div class="text-muted mt-5 pt-3 border-top">
-  Last modified December 21, 2021: <a href="https://github.com/biodatageeks/sequila/commit/b86e4b8a474991e63f12ea6ee7403ef850caf85d">update to bench on landing pge (#161) (b86e4b8)</a>
+  Last modified December 21, 2021: <a href="https://github.com/biodatageeks/sequila/commit/ac25bac3f9cba611bbbcbb0b2b0667a2bfd47229">Pileup/cov tests supplements (#162) (ac25bac)</a>
 </div>
 
 </div>
