@@ -69,20 +69,14 @@ object VectorizedPileup {
       altsMapKey.ensureSize(BATCH_SIZE * ALTS_MAP_SIZE, false)
       altsMapValue.ensureSize(BATCH_SIZE * ALTS_MAP_SIZE, false)
       //quals
-      if(conf.includeBaseQualities) {
-        val qualsMapVector = batch.cols(8).asInstanceOf[MapColumnVector]
-        val qualsMapKey = qualsMapVector.keys.asInstanceOf[LongColumnVector]
-        val qualsMapValue = qualsMapVector.values.asInstanceOf[ListColumnVector]
-        qualsMapKey.ensureSize(BATCH_SIZE * ALTS_MAP_SIZE, false)
-        qualsMapValue.ensureSize(BATCH_SIZE * ALTS_MAP_SIZE, false)
-        qualsMapVector.values.asInstanceOf[ListColumnVector].child.ensureSize(BATCH_SIZE * ALTS_MAP_SIZE * QUALITY_ARRAY_SIZE, false)
-        new VectorizedPileup(fullMode, writer, batch, contigVector, postStartVector, postEndVector, refVector, covVector, countRefVector, countNonRefVector,
-          altsMapVector, altsMapKey, altsMapValue, qualsMapVector, qualsMapKey, qualsMapValue, ALTS_MAP_SIZE, QUALITY_ARRAY_SIZE)
-      }
-      else {
-        new VectorizedPileup(fullMode, writer, batch, contigVector, postStartVector, postEndVector, refVector, covVector, countRefVector, countNonRefVector,
-          altsMapVector, altsMapKey, altsMapValue, null, null, null, ALTS_MAP_SIZE, QUALITY_ARRAY_SIZE)
-      }
+      val qualsMapVector = batch.cols(8).asInstanceOf[MapColumnVector]
+      val qualsMapKey = qualsMapVector.keys.asInstanceOf[LongColumnVector]
+      val qualsMapValue = qualsMapVector.values.asInstanceOf[ListColumnVector]
+      qualsMapKey.ensureSize(BATCH_SIZE * ALTS_MAP_SIZE, false)
+      qualsMapValue.ensureSize(BATCH_SIZE * ALTS_MAP_SIZE, false)
+      qualsMapVector.values.asInstanceOf[ListColumnVector].child.ensureSize(BATCH_SIZE * ALTS_MAP_SIZE * QUALITY_ARRAY_SIZE, false)
+      new VectorizedPileup(fullMode, writer, batch, contigVector, postStartVector, postEndVector, refVector, covVector, countRefVector, countNonRefVector,
+        altsMapVector, altsMapKey, altsMapValue, qualsMapVector, qualsMapKey, qualsMapValue, ALTS_MAP_SIZE, QUALITY_ARRAY_SIZE)
     } else
       new VectorizedPileup(
         fullMode, writer, batch, contigVector, postStartVector,

@@ -15,7 +15,6 @@ object InternalParams {
   final val ShowAllPositions = "spark.biodatageeks.coverage.allPositions"
 
   final val filterReadsByFlag = "spark.biodatageeks.coverage.filterFlag"
-  final val filterReadsByMQ = "spark.biodatageeks.coverage.minMapQual"
 
   final val RDDEventsName = "spark.biodatageeks.events"
   final val RDDPileupEventsName = "spark.biodatageeks.pileup.events"

@@ -14,7 +14,7 @@ scalaVersion := "2.12.13"
 val isSnapshotVersion = settingKey[Boolean]("Is snapshot")
 isSnapshotVersion := version.value.toLowerCase.contains("snapshot")
 
-val DEFAULT_HADOOP_VERSION = "3.1.2"
+val DEFAULT_HADOOP_VERSION = "2.7.4"
 
 lazy val hadoopVersion = Properties.envOrElse("SPARK_HADOOP_VERSION", DEFAULT_HADOOP_VERSION)
 
@@ -85,10 +85,6 @@ javaOptions in Test ++= Seq(
 
 javaOptions ++= Seq("-Xms512M", "-Xmx8192M", "-XX:+CMSClassUnloadingEnabled" , "-Dlog4j.configuration=log4j.properties")
 
-javacOptions ++= Seq("--release", "8")
-
-
-
 //fix for using with hdp warehouse connector
 updateOptions := updateOptions.value.withLatestSnapshots(false)
 outputStrategy := Some(StdoutOutput)
@@ -156,7 +152,7 @@ publishTo := {
   if (!version.value.toLowerCase.contains("snapshot")) {
     sonatypePublishToBundle.value
   } else {
-    val nexus = "http://zsibio.ii.pw.edu.pl/nexus/repository/"
+    val nexus = "https://zsibio.ii.pw.edu.pl/nexus/repository/"
     Some("snapshots" at nexus + "maven-snapshots")
   }
 }
