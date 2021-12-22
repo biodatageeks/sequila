@@ -7,4 +7,4 @@ description: >
     SeQuiLa's Pileup and coverage algorithm description
 ---
 
-TBD
+Stay tuned for our new research paper [Reproducible, scalable and cloud-ready genomic pileup operations]() that will be published in January 2022!
