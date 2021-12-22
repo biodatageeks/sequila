@@ -72,6 +72,12 @@ description: >
 [^3]: Does not result in increasing parallelism level
 [^4]: Available in version >= 1.13
 
+### Datasets
+|Type| File      | Size [GB]  |Download| 
+|----|-----------|--------|--------|
+|WES|NA12878.proper.wes.md.bam| 17 |[BAM](https://storage.googleapis.com/biodatageeks/sequila/data/WES/NA12878.proper.wes.md.bam) [BAI](https://storage.googleapis.com/biodatageeks/sequila/data/WES/NA12878.proper.wes.md.bam.bai) [SBI](https://storage.googleapis.com/biodatageeks/sequila/data/WES/NA12878.proper.wes.md.bam.sbi)|
+|WGS|NA12878.proper.wgs.md.bam| 278|[BAM](https://storage.googleapis.com/biodatageeks/sequila/data/WGS/NA12878.proper.wgs.md.bam) [BAI](https://storage.googleapis.com/biodatageeks/sequila/data/WGS/NA12878.proper.wgs.md.bam.bai) [SBI](https://storage.googleapis.com/biodatageeks/sequila/data/WGS/NA12878.proper.wgs.md.bam.sbi)|
+
 ### Results single node
 #### Coverage
 #### Pileup
