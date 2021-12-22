@@ -27,13 +27,13 @@
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://biodatageeks.github.io/sequila/docs/benchmarks/join/" /><meta property="article:section" content="docs" />
 
-<meta property="article:modified_time" content="2021-12-22T11:00:08+01:00" /><meta property="og:site_name" content="sequila" />
+<meta property="article:modified_time" content="2021-12-22T16:18:31+01:00" /><meta property="og:site_name" content="sequila" />
 
 <meta itemprop="name" content="Interval joins">
 <meta itemprop="description" content="SeQuiLa&#39;s interval joins benchmark
 ">
-<meta itemprop="dateModified" content="2021-12-22T11:00:08+01:00" />
-<meta itemprop="wordCount" content="0">
+<meta itemprop="dateModified" content="2021-12-22T16:18:31+01:00" />
+<meta itemprop="wordCount" content="462">
 <meta itemprop="keywords" content="" /><meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="Interval joins"/>
 <meta name="twitter:description" content="SeQuiLa&#39;s interval joins benchmark
@@ -206,6 +206,21 @@ if (!doNotTrack) {
             
 
 
+<div class="td-toc"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#performance-tests-description">Performance tests description</a></li>
+    <li><a href="#testing-enviornment">Testing enviornment</a>
+      <ul>
+        <li><a href="#datasets">Datasets</a></li>
+        <li><a href="#hadoop-cluster">Hadoop cluster</a></li>
+        <li><a href="#results-single-node">Results single node</a></li>
+        <li><a href="#results-hadoop-cluster">Results Hadoop cluster</a></li>
+        <li><a href="#conclusions">Conclusions</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav></div>
+
 
 
             
@@ -265,7 +280,237 @@ if (!doNotTrack) {
 		
 		
 	</header>    
-	
+	<h2 id="performance-tests-description">Performance tests description</h2>
+<p>In order to evaluate our range join strategy we have run a number of tests using both one-node and a Hadoop cluster
+installations. In that way we were able to analyze both vertical (by means of adding computing resources such as CPU/RAM on one machine)
+as well as horizontal (by means of adding resources on multiple machines) scalability.</p>
+<p>The main idea of the test was to compare performance of SeQuiLa with other tools like featureCounts and genAp that can be used
+to compute the number of reads intersecting predefined genomic intervals. It is by no means one of the most commonly used operations
+in both DNA and RNA-seq data processing, most notably in gene differential expression and copy number variation-calling.
+featureCounts performance results have been treated as a baseline. In order to show the difference between the naive approach using the
+default range join strategy available in Spark SQL and SeQuiLa interval-tree one, we have included it in the single-node test.</p>
+<h2 id="testing-enviornment">Testing enviornment</h2>
+<h3 id="datasets">Datasets</h3>
+<table>
+<thead>
+<tr>
+<th>Test name</th>
+<th>Format</th>
+<th>Size [GB]</th>
+<th>Row count</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>WES-SN</td>
+<td>BAM</td>
+<td>17</td>
+<td>161544693</td>
+</tr>
+<tr>
+<td>WES-SN</td>
+<td>ADAM</td>
+<td>14</td>
+<td>161544693</td>
+</tr>
+<tr>
+<td>WES-SN</td>
+<td>BED</td>
+<td>0.0045</td>
+<td>193557</td>
+</tr>
+<tr>
+<td>WGS-CL</td>
+<td>BAM</td>
+<td>273</td>
+<td>2617420313</td>
+</tr>
+<tr>
+<td>WGS-CL</td>
+<td>ADAM</td>
+<td>215</td>
+<td>2617420313</td>
+</tr>
+<tr>
+<td>WGS-CL</td>
+<td>BED</td>
+<td>0.0016</td>
+<td>68191</td>
+</tr>
+</tbody>
+</table>
+<p>WES-SN - tests performed on a single node using WES dataset</p>
+<p>WGS-CL - tests performed on a cluster using WGS dataset</p>
+<h3 id="hadoop-cluster">Hadoop cluster</h3>
+<table>
+<thead>
+<tr>
+<th>Masters</th>
+<th>Workers</th>
+<th>Hadoop distribution</th>
+<th>Total disk HDFS [TB]</th>
+<th>Total YARN cores</th>
+<th>Total YARN RAM [TB]</th>
+<th>Net [Gbits]</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>4</td>
+<td>CDH 5.12</td>
+<td>5</td>
+<td>96</td>
+<td>256</td>
+<td>10</td>
+</tr>
+</tbody>
+</table>
+<h4 id="apache-spark-configuration">Apache Spark configuration</h4>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Value</th>
+<th>SeQuiLa only</th>
+<th>Local-test</th>
+<th>Cluster-test</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>spark.driver.memory</td>
+<td>8g</td>
+<td>no</td>
+<td>yes</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>spark.executor.memory</td>
+<td>4g-8g</td>
+<td>no</td>
+<td>yes</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>spark.executor.cores</td>
+<td>2-4</td>
+<td>no</td>
+<td>yes</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>spark.dynamicAllocation.enabled</td>
+<td>false</td>
+<td>no</td>
+<td>yes</td>
+<td>yes</td>
+</tr>
+</tbody>
+</table>
+<h4 id="software">Software</h4>
+<table>
+<thead>
+<tr>
+<th>Software</th>
+<th>Version</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Apache Spark</td>
+<td>2.2.1</td>
+</tr>
+<tr>
+<td>Scala</td>
+<td>2.11.8</td>
+</tr>
+<tr>
+<td>JDK</td>
+<td>1.8</td>
+</tr>
+<tr>
+<td>ADAM</td>
+<td>0.22</td>
+</tr>
+<tr>
+<td>featureCounts</td>
+<td>1.6.0</td>
+</tr>
+</tbody>
+</table>
+<h4 id="sequila">SeQuiLa</h4>
+<h5 id="bam-table">BAM table</h5>
+<div class="highlight"><pre tabindex="0" style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-scala" data-lang="scala">    <span style="color:#204a87;font-weight:bold">val</span> <span style="color:#000">bamPath</span> <span style="color:#204a87;font-weight:bold">=</span> <span style="color:#4e9a06">&#34;NA12878*.bam&#34;</span>
+    <span style="color:#000">spark</span><span style="color:#ce5c00;font-weight:bold">.</span><span style="color:#000">sql</span><span style="color:#ce5c00;font-weight:bold">(</span>
+      <span style="color:#4e9a06">s&#34;&#34;&#34;
+</span><span style="color:#4e9a06">         |CREATE TABLE reads
+</span><span style="color:#4e9a06">         |USING org.biodatageeks.sequila.datasources.BAM.BAMDataSource
+</span><span style="color:#4e9a06">         |OPTIONS(path &#34;</span><span style="color:#4e9a06">${</span><span style="color:#000">bamPath</span><span style="color:#4e9a06">}</span><span style="color:#4e9a06">&#34;)
+</span><span style="color:#4e9a06">         |
+</span><span style="color:#4e9a06">      &#34;&#34;&#34;</span><span style="color:#ce5c00;font-weight:bold">.</span><span style="color:#000">stripMargin</span><span style="color:#ce5c00;font-weight:bold">)</span>
+    <span style="color:#000">spark</span><span style="color:#ce5c00;font-weight:bold">.</span><span style="color:#000">sql</span><span style="color:#ce5c00;font-weight:bold">(</span><span style="color:#4e9a06">s&#34;SELECT contigName,start,end FROM reads LIMIT 1&#34;</span><span style="color:#ce5c00;font-weight:bold">).</span><span style="color:#000">show</span><span style="color:#ce5c00;font-weight:bold">()</span>
+
+    <span style="color:#ce5c00;font-weight:bold">+----------+-----+---+</span>
+    <span style="color:#ce5c00;font-weight:bold">|</span><span style="color:#000">contigName</span><span style="color:#ce5c00;font-weight:bold">|</span><span style="color:#000">start</span><span style="color:#ce5c00;font-weight:bold">|</span><span style="color:#000">end</span><span style="color:#ce5c00;font-weight:bold">|</span>
+    <span style="color:#ce5c00;font-weight:bold">+----------+-----+---+</span>
+    <span style="color:#ce5c00;font-weight:bold">|</span>      <span style="color:#000">chr1</span><span style="color:#ce5c00;font-weight:bold">|</span>   <span style="color:#0000cf;font-weight:bold">34</span><span style="color:#ce5c00;font-weight:bold">|</span><span style="color:#0000cf;font-weight:bold">109</span><span style="color:#ce5c00;font-weight:bold">|</span>
+    <span style="color:#ce5c00;font-weight:bold">+----------+-----+---+</span>
+</code></pre></div><h5 id="adam-table">ADAM table</h5>
+<div class="highlight"><pre tabindex="0" style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-scala" data-lang="scala">    <span style="color:#204a87;font-weight:bold">val</span> <span style="color:#000">adamPath</span> <span style="color:#204a87;font-weight:bold">=</span> <span style="color:#4e9a06">&#34;NA12878*.adam&#34;</span>
+    <span style="color:#000">spark</span><span style="color:#ce5c00;font-weight:bold">.</span><span style="color:#000">sql</span><span style="color:#ce5c00;font-weight:bold">(</span>
+      <span style="color:#4e9a06">s&#34;&#34;&#34;
+</span><span style="color:#4e9a06">         |CREATE TABLE reads
+</span><span style="color:#4e9a06">         |USING org.biodatageeks.sequila.datasources.ADAM.ADAMDataSource
+</span><span style="color:#4e9a06">         |OPTIONS(path &#34;</span><span style="color:#4e9a06">${</span><span style="color:#000">adamPath</span><span style="color:#4e9a06">}</span><span style="color:#4e9a06">&#34;)
+</span><span style="color:#4e9a06">         |
+</span><span style="color:#4e9a06">      &#34;&#34;&#34;</span><span style="color:#ce5c00;font-weight:bold">.</span><span style="color:#000">stripMargin</span><span style="color:#ce5c00;font-weight:bold">)</span>
+    <span style="color:#000">spark</span><span style="color:#ce5c00;font-weight:bold">.</span><span style="color:#000">sql</span><span style="color:#ce5c00;font-weight:bold">(</span><span style="color:#4e9a06">s&#34;SELECT contigName,start,end FROM reads LIMIT 1&#34;</span><span style="color:#ce5c00;font-weight:bold">).</span><span style="color:#000">show</span><span style="color:#ce5c00;font-weight:bold">()</span>
+
+    <span style="color:#ce5c00;font-weight:bold">+----------+-----+---+</span>
+    <span style="color:#ce5c00;font-weight:bold">|</span><span style="color:#000">contigName</span><span style="color:#ce5c00;font-weight:bold">|</span><span style="color:#000">start</span><span style="color:#ce5c00;font-weight:bold">|</span><span style="color:#000">end</span><span style="color:#ce5c00;font-weight:bold">|</span>
+    <span style="color:#ce5c00;font-weight:bold">+----------+-----+---+</span>
+    <span style="color:#ce5c00;font-weight:bold">|</span>      <span style="color:#000">chr1</span><span style="color:#ce5c00;font-weight:bold">|</span>   <span style="color:#0000cf;font-weight:bold">34</span><span style="color:#ce5c00;font-weight:bold">|</span><span style="color:#0000cf;font-weight:bold">109</span><span style="color:#ce5c00;font-weight:bold">|</span>
+    <span style="color:#ce5c00;font-weight:bold">+----------+-----+---+</span>
+</code></pre></div><h5 id="bed-table">BED table</h5>
+<div class="highlight"><pre tabindex="0" style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-scala" data-lang="scala">    <span style="color:#204a87;font-weight:bold">val</span>  <span style="color:#000">bedPath</span><span style="color:#ce5c00;font-weight:bold">=</span><span style="color:#4e9a06">&#34;tgp_exome_hg18.bed&#34;</span>
+    <span style="color:#000">spark</span><span style="color:#ce5c00;font-weight:bold">.</span><span style="color:#000">sql</span><span style="color:#ce5c00;font-weight:bold">(</span><span style="color:#4e9a06">s&#34;&#34;&#34;
+</span><span style="color:#4e9a06">        |CREATE TABLE targets
+</span><span style="color:#4e9a06">        |USING org.biodatageeks.sequila.datasources.BED.BEDDataSource
+</span><span style="color:#4e9a06">        |OPTIONS (path &#34;file:///</span><span style="color:#4e9a06">${</span><span style="color:#000">bedPath</span><span style="color:#4e9a06">}</span><span style="color:#4e9a06">&#34;)&#34;&#34;&#34;</span><span style="color:#ce5c00;font-weight:bold">.</span><span style="color:#000">stripMargin</span><span style="color:#ce5c00;font-weight:bold">)</span>
+    <span style="color:#000">spark</span><span style="color:#ce5c00;font-weight:bold">.</span><span style="color:#000">sql</span><span style="color:#ce5c00;font-weight:bold">(</span><span style="color:#4e9a06">&#34;SELECT contig,post_start, pos_end FROM targets LIMIT 1&#34;</span><span style="color:#ce5c00;font-weight:bold">).</span><span style="color:#000">show</span>
+
+    <span style="color:#ce5c00;font-weight:bold">+------+---------+--------+</span>
+    <span style="color:#ce5c00;font-weight:bold">|</span><span style="color:#000">contig</span><span style="color:#ce5c00;font-weight:bold">|</span><span style="color:#000">pos_start</span><span style="color:#ce5c00;font-weight:bold">|</span> <span style="color:#000">pos_end</span><span style="color:#ce5c00;font-weight:bold">|</span>
+    <span style="color:#ce5c00;font-weight:bold">+------+---------+--------+</span>
+    <span style="color:#ce5c00;font-weight:bold">|</span>  <span style="color:#000">chr1</span><span style="color:#ce5c00;font-weight:bold">|</span>     <span style="color:#0000cf;font-weight:bold">4806</span><span style="color:#ce5c00;font-weight:bold">|</span>    <span style="color:#0000cf;font-weight:bold">4926</span><span style="color:#ce5c00;font-weight:bold">|</span>
+    <span style="color:#ce5c00;font-weight:bold">+------+---------+--------+</span>
+</code></pre></div><div class="highlight"><pre tabindex="0" style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql"><span style="color:#f8f8f8;text-decoration:underline">    </span><span style="color:#204a87;font-weight:bold">SELECT</span><span style="color:#f8f8f8;text-decoration:underline"> </span><span style="color:#000">targets</span><span style="color:#000;font-weight:bold">.</span><span style="color:#000">contigName</span><span style="color:#000;font-weight:bold">,</span><span style="color:#000">targets</span><span style="color:#000;font-weight:bold">.</span><span style="color:#204a87;font-weight:bold">start</span><span style="color:#000;font-weight:bold">,</span><span style="color:#000">targets</span><span style="color:#000;font-weight:bold">.</span><span style="color:#204a87;font-weight:bold">end</span><span style="color:#000;font-weight:bold">,</span><span style="color:#204a87;font-weight:bold">count</span><span style="color:#000;font-weight:bold">(</span><span style="color:#ce5c00;font-weight:bold">*</span><span style="color:#000;font-weight:bold">)</span><span style="color:#f8f8f8;text-decoration:underline"> </span><span style="color:#204a87;font-weight:bold">FROM</span><span style="color:#f8f8f8;text-decoration:underline"> </span><span style="color:#204a87;font-weight:bold">reads</span><span style="color:#f8f8f8;text-decoration:underline"> </span><span style="color:#204a87;font-weight:bold">JOIN</span><span style="color:#f8f8f8;text-decoration:underline"> </span><span style="color:#000">targets</span><span style="color:#f8f8f8;text-decoration:underline">
+</span><span style="color:#f8f8f8;text-decoration:underline">         </span><span style="color:#204a87;font-weight:bold">ON</span><span style="color:#f8f8f8;text-decoration:underline"> </span><span style="color:#000;font-weight:bold">(</span><span style="color:#000">targets</span><span style="color:#000;font-weight:bold">.</span><span style="color:#000">contigName</span><span style="color:#ce5c00;font-weight:bold">=</span><span style="color:#204a87;font-weight:bold">reads</span><span style="color:#000;font-weight:bold">.</span><span style="color:#000">contigName</span><span style="color:#f8f8f8;text-decoration:underline">
+</span><span style="color:#f8f8f8;text-decoration:underline">         </span><span style="color:#204a87;font-weight:bold">AND</span><span style="color:#f8f8f8;text-decoration:underline">
+</span><span style="color:#f8f8f8;text-decoration:underline">         </span><span style="color:#204a87;font-weight:bold">CAST</span><span style="color:#000;font-weight:bold">(</span><span style="color:#204a87;font-weight:bold">reads</span><span style="color:#000;font-weight:bold">.</span><span style="color:#204a87;font-weight:bold">end</span><span style="color:#f8f8f8;text-decoration:underline"> </span><span style="color:#204a87;font-weight:bold">AS</span><span style="color:#f8f8f8;text-decoration:underline"> </span><span style="color:#204a87">INTEGER</span><span style="color:#000;font-weight:bold">)</span><span style="color:#ce5c00;font-weight:bold">&gt;=</span><span style="color:#204a87;font-weight:bold">CAST</span><span style="color:#000;font-weight:bold">(</span><span style="color:#000">targets</span><span style="color:#000;font-weight:bold">.</span><span style="color:#204a87;font-weight:bold">start</span><span style="color:#f8f8f8;text-decoration:underline"> </span><span style="color:#204a87;font-weight:bold">AS</span><span style="color:#f8f8f8;text-decoration:underline"> </span><span style="color:#204a87">INTEGER</span><span style="color:#000;font-weight:bold">)</span><span style="color:#f8f8f8;text-decoration:underline">
+</span><span style="color:#f8f8f8;text-decoration:underline">         </span><span style="color:#204a87;font-weight:bold">AND</span><span style="color:#f8f8f8;text-decoration:underline">
+</span><span style="color:#f8f8f8;text-decoration:underline">         </span><span style="color:#204a87;font-weight:bold">CAST</span><span style="color:#000;font-weight:bold">(</span><span style="color:#204a87;font-weight:bold">reads</span><span style="color:#000;font-weight:bold">.</span><span style="color:#204a87;font-weight:bold">start</span><span style="color:#f8f8f8;text-decoration:underline"> </span><span style="color:#204a87;font-weight:bold">AS</span><span style="color:#f8f8f8;text-decoration:underline"> </span><span style="color:#204a87">INTEGER</span><span style="color:#000;font-weight:bold">)</span><span style="color:#ce5c00;font-weight:bold">&lt;=</span><span style="color:#204a87;font-weight:bold">CAST</span><span style="color:#000;font-weight:bold">(</span><span style="color:#000">targets</span><span style="color:#000;font-weight:bold">.</span><span style="color:#204a87;font-weight:bold">end</span><span style="color:#f8f8f8;text-decoration:underline"> </span><span style="color:#204a87;font-weight:bold">AS</span><span style="color:#f8f8f8;text-decoration:underline"> </span><span style="color:#204a87">INTEGER</span><span style="color:#000;font-weight:bold">)</span><span style="color:#f8f8f8;text-decoration:underline">
+</span><span style="color:#f8f8f8;text-decoration:underline">         </span><span style="color:#000;font-weight:bold">)</span><span style="color:#f8f8f8;text-decoration:underline">
+</span><span style="color:#f8f8f8;text-decoration:underline">         </span><span style="color:#204a87;font-weight:bold">GROUP</span><span style="color:#f8f8f8;text-decoration:underline"> </span><span style="color:#204a87;font-weight:bold">BY</span><span style="color:#f8f8f8;text-decoration:underline"> </span><span style="color:#000">targets</span><span style="color:#000;font-weight:bold">.</span><span style="color:#000">contigName</span><span style="color:#000;font-weight:bold">,</span><span style="color:#000">targets</span><span style="color:#000;font-weight:bold">.</span><span style="color:#204a87;font-weight:bold">start</span><span style="color:#000;font-weight:bold">,</span><span style="color:#000">targets</span><span style="color:#000;font-weight:bold">.</span><span style="color:#204a87;font-weight:bold">end</span><span style="color:#f8f8f8;text-decoration:underline">
+</span></code></pre></div><h3 id="results-single-node">Results single node</h3>
+
+<figure>
+    <img src="../join-local.png"/> 
+</figure>
+
+<h3 id="results-hadoop-cluster">Results Hadoop cluster</h3>
+
+<figure>
+    <img src="../join-cluster.png"/> 
+</figure>
+
+<h3 id="conclusions">Conclusions</h3>
+<p>SeQuiLa when run in parallel outperforms selected competing tools in terms of speed on single node (1.7-22.1x) and cluster (3.2-4.7x).
+SeQuiLa strategy involving broadcasting interval forest with all data columns (SeQuiLa_it_all) performs best in most of the cases (no network shuffling required),
+whereas broadcasting intervals with identifiers only (SeQuiLa_it_int) performs comparable to, or better than GenAp.
+All algorithms favours columnar (ADAM) to row oriented (BAM) file format due to column pruning and disk I/O operations reduction.</p>
+
 	
 		<style>
   .feedback--answer {
@@ -331,7 +576,7 @@ if (!doNotTrack) {
 	
 	
 	<div class="text-muted mt-5 pt-3 border-top">
-  Last modified December 22, 2021: <a href="https://github.com/biodatageeks/sequila/commit/a7f84ea26e660790fc444abdce2148ae5a3535ed">Doc/benchmark details (#163) (a7f84ea)</a>
+  Last modified December 22, 2021: <a href="https://github.com/biodatageeks/sequila/commit/6e14805b50dd87c0180683c4adc6ee8ac4f27e0c">Interval joins bench migrated (#164) (6e14805)</a>
 </div>
 
 </div>
