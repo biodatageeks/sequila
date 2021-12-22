@@ -9,6 +9,12 @@ description: >
 
 ## Testing environment
 
+### Datasets
+|Type| File      | Size [GB]  |Download| 
+|----|-----------|--------|--------|
+|WES|NA12878.proper.wes.md.bam| 17 |[BAM](https://storage.googleapis.com/biodatageeks/sequila/data/WES/NA12878.proper.wes.md.bam) [BAI](https://storage.googleapis.com/biodatageeks/sequila/data/WES/NA12878.proper.wes.md.bam.bai) [SBI](https://storage.googleapis.com/biodatageeks/sequila/data/WES/NA12878.proper.wes.md.bam.sbi)|
+|WGS|NA12878.proper.wgs.md.bam| 278|[BAM](https://storage.googleapis.com/biodatageeks/sequila/data/WGS/NA12878.proper.wgs.md.bam) [BAI](https://storage.googleapis.com/biodatageeks/sequila/data/WGS/NA12878.proper.wgs.md.bam.bai) [SBI](https://storage.googleapis.com/biodatageeks/sequila/data/WGS/NA12878.proper.wgs.md.bam.sbi)|
+|Reference|Homo_sapiens_assembly18.fasta| 2.9 | [FASTA](https://storage.googleapis.com/biodatageeks/sequila/data/reference/Homo_sapiens_assembly18.fasta) [FAI](https://storage.googleapis.com/biodatageeks/sequila/data/reference/Homo_sapiens_assembly18.fasta.fai)|
 
 ### Tools
 
@@ -64,6 +70,7 @@ description: >
 |-----------|--------|--------|-----|
 | ADAM| coverage |`-- coverage -collapse`|`--spark-master local[$n]`|
 | GATK| pileup |`PileupSpark`|`--spark-master local[$n]`|
+| GATK| pileup |`Pileup`|--|
 |megadepth|coverage| `--coverage --require-mdz --keep-order`|  `--threads $(n-1)`|
 |mosdepth|coverage|`-x`| `--threads $(n-1)`|
 |sambamba|coverage|`depth base`|--nthreads=$n[^3]|
@@ -71,6 +78,39 @@ description: >
 |samtools|pileup|`mpileup -B -x  -A -q 0 -Q 0`|--|
 [^3]: Does not result in increasing parallelism level
 [^4]: Available in version >= 1.13
+
+### SeQuiLa
+
+#### Coverage
+```scala
+import org.apache.spark.sql.{SequilaSession, SparkSession}
+val ss = SequilaSession(spark)
+ss.sparkContext.setLogLevel("INFO")
+val bamPath = "/scratch/wiewiom/WGS/NA12878.proper.wgs.md.bam"
+val referencePath = "/home/wiewiom/data/Homo_sapiens_assembly18.fasta"
+ss.time{
+    ss
+    .coverage(bamPath, referencePath)
+    .write
+    .orc("/tmp/sequila.coverage")
+}
+```
+
+#### Pileup
+```scala
+import org.apache.spark.sql.{SequilaSession, SparkSession}
+val ss = SequilaSession(spark)
+ss.sparkContext.setLogLevel("INFO")
+val bamPath = "/scratch/wiewiom/WGS/NA12878.proper.wgs.md.bam"
+val referencePath = "/home/wiewiom/data/Homo_sapiens_assembly18.fasta"
+ss.time{
+    ss
+    .pileup(bamPath, referencePath, true)
+    .write
+    .orc("/tmp/sequila.pileup")
+}
+```
+
 
 ### Results single node
 #### Coverage

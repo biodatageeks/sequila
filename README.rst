@@ -25,8 +25,5 @@
     :alt: GitHub commit activity
 
 
-`PySeQuiLa page <https://pysequila.biodatageeks.org>`_
+`SeQuiLa page <https://biodatageeks.github.io/sequila/>`_
 
-`PySeQuiLa documentation <https://pysequila.biodatageeks.org/doc/>`_
-
-`SeQuiLa documentation <http://biodatageeks.org/sequila/>`_
