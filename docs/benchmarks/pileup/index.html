@@ -27,13 +27,13 @@
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://biodatageeks.github.io/sequila/docs/benchmarks/pileup/" /><meta property="article:section" content="docs" />
 
-<meta property="article:modified_time" content="2021-12-21T21:49:16+01:00" /><meta property="og:site_name" content="sequila" />
+<meta property="article:modified_time" content="2021-12-22T11:00:08+01:00" /><meta property="og:site_name" content="sequila" />
 
 <meta itemprop="name" content="Pileup and coverage">
 <meta itemprop="description" content="SeQuiLa&#39;s Pileup and coverage benchmarks
 ">
-<meta itemprop="dateModified" content="2021-12-21T21:49:16+01:00" />
-<meta itemprop="wordCount" content="306">
+<meta itemprop="dateModified" content="2021-12-22T11:00:08+01:00" />
+<meta itemprop="wordCount" content="383">
 <meta itemprop="keywords" content="" /><meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="Pileup and coverage"/>
 <meta name="twitter:description" content="SeQuiLa&#39;s Pileup and coverage benchmarks
@@ -210,9 +210,11 @@ if (!doNotTrack) {
   <ul>
     <li><a href="#testing-environment">Testing environment</a>
       <ul>
+        <li><a href="#datasets">Datasets</a></li>
         <li><a href="#tools">Tools</a></li>
         <li><a href="#single-node-specification">Single node specification</a></li>
         <li><a href="#hadoop-cluster">Hadoop cluster</a></li>
+        <li><a href="#sequila">SeQuiLa</a></li>
         <li><a href="#results-single-node">Results single node</a></li>
         <li><a href="#results-hadoop-cluster">Results Hadoop cluster</a></li>
       </ul>
@@ -280,6 +282,37 @@ if (!doNotTrack) {
 		
 	</header>    
 	<h2 id="testing-environment">Testing environment</h2>
+<h3 id="datasets">Datasets</h3>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>File</th>
+<th>Size [GB]</th>
+<th>Download</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>WES</td>
+<td>NA12878.proper.wes.md.bam</td>
+<td>17</td>
+<td><a href="https://storage.googleapis.com/biodatageeks/sequila/data/WES/NA12878.proper.wes.md.bam" target="_blank" rel="noopener">BAM</a> <a href="https://storage.googleapis.com/biodatageeks/sequila/data/WES/NA12878.proper.wes.md.bam.bai" target="_blank" rel="noopener">BAI</a> <a href="https://storage.googleapis.com/biodatageeks/sequila/data/WES/NA12878.proper.wes.md.bam.sbi" target="_blank" rel="noopener">SBI</a></td>
+</tr>
+<tr>
+<td>WGS</td>
+<td>NA12878.proper.wgs.md.bam</td>
+<td>278</td>
+<td><a href="https://storage.googleapis.com/biodatageeks/sequila/data/WGS/NA12878.proper.wgs.md.bam" target="_blank" rel="noopener">BAM</a> <a href="https://storage.googleapis.com/biodatageeks/sequila/data/WGS/NA12878.proper.wgs.md.bam.bai" target="_blank" rel="noopener">BAI</a> <a href="https://storage.googleapis.com/biodatageeks/sequila/data/WGS/NA12878.proper.wgs.md.bam.sbi" target="_blank" rel="noopener">SBI</a></td>
+</tr>
+<tr>
+<td>Reference</td>
+<td>Homo_sapiens_assembly18.fasta</td>
+<td>2.9</td>
+<td><a href="https://storage.googleapis.com/biodatageeks/sequila/data/reference/Homo_sapiens_assembly18.fasta" target="_blank" rel="noopener">FASTA</a> <a href="https://storage.googleapis.com/biodatageeks/sequila/data/reference/Homo_sapiens_assembly18.fasta.fai" target="_blank" rel="noopener">FAI</a></td>
+</tr>
+</tbody>
+</table>
 <h3 id="tools">Tools</h3>
 <table>
 <thead>
@@ -554,6 +587,12 @@ if (!doNotTrack) {
 <td><code>--spark-master local[$n]</code></td>
 </tr>
 <tr>
+<td>GATK</td>
+<td>pileup</td>
+<td><code>Pileup</code></td>
+<td>&ndash;</td>
+</tr>
+<tr>
 <td>megadepth</td>
 <td>coverage</td>
 <td><code>--coverage --require-mdz --keep-order</code></td>
@@ -585,12 +624,37 @@ if (!doNotTrack) {
 </tr>
 </tbody>
 </table>
-<h3 id="results-single-node">Results single node</h3>
+<h3 id="sequila">SeQuiLa</h3>
 <h4 id="coverage">Coverage</h4>
-<h4 id="pileup">Pileup</h4>
-<h3 id="results-hadoop-cluster">Results Hadoop cluster</h3>
+<div class="highlight"><pre tabindex="0" style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-scala" data-lang="scala"><span style="color:#204a87;font-weight:bold">import</span> <span style="color:#000">org.apache.spark.sql.</span><span style="color:#ce5c00;font-weight:bold">{</span><span style="color:#000">SequilaSession</span><span style="color:#ce5c00;font-weight:bold">,</span> <span style="color:#000">SparkSession</span><span style="color:#ce5c00;font-weight:bold">}</span>
+<span style="color:#204a87;font-weight:bold">val</span> <span style="color:#000">ss</span> <span style="color:#204a87;font-weight:bold">=</span> <span style="color:#000">SequilaSession</span><span style="color:#ce5c00;font-weight:bold">(</span><span style="color:#000">spark</span><span style="color:#ce5c00;font-weight:bold">)</span>
+<span style="color:#000">ss</span><span style="color:#ce5c00;font-weight:bold">.</span><span style="color:#000">sparkContext</span><span style="color:#ce5c00;font-weight:bold">.</span><span style="color:#000">setLogLevel</span><span style="color:#ce5c00;font-weight:bold">(</span><span style="color:#4e9a06">&#34;INFO&#34;</span><span style="color:#ce5c00;font-weight:bold">)</span>
+<span style="color:#204a87;font-weight:bold">val</span> <span style="color:#000">bamPath</span> <span style="color:#204a87;font-weight:bold">=</span> <span style="color:#4e9a06">&#34;/scratch/wiewiom/WGS/NA12878.proper.wgs.md.bam&#34;</span>
+<span style="color:#204a87;font-weight:bold">val</span> <span style="color:#000">referencePath</span> <span style="color:#204a87;font-weight:bold">=</span> <span style="color:#4e9a06">&#34;/home/wiewiom/data/Homo_sapiens_assembly18.fasta&#34;</span>
+<span style="color:#000">ss</span><span style="color:#ce5c00;font-weight:bold">.</span><span style="color:#000">time</span><span style="color:#ce5c00;font-weight:bold">{</span>
+    <span style="color:#000">ss</span>
+    <span style="color:#ce5c00;font-weight:bold">.</span><span style="color:#000">coverage</span><span style="color:#ce5c00;font-weight:bold">(</span><span style="color:#000">bamPath</span><span style="color:#ce5c00;font-weight:bold">,</span> <span style="color:#000">referencePath</span><span style="color:#ce5c00;font-weight:bold">)</span>
+    <span style="color:#ce5c00;font-weight:bold">.</span><span style="color:#000">write</span>
+    <span style="color:#ce5c00;font-weight:bold">.</span><span style="color:#000">orc</span><span style="color:#ce5c00;font-weight:bold">(</span><span style="color:#4e9a06">&#34;/tmp/sequila.coverage&#34;</span><span style="color:#ce5c00;font-weight:bold">)</span>
+<span style="color:#ce5c00;font-weight:bold">}</span>
+</code></pre></div><h4 id="pileup">Pileup</h4>
+<div class="highlight"><pre tabindex="0" style="background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-scala" data-lang="scala"><span style="color:#204a87;font-weight:bold">import</span> <span style="color:#000">org.apache.spark.sql.</span><span style="color:#ce5c00;font-weight:bold">{</span><span style="color:#000">SequilaSession</span><span style="color:#ce5c00;font-weight:bold">,</span> <span style="color:#000">SparkSession</span><span style="color:#ce5c00;font-weight:bold">}</span>
+<span style="color:#204a87;font-weight:bold">val</span> <span style="color:#000">ss</span> <span style="color:#204a87;font-weight:bold">=</span> <span style="color:#000">SequilaSession</span><span style="color:#ce5c00;font-weight:bold">(</span><span style="color:#000">spark</span><span style="color:#ce5c00;font-weight:bold">)</span>
+<span style="color:#000">ss</span><span style="color:#ce5c00;font-weight:bold">.</span><span style="color:#000">sparkContext</span><span style="color:#ce5c00;font-weight:bold">.</span><span style="color:#000">setLogLevel</span><span style="color:#ce5c00;font-weight:bold">(</span><span style="color:#4e9a06">&#34;INFO&#34;</span><span style="color:#ce5c00;font-weight:bold">)</span>
+<span style="color:#204a87;font-weight:bold">val</span> <span style="color:#000">bamPath</span> <span style="color:#204a87;font-weight:bold">=</span> <span style="color:#4e9a06">&#34;/scratch/wiewiom/WGS/NA12878.proper.wgs.md.bam&#34;</span>
+<span style="color:#204a87;font-weight:bold">val</span> <span style="color:#000">referencePath</span> <span style="color:#204a87;font-weight:bold">=</span> <span style="color:#4e9a06">&#34;/home/wiewiom/data/Homo_sapiens_assembly18.fasta&#34;</span>
+<span style="color:#000">ss</span><span style="color:#ce5c00;font-weight:bold">.</span><span style="color:#000">time</span><span style="color:#ce5c00;font-weight:bold">{</span>
+    <span style="color:#000">ss</span>
+    <span style="color:#ce5c00;font-weight:bold">.</span><span style="color:#000">pileup</span><span style="color:#ce5c00;font-weight:bold">(</span><span style="color:#000">bamPath</span><span style="color:#ce5c00;font-weight:bold">,</span> <span style="color:#000">referencePath</span><span style="color:#ce5c00;font-weight:bold">,</span> <span style="color:#204a87;font-weight:bold">true</span><span style="color:#ce5c00;font-weight:bold">)</span>
+    <span style="color:#ce5c00;font-weight:bold">.</span><span style="color:#000">write</span>
+    <span style="color:#ce5c00;font-weight:bold">.</span><span style="color:#000">orc</span><span style="color:#ce5c00;font-weight:bold">(</span><span style="color:#4e9a06">&#34;/tmp/sequila.pileup&#34;</span><span style="color:#ce5c00;font-weight:bold">)</span>
+<span style="color:#ce5c00;font-weight:bold">}</span>
+</code></pre></div><h3 id="results-single-node">Results single node</h3>
 <h4 id="coverage-1">Coverage</h4>
 <h4 id="pileup-1">Pileup</h4>
+<h3 id="results-hadoop-cluster">Results Hadoop cluster</h3>
+<h4 id="coverage-2">Coverage</h4>
+<h4 id="pileup-2">Pileup</h4>
 <section class="footnotes" role="doc-endnotes">
 <hr>
 <ol>
@@ -674,7 +738,7 @@ if (!doNotTrack) {
 	
 	
 	<div class="text-muted mt-5 pt-3 border-top">
-  Last modified December 21, 2021: <a href="https://github.com/biodatageeks/sequila/commit/ac25bac3f9cba611bbbcbb0b2b0667a2bfd47229">Pileup/cov tests supplements (#162) (ac25bac)</a>
+  Last modified December 22, 2021: <a href="https://github.com/biodatageeks/sequila/commit/a7f84ea26e660790fc444abdce2148ae5a3535ed">Doc/benchmark details (#163) (a7f84ea)</a>
 </div>
 
 </div>
