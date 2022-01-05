@@ -12,7 +12,7 @@ description: >
 ### Datasets
 |Type| File      | Size [GB]  |Download| 
 |----|-----------|--------|--------|
-|WES|NA12878.proper.wes.md.bam| 17 |[BAM](https://storage.googleapis.com/biodatageeks/sequila/data/WES/NA12878.proper.wes.md.bam) [BAI](https://storage.googleapis.com/biodatageeks/sequila/data/WES/NA12878.proper.wes.md.bam.bai) [SBI](https://storage.googleapis.com/biodatageeks/sequila/data/WES/NA12878.proper.wes.md.bam.sbi)|
+|ES|NA12878.proper.wes.md.bam| 17 |[BAM](https://storage.googleapis.com/biodatageeks/sequila/data/WES/NA12878.proper.wes.md.bam) [BAI](https://storage.googleapis.com/biodatageeks/sequila/data/WES/NA12878.proper.wes.md.bam.bai) [SBI](https://storage.googleapis.com/biodatageeks/sequila/data/WES/NA12878.proper.wes.md.bam.sbi)|
 |WGS|NA12878.proper.wgs.md.bam| 278|[BAM](https://storage.googleapis.com/biodatageeks/sequila/data/WGS/NA12878.proper.wgs.md.bam) [BAI](https://storage.googleapis.com/biodatageeks/sequila/data/WGS/NA12878.proper.wgs.md.bam.bai) [SBI](https://storage.googleapis.com/biodatageeks/sequila/data/WGS/NA12878.proper.wgs.md.bam.sbi)|
 |Reference|Homo_sapiens_assembly18.fasta| 2.9 | [FASTA](https://storage.googleapis.com/biodatageeks/sequila/data/reference/Homo_sapiens_assembly18.fasta) [FAI](https://storage.googleapis.com/biodatageeks/sequila/data/reference/Homo_sapiens_assembly18.fasta.fai)|
 
@@ -29,7 +29,7 @@ description: >
 | [samtools](https://github.com/samtools/samtools)| 1.9 | yes | yes | no | no |
 | [samtools](https://github.com/samtools/samtools)| 1.14 | yes | yes | yes(only coverage, I/O) | no |
 | [SeQuiLa-cov](https://github.com/biodatageeks/sequila)| 0.6.11 | no | yes | yes| yes |
-| [SeQuiLa](https://github.com/biodatageeks/sequila)| 0.7.9 | yes | yes | yes| yes |
+| [SeQuiLa](https://github.com/biodatageeks/sequila)| 1.0.0 | yes | yes | yes| yes |
 
 ### Single node specification
 
@@ -114,7 +114,14 @@ ss.time{
 
 ### Results single node
 #### Coverage
+{{< figure src="../coverage-single-node.png" >}}
+
 #### Pileup
+{{< figure src="../pileup-single-node.png" >}}
+
 ### Results Hadoop cluster
 #### Coverage
+{{< figure src="../coverage-cluster.png" >}}
+
 #### Pileup
+{{< figure src="../pileup-cluster.png" >}}

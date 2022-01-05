@@ -130,7 +130,7 @@ SELECT * FROM pileup('reads', 'NA12878','{{ PWD }}/data/hg18.fasta', false) LIMI
 		{{< highlight bash>}}
 pyspark --master local[1] \
 		--driver-memory 4g \
-		--packages org.biodatageeks:sequila_2.12:0.7.9
+		--packages org.biodatageeks:sequila_2.12:1.0.0
 		{{< / highlight >}}
 		{{< highlight python>}}
 from pysequila import SequilaSession
@@ -187,7 +187,7 @@ SELECT * FROM coverage('reads', 'NA12878','{{ PWD }}/data/hg18.fasta') LIMIT 10;
 		{{< highlight bash>}}
 pyspark --master local[1] \
 --driver-memory 4g \
---packages org.biodatageeks:sequila_2.12:0.7.9
+--packages org.biodatageeks:sequila_2.12:1.0.0
 		{{< / highlight >}}
 {{< highlight python>}}
 from pysequila import SequilaSession
@@ -256,7 +256,7 @@ reads.pos_start <= targets.pos_end
 		{{< highlight bash>}}
 pyspark --master local[1] \
 --driver-memory 4g \
---packages org.biodatageeks:sequila_2.12:0.7.9
+--packages org.biodatageeks:sequila_2.12:1.0.0
 		{{< / highlight >}}
 		{{< highlight python>}}
 targets_df = ss.read\
