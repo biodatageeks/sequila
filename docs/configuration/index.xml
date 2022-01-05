@@ -121,7 +121,7 @@
 &lt;tr&gt;
 &lt;td&gt;spark.biodatageeks.rangejoin.intervalHolderClass&lt;/td&gt;
 &lt;td&gt;&lt;a href=&#34;https://github.com/biodatageeks/sequila/blob/master/src/main/scala/org/biodatageeks/sequila/rangejoins/methods/IntervalTree/IntervalTreeRedBlack.java&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;&lt;code&gt;IntervalTreeRedBlack&lt;/code&gt;&lt;/a&gt;&lt;/td&gt;
-&lt;td&gt;&lt;a href=&#34;http://biodatageeks.ii.pw.edu.pl/sequila/architecture/architecture.html#custom-interval-structure&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;Pluggable&lt;/a&gt; mechanism for implementing custom interval structures.&lt;/td&gt;
+&lt;td&gt;&lt;a href=&#34;https://biodatageeks.github.io/sequila/sequila/docs/algorithms/join/#custom-interval-structure&#34;&gt;Pluggable&lt;/a&gt; mechanism for implementing custom interval structures.&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/tbody&gt;
 &lt;/table&gt;

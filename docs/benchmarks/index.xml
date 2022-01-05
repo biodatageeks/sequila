@@ -24,7 +24,7 @@
 &lt;/thead&gt;
 &lt;tbody&gt;
 &lt;tr&gt;
-&lt;td&gt;WES&lt;/td&gt;
+&lt;td&gt;ES&lt;/td&gt;
 &lt;td&gt;NA12878.proper.wes.md.bam&lt;/td&gt;
 &lt;td&gt;17&lt;/td&gt;
 &lt;td&gt;&lt;a href=&#34;https://storage.googleapis.com/biodatageeks/sequila/data/WES/NA12878.proper.wes.md.bam&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;BAM&lt;/a&gt; &lt;a href=&#34;https://storage.googleapis.com/biodatageeks/sequila/data/WES/NA12878.proper.wes.md.bam.bai&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;BAI&lt;/a&gt; &lt;a href=&#34;https://storage.googleapis.com/biodatageeks/sequila/data/WES/NA12878.proper.wes.md.bam.sbi&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;SBI&lt;/a&gt;&lt;/td&gt;
@@ -130,7 +130,7 @@
 &lt;/tr&gt;
 &lt;tr&gt;
 &lt;td&gt;&lt;a href=&#34;https://github.com/biodatageeks/sequila&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;SeQuiLa&lt;/a&gt;&lt;/td&gt;
-&lt;td&gt;0.7.9&lt;/td&gt;
+&lt;td&gt;1.0.0&lt;/td&gt;
 &lt;td&gt;yes&lt;/td&gt;
 &lt;td&gt;yes&lt;/td&gt;
 &lt;td&gt;yes&lt;/td&gt;
@@ -381,10 +381,30 @@
 &lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;}&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h3 id=&#34;results-single-node&#34;&gt;Results single node&lt;/h3&gt;
 &lt;h4 id=&#34;coverage-1&#34;&gt;Coverage&lt;/h4&gt;
+
+&lt;figure&gt;
+    &lt;img src=&#34;../coverage-single-node.png&#34;/&gt; 
+&lt;/figure&gt;
+
 &lt;h4 id=&#34;pileup-1&#34;&gt;Pileup&lt;/h4&gt;
+
+&lt;figure&gt;
+    &lt;img src=&#34;../pileup-single-node.png&#34;/&gt; 
+&lt;/figure&gt;
+
 &lt;h3 id=&#34;results-hadoop-cluster&#34;&gt;Results Hadoop cluster&lt;/h3&gt;
 &lt;h4 id=&#34;coverage-2&#34;&gt;Coverage&lt;/h4&gt;
+
+&lt;figure&gt;
+    &lt;img src=&#34;../coverage-cluster.png&#34;/&gt; 
+&lt;/figure&gt;
+
 &lt;h4 id=&#34;pileup-2&#34;&gt;Pileup&lt;/h4&gt;
+
+&lt;figure&gt;
+    &lt;img src=&#34;../pileup-cluster.png&#34;/&gt; 
+&lt;/figure&gt;
+
 &lt;section class=&#34;footnotes&#34; role=&#34;doc-endnotes&#34;&gt;
 &lt;hr&gt;
 &lt;ol&gt;

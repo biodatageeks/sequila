@@ -563,7 +563,7 @@ wget -nc https://github.com/biodatageeks/pysequila/raw/master/features/data/Homo
       <link>https://biodatageeks.github.io/sequila/docs/algorithms/pileup/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       <guid>https://biodatageeks.github.io/sequila/docs/algorithms/pileup/</guid>
-      <description>&lt;p&gt;Stay tuned for our new research paper &lt;a href=&#34;&#34;&gt;Reproducible, scalable and cloud-ready genomic pileup operations&lt;/a&gt; that will be published in January 2022!&lt;/p&gt;
+      <description>&lt;p&gt;Stay tuned for our new research paper &lt;a href=&#34;&#34;&gt;Cloud-native distributed genomic pileup operations&lt;/a&gt; that will be published in January 2022!&lt;/p&gt;
 </description>
     </item>
     
@@ -585,7 +585,7 @@ wget -nc https://github.com/biodatageeks/pysequila/raw/master/features/data/Homo
 &lt;/thead&gt;
 &lt;tbody&gt;
 &lt;tr&gt;
-&lt;td&gt;WES&lt;/td&gt;
+&lt;td&gt;ES&lt;/td&gt;
 &lt;td&gt;NA12878.proper.wes.md.bam&lt;/td&gt;
 &lt;td&gt;17&lt;/td&gt;
 &lt;td&gt;&lt;a href=&#34;https://storage.googleapis.com/biodatageeks/sequila/data/WES/NA12878.proper.wes.md.bam&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;BAM&lt;/a&gt; &lt;a href=&#34;https://storage.googleapis.com/biodatageeks/sequila/data/WES/NA12878.proper.wes.md.bam.bai&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;BAI&lt;/a&gt; &lt;a href=&#34;https://storage.googleapis.com/biodatageeks/sequila/data/WES/NA12878.proper.wes.md.bam.sbi&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;SBI&lt;/a&gt;&lt;/td&gt;
@@ -691,7 +691,7 @@ wget -nc https://github.com/biodatageeks/pysequila/raw/master/features/data/Homo
 &lt;/tr&gt;
 &lt;tr&gt;
 &lt;td&gt;&lt;a href=&#34;https://github.com/biodatageeks/sequila&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;SeQuiLa&lt;/a&gt;&lt;/td&gt;
-&lt;td&gt;0.7.9&lt;/td&gt;
+&lt;td&gt;1.0.0&lt;/td&gt;
 &lt;td&gt;yes&lt;/td&gt;
 &lt;td&gt;yes&lt;/td&gt;
 &lt;td&gt;yes&lt;/td&gt;
@@ -942,10 +942,30 @@ wget -nc https://github.com/biodatageeks/pysequila/raw/master/features/data/Homo
 &lt;span style=&#34;color:#ce5c00;font-weight:bold&#34;&gt;}&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h3 id=&#34;results-single-node&#34;&gt;Results single node&lt;/h3&gt;
 &lt;h4 id=&#34;coverage-1&#34;&gt;Coverage&lt;/h4&gt;
+
+&lt;figure&gt;
+    &lt;img src=&#34;../coverage-single-node.png&#34;/&gt; 
+&lt;/figure&gt;
+
 &lt;h4 id=&#34;pileup-1&#34;&gt;Pileup&lt;/h4&gt;
+
+&lt;figure&gt;
+    &lt;img src=&#34;../pileup-single-node.png&#34;/&gt; 
+&lt;/figure&gt;
+
 &lt;h3 id=&#34;results-hadoop-cluster&#34;&gt;Results Hadoop cluster&lt;/h3&gt;
 &lt;h4 id=&#34;coverage-2&#34;&gt;Coverage&lt;/h4&gt;
+
+&lt;figure&gt;
+    &lt;img src=&#34;../coverage-cluster.png&#34;/&gt; 
+&lt;/figure&gt;
+
 &lt;h4 id=&#34;pileup-2&#34;&gt;Pileup&lt;/h4&gt;
+
+&lt;figure&gt;
+    &lt;img src=&#34;../pileup-cluster.png&#34;/&gt; 
+&lt;/figure&gt;
+
 &lt;section class=&#34;footnotes&#34; role=&#34;doc-endnotes&#34;&gt;
 &lt;hr&gt;
 &lt;ol&gt;
@@ -1751,7 +1771,7 @@ All algorithms favours columnar (ADAM) to row oriented (BAM) file format due to 
 &lt;tr&gt;
 &lt;td&gt;spark.biodatageeks.rangejoin.intervalHolderClass&lt;/td&gt;
 &lt;td&gt;&lt;a href=&#34;https://github.com/biodatageeks/sequila/blob/master/src/main/scala/org/biodatageeks/sequila/rangejoins/methods/IntervalTree/IntervalTreeRedBlack.java&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;&lt;code&gt;IntervalTreeRedBlack&lt;/code&gt;&lt;/a&gt;&lt;/td&gt;
-&lt;td&gt;&lt;a href=&#34;http://biodatageeks.ii.pw.edu.pl/sequila/architecture/architecture.html#custom-interval-structure&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;Pluggable&lt;/a&gt; mechanism for implementing custom interval structures.&lt;/td&gt;
+&lt;td&gt;&lt;a href=&#34;https://biodatageeks.github.io/sequila/sequila/docs/algorithms/join/#custom-interval-structure&#34;&gt;Pluggable&lt;/a&gt; mechanism for implementing custom interval structures.&lt;/td&gt;
 &lt;/tr&gt;
 &lt;/tbody&gt;
 &lt;/table&gt;
