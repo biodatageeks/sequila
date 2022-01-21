@@ -1,78 +1,44 @@
 package org.biodatageeks.sequila.flagStat
 
-import org.apache.spark.SparkContext._
+import htsjdk.samtools.SAMRecord
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.InternalRow
+import org.apache.spark.sql.catalyst.expressions.Attribute
+import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 import org.biodatageeks.sequila.datasources.BAM.{BAMFileReader, BAMTableReader}
-import org.seqdoop.hadoop_bam.BAMBDGInputFormat
+import org.seqdoop.hadoop_bam.{BAMBDGInputFormat, CRAMBDGInputFormat}
 import org.slf4j.LoggerFactory
-import scala.collection.mutable.Map
-class FlagStat(spark:SparkSession) {
-	val logger = LoggerFactory.getLogger(this.getClass.getCanonicalName)
+import org.apache.spark.sql.types.{LongType, StructField, StructType}
+import org.biodatageeks.sequila.datasources.InputDataType
+import org.biodatageeks.sequila.inputformats.BDGAlignInputFormat
+import org.biodatageeks.sequila.pileup.PileupMethods
+import org.biodatageeks.sequila.pileup.conf.Conf
+import org.biodatageeks.sequila.utils.{FileFuncs, TableFuncs}
 
-  	var readCount = accumulate("Read Count");
-		var QC_failure = accumulate("Vendor Quality-Check Failures");
-		var duplicates = accumulate("Duplicate Count");
-		var mapped = accumulate("Mapped Entries");
-		var paired_in_sequencing = accumulate("Paired in sequencing");
-		var read1 = accumulate("Read #1");
-		var read2 = accumulate("Read #2");
-		var properly_paired = accumulate("Properly Pairsed");
-		var with_itself_and_mate_mapped = accumulate("With itself and mate mapped");
-		var singletons = accumulate("Singletons");
-	// No acessors:
-	//var with_mate_mapped_to_a_different_chr = accumulate("With mate mapped to a different chr");
-	//var with_mate_mapped_to_a_different_chr_maq_greaterequal_than_5 = accumulate("With mate mapped to a different chr (mapQ>=5)");
+case class FlagStatRow(
+	RCount: Long,
+	QCFail: Long,
+	DUPES: Long,
+	MAPPED: Long,
+	UNMAPPED: Long,
+	PiSEQ: Long,
+	Read1: Long,
+	Read2: Long,
+	PPaired: Long,
+	WIaMM: Long,
+	Singletons: Long
+);
 
-	def getFlagStat(bamFilePath: String, sampleId: String) : Unit = {
-		val tableReader = new BAMTableReader[BAMBDGInputFormat](spark, bamFilePath, sampleId, "bam", None)
-		val records = tableReader.readFile
+case class FlagStat(spark:SparkSession) {
+	val Logger = LoggerFactory.getLogger(this.getClass.getCanonicalName);
 
-		records.foreach(
-			(iter) => {
-				readCount.add(1L);
-				if (iter.getReadFailsVendorQualityCheckFlag()) {
-					QC_failure.add(1L);
-				}
-				if (iter.getDuplicateReadFlag()) {
-					duplicates.add(1L);
-				}
-				if (!iter.getReadUnmappedFlag()) {
-					mapped.add(1L);
-				}
-				if (iter.getReadPairedFlag()) {
-					paired_in_sequencing.add(1L);
-
-					if (iter.getSecondOfPairFlag()) {
-						read2.add(1L);
-					} else if(iter.getFirstOfPairFlag()) {
-						read1.add(1L);
-					}
-
-					if (iter.getProperPairFlag()) {
-						properly_paired.add(1L);
-					}
-					if (!iter.getReadUnmappedFlag() && !iter.getMateUnmappedFlag()) {
-						with_itself_and_mate_mapped.add(1L);
-					}
-					if (!iter.getReadUnmappedFlag() && iter.getMateUnmappedFlag()) {
-						singletons.add(1L);
-					}
-				}
-			}
-		);
-
-	}
-
-	def accumulate(name : scala.Predef.String) : org.apache.spark.util.LongAccumulator = {
-		new org.apache.spark.util.LongAccumulator()
-	}
-
-	def getFlagStatB(bamFilePath: String, sampleId: String) : Unit = {
-		val tableReader = new BAMTableReader[BAMBDGInputFormat](spark, bamFilePath, sampleId, "bam", None)
+	def processFile(bamFilePath: String) : DataFrame = {
+		val tableReader = new BAMFileReader[BAMBDGInputFormat](spark, bamFilePath, null);
 		val records = tableReader.readFile;
+		processDF(processRows(records));
+	}
 
+	def processRows(records: RDD[SAMRecord]) : RDD[Row] = {
 		records.mapPartitions((m) => {
 			var RCount = 0L;
 			var QCFail = 0L;
@@ -85,8 +51,10 @@ class FlagStat(spark:SparkSession) {
 			var PPaired = 0L;
 			var WIaMM = 0L;
 			var Singletons = 0L;
+
 			while (m.hasNext) {
 				val iter = m.next;
+
 				if (iter.getReadFailsVendorQualityCheckFlag()) {
 					QCFail += 1;
 				}
@@ -117,29 +85,59 @@ class FlagStat(spark:SparkSession) {
 				}
 				RCount += 1;
 			}
-			Iterator (Map[String,Long](
-				"RCount" -> RCount,
-				"QCFail" -> QCFail,
-				"DUPES" -> DUPES,
-				"MAPPED" -> MAPPED,
-				"UNMAPPED" -> UNMAPPED,
-				"PiSEQ" -> PiSEQ,
-				"Read1" -> Read1,
-				"Read2" -> Read2,
-				"PPaired" -> PPaired,
-				"WIaMM" -> WIaMM,
-				"Singletons" -> Singletons
-			)/*.toList/toSeq*/)
-		})
-			.reduce{
-				(a,b) => {
-					for (k <- a.keys) {
-						a(k) = a(k) + b(k)
-					}
-				}
-			  a
-			}
+
+			Iterator(Row(RCount, QCFail, DUPES, MAPPED, UNMAPPED, PiSEQ, Read1, Read2, PPaired, WIaMM, Singletons))
+		});
 	}
 
+	def processDF(rows: RDD[Row]): DataFrame = {
+		spark.createDataFrame(rows, FlagStat.Schema)
+	}
 
+	def handleFlagStat(tableNameOrPath: String, sampleId: String): RDD[Row] = {
+		if(sampleId != null)
+			Logger.info(s"Calculating flagStat on table: $tableNameOrPath")
+		else
+			Logger.info(s"Calculating flagStat using file: $tableNameOrPath")
+
+		val (records) = {
+			if (sampleId != null) {
+				val metadata = TableFuncs.getTableMetadata(spark, tableNameOrPath)
+				val tableReader = metadata.provider match {
+					case Some(f) if sampleId != null =>
+						if (f == InputDataType.BAMInputDataType)
+							new BAMTableReader[BAMBDGInputFormat](spark, tableNameOrPath, sampleId, "bam", None)
+						else throw new Exception("Only BAM file format is supported.")
+					case None => throw new Exception("Empty file extension - BAM file format is supported..")
+				}
+				tableReader
+					.readFile
+			}
+			else {
+				val fileReader = FileFuncs.getFileExtension(tableNameOrPath) match {
+					case "bam" => new BAMFileReader[BAMBDGInputFormat](spark, tableNameOrPath, None)
+				}
+				fileReader
+					.readFile
+			}
+		}
+
+		processRows(records);
+	}
+}
+
+object FlagStat {
+	val Schema = StructType(Array(
+		StructField("RCount", LongType, false),
+		StructField("QCFail", LongType, false),
+		StructField("DUPES", LongType, false),
+		StructField("MAPPED", LongType, false),
+		StructField("UNMAPPED", LongType, false),
+		StructField("PiSEQ", LongType, false),
+		StructField("Read1", LongType, false),
+		StructField("Read2", LongType, false),
+		StructField("PPaired", LongType, false),
+		StructField("WIaMM", LongType, false),
+		StructField("Singletons", LongType, false)
+	));
 }

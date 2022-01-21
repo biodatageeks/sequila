@@ -1,3 +1,4 @@
+
 import sbtassembly.AssemblyPlugin.autoImport.ShadeRule
 
 import scala.util.Properties
