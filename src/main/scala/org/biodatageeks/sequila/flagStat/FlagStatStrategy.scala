@@ -77,6 +77,6 @@ case class FlagStatPlan [T<:BDGAlignInputFormat](plan:LogicalPlan, spark:SparkSe
     val fs = new FlagStat(spark);
     val rows = fs.handleFlagStat(tableNameOrPath, sampleId);
     val mapping = rows.map(x => x.toSeq);
-    mapping.map(x=> InternalRow.fromSeq(x));
+    mapping.map(x => InternalRow.fromSeq(x));
   }
 }
