@@ -10,6 +10,7 @@ import org.apache.spark.sql.execution.datasources.SequilaDataSourceStrategy
 import org.apache.spark.sql.functions.{lit, typedLit}
 import org.apache.spark.sql.internal.SessionState
 import org.apache.spark.sql.types.{ArrayType, ByteType, MapType, ShortType}
+import org.biodatageeks.sequila.flagStat.{FlagStatRow, FlagStatStrategy}
 import org.biodatageeks.sequila.pileup.PileupStrategy
 import org.biodatageeks.sequila.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
 import org.biodatageeks.sequila.utils.{InternalParams, UDFRegister}
@@ -33,8 +34,8 @@ object SequilaSession {
         new SequilaDataSourceStrategy(spark),
         new IntervalTreeJoinStrategyOptim(spark),
         new PileupStrategy(spark),
+        new FlagStatStrategy(spark),
         new GenomicIntervalStrategy(spark)
-
       )
     /*Set params*/
     spark
@@ -111,6 +112,16 @@ case class SequilaSession(sparkSession: SparkSession) extends SparkSession(spark
       new Dataset(sparkSession, PileupTemplate(path, refPath, true, quals), Encoders.kryo[Row])
   }.as[Pileup]
 
+  /**
+   * Calculate flagStat
+   *
+   * @param tableNameOrPath BAM file path or Table
+   * @param sampleId sample id
+   * @return pileup as Dataset[FlagStatRow]
+   */
+  def flagStat(tableNameOrPath: String, sampleId: String) : Dataset[FlagStatRow] ={
+    new Dataset(sparkSession, FlagStatTemplate(tableNameOrPath, sampleId), Encoders.kryo[Row])
+  }.as[FlagStatRow]
 }
 
 
