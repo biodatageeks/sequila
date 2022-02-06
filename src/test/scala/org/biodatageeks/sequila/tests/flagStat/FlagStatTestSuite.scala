@@ -2,7 +2,7 @@ package org.biodatageeks.sequila.tests.flagStat
 
 import org.apache.avro.io.Encoder
 import org.apache.spark.sql.{DataFrame, SequilaSession}
-import org.biodatageeks.sequila.flagStat.FlagStatRow
+import org.biodatageeks.sequila.flagStat.{FlagStat, FlagStatRow}
 import org.biodatageeks.sequila.utils.Columns
 import org.biodatageeks.sequila.tests.flagStat.FlagStatTestBase;
 
@@ -10,6 +10,16 @@ class FlagStatTestSuite extends FlagStatTestBase {
   test("Against a stable implementation (samtools)") {
     val result = ss.sql(flagStatQuery);
     performAssertions(result);
+    println("Base Test (against known-working implementation) passed");
+  }
+
+  test("Dataframe API testing") {
+    val fromSQL = ss.sql(flagStatQuery);
+    val fs = FlagStat(ss);
+    val rows = fs.handleFlagStat(tableName, sampleId);
+    val fromDF = fs.processDF(rows);
+    assertDataFrameEquals(fromSQL, fromDF);
+    println("DF API Test passed");
   }
 
   val Expected = Map[String, Long](

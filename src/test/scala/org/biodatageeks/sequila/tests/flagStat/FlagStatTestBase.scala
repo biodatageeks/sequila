@@ -15,8 +15,8 @@ class FlagStatTestBase extends FunSuite
 
   System.setSecurityManager(null)
 
-  val sampleId = "NA12878.multichrom"
-  val bamPath: String = s"D://${sampleId}.bam";
+  val sampleId = "NA12878.multichrom.md"
+  val bamPath: String = getClass.getResource(s"/multichrom/mdbam/${sampleId}.bam").getPath;;
   val tableName = "reads_bam"
   var ss : SequilaSession = null;
 
