@@ -6,16 +6,16 @@ import org.biodatageeks.sequila.utils.InternalParams
 import org.slf4j.LoggerFactory
 
 object FlagStatDebuggerEntryPoint {
-	val bamFilePath: String = "D:\\\\NA12878.multichrom.bam";
+	val bamFilePath: String = "/users/mazen/Documents/NA12878.proper.wes.md.bam";
 
-	val sampleId = "NA12878.multichrom"
-	//val samResPath: String = getClass.getResource("/multichrom/mdbam/samtools_x.pileup").getPath
-	//val bamPath: String = getClass.getResource(s"/multichrom/mdbam/${sampleId}.bam").getPath
+	val sampleId = "NA12878.proper.wes.md"
+	//val sampleId = "NA12878.multichrom.md"
+	//val bamPath: String = getClass.getResource(s"/multichrom/mdbam/${sampleId}.bam").getPath;;
 
 	def main(args: Array[String]): Unit = {
 		//execute(bamFilePath).show();
-		//executeSQL(bamFilePath, null).show();
-		performance(bamFilePath, sampleId);
+		// executeSQL(bamFilePath, null).show();
+		performance(bamFilePath, null);
 	}
 
 	def performance(tableNameOrPath: String, sampleId: String): Unit = {
@@ -32,8 +32,9 @@ object FlagStatDebuggerEntryPoint {
 		spark.sqlContext.setConf(InternalParams.SerializationMode, StorageLevel.DISK_ONLY.toString())
 		val ss = SequilaSession(spark);
 		ss.time {
-			ss.flagStat(tableNameOrPath, sampleId)
+			ss.flagStat(tableNameOrPath, sampleId).show();
 		}
+		ss.stop()
 	}
 
 	def execute(bamPath: String): DataFrame = {

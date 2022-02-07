@@ -2,7 +2,7 @@ package org.biodatageeks.sequila.flagStat
 
 import okhttp3.logging.HttpLoggingInterceptor.Logger
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.{FlagStatTemplate, PileupTemplate, SparkSession, Strategy}
+import org.apache.spark.sql.{Encoders, FlagStatTemplate, PileupTemplate, Row, SparkSession, Strategy}
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions.Attribute
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
@@ -12,14 +12,14 @@ import org.apache.spark.sql.execution.datasources.InsertIntoHadoopFsRelationComm
 import org.biodatageeks.sequila.datasources.BAM.BDGAlignFileReaderWriter
 import org.biodatageeks.sequila.datasources.InputDataType
 import org.biodatageeks.sequila.inputformats.BDGAlignInputFormat
-import org.apache.spark.sql.Encoders
-import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder
+import org.apache.spark.sql.catalyst.encoders.{ExpressionEncoder, RowEncoder}
 import org.biodatageeks.sequila.pileup.Pileup
 import org.biodatageeks.sequila.pileup.conf.Conf
 import org.biodatageeks.sequila.pileup.conf.QualityConstants.{DEFAULT_BIN_SIZE, DEFAULT_MAX_QUAL}
 import org.biodatageeks.sequila.utils.{FileFuncs, InternalParams, TableFuncs}
 import org.seqdoop.hadoop_bam.{BAMBDGInputFormat, CRAMBDGInputFormat}
 
+import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
 
 class FlagStatStrategy (spark:SparkSession) extends Strategy with Serializable {
@@ -76,7 +76,14 @@ case class FlagStatPlan [T<:BDGAlignInputFormat](plan:LogicalPlan, spark:SparkSe
   override protected def doExecute(): RDD[InternalRow] = {
     val fs = new FlagStat(spark);
     val rows = fs.handleFlagStat(tableNameOrPath, sampleId);
-    val mapping = rows.map(x => x.toSeq);
-    mapping.map(x => InternalRow.fromSeq(x));
+    //val mapping = rows.map(x => x.toSeq);
+    //mapping.map(x => InternalRow.fromSeq(x));
+    val mapping = rows.collectAsMap;
+    var sequence = new ListBuffer[Long];
+    FlagStat.Schema.fieldNames.foreach(x => {
+      sequence += mapping.get(x).get;
+    })
+    val result = InternalRow.fromSeq(sequence.toSeq);
+    spark.sparkContext.parallelize(Seq(result));
   }
 }

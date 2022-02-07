@@ -15,6 +15,8 @@ import org.biodatageeks.sequila.pileup.PileupMethods
 import org.biodatageeks.sequila.pileup.conf.Conf
 import org.biodatageeks.sequila.utils.{FileFuncs, TableFuncs}
 
+import scala.collection.mutable.ListBuffer
+
 case class FlagStatRow(
 	RCount: Long,
 	QCFail: Long,
@@ -38,7 +40,7 @@ case class FlagStat(spark:SparkSession) {
 		processDF(processRows(records));
 	}
 
-	def processRows(records: RDD[SAMRecord]) : RDD[Row] = {
+	def processRows(records: RDD[SAMRecord]) : RDD[(String, Long)] = {
 		records.mapPartitions((m) => {
 			var RCount = 0L;
 			var QCFail = 0L;
@@ -86,15 +88,35 @@ case class FlagStat(spark:SparkSession) {
 				RCount += 1;
 			}
 
-			Iterator(Row(RCount, QCFail, DUPES, MAPPED, UNMAPPED, PiSEQ, Read1, Read2, PPaired, WIaMM, Singletons))
-		});
+			//Iterator(Row(RCount, QCFail, DUPES, MAPPED, UNMAPPED, PiSEQ, Read1, Read2, PPaired, WIaMM, Singletons))
+			Iterator(
+				("RCount", RCount),
+				("QCFail", QCFail),
+				("DUPES", DUPES),
+				("MAPPED", MAPPED),
+				("UNMAPPED", UNMAPPED),
+				("PiSEQ", PiSEQ),
+				("Read1", Read1),
+				("Read2", Read2),
+				("PPaired", PPaired),
+				("WIaMM", WIaMM),
+				("Singletons", Singletons)
+			)
+		}).reduceByKey((v1, v2) => v1 + v2);
 	}
 
-	def processDF(rows: RDD[Row]): DataFrame = {
-		spark.createDataFrame(rows, FlagStat.Schema)
+	def processDF(rows: RDD[(String, Long)]): DataFrame = {
+		var mapping = rows.collectAsMap();
+		var sequence = new ListBuffer[Long];
+		FlagStat.Schema.fieldNames.foreach(x => {
+			sequence += mapping.get(x).get;
+		})
+		val result = Row.fromSeq(sequence);
+		val rdd = spark.sparkContext.parallelize(Seq(result));
+		spark.createDataFrame(rdd, FlagStat.Schema);
 	}
 
-	def handleFlagStat(tableNameOrPath: String, sampleId: String): RDD[Row] = {
+	def handleFlagStat(tableNameOrPath: String, sampleId: String): RDD[(String, Long)] = {
 		if(sampleId != null)
 			Logger.info(s"Calculating flagStat on table: $tableNameOrPath")
 		else
