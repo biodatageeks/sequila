@@ -14,12 +14,19 @@ class FlagStatTestSuite extends FlagStatTestBase {
   }
 
   test("Dataframe API testing") {
-    val fromSQL = ss.sql(flagStatQuery);
-    val fs = FlagStat(ss);
-    val rows = fs.handleFlagStat(tableName, sampleId);
-    val fromDF = fs.processDF(rows);
-    assertDataFrameEquals(fromSQL, fromDF);
+    val testDF = ss.flagStat(tableName, sampleId).toDF();
+    val rdd = ss.sparkContext.parallelize(Expected.toSeq);
+    val exptDF = FlagStat(ss).processDF(rdd);
+    assertDataFrameEquals(exptDF, testDF);
     println("DF API Test passed");
+  }
+
+  test("SQL DF against API testing") {
+    val result = ss.sql(flagStatQuery);
+    val rdd = ss.sparkContext.parallelize(Expected.toSeq);
+    val exptDF = FlagStat(ss).processDF(rdd);
+    assertDataFrameEquals(exptDF, result);
+    println("SQL DF against API Test passed");
   }
 
   val Expected = Map[String, Long](
@@ -35,13 +42,9 @@ class FlagStatTestSuite extends FlagStatTestBase {
     "WIaMM" -> 21924,
     "Singletons" -> 353
   );
+
   private def performAssertions(df:DataFrame):Unit ={
     assert(df.count() == 1);
-
-    //val query = Expected.map(data => s"${data._1} == ${data._2}").mkString(" and ");
-    //val merge = result.where(query);
-    //assert(merge.count(), 1);
-
     val obtained = df.where("RCount > 0");
     assert(obtained.count(), 1);
     val results = obtained.first();
