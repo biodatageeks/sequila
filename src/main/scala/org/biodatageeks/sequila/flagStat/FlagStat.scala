@@ -36,8 +36,8 @@ case class FlagStat(spark:SparkSession) {
 
 	def processFile(bamFilePath: String) : DataFrame = {
 		val tableReader = new BAMFileReader[BAMBDGInputFormat](spark, bamFilePath, null);
-		val records = tableReader.readFile;
-		processDF(processRows(records));
+		val records = tableReader.readFile
+		processDF(processRows(records))
 	}
 
 	def processRows(records: RDD[SAMRecord]) : RDD[(String, Long)] = {
@@ -102,9 +102,8 @@ case class FlagStat(spark:SparkSession) {
 				("WIaMM", WIaMM),
 				("Singletons", Singletons)
 			)
-		}).reduceByKey((v1, v2) => v1 + v2);
+		}).reduceByKey((v1, v2) => v1 + v2)
 	}
-
 	def processDF(rows: RDD[(String, Long)]): DataFrame = {
 		var mapping = rows.collectAsMap();
 		var sequence = new ListBuffer[Long];
@@ -115,6 +114,7 @@ case class FlagStat(spark:SparkSession) {
 		val rdd = spark.sparkContext.parallelize(Seq(result));
 		spark.createDataFrame(rdd, FlagStat.Schema);
 	}
+
 
 	def handleFlagStat(tableNameOrPath: String, sampleId: String): RDD[(String, Long)] = {
 		if(sampleId != null)

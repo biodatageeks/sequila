@@ -24,18 +24,15 @@ import scala.reflect.ClassTag
 
 class FlagStatStrategy (spark:SparkSession) extends Strategy with Serializable {
 
-  //var vectorizedOrcWritePath: String = null
   override def apply(plan: LogicalPlan): Seq[SparkPlan] = {
     plan match {
       case CreateDataSourceTableAsSelectCommand(table, mode, query, outputColumnNames) => {
         table.storage.locationUri match {
-          //case Some(path) => vectorizedOrcWritePath = path.getPath
           case None => None
         }
         Nil
       }
       case InsertIntoHadoopFsRelationCommand(outputPath, staticPartitions, ifPartitionNotExists, partitionColumns, bucketSpec, fileFormat, options, query, mode, catalogTable, fileIndex, outputColumnNames) => {
-        //vectorizedOrcWritePath = outputPath.toString
         Nil
       }
       case FlagStatTemplate(tableNameOrPath, sampleId, output) => {
@@ -48,7 +45,6 @@ class FlagStatStrategy (spark:SparkSession) extends Strategy with Serializable {
         inputFormat match {
           case Some(f) =>
             if (f == InputDataType.BAMInputDataType)
-              //FlagStatPlan[BAMBDGInputFormat](plan, spark, tableNameOrPath, sampleId, output, vectorizedOrcWritePath) :: Nil
               FlagStatPlan[BAMBDGInputFormat](plan, spark, tableNameOrPath, sampleId, output) :: Nil
             else Nil
           case None => throw new RuntimeException("Only BAM file format is supported in flagStat function.")
@@ -76,14 +72,12 @@ case class FlagStatPlan [T<:BDGAlignInputFormat](plan:LogicalPlan, spark:SparkSe
   override protected def doExecute(): RDD[InternalRow] = {
     val fs = new FlagStat(spark);
     val rows = fs.handleFlagStat(tableNameOrPath, sampleId);
-    //val mapping = rows.map(x => x.toSeq);
-    //mapping.map(x => InternalRow.fromSeq(x));
     val mapping = rows.collectAsMap;
-    var sequence = new ListBuffer[Long];
+    val fields = new ListBuffer[Long];
     FlagStat.Schema.fieldNames.foreach(x => {
-      sequence += mapping.get(x).get;
+      fields += mapping(x);
     })
-    val result = InternalRow.fromSeq(sequence.toSeq);
+    val result = InternalRow.fromSeq(fields);
     spark.sparkContext.parallelize(Seq(result));
   }
 }
