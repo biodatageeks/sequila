@@ -32,6 +32,7 @@ object Columns {
   final val COUNT_REF="countRef"
   final val COUNT_NONREF="countNonRef"
   final val QUALS="quals"
+  final val LENGTH = "Length"
 
   private val sequencedFragmentColumns = ScalaFuncs
     .classAccessors[SequencedFragment]
