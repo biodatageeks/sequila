@@ -3,7 +3,7 @@ package org.biodatageeks.sequila.rangejoins.methods.IntervalTree
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SequilaSession.logger
 import org.apache.spark.sql.catalyst.InternalRow
-import org.apache.spark.sql.catalyst.expressions.Attribute
+import org.apache.spark.sql.catalyst.expressions.{Attribute, UnsafeProjection}
 import org.apache.spark.sql.execution.SparkPlan
 import org.apache.spark.sql.{Row, SparkSession}
 import org.apache.spark.unsafe.types.UTF8String
@@ -83,6 +83,13 @@ case class FeatureCountsPlan(spark: SparkSession,
         })
       })
         .flatMap(r => r)
+        .groupBy(x => x)
+        .mapValues(_.size)
+        .map(entry => {
+          entry._1.setInt(6, entry._2)
+          toUnsafeRow(entry._1)
+        })
+
       v3
     } else {
       val genesRddWithIndex = genesRdd.zipWithIndex()
@@ -118,8 +125,19 @@ case class FeatureCountsPlan(spark: SparkSession,
       val result =  v3.
         join(intGenesRdd)
         .map(l => l._2._2)
+        .groupBy(x => x)
+        .mapValues(_.size)
+        .map(entry => {
+          entry._1.setInt(6, entry._2)
+          toUnsafeRow(entry._1)
+        })
       result
     }
+  }
+
+  private def toUnsafeRow(r: InternalRow): InternalRow = {
+    val proj =  UnsafeProjection.create(schema)
+    proj.apply(r)
   }
 
   private def toInternalRow(r: Row): InternalRow = {
@@ -129,7 +147,8 @@ case class FeatureCountsPlan(spark: SparkSession,
       r.getString(2).toInt, //Start
       r.getString(3).toInt, //End
       UTF8String.fromString(r.getString(4)), //Strand
-      r.getString(3).toInt - r.getString(2).toInt //Length
+      r.getString(3).toInt - r.getString(2).toInt, //Length
+      0 //count
     ))
   }
 

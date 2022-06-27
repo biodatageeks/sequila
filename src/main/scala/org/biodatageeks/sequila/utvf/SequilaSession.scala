@@ -7,9 +7,8 @@ import org.apache.spark.sql.catalyst.analysis.{Analyzer, SeQuiLaAnalyzer}
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.execution.QueryExecution
 import org.apache.spark.sql.execution.datasources.SequilaDataSourceStrategy
-import org.apache.spark.sql.functions.{lit, typedLit}
+import org.apache.spark.sql.functions.typedLit
 import org.apache.spark.sql.internal.SessionState
-import org.apache.spark.sql.types.{ArrayType, ByteType, MapType, ShortType}
 import org.biodatageeks.sequila.pileup.PileupStrategy
 import org.biodatageeks.sequila.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
 import org.biodatageeks.sequila.utils.{InternalParams, UDFRegister}
@@ -89,6 +88,18 @@ case class SequilaSession(sparkSession: SparkSession) extends SparkSession(spark
   def coverage(path: String, refPath: String) : Dataset[Coverage] ={
 
     new Dataset(sparkSession, PileupTemplate(path, refPath, false, false), Encoders.kryo[Row]).as[Coverage]
+  }
+
+  /**
+    * Calculate genes count number in reads
+    *
+    * @param reads BAM file
+    * @param genes BED file
+    * @return genes count as Dataset[FeatureCounts]
+    */
+  def featureCounts(reads: String, genes: String) : Dataset[FeatureCounts] ={
+
+    new Dataset(sparkSession, FeatureCountsTemplate(reads, genes), Encoders.kryo[Row]).as[FeatureCounts]
   }
 
   /**

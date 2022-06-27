@@ -33,11 +33,11 @@ object FeatureCountsFunc {
 
     val ss = SequilaSession(spark)
 
-    val query = s"Select fc.*, count(*) AS Counts " +
-      s"          FROM feature_counts('${runConf.readsFile()}', '${runConf.annotations()}') fc " +
-      s"          GROUP BY fc.sample_id, fc.contig, fc.pos_start, fc.pos_end, fc.strand, fc.length"
+    val query = s"Select fc.*" +
+      s" FROM feature_counts('${runConf.readsFile()}', '${runConf.annotations()}') fc "
 
     ss.sql(query)
+      .orderBy("sample_id")
       .coalesce(1)
       .show()
   }

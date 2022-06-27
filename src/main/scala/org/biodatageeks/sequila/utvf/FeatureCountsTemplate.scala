@@ -24,9 +24,13 @@ object FeatureCountsTemplate {
       StructField(s"${Columns.CONTIG}", StringType, nullable = false),
       StructField(s"${Columns.START}", IntegerType, nullable = false),
       StructField(s"${Columns.END}", IntegerType, nullable = false),
-      StructField(s"${Columns.STRAND}", StringType, nullable = true),
-      StructField(s"${Columns.LENGTH}", IntegerType, nullable = false))
+      StructField(s"${Columns.STRAND}", StringType, nullable = false),
+      StructField(s"${Columns.LENGTH}", IntegerType, nullable = false),
+      StructField(s"${Columns.COUNT_REF}", IntegerType, nullable = false))
     ).toAttributes
     new FeatureCountsTemplate(reads, genes, output)
   }
 }
+
+case class FeatureCounts(sample:String, contig:String, start:Int, end:Int,
+                         strand:String, length:Int, countRef: Int)
