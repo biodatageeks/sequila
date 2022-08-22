@@ -13,9 +13,9 @@ class ImplicitIntervalTreeWithInterpolationIndex[V] extends BaseIntervalHolder[V
   var internalTree: ArrayBuffer[AugmentedNode[V]] = _
   var arraySizeIncludingImaginaryNodes: Int = -1
   var K: Int = -1
-  var domainSize = -1
-  var minStart = -1
-  val NUMBER_OF_DOMAINS = 20000
+  var domainSize: Int = -1
+  var minStart: Int = -1
+  val NUMBER_OF_DOMAINS = 4096
   val parameters: ArrayBuffer[(Double, Double, Double)] = new ArrayBuffer[(Double, Double, Double)](NUMBER_OF_DOMAINS)
   val invalidIndex: Int = Integer.MAX_VALUE
   var queries: Int = 0
@@ -34,7 +34,7 @@ class ImplicitIntervalTreeWithInterpolationIndex[V] extends BaseIntervalHolder[V
     }
     internalTree = createImplicitIntervalTree(intervals)
     val result: TreeMetadata = TreeMetadataRetriever.resolveKAndArraySizeIncludingImaginaryNodes(internalTree.size)
-    print("Tree size=".concat(result.K.toString))
+    println("Tree size = ".concat(result.K.toString))
     K = result.K
     arraySizeIncludingImaginaryNodes = result.arraySizeIncludingImaginaryNodes
     minStart = internalTree(0).getStart
@@ -309,7 +309,7 @@ class ImplicitIntervalTreeWithInterpolationIndex[V] extends BaseIntervalHolder[V
     val which = whichDomain(start)
     val model: (Double, Double, Double) = parameters(which)
     val lv_f: Double = model._3
-    if (lv_f < 0) {
+    if (lv_f < 0 || model._2 == 0.0) {
       return invalidIndex
     }
     val k = lv_f.toInt
