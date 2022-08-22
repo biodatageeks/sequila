@@ -3,7 +3,7 @@ package org.biodatageeks.sequila.rangejoins.methods.IntervalTree
 import org.biodatageeks.sequila.rangejoins.IntervalTree.Interval
 import org.biodatageeks.sequila.rangejoins.methods.base.BaseIntervalHolder
 
-class IntervalHolderChromosome[T](allRegions: Array[(String,Interval[Int],T)], intervalHolderClassName:String) extends Serializable {
+class IntervalHolderChromosome[T](allRegions: Array[(String,Interval[Int],T)], intervalHolderClassName:String, domains: Option[Int] = None) extends Serializable {
 
 
   val intervalHolderHashMap:Map[String, BaseIntervalHolder[T]] = {
@@ -16,7 +16,7 @@ class IntervalHolderChromosome[T](allRegions: Array[(String,Interval[Int],T)], i
         x._2.foreach { y =>
           it.put(y._2.start, y._2.end, y._3)
         }
-        it.postConstruct
+        it.postConstruct(domains)
         (x._1, it)
       })
   }

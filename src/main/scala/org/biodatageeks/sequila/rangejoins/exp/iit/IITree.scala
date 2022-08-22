@@ -13,7 +13,7 @@ class IITree[V] extends BaseIntervalHolder[V] with Serializable {
   private val map = mutable.HashMap[(Int, Int), Node[V]]()
 
 
-  override def postConstruct: Unit = {
+  override def postConstruct(domains: Option[Int]): Unit = {
     nodes = nodes.sortBy(r => (r.start, r.end))
     maxLevel = index(nodes)
     map.clear()

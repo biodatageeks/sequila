@@ -133,7 +133,7 @@ class NCList[V] extends BaseIntervalHolder[V] with Serializable {
   }
 
 
-  override def postConstruct:Unit = {
+  override def postConstruct(domains: Option[Int]):Unit = {
     //if (!built) {
     // val t1 = System.nanoTime
     build_index()

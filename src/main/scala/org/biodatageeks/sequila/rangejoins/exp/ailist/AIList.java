@@ -2,6 +2,7 @@ package org.biodatageeks.sequila.rangejoins.exp.ailist;
 
 import org.biodatageeks.sequila.rangejoins.methods.base.BaseIntervalHolder;
 import org.biodatageeks.sequila.rangejoins.methods.base.BaseNode;
+import scala.Option;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -149,7 +150,7 @@ public class AIList<T> implements BaseIntervalHolder<T> {
 	}
 
 	@Override
-	public void postConstruct() {
+	public void postConstruct(Option<Object> domains) {
 		sortIntervals();
 
 		// max number of components
@@ -164,7 +165,6 @@ public class AIList<T> implements BaseIntervalHolder<T> {
 
 		augmentWithMaxEnds();
 	}
-
 	@Override
 	public Iterator<BaseNode<T>> iterator() {
 		return null;

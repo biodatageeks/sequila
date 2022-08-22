@@ -15,20 +15,28 @@ class ImplicitIntervalTreeWithInterpolationIndex[V] extends BaseIntervalHolder[V
   var K: Int = -1
   var domainSize: Int = -1
   var minStart: Int = -1
-  val NUMBER_OF_DOMAINS = 4096
-  val parameters: ArrayBuffer[(Double, Double, Double)] = new ArrayBuffer[(Double, Double, Double)](NUMBER_OF_DOMAINS)
+  val parameters: ArrayBuffer[(Double, Double, Double)] = new ArrayBuffer[(Double, Double, Double)]()
   val invalidIndex: Int = Integer.MAX_VALUE
   var queries: Int = 0
   var totalClimbCost = 0
   var rootIndex: Int = -1
+  var NUMBER_OF_DOMAINS = -1
 
   override def put(start: Int, end: Int, value: V): V = {
     intervals += new AugmentedNode[V](start, end, value)
     value
   }
 
-  override def postConstruct: Unit = {
+  private def resolveNumberOfDomains(): Int = {
+    math.max(1, intervals.size/25000)
+  }
+
+  override def postConstruct(domains: Option[Int]): Unit = {
     val dummyValue = 0.0
+    NUMBER_OF_DOMAINS = domains match {
+      case Some(x)=> x
+      case None => resolveNumberOfDomains()
+    }
     0 until NUMBER_OF_DOMAINS foreach { _ =>
       parameters.append((dummyValue, dummyValue, dummyValue))
     }

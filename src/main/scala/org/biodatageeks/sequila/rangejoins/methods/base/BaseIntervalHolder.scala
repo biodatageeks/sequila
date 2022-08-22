@@ -47,7 +47,7 @@ trait BaseIntervalHolder[V] extends java.lang.Iterable[BaseNode[V] ] with Serial
   /**
     * An optional method to include any struct actions required once all items are added
     */
-  def postConstruct : Unit = {
+  def postConstruct(domains: Option[Int]) : Unit = {
 
   }
 }
