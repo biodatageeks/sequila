@@ -21,6 +21,7 @@ class ImplicitIntervalTreeWithInterpolationIndex[V] extends BaseIntervalHolder[V
   var totalClimbCost = 0
   var rootIndex: Int = -1
   var NUMBER_OF_DOMAINS = -1
+  val DEFAULT_INTERVALS_PER_DOMAIN = 4880
 
   override def put(start: Int, end: Int, value: V): V = {
     intervals += new AugmentedNode[V](start, end, value)
@@ -28,7 +29,7 @@ class ImplicitIntervalTreeWithInterpolationIndex[V] extends BaseIntervalHolder[V
   }
 
   private def resolveNumberOfDomains(): Int = {
-    math.max(1, intervals.size/25000)
+    math.max(1, intervals.size/DEFAULT_INTERVALS_PER_DOMAIN)
   }
 
   override def postConstruct(domains: Option[Int]): Unit = {
@@ -42,7 +43,8 @@ class ImplicitIntervalTreeWithInterpolationIndex[V] extends BaseIntervalHolder[V
     }
     internalTree = createImplicitIntervalTree(intervals)
     val result: TreeMetadata = TreeMetadataRetriever.resolveKAndArraySizeIncludingImaginaryNodes(internalTree.size)
-    println("Tree size = ".concat(result.K.toString))
+    println(s"Tree size=${result.K.toString}")
+    println(s"Using number of domains=${NUMBER_OF_DOMAINS}")
     K = result.K
     arraySizeIncludingImaginaryNodes = result.arraySizeIncludingImaginaryNodes
     minStart = internalTree(0).getStart

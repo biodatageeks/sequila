@@ -200,7 +200,7 @@ case class AlignmentsRDD(rdd: RDD[SAMRecord]) {
       .sqlContext
       .setConf(InternalParams.AlignmentIntervals, "")
     logger.info(s"Found ${boundsOverlappingReads.length} overlapping reads")
-    val tree = new IntervalHolderChromosome[TruncRead](boundsOverlappingReads, "org.biodatageeks.sequila.rangejoins.methods.IntervalTree.IntervalTreeRedBlack")
+    val tree = new IntervalHolderChromosome[TruncRead](boundsOverlappingReads, "org.biodatageeks.sequila.rangejoins.methods.IntervalTree.IntervalTreeRedBlack", Map[String,String]())
     PartitionUtils.getAdjustedPartitionBounds(lowerBounds, tree, conf, contigs)
   }
 

@@ -49,8 +49,6 @@ class NCList[V] extends BaseIntervalHolder[V] with Serializable {
   var buffer_l_list: mutable.HashMap[ (Int, Int), LListElem[V]] = mutable.HashMap[ (Int, Int), LListElem[V]]()
   var l_list: Array[LListElem[V]] = Array()
   var h_list: ArrayBuffer[HListElem] = ArrayBuffer()
-  //var l_list_storage: ArrayBuffer[LListElem[V]] = ArrayBuffer[LListElem[V]]()
-
   var built = false
 
   def iterator(): java.util.Iterator[BaseNode[V]] = ???
@@ -71,8 +69,6 @@ class NCList[V] extends BaseIntervalHolder[V] with Serializable {
       elem.setValue(value)
       buffer_l_list((start,end)) = (elem)
     }
-
-    //built = false
     ret
   }
 
@@ -134,12 +130,7 @@ class NCList[V] extends BaseIntervalHolder[V] with Serializable {
 
 
   override def postConstruct(domains: Option[Int]):Unit = {
-    //if (!built) {
-    // val t1 = System.nanoTime
     build_index()
-    // val t2 = System.nanoTime
-    // println(s"Structure build time at first query: ${(t2-t1)/1e6d} ms; ${l_list.length} elements ")
-    //}
   }
 
   def build_index(): Unit = {

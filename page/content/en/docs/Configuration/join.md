@@ -13,3 +13,4 @@ description: >
 |spark.biodatageeks.rangejoin.maxGap| 0 | The maximum gap between between regions |
 |spark.biodatageeks.rangejoin.minOverlap| 1 | The minimal length of the overlap between regions |
 |spark.biodatageeks.rangejoin.intervalHolderClass|[`IntervalTreeRedBlack`](https://github.com/biodatageeks/sequila/blob/master/src/main/scala/org/biodatageeks/sequila/rangejoins/methods/IntervalTree/IntervalTreeRedBlack.java)| [Pluggable](/sequila/docs/algorithms/join/#custom-interval-structure) mechanism for implementing custom interval structures.|
+|spark.biodatageeks.rangejoin.iitii.domainsNum|floor(dataset.count/4880)| Parameter of the ImplicitIntervalTreeWithInterpolationIndex structure to explicitly provide number of domains that the dataset is divided into. It indicates the number of interpolation functions that are being used during intersection. |

@@ -55,7 +55,7 @@ object BamBedChecker {
       .map(r => ("1", Interval[Int](r.pos_start, r.pos_end), InternalRow.empty))
       .collect()
 
-    val tree = new IntervalHolderChromosome[InternalRow](localIntervals, classHolder)
+    val tree = new IntervalHolderChromosome[InternalRow](localIntervals, classHolder, Map[String,String]())
     val intervalTree = spark.sparkContext.broadcast(tree)
 
     val cnt = ds2.map(r => intervalTree.value.getIntervalTreeByChromosome(r.contig) match {
