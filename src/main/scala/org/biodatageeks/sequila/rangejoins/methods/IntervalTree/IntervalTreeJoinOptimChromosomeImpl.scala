@@ -88,7 +88,10 @@ object IntervalTreeJoinOptimChromosomeImpl extends Serializable {
         .collect()
 
   val intervalTree = {
-    val tree = new IntervalHolderChromosome[InternalRow](localIntervals, intervalHolderClassName, spark.sqlContext.getAllConfs)
+    val tree = spark.time {
+      new IntervalHolderChromosome[InternalRow](localIntervals, intervalHolderClassName, spark.sqlContext.getAllConfs)
+    }
+    println(s"EstimatedTreeSize=${SizeEstimator.estimate(tree)}")
     try{
       val treeSize = GraphLayout.parseInstance(tree).totalSize()
       logger.info(s"Real broadcast size of the interval structure is ${treeSize} bytes")
@@ -100,7 +103,9 @@ object IntervalTreeJoinOptimChromosomeImpl extends Serializable {
         logger.info(s"Real broadcast size of the interval structure is ${treeSize} bytes")
 
     }
-    spark.sparkContext.broadcast(tree)
+    spark.time {
+      spark.sparkContext.broadcast(tree)
+    }
   }
     val joinedRDD = rdd2
         .mapPartitions(p=> {
@@ -139,8 +144,13 @@ object IntervalTreeJoinOptimChromosomeImpl extends Serializable {
 
       /* Create and broadcast an interval tree */
       val intervalTree = {
-        val tree = new IntervalHolderChromosome[Long](localIntervals, intervalHolderClassName ,spark.sqlContext.getAllConfs)
-        spark.sparkContext.broadcast(tree)
+        val tree =
+          spark.time {
+            new IntervalHolderChromosome[Long](localIntervals, intervalHolderClassName ,spark.sqlContext.getAllConfs)
+          }
+        spark.time{
+          spark.sparkContext.broadcast(tree)
+        }
       }
       val kvrdd2 = rdd2
         .mapPartitions(p => {
