@@ -25,18 +25,4 @@ class Node[V1](val start: Int, val end: Int) extends BaseNode[V1] with Serializa
     values.add(v)
     v
   }
-
-
-  override def equals(other: Any): Boolean = other match {
-    case that: Node[V1] =>
-      start == that.start &&
-        end == that.end &&
-        values.equals(that.values)
-    case _ => false
-  }
-
-  override def hashCode(): Int = {
-    val state = Seq(start, end, values.hashCode())
-    state.map(_.hashCode()).foldLeft(0)((a, b) => 31 * a + b)
-  }
 }

@@ -30,7 +30,7 @@ libraryDependencies += "org.apache.spark" %% "spark-core" % sparkVersion
 libraryDependencies += "org.apache.spark" %% "spark-sql" % sparkVersion
 libraryDependencies += "com.github.mrpowers" %% "spark-fast-tests" % "0.21.3"
 libraryDependencies += "com.github.mrpowers" %% "spark-daria" % "0.38.2"
-libraryDependencies += "com.holdenkarau" %% "spark-testing-base" % "3.1.2_1.1.0" % "test" excludeAll ExclusionRule(organization = "javax.servlet") excludeAll (ExclusionRule("org.apache.hadoop"))
+libraryDependencies += "com.holdenkarau" %% "spark-testing-base" % "3.1.2_1.2.0" % "test" excludeAll ExclusionRule(organization = "javax.servlet") excludeAll (ExclusionRule("org.apache.hadoop")) excludeAll (ExclusionRule("org.apache.avro"))
 libraryDependencies += "org.bdgenomics.adam" %% "adam-core-spark3" % "0.36.0" excludeAll (ExclusionRule("org.seqdoop"))
 libraryDependencies += "org.bdgenomics.adam" %% "adam-apis-spark3" % "0.36.0" excludeAll (ExclusionRule("org.seqdoop"))
 libraryDependencies += "org.bdgenomics.adam" %% "adam-cli-spark3" % "0.36.0" excludeAll (ExclusionRule("org.seqdoop"))
@@ -160,3 +160,5 @@ publishTo := {
     Some("snapshots" at nexus + "maven-snapshots")
   }
 }
+
+ThisBuild / useCoursier := true

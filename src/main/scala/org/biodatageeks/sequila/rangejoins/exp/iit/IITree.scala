@@ -11,12 +11,18 @@ class IITree[V] extends BaseIntervalHolder[V] with Serializable {
   private var nodes = new ArrayBuffer[Node[V]]()
   private var maxLevel: Int = -1
   private val map = mutable.HashMap[(Int, Int), Node[V]]()
+  private var rootStack: Array[Int] = _
+  private var root: Int = _
+  private var stack: Array[Array[Int]] = _
 
 
   override def postConstruct(domains: Option[Int]): Unit = {
     nodes = nodes.sortBy(r => (r.start, r.end))
     maxLevel = index(nodes)
     map.clear()
+    root = (1 << maxLevel) - 1
+    rootStack = Array(maxLevel, root, 0)
+    stack = Array.ofDim[Int](32,3)
   }
 
   override def put(start: Int, end: Int, value: V): V = {
@@ -37,48 +43,54 @@ class IITree[V] extends BaseIntervalHolder[V] with Serializable {
     }
   }
 
+  private case class StackCell(k: Int, x: Int, w: Boolean)
 
   override def overlappers(start: Int, end: Int): util.Iterator[BaseNode[V]] = {
-    if (maxLevel == -1) {
-      throw new IllegalStateException("ImplicitIntervalTree needs to be indexed before finding overlapping intervals")
-    }
-    val result = mutable.Queue[BaseNode[V]]()
-    val stack = mutable.Stack[StackCell]()
-    val root = (1L << maxLevel) - 1
-    stack.push(new StackCell(maxLevel, root, 0))
+    val result = new util.ArrayList[BaseNode[V]]()
+    stack(0) = rootStack
+    stack(0)(2) = 0 //reset processed root node
+    var t = 1
 
-    while (stack.nonEmpty) {
-      val z = stack.pop()
-      if (z.k <= 3) {
-        val i0 = z.x >> z.k << z.k
-        var i1 = i0 + (1L << (z.k + 1)) - 1
+    while (t >= 1) {
+      t -= 1
+      val z = stack(t)
+      val zKDec = z(0) - 1
+      if (z(0) <= 3) {
+        val i0 = z(1) >> z(0) << z(0)
+        var i1 = i0 + (1 << (z(0) + 1)) - 1
 
         if (i1 >= nodes.length) {
           i1 = nodes.length
         }
 
-        var i = i0.toInt
+        var i = i0
         while (i < i1 && nodes(i).start <= end) {
           if (start <= nodes(i).end) {
-            result.enqueue(nodes(i))
+            result.add(nodes(i))
           }
           i += 1
         }
-      } else if (z.w == 0) {
-        val y = z.x - (1L << (z.k - 1)) // the left child of z.x; NB: y may be out of range (i.e. y>=a.size())
-        stack.push(new StackCell(z.k, z.x, 1)) // re-add node z.x, but mark the left child having been processed
-        if (y >= nodes.length || nodes(y.toInt).max >= start) { // push the left child if y is out of range or may overlap with the query
-          stack.push(new StackCell(z.k - 1, y, 0))
+      } else if (z(2) == 0) {
+        val y = z(1) - (1 << zKDec) // the left child of z.x; NB: y may be out of range (i.e. y>=a.size())
+        z(2) = 1 // re-add node z.x, but mark the left child having been processed
+        t += 1
+        if (y >= nodes.length || nodes(y).max >= start) { // push the left child if y is out of range or may overlap with the query
+          val z = stack(t)
+          z(0) = zKDec
+          z(1) = y
+          z(2) = 0
+          t += 1
         }
-      } else if (z.x < nodes.length && nodes(z.x.toInt).start <= end) { // need to push the right child
-        if (start <= nodes(z.x.toInt).end) {
-          result.enqueue(nodes(z.x.toInt))
+      } else if (z(1) < nodes.length && nodes(z(1)).start <= end) { // need to push the right child
+        if (start <= nodes(z(1)).end) {
+          result.add(nodes(z(1)))
         } // test if z.x overlaps the query; if yes, append to out[]
-        stack.push(new StackCell(z.k - 1, z.x + (1L << (z.k - 1)), 0)) // push the right child
+        stack(t) = Array(zKDec, z(1) + (1 << zKDec), 0)// push the right child
+        t += 1
       }
     }
 
-    result.asJava.iterator()
+    result.iterator()
   }
 
 
@@ -164,7 +176,6 @@ class IITree[V] extends BaseIntervalHolder[V] with Serializable {
         s = mid + 1
       }
     }
-
     -1
   }
 
@@ -179,5 +190,5 @@ class IITree[V] extends BaseIntervalHolder[V] with Serializable {
     }
   }
 
-  private class StackCell(val k: Int, val x: Long, val w: Int)
+
 }
