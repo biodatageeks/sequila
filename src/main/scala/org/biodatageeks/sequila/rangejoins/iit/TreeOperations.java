@@ -1,4 +1,4 @@
-package org.biodatageeks.sequila.rangejoins.exp.bfs;
+package org.biodatageeks.sequila.rangejoins.iit;
 
 
 public class TreeOperations {

@@ -259,6 +259,7 @@ public class IntervalTreeRedBlack<V> implements BaseIntervalHolder<V>,  Serializ
     {
         Node<V> result = null;
         Node<V> node = mRoot;
+        int opCounter = 0;
 
         if ( node != null && node.getMaxEnd() >= start )
         {
@@ -269,12 +270,14 @@ public class IntervalTreeRedBlack<V> implements BaseIntervalHolder<V>,  Serializ
                     // no need to consider the right sub-tree:  even if there's an overlapper, if won't be minimal
                     result = node;
                     node = node.getLeft();
+                    opCounter++;
                     if ( node == null || node.getMaxEnd() < start )
                         break; // no left sub-tree or all nodes end too early
                 }
                 else
                 { // no overlap.  if there might be a left sub-tree overlapper, consider the left sub-tree.
                     final Node<V> left = node.getLeft();
+                    opCounter++;
                     if ( left != null && left.getMaxEnd() >= start )
                     {
                         node = left;
@@ -285,6 +288,7 @@ public class IntervalTreeRedBlack<V> implements BaseIntervalHolder<V>,  Serializ
                             break; // everything in the right sub-tree is past the end of the query interval
 
                         node = node.getRight();
+                        opCounter++;
                         if ( node == null || node.getMaxEnd() < start )
                             break; // no right sub-tree or all nodes end too early
                     }
@@ -292,6 +296,9 @@ public class IntervalTreeRedBlack<V> implements BaseIntervalHolder<V>,  Serializ
             }
         }
 
+        if (result != null) {
+            result.operations = opCounter;
+        }
         return result;
     }
 
@@ -375,7 +382,6 @@ public class IntervalTreeRedBlack<V> implements BaseIntervalHolder<V>,  Serializ
                 }
             }
         }
-
         return result;
     }
 
@@ -543,6 +549,7 @@ public class IntervalTreeRedBlack<V> implements BaseIntervalHolder<V>,  Serializ
 
     public static class Node<V1> extends BaseNode<V1> implements Serializable
     {
+
         // bit-wise definitions from which the other constants are composed
         private static final long serialVersionUID = 1L;
         public static final int HAS_LESSER_PART = 1;
@@ -556,6 +563,8 @@ public class IntervalTreeRedBlack<V> implements BaseIntervalHolder<V>,  Serializ
         // there is no value that equals 5, since that would imply overhanging on left and right without overlapping
         public static final int IS_RIGHT_OVERHANGING_OVERLAPPER = HAS_GREATER_PART | HAS_OVERLAPPING_PART; // 6
         public static final int IS_SUPERSET = HAS_LESSER_PART | HAS_OVERLAPPING_PART | HAS_GREATER_PART; // 7
+
+        public long operations = 0;
 
         Node( final int start, final int end, final V1 value )
         {
@@ -612,6 +621,11 @@ public class IntervalTreeRedBlack<V> implements BaseIntervalHolder<V>,  Serializ
         public ArrayList<V1> getValue()
         {
             return mValue;
+        }
+
+        @Override
+        public long operations() {
+            return operations;
         }
 
         public V1 setValue( final V1 value )
@@ -832,27 +846,35 @@ public class IntervalTreeRedBlack<V> implements BaseIntervalHolder<V>,  Serializ
         @SuppressWarnings("null")
         static <V1> Node<V1> getNextOverlapper( Node<V1> node, final int start, final int end )
         {
+            long opCounter = 0;
             do
             {
                 Node<V1> nextNode = node.mRight;
+                opCounter++;
                 if ( nextNode != null && nextNode.mMaxEnd >= start )
                 {
                     node = nextNode;
-                    while ( (nextNode = node.mLeft) != null && nextNode.mMaxEnd >= start )
+                    while ( (nextNode = node.mLeft) != null && nextNode.mMaxEnd >= start ) {
                         node = nextNode;
+                        opCounter++;
+                    }
                 }
                 else
                 {
                     nextNode = node;
-                    while ( (node = nextNode.mParent) != null && node.mRight == nextNode )
+                    while ( (node = nextNode.mParent) != null && node.mRight == nextNode ) {
                         nextNode = node;
+                        opCounter++;
+                    }
                 }
-
                 if ( node != null && node.mStart > end )
                     node = null;
             }
             while ( node != null && !(node.mStart <= end && start <= node.mEnd) );
 
+            if (node!=null) {
+                node.operations = opCounter;
+            }
             return node;
         }
 

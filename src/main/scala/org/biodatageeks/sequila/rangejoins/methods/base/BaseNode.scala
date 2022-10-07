@@ -7,4 +7,5 @@ abstract class BaseNode[V] extends Serializable {
   def getStart: Int
   def getEnd: Int
   def getValue : util.ArrayList[V]
+  def operations: Long
 }

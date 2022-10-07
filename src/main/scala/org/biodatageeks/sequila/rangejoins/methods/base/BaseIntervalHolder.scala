@@ -43,7 +43,6 @@ trait BaseIntervalHolder[V] extends java.lang.Iterable[BaseNode[V] ] with Serial
     * @return An iterator.
     */
   def overlappers(start: Int, end: Int): java.util.Iterator[BaseNode[V]]
-
   /**
     * An optional method to include any struct actions required once all items are added
     */

@@ -1,4 +1,4 @@
-package org.biodatageeks.sequila.rangejoins.exp.speedup;
+package org.biodatageeks.sequila.rangejoins.iit;
 
 public class MetadataResolver {
 	public static TreeMetadata resolveMetadata(final int numberOfElems) {
