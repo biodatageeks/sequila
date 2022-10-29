@@ -47,7 +47,7 @@ object ResolveTableValuedFunctionsSeq extends Rule[LogicalPlan] {
     def implicitCast(values: Seq[Expression]): Option[Seq[Expression]] = {
       if (args.length == values.length) {
         val casted = values.zip(args).map { case (value, (_, expectedType)) =>
-          TypeCoercion.ImplicitTypeCasts.implicitCast(value, expectedType)
+          TypeCoercion.implicitCast(value, expectedType)
         }
         if (casted.forall(_.isDefined)) {
           return Some(casted.map(_.get))
@@ -130,7 +130,7 @@ object ResolveTableValuedFunctionsSeq extends Rule[LogicalPlan] {
 
   override def apply(plan: LogicalPlan): LogicalPlan = plan transformUp {
     case u: UnresolvedTableValuedFunction if u.functionArgs.forall(_.resolved) =>
-      val resolvedFunc = builtinFunctions.get(u.functionName.toLowerCase(Locale.ROOT)) match {
+      val resolvedFunc = builtinFunctions.get(u.name.funcName.toLowerCase(Locale.ROOT)) match {
         case Some(tvf) =>
           val resolved = tvf.flatMap { case (argList, resolver) =>
             argList.implicitCast(u.functionArgs) match {
@@ -143,12 +143,12 @@ object ResolveTableValuedFunctionsSeq extends Rule[LogicalPlan] {
           resolved.headOption.getOrElse {
             val argTypes = u.functionArgs.map(_.dataType.typeName).mkString(", ")
             u.failAnalysis(
-              s"""error: table-valued function ${u.functionName} with alternatives:
+              s"""error: table-valued function ${u.name.funcName} with alternatives:
                  |${tvf.keys.map(_.toString).toSeq.sorted.map(x => s" ($x)").mkString("\n")}
                  |cannot be applied to: (${argTypes})""".stripMargin)
           }
         case _ =>
-          u.failAnalysis(s"could not resolve `${u.functionName}` to a table-valued function")
+          u.failAnalysis(s"could not resolve `${u.name.funcName}` to a table-valued function")
       }
 
       // If alias names assigned, add `Project` with the aliases
@@ -157,7 +157,7 @@ object ResolveTableValuedFunctionsSeq extends Rule[LogicalPlan] {
         // Checks if the number of the aliases is equal to expected one
         if (u.output.size != outputAttrs.size) {
           u.failAnalysis(s"Number of given aliases does not match number of output columns. " +
-            s"Function name: ${u.functionName}; number of aliases: " +
+            s"Function name: ${u.name.funcName}; number of aliases: " +
             s"${u.output.size}; number of output columns: ${outputAttrs.size}.")
         }
         val aliases = outputAttrs.zip(u.output).map {

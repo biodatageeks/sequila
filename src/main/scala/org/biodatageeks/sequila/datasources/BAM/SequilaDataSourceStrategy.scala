@@ -102,6 +102,7 @@ case class SequilaDataSourceStrategy(spark: SparkSession) extends Strategy
         l.output.toStructType,
         Set.empty,
         Set.empty,
+        None,
         toCatalystRDD(l, baseRelation.buildScan()),
         baseRelation,
         None) :: Nil
@@ -215,6 +216,7 @@ case class SequilaDataSourceStrategy(spark: SparkSession) extends Strategy
         projects.map(_.toAttribute).toStructType,
         Set.empty,
         Set.empty,
+        None,
         scanBuilder(requestedColumns, candidatePredicates, pushedFilters),
         relation.relation,
         relation.catalogTable.map(_.identifier))
@@ -229,6 +231,7 @@ case class SequilaDataSourceStrategy(spark: SparkSession) extends Strategy
         requestedColumns.toStructType,
         Set.empty,
         Set.empty,
+        None,
         scanBuilder(requestedColumns, candidatePredicates, pushedFilters),
         relation.relation,
         relation.catalogTable.map(_.identifier))

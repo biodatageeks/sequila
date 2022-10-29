@@ -31,4 +31,6 @@ case class GenomicIntervalPlan(plan: LogicalPlan, spark: SparkSession,interval:G
       )
   }
   def children: Seq[SparkPlan] = Nil
+
+  override protected def withNewChildrenInternal(newChildren: IndexedSeq[SparkPlan]): SparkPlan = this
 }

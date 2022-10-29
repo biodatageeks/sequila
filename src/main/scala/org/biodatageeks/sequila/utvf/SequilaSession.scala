@@ -5,7 +5,7 @@ import htsjdk.samtools.ValidationStringency
 import org.apache.log4j.Logger
 import org.apache.spark.sql.catalyst.analysis.{Analyzer, SeQuiLaAnalyzer}
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
-import org.apache.spark.sql.execution.QueryExecution
+import org.apache.spark.sql.execution.{CommandExecutionMode, QueryExecution}
 import org.apache.spark.sql.execution.datasources.SequilaDataSourceStrategy
 import org.apache.spark.sql.functions.{lit, typedLit}
 import org.apache.spark.sql.internal.SessionState
@@ -120,6 +120,7 @@ case class SequilaSessionState(sparkSession: SparkSession, customAnalyzer: Analy
     sparkSession.sessionState.conf,
     sparkSession.sessionState.experimentalMethods,
     sparkSession.sessionState.functionRegistry,
+    sparkSession.sessionState.tableFunctionRegistry,
     sparkSession.sessionState.udfRegistration,
     () => sparkSession.sessionState.catalog,
     sparkSession.sessionState.sqlParser,
@@ -129,7 +130,7 @@ case class SequilaSessionState(sparkSession: SparkSession, customAnalyzer: Analy
     () => sparkSession.sessionState.streamingQueryManager,
     sparkSession.sessionState.listenerManager,
     () =>sparkSession.sessionState.resourceLoader,
-    executePlan,
+    sparkSession.sessionState.executePlan,
     (sparkSession:SparkSession,sessionState: SessionState) => sessionState.clone(sparkSession),
     sparkSession.sessionState.columnarRules,
     sparkSession.sessionState.queryStagePrepRules

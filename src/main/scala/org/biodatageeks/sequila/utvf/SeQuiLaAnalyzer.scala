@@ -24,7 +24,7 @@ class SeQuiLaAnalyzer(session: SparkSession) extends
     new ResolveSQLOnFile(session) +:
     new FallBackFileSourceV2(session) +:
       new ResolveSessionCatalog(
-        catalogManager, catalog.isTempView, catalog.isTempFunction) +:
+        catalogManager) +:
     ResolveEncodersInScalaAgg+: session.extensions.buildResolutionRules(session)
 
 
@@ -72,9 +72,11 @@ class SeQuiLaAnalyzer(session: SparkSession) extends
         ResolveRelations ::
         ResolveTables ::
         ResolvePartitionSpec ::
+        ResolveAlterTableCommands ::
         AddMetadataColumns ::
+        DeduplicateRelations ::
         ResolveReferences ::
-        ResolveCreateNamedStruct ::
+        ResolveExpressionsWithNamePlaceholders ::
         ResolveDeserializer ::
         ResolveNewInstance ::
         ResolveUpCast ::
@@ -97,21 +99,23 @@ class SeQuiLaAnalyzer(session: SparkSession) extends
         GlobalAggregates ::
         ResolveAggregateFunctions ::
         TimeWindowing ::
+        SessionWindowing ::
         ResolveInlineTables ::
-        ResolveHigherOrderFunctions(v1SessionCatalog) ::
+        ResolveHigherOrderFunctions(catalogManager) ::
         ResolveLambdaVariables ::
         ResolveTimeZone ::
         ResolveRandomSeed ::
         ResolveBinaryArithmetic ::
         ResolveUnion ::
-        TypeCoercion.typeCoercionRules ++
+        typeCoercionRules ++
+          Seq(ResolveWithCTE) ++
           extendedResolutionRules : _*),
+    Batch("Remove TempResolvedColumn", Once, RemoveTempResolvedColumn),
     Batch("Apply Char Padding", Once,
       ApplyCharTypePadding),
     Batch("Post-Hoc Resolution", Once,
-      Seq(ResolveNoopDropTable) ++
+      Seq(ResolveCommandsWithIfExists) ++
         postHocResolutionRules: _*),
-    Batch("Normalize Alter Table", Once, ResolveAlterTableChanges),
     Batch("Remove Unresolved Hints", Once,
       new ResolveHints.RemoveAllHints),
     Batch("Nondeterministic", Once,
@@ -124,6 +128,8 @@ class SeQuiLaAnalyzer(session: SparkSession) extends
     Batch("Subquery", Once,
       UpdateOuterReferences),
     Batch("Cleanup", fixedPoint,
-      CleanupAliases)
+      CleanupAliases),
+    Batch("HandleAnalysisOnlyCommand", Once,
+      HandleAnalysisOnlyCommand)
   )
 }
