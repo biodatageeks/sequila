@@ -18,15 +18,16 @@ val DEFAULT_HADOOP_VERSION = "3.1.2"
 
 lazy val hadoopVersion = Properties.envOrElse("SPARK_HADOOP_VERSION", DEFAULT_HADOOP_VERSION)
 
-dependencyOverrides += "io.netty" % "netty-all" % "4.1.63.Final"
-dependencyOverrides += "io.netty" % "netty-buffer" % "4.1.63.Final"
-dependencyOverrides += "io.netty" % "netty-codec" % "4.1.63.Final"
-dependencyOverrides += "io.netty" % "netty-common" % "4.1.63.Final"
-dependencyOverrides += "io.netty" % "netty-handler" % "4.1.63.Final"
-dependencyOverrides += "io.netty" % "netty-resolver" % "4.1.63.Final"
-dependencyOverrides += "io.netty" % "netty-transport" % "4.1.63.Final"
-dependencyOverrides += "io.netty" % "netty-transport-native-epoll" % "4.1.63.Final"
-dependencyOverrides += "io.netty" % "netty-transport-native-unix-common" % "4.1.63.Final"
+val nettyVersion = "4.1.68.Final"
+dependencyOverrides += "io.netty" % "netty-all" % nettyVersion
+dependencyOverrides += "io.netty" % "netty-buffer" % nettyVersion
+dependencyOverrides += "io.netty" % "netty-codec" % nettyVersion
+dependencyOverrides += "io.netty" % "netty-common" % nettyVersion
+dependencyOverrides += "io.netty" % "netty-handler" % nettyVersion
+dependencyOverrides += "io.netty" % "netty-resolver" % nettyVersion
+dependencyOverrides += "io.netty" % "netty-transport" % nettyVersion
+dependencyOverrides += "io.netty" % "netty-transport-native-epoll" % nettyVersion
+dependencyOverrides += "io.netty" % "netty-transport-native-unix-common" % nettyVersion
 dependencyOverrides += "com.google.guava" % "guava" % "15.0"
 dependencyOverrides += "org.apache.orc" % "orc-core" % "1.6.9"
 dependencyOverrides += "org.apache.logging.log4j" % "log4j-core" % "2.3"
