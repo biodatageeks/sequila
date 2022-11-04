@@ -82,14 +82,14 @@ linkTitle = "SeQuiLa"
 	<div class="text-left">
 	{{< highlight bash>}}
 # ensure you have Apache Spark and GraalVM installed
-sdk install spark 3.1.2
+sdk install spark 3.2.2
 sdk install java 21.3.0.r11-grl
 # set Apache Spark and JDK using sdkman
-sdk use spark 3.1.2
+sdk use spark 3.2.2
 # use GraalVM for best performance
 sdk use java 21.3.0.r11-grl
 # in case you prefer to use a Python interface
-pip install pysequila==0.3.3
+pip install pysequila==0.4.0
 # download sample data
 mkdir -p data
 #BAM
@@ -130,7 +130,7 @@ SELECT * FROM pileup('reads', 'NA12878','{{ PWD }}/data/hg18.fasta', false) LIMI
 		{{< highlight bash>}}
 pyspark --master local[1] \
 		--driver-memory 4g \
-		--packages org.biodatageeks:sequila_2.12:1.0.0
+		--packages org.biodatageeks:sequila_2.12:1.1.0
 		{{< / highlight >}}
 		{{< highlight python>}}
 from pysequila import SequilaSession
@@ -187,7 +187,7 @@ SELECT * FROM coverage('reads', 'NA12878','{{ PWD }}/data/hg18.fasta') LIMIT 10;
 		{{< highlight bash>}}
 pyspark --master local[1] \
 --driver-memory 4g \
---packages org.biodatageeks:sequila_2.12:1.0.0
+--packages org.biodatageeks:sequila_2.12:1.1.0
 		{{< / highlight >}}
 {{< highlight python>}}
 from pysequila import SequilaSession
@@ -256,7 +256,7 @@ reads.pos_start <= targets.pos_end
 		{{< highlight bash>}}
 pyspark --master local[1] \
 --driver-memory 4g \
---packages org.biodatageeks:sequila_2.12:1.0.0
+--packages org.biodatageeks:sequila_2.12:1.1.0
 		{{< / highlight >}}
 		{{< highlight python>}}
 targets_df = ss.read\

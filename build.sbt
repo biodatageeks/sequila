@@ -3,7 +3,7 @@ import sbtassembly.AssemblyPlugin.autoImport.ShadeRule
 import scala.util.Properties
 
 name := """sequila"""
-val DEFAULT_SPARK_3_VERSION = "3.1.2"
+val DEFAULT_SPARK_3_VERSION = "3.2.2"
 lazy val sparkVersion = Properties.envOrElse("SPARK_VERSION", DEFAULT_SPARK_3_VERSION)
 
 version := s"${sys.env.getOrElse("VERSION", "0.1.0")}"
@@ -18,6 +18,16 @@ val DEFAULT_HADOOP_VERSION = "3.1.2"
 
 lazy val hadoopVersion = Properties.envOrElse("SPARK_HADOOP_VERSION", DEFAULT_HADOOP_VERSION)
 
+val nettyVersion = "4.1.68.Final"
+dependencyOverrides += "io.netty" % "netty-all" % nettyVersion
+dependencyOverrides += "io.netty" % "netty-buffer" % nettyVersion
+dependencyOverrides += "io.netty" % "netty-codec" % nettyVersion
+dependencyOverrides += "io.netty" % "netty-common" % nettyVersion
+dependencyOverrides += "io.netty" % "netty-handler" % nettyVersion
+dependencyOverrides += "io.netty" % "netty-resolver" % nettyVersion
+dependencyOverrides += "io.netty" % "netty-transport" % nettyVersion
+dependencyOverrides += "io.netty" % "netty-transport-native-epoll" % nettyVersion
+dependencyOverrides += "io.netty" % "netty-transport-native-unix-common" % nettyVersion
 dependencyOverrides += "com.google.guava" % "guava" % "15.0"
 dependencyOverrides += "org.apache.orc" % "orc-core" % "1.6.9"
 dependencyOverrides += "org.apache.logging.log4j" % "log4j-core" % "2.3"
@@ -30,7 +40,7 @@ libraryDependencies += "org.apache.spark" %% "spark-core" % sparkVersion
 libraryDependencies += "org.apache.spark" %% "spark-sql" % sparkVersion
 libraryDependencies += "com.github.mrpowers" %% "spark-fast-tests" % "0.21.3"
 libraryDependencies += "com.github.mrpowers" %% "spark-daria" % "0.38.2"
-libraryDependencies += "com.holdenkarau" %% "spark-testing-base" % "3.1.2_1.1.0" % "test" excludeAll ExclusionRule(organization = "javax.servlet") excludeAll (ExclusionRule("org.apache.hadoop"))
+libraryDependencies += "com.holdenkarau" %% "spark-testing-base" % "3.2.0_1.2.0" % "test" excludeAll ExclusionRule(organization = "javax.servlet") excludeAll (ExclusionRule("org.apache.hadoop"))
 libraryDependencies += "org.bdgenomics.adam" %% "adam-core-spark3" % "0.36.0" excludeAll (ExclusionRule("org.seqdoop"))
 libraryDependencies += "org.bdgenomics.adam" %% "adam-apis-spark3" % "0.36.0" excludeAll (ExclusionRule("org.seqdoop"))
 libraryDependencies += "org.bdgenomics.adam" %% "adam-cli-spark3" % "0.36.0" excludeAll (ExclusionRule("org.seqdoop"))
@@ -156,7 +166,8 @@ publishTo := {
   if (!version.value.toLowerCase.contains("snapshot")) {
     sonatypePublishToBundle.value
   } else {
-    val nexus = "http://zsibio.ii.pw.edu.pl/nexus/repository/"
+    val nexus = "https://zsibio.ii.pw.edu.pl/nexus/repository/"
     Some("snapshots" at nexus + "maven-snapshots")
   }
 }
+ThisBuild / useCoursier := true

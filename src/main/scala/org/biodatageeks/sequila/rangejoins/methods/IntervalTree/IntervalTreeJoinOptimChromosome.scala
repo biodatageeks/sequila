@@ -115,4 +115,6 @@ case class IntervalTreeJoinOptimChromosome(left: SparkPlan,
       .stats
       .sizeInBytes != Long.MaxValue)
   }
+
+  override protected def withNewChildrenInternal(newLeft: SparkPlan, newRight: SparkPlan): SparkPlan  =  copy(left = newLeft, right = newRight)
 }

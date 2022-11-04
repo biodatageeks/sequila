@@ -65,4 +65,6 @@ IntervalTreeJoinChromosome(left: SparkPlan,
     }
 
   }
+
+  override protected def withNewChildrenInternal(newLeft: SparkPlan, newRight: SparkPlan): SparkPlan =  copy(left = newLeft, right = newRight)
 }
