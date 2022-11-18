@@ -6,8 +6,8 @@ import org.apache.spark.sql.SparkSession
 import org.biodatageeks.sequila.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
 import org.biodatageeks.sequila.utils.{Columns, InternalParams}
 import org.rogach.scallop.ScallopConf
-import org.seqdoop.hadoop_bam.{BAMInputFormat, SAMRecordWritable}
 import org.seqdoop.hadoop_bam.util.SAMHeaderReader
+import org.seqdoop.hadoop_bam.{BAMInputFormat, SAMRecordWritable}
 
 object FeatureCounts {
   case class Region(contig:String, pos_start:Int, pos_end:Int)
@@ -25,6 +25,7 @@ object FeatureCounts {
     val spark = SparkSession
       .builder()
       .appName("SeQuiLa-FC")
+      .config("spark.master", "local[4]")
       .getOrCreate()
 
     spark.sqlContext.setConf(InternalParams.useJoinOrder,"true")
@@ -41,11 +42,11 @@ object FeatureCounts {
                      count(*) AS Counts
             FROM reads JOIN targets
       |ON (
-      |  targets.Chr=reads.contigName
+      |  targets.Chr=reads.contig
       |  AND
-      |  reads.end >= CAST(targets.Start AS INTEGER)
+      |  reads.pos_end >= CAST(targets.Start AS INTEGER)
       |  AND
-      |  reads.start <= CAST(targets.End AS INTEGER)
+      |  reads.pos_start <= CAST(targets.End AS INTEGER)
       |)
       |GROUP BY targets.GeneId,targets.Chr,targets.Start,targets.End,targets.Strand""".stripMargin
       spark
@@ -70,7 +71,7 @@ object FeatureCounts {
         .option("delimiter", "\t")
         .csv(runConf.annotations())
       targets
-        .withColumnRenamed("contigName", Columns.CONTIG)
+        .withColumnRenamed("contig", Columns.CONTIG)
         .createOrReplaceTempView("targets")
 
      spark.sql(query)
