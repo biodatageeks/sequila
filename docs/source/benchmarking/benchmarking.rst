@@ -170,14 +170,14 @@ For counting reads overlapping predefined feature regions the following SQL quer
 
 .. code-block:: sql
 
-    SELECT targets.contigName,targets.start,targets.end,count(*) FROM reads JOIN targets
+    SELECT targets.contig,targets.pos_start,targets.pos_end,count(*) FROM reads JOIN targets
          ON (targets.contigName=reads.contigName
          AND
-         CAST(reads.end AS INTEGER)>=CAST(targets.start AS INTEGER)
+         CAST(reads.pos_end AS INTEGER)>=CAST(targets.pos_start AS INTEGER)
          AND
-         CAST(reads.start AS INTEGER)<=CAST(targets.end AS INTEGER)
+         CAST(reads.pos_start AS INTEGER)<=CAST(targets.pos_end AS INTEGER)
          )
-         GROUP BY targets.contigName,targets.start,targets.end
+         GROUP BY targets.contig,targets.pos_start,targets.pos_end
 
 Exactly the same query has been used for both single node and cluster tests.
 
