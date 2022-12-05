@@ -48,7 +48,7 @@ libraryDependencies += "io.projectglow" %% "glow-spark3" % "1.0.1" excludeAll (E
 libraryDependencies += "com.intel.gkl" % "gkl" % "0.8.8"
 libraryDependencies += "org.openjdk.jol" % "jol-core" % "0.16" % "provided"
 libraryDependencies += "com.github.jsr203hadoop" % "jsr203hadoop" % "1.0.3"
-
+libraryDependencies += "org.skyscreamer" % "jsonassert" % "1.5.1"
 
 
 

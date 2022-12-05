@@ -29,6 +29,7 @@ object DepthOfCoverage {
     val spark = SparkSession
       .builder()
       .appName("SeQuiLa-DoC")
+      .config("spark.master", "local[4]")
       .getOrCreate()
 
 
@@ -50,7 +51,7 @@ object DepthOfCoverage {
     val query = "SELECT * FROM coverage('reads_tmp', '%s', '%s')".format(sample, runConf.format())
 
     ss.sql(query)
-      .orderBy(Columns.CONTIG,"start")
+      .orderBy(Columns.CONTIG,"pos_start")
       .coalesce(1)
       .write
         .mode("overwrite")

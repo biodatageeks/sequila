@@ -1,6 +1,10 @@
 package org.biodatageeks.sequila.apps
 
+import htsjdk.samtools.ValidationStringency
 import org.apache.spark.sql.{SequilaSession, SparkSession}
+import org.biodatageeks.sequila.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
+import org.biodatageeks.sequila.utils.InternalParams
+import org.seqdoop.hadoop_bam.util.SAMHeaderReader
 
 trait SequilaApp {
   def createSequilaSession(): SequilaSession = {
@@ -14,5 +18,24 @@ trait SequilaApp {
     val ss = SequilaSession(spark)
     spark.sparkContext.setLogLevel("WARN")
     ss
+  }
+
+  def createSparkSessionWithExtraStrategy(): SparkSession = {
+    val spark = SparkSession
+      .builder()
+      .appName("SeQuiLa-DoC")
+      .config("spark.master", "local[4]")
+      .getOrCreate()
+
+    spark.sqlContext.setConf(InternalParams.useJoinOrder, "false")
+    spark.experimental.extraStrategies = new IntervalTreeJoinStrategyOptim(spark) :: Nil
+    spark
+      .sparkContext
+      .setLogLevel("INFO")
+    spark
+      .sparkContext
+      .hadoopConfiguration.set(SAMHeaderReader.VALIDATION_STRINGENCY_PROPERTY, ValidationStringency.SILENT.toString)
+
+    spark
   }
 }
