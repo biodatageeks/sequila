@@ -1,6 +1,6 @@
 package org.biodatageeks.sequila.ximmer
 
-import org.apache.spark.sql.{SequilaSession, SparkSession}
+import org.apache.spark.sql.SequilaSession
 import org.biodatageeks.sequila.apps.PileupApp.createSparkSessionWithExtraStrategy
 import org.biodatageeks.sequila.utils.SystemFilesUtil._
 
@@ -31,7 +31,7 @@ class TargetCounts {
 
       if (saveBamInfo) {
         val countQuery = "Select count(*) from reads"
-        val bam_info_output = outputPath + "/bam_info/" + sample.toString
+        val bam_info_output = outputPath + "/bam_info/" + sample
         Files.createDirectories(Paths.get(bam_info_output))
 
         ss.sql(countQuery)
@@ -83,29 +83,21 @@ class TargetCounts {
       ss.sql(intervalJoinQuery)
         .createOrReplaceTempView("result");
 
-      //Uzupelnienie przedziałów z zerowym pokryciem
-      //Obejscie problemu - strategia intevalJoin lapie tylko inner joina, zamiast zrobic left joina
-      //Robimy jest drugi sql na pliku BED i wyniku poprzedniego sqla (podobny rozmiar co bed)
+//      //Uzupelnienie przedziałów z zerowym pokryciem
+//      //Obejscie problemu - strategia intevalJoin lapie tylko inner joina, zamiast zrobic left joina
+//      //Robiony jest drugi sql na pliku BED i wyniku poprzedniego sqla (podobny rozmiar co bed)
       val includeAllTargetsQuery =
-      """SELECT *
-        |FROM (
-        |   SELECT t._c0 AS Chr,
-        |          t._c1 AS Start,
-        |          t._c2 AS End,
-        |          0 AS codex_cov,
-        |          0 AS cnmops_cov,
-        |          0 AS ed_cov,
-        |          0 AS conifer_cov
-        |   FROM targets t
-        |   WHERE NOT EXISTS (
-        |         SELECT 1
-        |         FROM result r
-        |         WHERE r.chr = t._c0 AND r.start = t._c1 AND r.end = t._c2)
-        |   UNION
-        |   SELECT * FROM result
-        |   )
-        |ORDER BY chr, CAST(start AS INTEGER)
-        |""".stripMargin
+        """SELECT t._c0 AS Chr,
+          |       t._c1 AS Start,
+          |       t._c2 AS End,
+          |       CASE WHEN codex_cov IS NULL THEN 0 ELSE codex_cov END,
+          |       CASE WHEN cnmops_cov IS NULL THEN 0 ELSE cnmops_cov END,
+          |       CASE WHEN ed_cov IS NULL THEN 0 ELSE ed_cov END,
+          |       CASE WHEN conifer_cov IS NULL THEN 0 ELSE conifer_cov END
+          |FROM targets t
+          |       LEFT JOIN result r on r.chr = t._c0 AND r.start = t._c1 AND r.end = t._c2
+          |ORDER BY chr, CAST(start AS INTEGER)
+          |""".stripMargin
 
       ss.sql(includeAllTargetsQuery)
         .coalesce(1)
