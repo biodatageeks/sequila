@@ -51,4 +51,30 @@ class SequilaConverter (spark: SparkSession) extends Serializable with PileupCon
     spark.createDF(perBase.collect().toList, CommonPileupFormat.schemaAltsQualsString.fields.toList )
   }
 
+  def convertToPerBaseOutput(df: DataFrame): DataFrame = {
+    val perBase = df.rdd.flatMap( { r => {
+      val chr = r.getString(SequilaSchema.contig)
+      val start = r.getInt(SequilaSchema.position_start)
+      val end = r.getInt(SequilaSchema.position_end) + 1
+      val ref = r.getString(SequilaSchema.ref)
+      val cov = r.getShort(SequilaSchema.cov)
+      val array = new Array[(String, Int, Int, String, Short)](end - start)
+
+      var cnt = 0
+      var position = start
+
+      while (position < end) {
+        if (ref == AlignmentConstants.REF_SYMBOL)
+          array(cnt) = (chr, position, position, "R", cov)
+        else
+          array(cnt) = (chr, position, position, ref.substring(cnt, cnt + 1), cov)
+        cnt += 1
+        position += 1
+      }
+      array
+    }
+    })
+    spark.createDataFrame(perBase)
+  }
+
 }

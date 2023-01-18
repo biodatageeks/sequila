@@ -1,15 +1,17 @@
 package org.biodatageeks.sequila.ximmer.converters
 
+import org.apache.spark.sql.{DataFrame, Row}
+
 import java.io.{File, PrintWriter}
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
-import scala.io.Source
 
 class ExomeDepthConverter {
 
-  val recordsByChr: mutable.Map[String, ListBuffer[Record]] = mutable.LinkedHashMap[String, ListBuffer[Record]]()
+  val recordsByChr: mutable.Map[String, ListBuffer[ListBuffer[String]]] = mutable.LinkedHashMap[String, ListBuffer[ListBuffer[String]]]()
 
-  def convertToExomeDepthFormat(sampleFiles: List[String], sampleNames: List[String], outputPath: String): Unit = {
+  def convertToExomeDepthFormat(targetCountResult: mutable.Map[String, (DataFrame, Long)], outputPath: String): Unit = {
+    val sampleNames = targetCountResult.keys.toList
     val header = List(addExtraQuotes("chromosome"), addExtraQuotes("start"), addExtraQuotes("end"), addExtraQuotes("exon"))
       .mkString(" ") + " " +
       sampleNames.toStream
@@ -17,8 +19,16 @@ class ExomeDepthConverter {
         .toList
         .mkString(" ")
 
-    for (sampleFile <- sampleFiles) {
-      fillCoveragesForSample(sampleFile)
+    val sampleList = targetCountResult.map(x => x._2._1).toList
+    var beforeInit = true
+    for (sampleDF <- sampleList) {
+      val collected = sampleDF.collect()
+      if (beforeInit) {
+        initTargets(collected)
+        beforeInit = false
+      }
+
+      fillCoveragesForSample(collected)
     }
 
     recordsByChr.foreach(x => {
@@ -31,7 +41,7 @@ class ExomeDepthConverter {
       pw.write("\n")
 
       regions.foreach(r => {
-        pw.write(r.toString())
+        pw.write(r.mkString(" "))
         pw.write("\n")
       })
       pw.close()
@@ -42,63 +52,28 @@ class ExomeDepthConverter {
     "\"" + s + "\""
   }
 
-  private def fillCoveragesForSample(sampleFile: String): Unit = {
-    val content = Source.fromFile(sampleFile)
-    val lines = content.getLines()
-    for (line <- lines) {
-      val elements = line.split(",")
-      val record = recordFromElements(elements)
-      val cov = elements(5)
-      val chr = record.chr
-
+  private def initTargets(rows: Array[Row]): Unit = {
+    rows.foreach(row => {
+      val chr = row.getString(0)
+      val start = row.getString(1).toInt
+      val end = row.getString(2).toInt - 1
+      val exon = "\"" + chr + "-" + start + "-" + end + "\""
+      val record = ListBuffer(addExtraQuotes(chr), (start + 1).toString, end.toString, exon)
       if (!recordsByChr.contains(chr)) {
-        recordsByChr += (chr -> new ListBuffer[Record])
+        recordsByChr += (chr -> new ListBuffer[ListBuffer[String]])
       }
-      if (!recordsByChr(chr).contains(record)) {
-        recordsByChr(chr) += record
-      }
-
-      recordsByChr(chr)
-        .find(x => x.equals(record))
-        .get
-        .addCov(cov)
-    }
-
-    content.close()
+      recordsByChr(chr) += record
+    })
   }
 
-  private def recordFromElements(elements: Array[String]): Record = {
-    val chr = elements(0)
-    val start = elements(1).toInt
-    val end = elements(2).toInt - 1
-    val exon = "\"" + chr + "-" + start + "-" + end + "\""
-    new Record(chr, (start + 1).toString, end.toString, exon)
-  }
-
-  class Record(val chr: String, val start: String, val end: String, val exon: String) {
-    private val covs = new ListBuffer[String]()
-
-    def addCov(value: String): Unit = {
-      covs += value
-    }
-
-    override def toString(): String = {
-      var objectList = List(addExtraQuotes(chr), start, end, exon)
-      objectList ++= covs.toList
-      objectList.mkString(" ")
-    }
-
-    override def equals(o: Any): Boolean = {
-      if (!o.isInstanceOf[Record]) return false
-      val other = o.asInstanceOf[Record]
-
-      (this.chr == other.chr) && (this.start == other.start) && (this.end == other.end) && (this.exon == other.exon)
-    }
-
-    override def hashCode(): Int = {
-      val PRIME = 59
-      exon.hashCode() * PRIME
-    }
+  private def fillCoveragesForSample(rows: Array[Row]): Unit = {
+    var iterator = 0
+    rows.foreach(row => {
+      val chr = row.getString(0)
+      val cov = row.getLong(5)
+      recordsByChr(chr)(iterator) += cov.toString
+      iterator += 1
+    })
   }
 
 }

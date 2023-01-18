@@ -1,9 +1,11 @@
 package org.biodatageeks.sequila.ximmer.converters
 
+import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.biodatageeks.sequila.apps.PileupApp.createSparkSessionWithExtraStrategy
+
 import java.io.{File, PrintWriter}
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
-import scala.io.Source
 
 class CnMopsConverter {
 
@@ -12,12 +14,19 @@ class CnMopsConverter {
   val targetLengthList: ListBuffer[Int] = ListBuffer[Int]()
   var targetsNr = 0
 
-  def convertToCnMopsFormat(sampleFiles: List[String], sampleNames: List[String], outputPath: String): Unit = {
+  def convertToCnMopsFormat(targetCountResult: mutable.Map[String, (DataFrame, Long)], outputPath: String): Unit = {
+    val spark = createSparkSessionWithExtraStrategy()
+    val sampleNames = targetCountResult.keys.toList
     val samplesValues : ListBuffer[List[String]] = ListBuffer[List[String]]()
-    fillTargetsInfo(sampleFiles.head)
-    for (sampleFile <- sampleFiles) {
-      val sampleValues = fillValuesForSample(sampleFile)
-      samplesValues += sampleValues
+    var sampleDFList = targetCountResult.map(x => x._2._1).toList
+
+    val firstSampleValues = fillTargetsInfo(sampleDFList.head)
+    samplesValues += firstSampleValues
+    sampleDFList = sampleDFList.drop(1)
+
+    for (sampleDF <- sampleDFList) {
+      val sampleValue = fillValuesForSample(sampleDF, spark)
+      samplesValues += sampleValue
     }
 
     val chrList = targetsNumberByChr.keys.toList
@@ -45,27 +54,18 @@ class CnMopsConverter {
     writeResultJson(outputPath)
   }
 
-  private def fillValuesForSample(sampleFile: String): List[String] = {
-    val content = Source.fromFile(sampleFile)
-    val lines = content.getLines()
-    val values : ListBuffer[String] = ListBuffer[String]()
-    for (line <- lines) {
-      val elements = line.split(",")
-      val cov = elements(4)
-      values += cov
-    }
-    content.close()
-    values.toList
+  private def fillValuesForSample(sampleDF: DataFrame, spark: SparkSession): List[String] = {
+    import spark.implicits._
+    sampleDF.mapPartitions(rowIterator => rowIterator.map(row => {
+      row.getLong(4).toString
+    })).collect().toList
   }
 
-  private def fillTargetsInfo(sampleFile: String): Unit = {
-    val content = Source.fromFile(sampleFile)
-    val lines = content.getLines()
-    for (line <- lines) {
-      val elements = line.split(",")
-      val chr = elements(0)
-      val start = elements(1)
-      val end = elements(2)
+  private def fillTargetsInfo(df: DataFrame): List[String] = {
+    df.collect().map(row => {
+      val chr = row.getString(0)
+      val start = row.getString(1)
+      val end = row.getString(2)
 
       if (!targetsNumberByChr.contains(chr)) {
         targetsNumberByChr += (chr -> 0)
@@ -76,8 +76,9 @@ class CnMopsConverter {
       targetLengthList += (end.toInt - start.toInt)
 
       targetsNr += 1
-    }
-    content.close()
+
+      row.getLong(4).toString
+    }).toList
   }
 
   private def addSquareBrackets(s: String) : String = {

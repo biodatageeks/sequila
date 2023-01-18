@@ -1,17 +1,18 @@
 package org.biodatageeks.sequila.ximmer
 
-import org.apache.spark.sql.SequilaSession
+import org.apache.spark.sql.{DataFrame, SequilaSession}
 import org.biodatageeks.sequila.apps.PileupApp.createSparkSessionWithExtraStrategy
 import org.biodatageeks.sequila.utils.SystemFilesUtil._
 
-import java.nio.file.{Files, Paths}
+import scala.collection.mutable
 
 class TargetCounts {
 
-  def calculateTargetCounts(targetsPath: String, bamFiles: List[String], saveBamInfo: Boolean,
-                            outputPath: String): Unit = {
+  def calculateTargetCounts(targetsPath: String, bamFiles: List[String], saveBamInfo: Boolean): mutable.Map[String, (DataFrame, Long)] = {
     val spark = createSparkSessionWithExtraStrategy()
     val ss = SequilaSession(spark)
+
+    val resultMap = mutable.LinkedHashMap[String, (DataFrame, Long)]()
 
     ss
       .read
@@ -29,16 +30,16 @@ class TargetCounts {
 
       val sample = getFilename(bam)
 
+      var readsNr = 0L
       if (saveBamInfo) {
+        val startTime = System.currentTimeMillis()
         val countQuery = "Select count(*) from reads"
-        val bam_info_output = outputPath + "/bam_info/" + sample
-        Files.createDirectories(Paths.get(bam_info_output))
+        readsNr = ss.sql(countQuery) //TODO kkobylin sprawdzic czy da sie w inny sposob wyciagnac ilosc probek bo to trwa 3 sek
+          .first()
+          .getLong(0)
+        val endTimeEnd = System.currentTimeMillis()
 
-        ss.sql(countQuery)
-          .coalesce(1)
-          .write
-          .mode("overwrite")
-          .csv(bam_info_output)
+        println("Select count time: " + (endTimeEnd - startTime) / 1000)
       }
 
       val intervalJoinQuery =
@@ -77,9 +78,6 @@ class TargetCounts {
           |GROUP BY t._c0, t._c1, t._c2
           |""".stripMargin
 
-      val target_counts_output = outputPath + "/target_counts_output/" + sample
-      Files.createDirectories(Paths.get(target_counts_output))
-
       ss.sql(intervalJoinQuery)
         .createOrReplaceTempView("result");
 
@@ -99,14 +97,10 @@ class TargetCounts {
           |ORDER BY chr, CAST(start AS INTEGER)
           |""".stripMargin
 
-      ss.sql(includeAllTargetsQuery)
-        .coalesce(1)
-        .write
-        .mode("overwrite")
-        .csv(target_counts_output)
+      val resultDF = ss.sql(includeAllTargetsQuery)
+      resultMap += (sample -> (resultDF, readsNr))
     }
-
-    ss.stop()
+    return resultMap
   }
 
 }

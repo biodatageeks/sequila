@@ -1,9 +1,10 @@
 package org.biodatageeks.sequila.ximmer.converters
 
+import org.apache.spark.sql.DataFrame
+
 import java.io.{File, PrintWriter}
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
-import scala.io.Source
 
 class CodexConverter {
   val mergedFormatJson: String =
@@ -21,11 +22,11 @@ class CodexConverter {
 
   var coveragesByChrMap : mutable.Map[String, ListBuffer[Int]] = mutable.Map[String, ListBuffer[Int]]()
 
-  def convertToCodexFormat(targetCountFiles: List[String], outputPath: String): Unit = {
-    val samplesCount = targetCountFiles.size
+  def convertToCodexFormat(targetCountResult: mutable.Map[String, (DataFrame, Long)], outputPath: String): Unit = {
+    val samplesCount = targetCountResult.size
 
-    for (targetCountFile <- targetCountFiles) {
-      readAndFillCoveragesByChrMap(targetCountFile)
+    for (targetCountResult <- targetCountResult) {
+      readAndFillCoveragesByChrMap(targetCountResult._2._1)
     }
 
     for ((chr, values) <- coveragesByChrMap) {
@@ -44,20 +45,15 @@ class CodexConverter {
     }
   }
 
-  private def readAndFillCoveragesByChrMap(targetCountFile: String): Unit = {
-    val content = Source.fromFile(targetCountFile)
-    val lines = content.getLines()
-    for (line <- lines) {
-      val elements = line.split(",")
-      val chr = elements(0)
-      val cov = elements(3)
+  private def readAndFillCoveragesByChrMap(targetCount: DataFrame): Unit = {
+    targetCount.collect().foreach(row => {
+      val chr = row.getString(0)
+      val cov = row.getLong(3).toInt
       if (!coveragesByChrMap.contains(chr)) {
         coveragesByChrMap += (chr -> new ListBuffer[Int])
       }
-      coveragesByChrMap(chr) += cov.toInt
-    }
-
-    content.close()
+      coveragesByChrMap(chr) += cov
+    })
   }
 
 }

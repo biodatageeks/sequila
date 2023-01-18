@@ -1,42 +1,32 @@
 package org.biodatageeks.sequila.ximmer.converters
 
+import org.apache.spark.sql.DataFrame
+
 import java.io.{File, PrintWriter}
-import scala.io.Source
 
 class ConiferConverter {
 
-  def convertToConiferFormat(sample: String, targetCountFile: String, bamInfoFile: String, outputPath: String) : Unit = {
-    val readsNumber = readTotalReadsNumber(bamInfoFile)
-    var iterator = 1
+  def convertToConiferFormat(targetCountResult: (String, (DataFrame, Long)), outputPath: String) : Unit = {
+    val readsNumber = targetCountResult._2._2
+    val sample = targetCountResult._1
     val fileObject = new File(outputPath + "/" + sample + ".rpkm")
     val pw = new PrintWriter(fileObject)
+    var iterator = 1
 
-    val content = Source.fromFile(targetCountFile)
-    val lines = content.getLines()
-
-    for (line <- lines) {
-      val elements = line.split(",")
-      val targetStart = elements(1).toInt
-      val targetEnd = elements(2).toInt
-      val cov = elements(6).toInt
+    targetCountResult._2._1.collect().foreach(row => {
+      val targetStart = row.getString(1).toInt
+      val targetEnd = row.getString(2).toInt
+      val cov = row.getLong(6)
       val exonLength = targetEnd - targetStart
       val rpkm = BigDecimal(calculateRpkm(cov, exonLength, readsNumber)).setScale(6, BigDecimal.RoundingMode.FLOOR).toDouble
       pw.write(iterator + "\t" + cov + "\t" + rpkm + "\n")
       iterator += 1
-    }
+    })
+
     pw.close()
-    content.close()
   }
 
-  private def readTotalReadsNumber(bamInfoFile: String) : Int = {
-    val content = Source.fromFile(bamInfoFile)
-    val totalReadsNumber = content.getLines().next().toInt
-    content.close()
-    totalReadsNumber
-  }
-
-  private def calculateRpkm(readCount: Int, exonLength: Int, totalReads: Int) : Double = {
+  private def calculateRpkm(readCount: Long, exonLength: Int, totalReads: Long) : Double = {
     (scala.math.pow(10, 9) * readCount / exonLength) / totalReads
   }
-
 }

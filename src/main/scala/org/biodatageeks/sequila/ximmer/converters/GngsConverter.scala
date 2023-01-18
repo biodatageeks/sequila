@@ -1,70 +1,55 @@
 package org.biodatageeks.sequila.ximmer.converters
 
+import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.biodatageeks.sequila.apps.PileupApp.createSparkSessionWithExtraStrategy
+
 import java.io.{File, PrintWriter}
-import scala.collection.mutable
-import scala.collection.mutable.ListBuffer
-import scala.io.Source
 
-class GngsConverter {
-  var coveragesByRegions : mutable.Map[RegionWithSize, ListBuffer[Double]] = mutable.LinkedHashMap[RegionWithSize, ListBuffer[Double]]()
-  // Zmienna pomagajaca uwzglednic basy z zerowym pokryciem w statystykach
-  var targetRegionsSize = 0
+class GngsConverter extends Serializable{
 
-  def calculateStatsAndConvertToGngsFormat(targetsPerBaseFile: String, targetsFile: String, outputPath: String, sample: String): Unit = {
+  def calculateStatsAndConvertToGngsFormat(outputPath: String, sample: String, meanCoverage : DataFrame,
+                                           perBaseCoverage : DataFrame): Unit = {
+    val spark = createSparkSessionWithExtraStrategy()
+    calculateAndWriteStats(perBaseCoverage, outputPath, sample, spark)
+    writeSampleIntervalSummary(meanCoverage, outputPath, sample, spark)
+  }
 
-    initTargetRegions(targetsFile)
-    readCoverages(targetsPerBaseFile)
+  private def calculateAndWriteStats(coveragesDf: DataFrame, outputPath: String, sample: String, spark: SparkSession) : Unit = {
+    import spark.implicits._
 
-    val coverages = coveragesByRegions.values
-      .toStream
-      .flatMap(x => x.toStream)
-      .sorted
+    val coveragesCount = coveragesDf.count()
+    val coveragesSum = spark.sparkContext.longAccumulator("coveragesSum")
+    val nrAbove1 = spark.sparkContext.longAccumulator("nrAbove1")
+    val nrAbove5 = spark.sparkContext.longAccumulator("nrAbove5")
+    val nrAbove10 = spark.sparkContext.longAccumulator("nrAbove10")
+    val nrAbove20 = spark.sparkContext.longAccumulator("nrAbove20")
+    val nrAbove50 = spark.sparkContext.longAccumulator("nrAbove50")
+
+    val coverages = coveragesDf.mapPartitions(rowIterator => {
+      rowIterator.map(
+        row => {
+          val value = row.getShort(4).toInt
+          val valueLong = value.toLong
+          coveragesSum.add(valueLong)
+          if (value > 1) nrAbove1.add(1L)
+          if (value > 5) nrAbove5.add(1L)
+          if (value > 10) nrAbove10.add(1L)
+          if (value > 20) nrAbove20.add(1L)
+          if (value > 50) nrAbove50.add(1L)
+          value
+        }
+      )})
+      .collect()
       .toList
+      .sortWith(_ < _)
 
-    calculateAndWriteStats(coverages, outputPath, sample)
-    writeSampleIntervalSummary(outputPath, sample)
-  }
-
-  private def initTargetRegions(targetsFile: String): Unit = {
-    val content = Source.fromFile(targetsFile)
-
-    for (line <- content.getLines) {
-      val elements = line.split("\t")
-      val regionWithSize = convertLineToObject(elements)
-      coveragesByRegions += (regionWithSize -> new ListBuffer[Double])
-      targetRegionsSize += regionWithSize.size
-    }
-
-    content.close()
-  }
-
-  private def readCoverages(joinFile: String): Unit = {
-    val content = Source.fromFile(joinFile)
-
-    for (line <- content.getLines) {
-      val elements = line.split(",")
-      val regionWithSize = convertLineToObject(elements)
-
-      var coverage = elements(3)
-      if (coverage == "\"\"" || coverage.isEmpty) {
-        coverage = "0.0"
-      }
-      val coverageDouble = coverage.toDouble
-
-      coveragesByRegions(regionWithSize) += coverageDouble
-    }
-
-    content.close()
-  }
-
-  private def calculateAndWriteStats(coverages: List[Double], outputPath: String, sample: String) : Unit = {
-    val median = calculateMedian(coverages)
-    val mean = coverages.sum / targetRegionsSize
-    val perc_bases_above_1 = calcAbovePercent(coverages, 1)
-    val perc_bases_above_5 = calcAbovePercent(coverages, 5)
-    val perc_bases_above_10 = calcAbovePercent(coverages, 10)
-    val perc_bases_above_20 = calcAbovePercent(coverages, 20)
-    val perc_bases_above_50 = calcAbovePercent(coverages, 50)
+    val median = calculateMedian(coverages, coveragesCount.toInt)
+    val mean = coveragesSum.value / coveragesCount
+    val perc_bases_above_1 = nrAbove1.value.toDouble / coveragesCount * 100
+    val perc_bases_above_5 = nrAbove5.value.toDouble / coveragesCount * 100
+    val perc_bases_above_10 = nrAbove10.value.toDouble / coveragesCount * 100
+    val perc_bases_above_20 = nrAbove20.value.toDouble / coveragesCount * 100
+    val perc_bases_above_50 = nrAbove50.value.toDouble / coveragesCount * 100
 
     val fileObject = new File(outputPath + "/" +sample + ".stats.tsv" )
     val pw = new PrintWriter(fileObject)
@@ -77,65 +62,49 @@ class GngsConverter {
     pw.close()
   }
 
-  private def calculateMedian(sortedValues: List[Double]) : Double = {
-    val nrOfZeroCoverages = targetRegionsSize - sortedValues.size
-    val allValues = Array.fill(nrOfZeroCoverages)(0.0) ++ sortedValues
+  private def calculateMedian(sortedValues: List[Int], coveragesSize: Int) : Double = {
+    val allValues = sortedValues
 
-    if (allValues.length % 2 == 1) {
-      allValues(allValues.length / 2)
+    if (coveragesSize % 2 == 1) {
+      allValues(coveragesSize / 2)
     } else {
-      val (up, down) = allValues.splitAt(allValues.length / 2)
+      val (up, down) = allValues.splitAt(coveragesSize / 2)
       (up.last + down.head) / 2
     }
   }
 
-  private def calcAbovePercent(values: List[Double], above : Int) : Double = {
-    val nrAbove = values.toStream
-      .count(x => x >= above)
-    nrAbove.toDouble / targetRegionsSize * 100
-  }
+  private def writeSampleIntervalSummary(meanCoverage: DataFrame, outputPath: String, sample: String, spark: SparkSession): Unit = {
+    import spark.implicits._
 
-  private def writeSampleIntervalSummary(outputPath: String, sample: String): Unit = {
-    val regions = new ListBuffer[String]()
-    val means = new ListBuffer[String]()
-    regions += "sample"
-    means += sample
+    val regionsAndMeans = meanCoverage.mapPartitions(rowIterator => rowIterator.map(
+      row => {
+        val chr = row.getString(0)
+        val start = row.getString(1)
+        var end = row.getString(2).toInt
+        end = end - 1
+        val mean = row.getDouble(3).toString
+        val region = chr + ":" + start + "-" + end.toString
+        (region, mean)
+      }
+    )).collect()
 
-    coveragesByRegions.foreach(x => {
-      val region = x._1.region
-      val regionSize = x._1.size
-      val sum = x._2.sum
-      regions += region
-      means += (sum / regionSize).toString
-    })
+    var regions = regionsAndMeans
+      .map(x => x._1)
+      .toList
+    regions = "sample" +: regions
+
+    var means = regionsAndMeans
+      .map(x => x._2)
+      .toList
+    means = sample +: means
 
     val fileObject = new File(outputPath + "/" + sample + ".calc_target_covs.sample_interval_summary" )
     val pw = new PrintWriter(fileObject)
-    pw.write(regions.toList.mkString("\t"))
+    pw.write(regions.mkString("\t"))
     pw.write("\n")
-    pw.write(means.toList.mkString("\t"))
+    pw.write(means.mkString("\t"))
     println(s"Write file " + outputPath + "/sample_interval_summary/" + sample + ".calc_target_covs.sample_interval_summary")
     pw.close()
-  }
-
-  private def convertLineToObject(elements: Array[String]) : RegionWithSize = {
-    val region = elements(0) + ":" + elements(1) + "-" + elements(2)
-    val size = elements(2).toInt - elements(1).toInt + 1
-    new RegionWithSize(region, size)
-  }
-
-  class RegionWithSize(var region: String, var size: Int) {
-    override def equals(o: Any): Boolean = {
-      if (!o.isInstanceOf[RegionWithSize]) return false
-      val other = o.asInstanceOf[RegionWithSize]
-
-      (this.region == other.region) && (this.size == other.size)
-    }
-
-    override def hashCode(): Int = {
-      val PRIME = 59
-      region.hashCode() * PRIME + size.hashCode()
-    }
   }
 
 }
