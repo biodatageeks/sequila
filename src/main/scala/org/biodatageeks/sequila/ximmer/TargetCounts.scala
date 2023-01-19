@@ -12,7 +12,7 @@ class TargetCounts {
     val spark = createSparkSessionWithExtraStrategy()
     val ss = SequilaSession(spark)
 
-    val resultMap = mutable.LinkedHashMap[String, (DataFrame, Long)]()
+    val resultMap = mutable.SortedMap[String, (DataFrame, Long)]()
 
     ss
       .read

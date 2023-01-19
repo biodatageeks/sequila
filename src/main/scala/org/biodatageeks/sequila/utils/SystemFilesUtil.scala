@@ -16,6 +16,7 @@ object SystemFilesUtil {
       .map(_.getPath)
       .map(x => x.replace("\\", "/"))
       .toList
+      .sorted
   }
 
   def getFilename(filePath: String) : String = {

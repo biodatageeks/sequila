@@ -27,11 +27,11 @@ trait SequilaApp {
       .config("spark.master", "local[4]")
       .getOrCreate()
 
-    spark.sqlContext.setConf(InternalParams.useJoinOrder, "false")
+    spark.sqlContext.setConf(InternalParams.useJoinOrder, "true")
     spark.experimental.extraStrategies = new IntervalTreeJoinStrategyOptim(spark) :: Nil
     spark
       .sparkContext
-      .setLogLevel("INFO")
+      .setLogLevel("OFF")
     spark
       .sparkContext
       .hadoopConfiguration.set(SAMHeaderReader.VALIDATION_STRINGENCY_PROPERTY, ValidationStringency.SILENT.toString)

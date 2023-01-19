@@ -18,7 +18,7 @@ class PerBaseCoverage {
   def calculatePerBaseCoverage(bamFiles: List[String], targetsPath: String): mutable.Map[String, (DataFrame, DataFrame)] = {
     val spark = createSparkSessionWithExtraStrategy()
     val ss = SequilaSession(spark)
-    ss.sqlContext.setConf(InternalParams.filterReadsByFlag, "2317")
+    ss.sqlContext.setConf(InternalParams.filterReadsByFlag, "2316")
     ss.sqlContext.setConf(InternalParams.filterReadsByMQ, "1")
 
     ss
@@ -28,7 +28,7 @@ class PerBaseCoverage {
       .csv(targetsPath)
       .createOrReplaceTempView("targets")
 
-    val resultMap = mutable.LinkedHashMap[String, (DataFrame, DataFrame)]()
+    val resultMap = mutable.SortedMap[String, (DataFrame, DataFrame)]()
 
     for (bam <- bamFiles) {
       ss.sql(s"""DROP TABLE IF EXISTS reads""")
@@ -49,25 +49,40 @@ class PerBaseCoverage {
       val perBaseCoverage = new SequilaConverter(ss).convertToPerBaseOutput(coverageDf)
       perBaseCoverage.createOrReplaceTempView("reads_pb_cov")
 
+      val intervalQuery =
+        """SELECT r.*
+          |FROM reads_pb_cov r INNER JOIN targets t
+          |ON (
+          |  t._c0 = concat('chr', r._1)
+          |  AND
+          |  r._2 >= CAST(t._c1 AS INTEGER) - 1
+          |  AND
+          |  r._2 <= CAST(t._c2 AS INTEGER) - 1
+          |)
+       """.stripMargin
+
+      val narrowPerBaseCoverage = ss.sql(intervalQuery)
+      narrowPerBaseCoverage.createOrReplaceTempView("narrow_reads_pb_cov")
+
       val meanCoverageQuery =
       """SELECT t._c0 AS Chr,
         |t._c1 AS Start,
         |t._c2 AS End,
         |sum(r._5) / (CAST(t._c2 AS INTEGER) - CAST(t._c1 AS INTEGER) + 1) AS mean_cov
-                  FROM reads_pb_cov r INNER JOIN targets t
+                  FROM narrow_reads_pb_cov r INNER JOIN targets t
         |ON (
         |  t._c0 = concat('chr', r._1)
         |  AND
-        |  r._2 >= CAST(t._c1 AS INTEGER)
+        |  r._2 >= CAST(t._c1 AS INTEGER) - 1
         |  AND
-        |  r._2 <= CAST(t._c2 AS INTEGER)
+        |  r._2 <= CAST(t._c2 AS INTEGER) - 1
         |)
         |GROUP BY t._c0, t._c1, t._c2
         |ORDER BY t._c0, CAST(t._c1 AS INTEGER)
         |""".stripMargin
 
       val meanCoverage = ss.sql(meanCoverageQuery)
-      resultMap += (sample -> (meanCoverage, perBaseCoverage))
+      resultMap += (sample -> (meanCoverage, narrowPerBaseCoverage))
     }
 
     return resultMap

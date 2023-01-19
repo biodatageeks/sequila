@@ -1,7 +1,6 @@
 package org.biodatageeks.sequila.ximmer.converters
 
-import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.biodatageeks.sequila.apps.PileupApp.createSparkSessionWithExtraStrategy
+import org.apache.spark.sql.DataFrame
 
 import java.io.{File, PrintWriter}
 import scala.collection.mutable
@@ -15,7 +14,6 @@ class CnMopsConverter {
   var targetsNr = 0
 
   def convertToCnMopsFormat(targetCountResult: mutable.Map[String, (DataFrame, Long)], outputPath: String): Unit = {
-    val spark = createSparkSessionWithExtraStrategy()
     val sampleNames = targetCountResult.keys.toList
     val samplesValues : ListBuffer[List[String]] = ListBuffer[List[String]]()
     var sampleDFList = targetCountResult.map(x => x._2._1).toList
@@ -25,7 +23,7 @@ class CnMopsConverter {
     sampleDFList = sampleDFList.drop(1)
 
     for (sampleDF <- sampleDFList) {
-      val sampleValue = fillValuesForSample(sampleDF, spark)
+      val sampleValue = fillValuesForSample(sampleDF)
       samplesValues += sampleValue
     }
 
@@ -54,11 +52,10 @@ class CnMopsConverter {
     writeResultJson(outputPath)
   }
 
-  private def fillValuesForSample(sampleDF: DataFrame, spark: SparkSession): List[String] = {
-    import spark.implicits._
-    sampleDF.mapPartitions(rowIterator => rowIterator.map(row => {
+  private def fillValuesForSample(sampleDF: DataFrame): List[String] = {
+    sampleDF.collect().map(row => {
       row.getLong(4).toString
-    })).collect().toList
+    }).toList
   }
 
   private def fillTargetsInfo(df: DataFrame): List[String] = {
