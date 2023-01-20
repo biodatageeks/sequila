@@ -67,12 +67,18 @@ class ExomeDepthConverter {
   }
 
   private def fillCoveragesForSample(rows: Array[Row]): Unit = {
-    var iterator = 0
+    val chrList = recordsByChr.keys.toList
+    val iteratorByChr = mutable.LinkedHashMap[String, Int]()
+    for (chr <- chrList) {
+      iteratorByChr += (chr -> 0)
+    }
+
     rows.foreach(row => {
       val chr = row.getString(0)
       val cov = row.getLong(5)
+      val iterator = iteratorByChr(chr)
       recordsByChr(chr)(iterator) += cov.toString
-      iterator += 1
+      iteratorByChr(chr) += 1
     })
   }
 

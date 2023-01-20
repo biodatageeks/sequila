@@ -9,7 +9,7 @@ class ConiferConverter {
   def convertToConiferFormat(targetCountResult: (String, (DataFrame, Long)), outputPath: String) : Unit = {
     val readsNumber = targetCountResult._2._2
     val sample = targetCountResult._1
-    val fileObject = new File(outputPath + "/" + sample + ".rpkm")
+    val fileObject = new File(outputPath + "/" + sample + ".rpkm") //TODO kkobylin file
     val pw = new PrintWriter(fileObject)
     var iterator = 1
 
