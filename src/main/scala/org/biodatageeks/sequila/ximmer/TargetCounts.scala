@@ -30,7 +30,7 @@ class TargetCounts {
       if (saveBamInfo) {
         val startTime = System.currentTimeMillis()
         val countQuery = "Select count(*) from reads"
-        readsNr = ss.sql(countQuery) //TODO kkobylin sprawdzic czy da sie w inny sposob wyciagnac ilosc probek bo to trwa 3 sek
+        readsNr = ss.sql(countQuery)
           .first()
           .getLong(0)
         val endTimeEnd = System.currentTimeMillis()
@@ -93,7 +93,7 @@ class TargetCounts {
           |ORDER BY chr, CAST(start AS INTEGER)
           |""".stripMargin
 
-      val resultDF = ss.sql(includeAllTargetsQuery) //TODO kkobylin do cache
+      val resultDF = ss.sql(includeAllTargetsQuery).cache()
       resultMap += (sample -> (resultDF, readsNr))
     }
     return resultMap

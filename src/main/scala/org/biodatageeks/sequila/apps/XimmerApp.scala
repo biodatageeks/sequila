@@ -39,7 +39,7 @@ object XimmerApp {
 
     if (shouldCalculateTargetCounts(runConf)) {
       val targetCountsStart = System.currentTimeMillis()
-      targetCountsResult = new TargetCounts().calculateTargetCounts(ss, runConf.targets(), bamFiles, shouldCallConifer)
+      targetCountsResult = new TargetCounts().calculateTargetCounts(spark, runConf.targets(), bamFiles, shouldCallConifer)
       val targetCountsEnd = System.currentTimeMillis()
       println("Whole targetCouns time: " + (targetCountsEnd - targetCountsStart) / 1000)
     }
