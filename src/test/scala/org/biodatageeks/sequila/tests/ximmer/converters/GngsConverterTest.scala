@@ -3,6 +3,7 @@ package org.biodatageeks.sequila.tests.ximmer.converters
 import com.holdenkarau.spark.testing.{DataFrameSuiteBase, SharedSparkContext}
 import org.apache.spark.sql.types._
 import org.biodatageeks.sequila.ximmer.converters.GngsConverter
+import org.biodatageeks.sequila.utils.InternalParams
 import org.scalatest.{BeforeAndAfter, FunSuite}
 
 import java.io.File
@@ -34,6 +35,7 @@ class GngsConverterTest extends FunSuite
 
   test("Convert to xhmm format") {
     //given
+    spark.conf.set(InternalParams.saveAsSparkFormat, "false")
     val meanCoverageDF = spark.read
       .option("header", "false")
       .schema(meanCoverageSchema)
@@ -50,8 +52,8 @@ class GngsConverterTest extends FunSuite
     val resultStats = scala.io.Source.fromFile(tempDir + "/XI001.stats.tsv")
     val resultSummary = scala.io.Source.fromFile(tempDir + "/XI001.calc_target_covs.sample_interval_summary")
 
-    assert(resultStats.getLines().mkString == expectedStats.getLines().mkString)
-    assert(resultSummary.getLines().mkString == expectedSummary.getLines().mkString)
+    assert(resultStats.getLines().mkString.trim == expectedStats.getLines().mkString)
+    assert(resultSummary.getLines().mkString.trim == expectedSummary.getLines().mkString)
 
     expectedStats.close(); expectedSummary.close
     resultStats.close(); resultSummary.close
