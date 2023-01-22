@@ -1,7 +1,6 @@
 package org.biodatageeks.sequila.ximmer
 
-import org.apache.spark.sql.{DataFrame, SequilaSession, SparkSession}
-import org.biodatageeks.sequila.apps.PileupApp.createSparkSessionWithExtraStrategy
+import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.biodatageeks.sequila.pileup.converters.sequila.SequilaConverter
 import org.biodatageeks.sequila.utils.InternalParams
 import org.biodatageeks.sequila.utils.SystemFilesUtil.getFilename
@@ -43,7 +42,7 @@ class PerBaseCoverage {
       perBaseCoverage.createOrReplaceTempView("reads_pb_cov")
 
       val intervalQuery =
-        """SELECT r.*
+        """SELECT r.*, t._c0 as chr , t._c1 as start, t._c2 as end
           |FROM reads_pb_cov r INNER JOIN targets t
           |ON (
           |  t._c0 = concat('chr', r._1)
@@ -58,20 +57,11 @@ class PerBaseCoverage {
       narrowPerBaseCoverage.createOrReplaceTempView("narrow_reads_pb_cov")
 
       val meanCoverageQuery =
-      """SELECT t._c0 AS Chr,
-        |t._c1 AS Start,
-        |t._c2 AS End,
-        |sum(r._5) / (CAST(t._c2 AS INTEGER) - CAST(t._c1 AS INTEGER) - 1) AS mean_cov
-                  FROM narrow_reads_pb_cov r INNER JOIN targets t
-        |ON (
-        |  t._c0 = concat('chr', r._1)
-        |  AND
-        |  r._2 >= CAST(t._c1 AS INTEGER)
-        |  AND
-        |  r._2 <= CAST(t._c2 AS INTEGER)
-        |)
-        |GROUP BY t._c0, t._c1, t._c2
-        |ORDER BY t._c0, CAST(t._c1 AS INTEGER)
+      """SELECT chr, start, end,
+        |sum(r._5) / (CAST(end AS INTEGER) - CAST(start AS INTEGER) - 1) AS mean_cov
+        |FROM narrow_reads_pb_cov r
+        |GROUP BY chr, start, end
+        |ORDER BY chr, CAST(start AS INTEGER)
         |""".stripMargin
 
       val meanCoverage = ss.sql(meanCoverageQuery)
