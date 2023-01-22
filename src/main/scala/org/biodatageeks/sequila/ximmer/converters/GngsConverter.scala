@@ -1,15 +1,14 @@
 package org.biodatageeks.sequila.ximmer.converters
 
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.biodatageeks.sequila.apps.PileupApp.createSparkSessionWithExtraStrategy
+import org.biodatageeks.sequila.utils.InternalParams
 
 import java.io.{File, PrintWriter}
 
 class GngsConverter extends Serializable{
 
-  def calculateStatsAndConvertToGngsFormat(outputPath: String, sample: String, meanCoverage : DataFrame,
-                                           perBaseCoverage : DataFrame): Unit = {
-    val spark = createSparkSessionWithExtraStrategy()
+  def calculateStatsAndConvertToGngsFormat(outputPath: String, sample: String, meanCoverage : DataFrame, perBaseCoverage : DataFrame): Unit = {
+    val spark = SparkSession.builder().getOrCreate()
     calculateAndWriteStats(perBaseCoverage, outputPath, sample, spark)
     writeSampleIntervalSummary(meanCoverage, outputPath, sample, spark)
   }
@@ -44,14 +43,15 @@ class GngsConverter extends Serializable{
       .sortWith(_ < _)
 
     val median = calculateMedian(coverages, coveragesCount.toInt)
-    val mean = coveragesSum.value / coveragesCount
+    val mean = coveragesSum.value / coveragesCount.toDouble
     val perc_bases_above_1 = nrAbove1.value.toDouble / coveragesCount * 100
     val perc_bases_above_5 = nrAbove5.value.toDouble / coveragesCount * 100
     val perc_bases_above_10 = nrAbove10.value.toDouble / coveragesCount * 100
     val perc_bases_above_20 = nrAbove20.value.toDouble / coveragesCount * 100
     val perc_bases_above_50 = nrAbove50.value.toDouble / coveragesCount * 100
 
-    val fileObject = new File(outputPath + "/" +sample + ".stats.tsv" )
+    val filename = outputPath + "/" +sample + ".stats.tsv"
+    val fileObject = new File(filename)
     val pw = new PrintWriter(fileObject)
     pw.write("Median Coverage\tMean Coverage\tperc_bases_above_1\tperc_bases_above_5\tperc_bases_above_10\t" +
       "perc_bases_above_20\tperc_bases_above_50")
@@ -60,6 +60,13 @@ class GngsConverter extends Serializable{
       + "\t" + perc_bases_above_20 + "\t" + perc_bases_above_50 + "\t")
     println(s"Write file " + outputPath + "/sample_interval_summary/" + sample + ".stats.tsv")
     pw.close()
+
+    if (spark.conf.get(InternalParams.saveAsSparkFormat).toBoolean) {
+      val resultDF = spark.read.text(filename)
+      resultDF.write
+        .option("delimiter", "\t")
+        .csv(outputPath + "/spark" + "/" + sample + "-stats")
+    }
   }
 
   private def calculateMedian(sortedValues: List[Int], coveragesSize: Int) : Double = {
@@ -69,7 +76,7 @@ class GngsConverter extends Serializable{
       allValues(coveragesSize / 2)
     } else {
       val (up, down) = allValues.splitAt(coveragesSize / 2)
-      (up.last + down.head) / 2
+      (up.last + down.head) / 2.0
     }
   }
 
@@ -98,13 +105,21 @@ class GngsConverter extends Serializable{
       .toList
     means = sample +: means
 
-    val fileObject = new File(outputPath + "/" + sample + ".calc_target_covs.sample_interval_summary" )
+    val filename = outputPath + "/" + sample + ".calc_target_covs.sample_interval_summary"
+    val fileObject = new File(filename)
     val pw = new PrintWriter(fileObject)
     pw.write(regions.mkString("\t"))
     pw.write("\n")
     pw.write(means.mkString("\t"))
     println(s"Write file " + outputPath + "/sample_interval_summary/" + sample + ".calc_target_covs.sample_interval_summary")
     pw.close()
+
+    if (spark.conf.get(InternalParams.saveAsSparkFormat).toBoolean) {
+      val resultDF = spark.read.text(filename)
+      resultDF.write
+        .option("delimiter", "\t")
+        .csv(outputPath + "/spark" + "/" + sample + "-summary")
+    }
   }
 
 }

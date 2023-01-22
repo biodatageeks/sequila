@@ -2,7 +2,8 @@ package org.biodatageeks.sequila.tests.ximmer.converters
 
 import com.holdenkarau.spark.testing.{DataFrameSuiteBase, SharedSparkContext}
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.types.{IntegerType, LongType, StringType, StructField, StructType}
+import org.apache.spark.sql.types.{LongType, StringType, StructField, StructType}
+import org.biodatageeks.sequila.utils.InternalParams
 import org.scalatest.{BeforeAndAfter, FunSuite}
 
 import java.io.File
@@ -34,13 +35,15 @@ class XimmerConverterTestBase extends FunSuite
     val df1 = spark.read
       .option("header", "false")
       .schema(schema)
-      .csv(ximmerResourceDir + "/target_counts_XI001.csv")
+      .csv(ximmerResourceDir + "/converter_tests_input/target_counts_XI001.csv")
     val df2 = spark.read
       .option("header", "false")
       .schema(schema)
-      .csv(ximmerResourceDir + "/target_counts_XI002.csv")
+      .csv(ximmerResourceDir + "/converter_tests_input/target_counts_XI002.csv")
     targetCountsResult += ("XI001" -> (df1, 735229))
     targetCountsResult += ("XI002" -> (df2, 930845))
+
+    spark.conf.set(InternalParams.saveAsSparkFormat, "false")
   }
 
   def after: Unit = {

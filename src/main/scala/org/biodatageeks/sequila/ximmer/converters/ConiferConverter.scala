@@ -1,15 +1,18 @@
 package org.biodatageeks.sequila.ximmer.converters
 
-import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.biodatageeks.sequila.utils.InternalParams
 
 import java.io.{File, PrintWriter}
 
 class ConiferConverter {
 
   def convertToConiferFormat(targetCountResult: (String, (DataFrame, Long)), outputPath: String) : Unit = {
+    val spark = SparkSession.builder().getOrCreate()
     val readsNumber = targetCountResult._2._2
     val sample = targetCountResult._1
-    val fileObject = new File(outputPath + "/" + sample + ".rpkm") //TODO kkobylin file
+    val filename = outputPath + "/" + sample + ".rpkm"
+    val fileObject = new File(filename)
     val pw = new PrintWriter(fileObject)
     var iterator = 1
 
@@ -24,6 +27,13 @@ class ConiferConverter {
     })
 
     pw.close()
+
+    if (spark.conf.get(InternalParams.saveAsSparkFormat).toBoolean) {
+      val resultDF = spark.read.text(filename)
+      resultDF.write
+        .option("delimiter", "\t")
+        .csv(outputPath + "/spark" + "/" + sample)
+    }
   }
 
   private def calculateRpkm(readCount: Long, exonLength: Int, totalReads: Long) : Double = {

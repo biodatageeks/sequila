@@ -20,11 +20,12 @@ trait SequilaApp {
     ss
   }
 
-  def createSparkSessionWithExtraStrategy(): SparkSession = {
+  def createSparkSessionWithExtraStrategy(sparkSave: Boolean = false): SparkSession = {
     val spark = SparkSession
       .builder()
       .appName("SeQuiLa-DoC")
       .config("spark.master", "local[4]")
+      .config(InternalParams.saveAsSparkFormat, sparkSave)
       .getOrCreate()
 
     spark.sqlContext.setConf(InternalParams.useJoinOrder, "true")
