@@ -46,7 +46,8 @@ class CodexConverter {
       pw.close()
 
       if (spark.conf.get(InternalParams.saveAsSparkFormat).toBoolean) {
-        val resultDF = spark.read.option("wholetext", value = true).text(outputPath + "/" + fileName)
+        import spark.implicits._
+        val resultDF = spark.sparkContext.parallelize(Seq(stringValue)).toDF()
         resultDF.write.text(outputPath + "/spark" + chr)
       }
     }

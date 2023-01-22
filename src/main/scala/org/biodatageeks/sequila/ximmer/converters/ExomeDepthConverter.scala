@@ -36,20 +36,24 @@ class ExomeDepthConverter {
     recordsByChr.foreach(x => {
       val chr = x._1
       val regions = x._2
+      val resultList = ListBuffer[String]()
       val fileName = "analysis." + chr + ".counts.tsv"
       val fileObject = new File(outputPath + "/" + fileName)
       val pw = new PrintWriter(fileObject)
+      resultList += header
       pw.write(header)
       pw.write("\n")
 
       regions.foreach(r => {
+        resultList += r.mkString(" ")
         pw.write(r.mkString(" "))
         pw.write("\n")
       })
       pw.close()
 
       if (spark.conf.get(InternalParams.saveAsSparkFormat).toBoolean) {
-        val resultDF = spark.read.text(outputPath + "/" + fileName)
+        import spark.implicits._
+        val resultDF = spark.sparkContext.parallelize(resultList).toDF()
         resultDF.write
           .option("delimiter", "\t")
           .csv(outputPath + "/spark" + chr)

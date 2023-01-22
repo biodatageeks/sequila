@@ -4,6 +4,7 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.biodatageeks.sequila.utils.InternalParams
 
 import java.io.{File, PrintWriter}
+import scala.collection.mutable.ListBuffer
 
 class GngsConverter extends Serializable{
 
@@ -53,16 +54,21 @@ class GngsConverter extends Serializable{
     val filename = outputPath + "/" +sample + ".stats.tsv"
     val fileObject = new File(filename)
     val pw = new PrintWriter(fileObject)
-    pw.write("Median Coverage\tMean Coverage\tperc_bases_above_1\tperc_bases_above_5\tperc_bases_above_10\t" +
-      "perc_bases_above_20\tperc_bases_above_50")
+    val resultList = ListBuffer[String]()
+    val statsHeader = "Median Coverage\tMean Coverage\tperc_bases_above_1\tperc_bases_above_5\tperc_bases_above_10\t" +
+      "perc_bases_above_20\tperc_bases_above_50"
+    pw.write(statsHeader)
+    resultList += statsHeader
     pw.write("\n")
-    pw.write(median + "\t" + mean + "\t" + perc_bases_above_1 + "\t" + perc_bases_above_5 + "\t" + perc_bases_above_10
-      + "\t" + perc_bases_above_20 + "\t" + perc_bases_above_50 + "\t")
+    val statsLine = median + "\t" + mean + "\t" + perc_bases_above_1 + "\t" + perc_bases_above_5 + "\t" + perc_bases_above_10 + "\t" + perc_bases_above_20 + "\t" + perc_bases_above_50 + "\t"
+    pw.write(statsLine)
+    resultList += statsLine
     println(s"Write file " + outputPath + "/sample_interval_summary/" + sample + ".stats.tsv")
     pw.close()
 
     if (spark.conf.get(InternalParams.saveAsSparkFormat).toBoolean) {
-      val resultDF = spark.read.text(filename)
+      import spark.implicits._
+      val resultDF = spark.sparkContext.parallelize(resultList).toDF()
       resultDF.write
         .option("delimiter", "\t")
         .csv(outputPath + "/spark" + "/" + sample + "-stats")
@@ -108,14 +114,18 @@ class GngsConverter extends Serializable{
     val filename = outputPath + "/" + sample + ".calc_target_covs.sample_interval_summary"
     val fileObject = new File(filename)
     val pw = new PrintWriter(fileObject)
+    val resultList = ListBuffer[String]()
     pw.write(regions.mkString("\t"))
+    resultList += regions.mkString("\t")
     pw.write("\n")
     pw.write(means.mkString("\t"))
+    resultList += means.mkString("\t")
     println(s"Write file " + outputPath + "/sample_interval_summary/" + sample + ".calc_target_covs.sample_interval_summary")
     pw.close()
 
     if (spark.conf.get(InternalParams.saveAsSparkFormat).toBoolean) {
-      val resultDF = spark.read.text(filename)
+      import spark.implicits._
+      val resultDF = spark.sparkContext.parallelize(resultList).toDF()
       resultDF.write
         .option("delimiter", "\t")
         .csv(outputPath + "/spark" + "/" + sample + "-summary")

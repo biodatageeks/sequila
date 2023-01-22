@@ -53,9 +53,10 @@ class CnMopsConverter {
 
     val fileName = "analysis.cnmops.cnvs.json"
     val output = outputPath + "/" + fileName
-    writeResultJson(output)
+    val formattedJson = writeResultJson(output)
     if (spark.conf.get(InternalParams.saveAsSparkFormat).toBoolean) {
-      val resultDF = spark.read.option("wholetext", value = true).text(output)
+      import spark.implicits._
+      val resultDF = spark.sparkContext.parallelize(Seq(formattedJson)).toDF()
       resultDF.write.text(outputPath + "/spark")
     }
   }
@@ -130,7 +131,7 @@ class CnMopsConverter {
   // Ilosc targetow [15]
   var targetsNumberAll: String = ""
 
-  private def writeResultJson(outputPath: String): Unit = {
+  private def writeResultJson(outputPath: String): String = {
     val fileObject = new File(outputPath)
     val pw = new PrintWriter(fileObject)
 
@@ -338,5 +339,6 @@ class CnMopsConverter {
 
     pw.write(formattedJson)
     pw.close()
+    formattedJson
   }
 }
