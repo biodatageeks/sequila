@@ -1,6 +1,7 @@
 package org.biodatageeks.sequila.apps
 
-import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.{DataFrame, SequilaSession}
+import org.biodatageeks.sequila.apps.PileupApp.createSparkSessionWithExtraStrategy
 import org.biodatageeks.sequila.utils.SystemFilesUtil._
 import org.biodatageeks.sequila.ximmer.converters._
 import org.biodatageeks.sequila.ximmer.{PerBaseCoverage, TargetCounts}
@@ -15,6 +16,7 @@ object XimmerApp {
     val bam_dir = opt[String](required = true)
     val targets = opt[String](required = true)
     val output_path = opt[String](required = true)
+    val spark_save = opt[Boolean](default = Some(false))
     val callers = trailArg[List[String]](required = true)
     verify()
   }
@@ -22,6 +24,9 @@ object XimmerApp {
   def main(args: Array[String]): Unit = {
     val startTime = System.currentTimeMillis()
     val runConf = new RunConf(args)
+    val spark = createSparkSessionWithExtraStrategy(runConf.spark_save())
+    val ss = SequilaSession(spark)
+
     val bamFiles = findBamFiles(runConf.bam_dir())
 
     val shouldCallXhmm = runConf.callers().contains("xhmm")
@@ -34,7 +39,7 @@ object XimmerApp {
 
     if (shouldCalculateTargetCounts(runConf)) {
       val targetCountsStart = System.currentTimeMillis()
-      targetCountsResult = new TargetCounts().calculateTargetCounts(runConf.targets(), bamFiles, shouldCallConifer)
+      targetCountsResult = new TargetCounts().calculateTargetCounts(ss, runConf.targets(), bamFiles, shouldCallConifer)
       val targetCountsEnd = System.currentTimeMillis()
       println("Whole targetCouns time: " + (targetCountsEnd - targetCountsStart) / 1000)
     }
@@ -68,7 +73,7 @@ object XimmerApp {
     var xhmmTimeStart = System.currentTimeMillis()
     if (shouldCallXhmm) {
       val perBaseCoverageStart = System.currentTimeMillis()
-      val perBaseResults = new PerBaseCoverage().calculatePerBaseCoverage(bamFiles, runConf.targets())
+      val perBaseResults = new PerBaseCoverage().calculatePerBaseCoverage(ss, bamFiles, runConf.targets())
       val perBaseCoverageEnd = System.currentTimeMillis()
       println("PerBase time: " + (perBaseCoverageEnd - perBaseCoverageStart) / 1000)
       xhmmTimeStart = System.currentTimeMillis()

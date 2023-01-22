@@ -1,6 +1,7 @@
 package org.biodatageeks.sequila.ximmer.converters
 
-import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.biodatageeks.sequila.utils.InternalParams
 
 import java.io.{File, PrintWriter}
 import scala.collection.mutable
@@ -20,9 +21,10 @@ class CodexConverter {
        |  "value": %s
        |}""".stripMargin
 
-  var coveragesByChrMap : mutable.Map[String, ListBuffer[Int]] = mutable.Map[String, ListBuffer[Int]]()
+  var coveragesByChrMap: mutable.Map[String, ListBuffer[Int]] = mutable.Map[String, ListBuffer[Int]]()
 
   def convertToCodexFormat(targetCountResult: mutable.Map[String, (DataFrame, Long)], outputPath: String): Unit = {
+    val spark = SparkSession.builder().getOrCreate()
     val samplesCount = targetCountResult.size
 
     for (targetCountResult <- targetCountResult) {
@@ -42,6 +44,11 @@ class CodexConverter {
 
       pw.write(stringValue)
       pw.close()
+
+      if (spark.conf.get(InternalParams.saveAsSparkFormat).toBoolean) {
+        val resultDF = spark.read.option("wholetext", value = true).text(outputPath + "/" + fileName)
+        resultDF.write.text(outputPath + "/spark" + chr)
+      }
     }
   }
 

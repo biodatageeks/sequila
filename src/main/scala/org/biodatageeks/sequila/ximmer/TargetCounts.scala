@@ -1,17 +1,13 @@
 package org.biodatageeks.sequila.ximmer
 
-import org.apache.spark.sql.{DataFrame, SequilaSession}
-import org.biodatageeks.sequila.apps.PileupApp.createSparkSessionWithExtraStrategy
+import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.biodatageeks.sequila.utils.SystemFilesUtil._
 
 import scala.collection.mutable
 
 class TargetCounts {
 
-  def calculateTargetCounts(targetsPath: String, bamFiles: List[String], saveBamInfo: Boolean): mutable.Map[String, (DataFrame, Long)] = {
-    val spark = createSparkSessionWithExtraStrategy()
-    val ss = SequilaSession(spark)
-
+  def calculateTargetCounts(ss: SparkSession, targetsPath: String, bamFiles: List[String], saveBamInfo: Boolean): mutable.Map[String, (DataFrame, Long)] = {
     val resultMap = mutable.SortedMap[String, (DataFrame, Long)]()
 
     ss
@@ -97,7 +93,7 @@ class TargetCounts {
           |ORDER BY chr, CAST(start AS INTEGER)
           |""".stripMargin
 
-      val resultDF = ss.sql(includeAllTargetsQuery)
+      val resultDF = ss.sql(includeAllTargetsQuery) //TODO kkobylin do cache
       resultMap += (sample -> (resultDF, readsNr))
     }
     return resultMap
