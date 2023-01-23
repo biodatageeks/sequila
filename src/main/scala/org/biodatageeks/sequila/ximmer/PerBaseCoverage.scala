@@ -9,7 +9,7 @@ import scala.collection.mutable
 
 class PerBaseCoverage {
 
-  def calculatePerBaseCoverage(ss: SparkSession, bamFiles: List[String], targetsPath: String): mutable.Map[String, (DataFrame, DataFrame)] = {
+  def calculatePerBaseCoverage(ss: SparkSession, bamFiles: List[String], targetsPath: String): mutable.Map[String, (DataFrame, DataFrame, Short)] = {
     ss.sqlContext.setConf(InternalParams.filterReadsByFlag, "2316")
     ss.sqlContext.setConf(InternalParams.filterReadsByMQ, "1")
 
@@ -20,7 +20,7 @@ class PerBaseCoverage {
       .csv(targetsPath)
       .createOrReplaceTempView("targets")
 
-    val resultMap = mutable.SortedMap[String, (DataFrame, DataFrame)]()
+    val resultMap = mutable.SortedMap[String, (DataFrame, DataFrame, Short)]()
 
     for (bam <- bamFiles) {
       ss.sql(s"""DROP TABLE IF EXISTS reads""")
@@ -61,11 +61,32 @@ class PerBaseCoverage {
         |sum(r._5) / (CAST(end AS INTEGER) - CAST(start AS INTEGER) - 1) AS mean_cov
         |FROM narrow_reads_pb_cov r
         |GROUP BY chr, start, end
-        |ORDER BY chr, CAST(start AS INTEGER)
         |""".stripMargin
 
       val meanCoverage = ss.sql(meanCoverageQuery)
-      resultMap += (sample -> (meanCoverage, narrowPerBaseCoverage))
+      meanCoverage.createOrReplaceTempView("mean_coverage")
+
+      val includeAllTargetsQuery =
+        """SELECT t._c0 AS Chr,
+          |       t._c1 AS Start,
+          |       t._c2 AS End,
+          |       CASE WHEN mean_cov IS NULL THEN 0 ELSE mean_cov END
+          |FROM targets t
+          |       LEFT JOIN mean_coverage r on r.chr = t._c0 AND r.start = t._c1 AND r.end = t._c2
+          |ORDER BY chr, CAST(start AS INTEGER)
+          |""".stripMargin
+
+      val allMeanCoverage = ss.sql(includeAllTargetsQuery)
+
+      val medianQuery =
+        """
+          |Select percentile_approx(r._5, 0.5)
+          |FROM narrow_reads_pb_cov r
+          |""".stripMargin
+
+      val median = ss.sql(medianQuery).first().getShort(0)
+
+      resultMap += (sample -> (allMeanCoverage, narrowPerBaseCoverage, median))
     }
 
     return resultMap

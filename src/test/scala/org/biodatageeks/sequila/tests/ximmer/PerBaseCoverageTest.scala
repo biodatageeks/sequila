@@ -25,8 +25,10 @@ class PerBaseCoverageTest extends FunSuite
     val result = new PerBaseCoverage().calculatePerBaseCoverage(ss, List(bamFile), targetsPath)
     //then
     assertEquals("XI001", result.head._1)
+    assertEquals(6, result.head._2._3)
     val meanCoverageDF = result.head._2._1
     val perBaseCoverageDF = result.head._2._2
+
 
     meanCoverageDF.collect().foreach(row => {
       val lineElements = expectedMeanCoverage.readLine().split(",")

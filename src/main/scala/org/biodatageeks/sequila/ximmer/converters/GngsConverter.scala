@@ -8,15 +8,14 @@ import scala.collection.mutable.ListBuffer
 
 class GngsConverter extends Serializable{
 
-  def calculateStatsAndConvertToGngsFormat(outputPath: String, sample: String, meanCoverage : DataFrame, perBaseCoverage : DataFrame): Unit = {
+  def calculateStatsAndConvertToGngsFormat(outputPath: String, sample: String, meanCoverage : DataFrame,
+                                           perBaseCoverage : DataFrame, median: Short): Unit = {
     val spark = SparkSession.builder().getOrCreate()
-    calculateAndWriteStats(perBaseCoverage, outputPath, sample, spark)
+    calculateAndWriteStats(perBaseCoverage, median, outputPath, sample, spark)
     writeSampleIntervalSummary(meanCoverage, outputPath, sample, spark)
   }
 
-  private def calculateAndWriteStats(coveragesDf: DataFrame, outputPath: String, sample: String, spark: SparkSession) : Unit = {
-    import spark.implicits._
-
+  private def calculateAndWriteStats(coveragesDf: DataFrame, median: Short, outputPath: String, sample: String, spark: SparkSession) : Unit = {
     val coveragesCount = coveragesDf.count()
     val coveragesSum = spark.sparkContext.longAccumulator("coveragesSum")
     val nrAbove1 = spark.sparkContext.longAccumulator("nrAbove1")
@@ -25,9 +24,7 @@ class GngsConverter extends Serializable{
     val nrAbove20 = spark.sparkContext.longAccumulator("nrAbove20")
     val nrAbove50 = spark.sparkContext.longAccumulator("nrAbove50")
 
-    val coverages = coveragesDf.mapPartitions(rowIterator => {
-      rowIterator.map(
-        row => {
+    coveragesDf.foreach(row => {
           val value = row.getShort(4).toInt
           val valueLong = value.toLong
           coveragesSum.add(valueLong)
@@ -36,14 +33,9 @@ class GngsConverter extends Serializable{
           if (value > 10) nrAbove10.add(1L)
           if (value > 20) nrAbove20.add(1L)
           if (value > 50) nrAbove50.add(1L)
-          value
         }
-      )})
-      .collect()
-      .toList
-      .sortWith(_ < _)
+      )
 
-    val median = calculateMedian(coverages, coveragesCount.toInt)
     val mean = coveragesSum.value / coveragesCount.toDouble
     val perc_bases_above_1 = nrAbove1.value.toDouble / coveragesCount * 100
     val perc_bases_above_5 = nrAbove5.value.toDouble / coveragesCount * 100
@@ -72,17 +64,6 @@ class GngsConverter extends Serializable{
       resultDF.write
         .option("delimiter", "\t")
         .csv(outputPath + "/spark" + "/" + sample + "-stats")
-    }
-  }
-
-  private def calculateMedian(sortedValues: List[Int], coveragesSize: Int) : Double = {
-    val allValues = sortedValues
-
-    if (coveragesSize % 2 == 1) {
-      allValues(coveragesSize / 2)
-    } else {
-      val (up, down) = allValues.splitAt(coveragesSize / 2)
-      (up.last + down.head) / 2.0
     }
   }
 

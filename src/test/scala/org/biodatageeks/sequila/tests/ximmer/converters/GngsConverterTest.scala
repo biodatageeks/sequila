@@ -47,7 +47,7 @@ class GngsConverterTest extends FunSuite
     val expectedStats = scala.io.Source.fromFile(ximmerResourceDir + "/xhmm/expected.stats.tsv")
     val expectedSummary = scala.io.Source.fromFile(ximmerResourceDir + "/xhmm/expected.sample_interval_summary")
     //when
-    new GngsConverter().calculateStatsAndConvertToGngsFormat(tempDir, "XI001", meanCoverageDF, perBaseCoverageDF)
+    new GngsConverter().calculateStatsAndConvertToGngsFormat(tempDir, "XI001", meanCoverageDF, perBaseCoverageDF, 10)
     //then
     val resultStats = scala.io.Source.fromFile(tempDir + "/XI001.stats.tsv")
     val resultSummary = scala.io.Source.fromFile(tempDir + "/XI001.calc_target_covs.sample_interval_summary")
