@@ -93,7 +93,7 @@ class TargetCounts {
           |ORDER BY chr, CAST(start AS INTEGER)
           |""".stripMargin
 
-      val resultDF = ss.sql(includeAllTargetsQuery).cache()
+      val resultDF = ss.sql(includeAllTargetsQuery)
       resultMap += (sample -> (resultDF, readsNr))
     }
     return resultMap
