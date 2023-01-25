@@ -23,7 +23,7 @@ class CodexConverter {
 
   var coveragesByChrMap: mutable.Map[String, ListBuffer[Int]] = mutable.Map[String, ListBuffer[Int]]()
 
-  def convertToCodexFormat(targetCountResult: mutable.Map[String, (DataFrame, Long)], outputPath: String): Unit = {
+  def convertToCodexFormat(targetCountResult: mutable.Map[String, (DataFrame, DataFrame)], outputPath: String): Unit = {
     val spark = SparkSession.builder().getOrCreate()
     val samplesCount = targetCountResult.size
 

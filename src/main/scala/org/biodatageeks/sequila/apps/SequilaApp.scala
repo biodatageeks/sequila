@@ -23,9 +23,11 @@ trait SequilaApp {
   def createSparkSessionWithExtraStrategy(sparkSave: Boolean = false): SparkSession = {
     val spark = SparkSession
       .builder()
-      .appName("SeQuiLa-DoC")
-      .config("spark.master", "local[4]")
+//      .appName("SeQuiLa-DoC")
+//      .config("spark.master", "local[4]")
       .config(InternalParams.saveAsSparkFormat, sparkSave)
+//      .config("spark.sql.files.maxPartitionBytes", "16777216")
+//      .config("spark.sql.files.maxPartitionBytes", "134217728")
       .getOrCreate()
 
     spark.sqlContext.setConf(InternalParams.useJoinOrder, "true")
@@ -36,6 +38,9 @@ trait SequilaApp {
     spark
       .sparkContext
       .hadoopConfiguration.set(SAMHeaderReader.VALIDATION_STRINGENCY_PROPERTY, ValidationStringency.SILENT.toString)
+//    spark
+//      .sparkContext
+//      .hadoopConfiguration.set("dfs.block.size", "16m")
 
     spark
   }

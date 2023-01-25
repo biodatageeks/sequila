@@ -14,7 +14,7 @@ class CnMopsConverter {
   val targetLengthList: ListBuffer[Int] = ListBuffer[Int]()
   var targetsNr = 0
 
-  def convertToCnMopsFormat(targetCountResult: mutable.Map[String, (DataFrame, Long)], outputPath: String): Unit = {
+  def convertToCnMopsFormat(targetCountResult: mutable.Map[String, (DataFrame, DataFrame)], outputPath: String): Unit = {
     val spark = SparkSession.builder().getOrCreate()
     val sampleNames = targetCountResult.keys.toList
     val samplesValues: ListBuffer[List[String]] = ListBuffer[List[String]]()
@@ -33,7 +33,7 @@ class CnMopsConverter {
     val chrNr = chrList.size
     val targetsForEachChromosome = targetsNumberByChr.values.toList
 
-    val singleSampleCoveragesList = samplesValues.toStream
+    val singleSampleCoveragesList = samplesValues
       .map(x => {
         val values = addSquareBrackets(x.mkString(", "))
         singleSampleCoverages.format(values)

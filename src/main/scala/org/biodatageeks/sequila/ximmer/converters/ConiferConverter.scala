@@ -8,9 +8,9 @@ import scala.collection.mutable.ListBuffer
 
 class ConiferConverter {
 
-  def convertToConiferFormat(targetCountResult: (String, (DataFrame, Long)), outputPath: String) : Unit = {
+  def convertToConiferFormat(targetCountResult: (String, (DataFrame, DataFrame)), outputPath: String) : Unit = {
     val spark = SparkSession.builder().getOrCreate()
-    val readsNumber = targetCountResult._2._2
+    val readsNumber = targetCountResult._2._2.first().getLong(0)
     val sample = targetCountResult._1
     val filename = outputPath + "/" + sample + ".rpkm"
     val fileObject = new File(filename)

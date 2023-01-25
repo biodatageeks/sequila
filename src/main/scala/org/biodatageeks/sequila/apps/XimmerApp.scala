@@ -35,11 +35,11 @@ object XimmerApp {
     val shouldCallCnmops = runConf.callers().contains("cnmops")
     val shouldCallExomedepth = runConf.callers().contains("exomedepth")
 
-    var targetCountsResult = mutable.Map[String, (DataFrame, Long)]()
+    var targetCountsResult = mutable.Map[String, (DataFrame, DataFrame)]()
 
     if (shouldCalculateTargetCounts(runConf)) {
       val targetCountsStart = System.currentTimeMillis()
-      targetCountsResult = new TargetCounts().calculateTargetCounts(ss, runConf.targets(), bamFiles, shouldCallConifer)
+      targetCountsResult = new TargetCounts().calculateTargetCounts(spark, runConf.targets(), bamFiles, shouldCallConifer)
       val targetCountsEnd = System.currentTimeMillis()
       println("Whole targetCouns time: " + (targetCountsEnd - targetCountsStart) / 1000)
     }
@@ -104,7 +104,7 @@ object XimmerApp {
     )
   }
 
-  private def convertToConiferFormat(targetCountResult: mutable.Map[String, (DataFrame, Long)], outputPath: String) : Unit = {
+  private def convertToConiferFormat(targetCountResult: mutable.Map[String, (DataFrame, DataFrame)], outputPath: String) : Unit = {
     val coniferOutput = outputPath + "/conifer"
     Files.createDirectories(Paths.get(coniferOutput))
     val converter = new ConiferConverter()

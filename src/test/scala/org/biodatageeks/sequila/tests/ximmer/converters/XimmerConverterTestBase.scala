@@ -17,7 +17,7 @@ class XimmerConverterTestBase extends FunSuite
 
   val tempDir = "src/test/resources/ximmer/temp"
   val ximmerResourceDir = "src/test/resources/ximmer"
-  val targetCountsResult: mutable.Map[String, (DataFrame, Long)] = mutable.SortedMap[String, (DataFrame, Long)]()
+  val targetCountsResult: mutable.Map[String, (DataFrame, DataFrame)] = mutable.SortedMap[String, (DataFrame, DataFrame)]()
 
   val schema = StructType(
     Seq(StructField("chr", StringType),
@@ -29,6 +29,7 @@ class XimmerConverterTestBase extends FunSuite
       StructField("conifer_cov", LongType)))
 
   before {
+    import spark.implicits._
     val directory = new Directory(new File(tempDir))
     directory.createDirectory()
 
@@ -40,8 +41,8 @@ class XimmerConverterTestBase extends FunSuite
       .option("header", "false")
       .schema(schema)
       .csv(ximmerResourceDir + "/converter_tests_input/target_counts_XI002.csv")
-    targetCountsResult += ("XI001" -> (df1, 735229))
-    targetCountsResult += ("XI002" -> (df2, 930845))
+    targetCountsResult += ("XI001" -> (df1, spark.sparkContext.parallelize(Seq(735229)).toDF()))
+    targetCountsResult += ("XI002" -> (df2, spark.sparkContext.parallelize(Seq(930845)).toDF()))
 
     spark.conf.set(InternalParams.saveAsSparkFormat, "false")
   }

@@ -7,8 +7,8 @@ import scala.collection.mutable
 
 class TargetCounts {
 
-  def calculateTargetCounts(ss: SparkSession, targetsPath: String, bamFiles: List[String], saveBamInfo: Boolean): mutable.Map[String, (DataFrame, Long)] = {
-    val resultMap = mutable.SortedMap[String, (DataFrame, Long)]()
+  def calculateTargetCounts(ss: SparkSession, targetsPath: String, bamFiles: List[String], saveBamInfo: Boolean): mutable.Map[String, (DataFrame, DataFrame)] = {
+    val resultMap = mutable.SortedMap[String, (DataFrame, DataFrame)]()
 
     ss
       .read
@@ -25,18 +25,6 @@ class TargetCounts {
            |OPTIONS(path '$bam')""".stripMargin)
 
       val sample = getFilename(bam)
-
-      var readsNr = 0L
-      if (saveBamInfo) {
-        val startTime = System.currentTimeMillis()
-        val countQuery = "Select count(*) from reads"
-        readsNr = ss.sql(countQuery)
-          .first()
-          .getLong(0)
-        val endTimeEnd = System.currentTimeMillis()
-
-        println("Select count time: " + (endTimeEnd - startTime) / 1000)
-      }
 
       val intervalJoinQuery =
         """SELECT t._c0 AS Chr,
@@ -77,24 +65,33 @@ class TargetCounts {
       ss.sql(intervalJoinQuery)
         .createOrReplaceTempView("result");
 
-//      //Uzupelnienie przedziałów z zerowym pokryciem
-//      //Obejscie problemu - strategia intevalJoin lapie tylko inner joina, zamiast zrobic left joina
-//      //Robiony jest drugi sql na pliku BED i wyniku poprzedniego sqla (podobny rozmiar co bed)
       val includeAllTargetsQuery =
         """SELECT t._c0 AS Chr,
           |       t._c1 AS Start,
           |       t._c2 AS End,
-          |       CASE WHEN codex_cov IS NULL THEN 0 ELSE codex_cov END,
-          |       CASE WHEN cnmops_cov IS NULL THEN 0 ELSE cnmops_cov END,
-          |       CASE WHEN ed_cov IS NULL THEN 0 ELSE ed_cov END,
-          |       CASE WHEN conifer_cov IS NULL THEN 0 ELSE conifer_cov END
+          |       CASE WHEN codex_cov IS NULL THEN 0 ELSE codex_cov END AS codex_cov,
+          |       CASE WHEN cnmops_cov IS NULL THEN 0 ELSE cnmops_cov END AS cnmops_cov,
+          |       CASE WHEN ed_cov IS NULL THEN 0 ELSE ed_cov END AS ed_cov,
+          |       CASE WHEN conifer_cov IS NULL THEN 0 ELSE conifer_cov END AS conifer_cov
           |FROM targets t
           |       LEFT JOIN result r on r.chr = t._c0 AND r.start = t._c1 AND r.end = t._c2
           |ORDER BY chr, CAST(start AS INTEGER)
           |""".stripMargin
 
-      val resultDF = ss.sql(includeAllTargetsQuery)
-      resultMap += (sample -> (resultDF, readsNr))
+      val resultDF = ss.sql(includeAllTargetsQuery).cache()
+      resultDF.createOrReplaceTempView("result_all_targets")
+
+      var readNrDF : DataFrame = null
+      if (saveBamInfo) {
+        val startTime = System.currentTimeMillis()
+        val countQuery = "Select sum(conifer_cov) from result_all_targets"
+        readNrDF = ss.sql(countQuery)
+        val endTimeEnd = System.currentTimeMillis()
+
+        println("Select count time: " + (endTimeEnd - startTime) / 1000)
+      }
+
+      resultMap += (sample -> (resultDF, readNrDF))
     }
     return resultMap
   }
