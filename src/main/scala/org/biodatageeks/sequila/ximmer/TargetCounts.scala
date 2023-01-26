@@ -7,8 +7,8 @@ import scala.collection.mutable
 
 class TargetCounts {
 
-  def calculateTargetCounts(ss: SparkSession, targetsPath: String, bamFiles: List[String], saveBamInfo: Boolean): mutable.Map[String, (DataFrame, DataFrame)] = {
-    val resultMap = mutable.SortedMap[String, (DataFrame, DataFrame)]()
+  def calculateTargetCounts(ss: SparkSession, targetsPath: String, bamFiles: List[String], saveBamInfo: Boolean): mutable.Map[String, (DataFrame, Long)] = {
+    val resultMap = mutable.SortedMap[String, (DataFrame, Long)]()
 
     ss
       .read
@@ -23,6 +23,18 @@ class TargetCounts {
         s"""CREATE TABLE reads
            |USING org.biodatageeks.sequila.datasources.BAM.BAMDataSource
            |OPTIONS(path '$bam')""".stripMargin)
+
+      var readsNr = 0L
+      if (saveBamInfo) {
+        val startTime = System.currentTimeMillis()
+        val countQuery = "Select count(*) from reads"
+        readsNr = ss.sql(countQuery)
+          .first()
+          .getLong(0)
+        val endTimeEnd = System.currentTimeMillis()
+
+        println("Select count time: " + (endTimeEnd - startTime) / 1000)
+      }
 
       val sample = getFilename(bam)
 
@@ -81,17 +93,7 @@ class TargetCounts {
       val resultDF = ss.sql(includeAllTargetsQuery).cache()
       resultDF.createOrReplaceTempView("result_all_targets")
 
-      var readNrDF : DataFrame = null
-      if (saveBamInfo) {
-        val startTime = System.currentTimeMillis()
-        val countQuery = "Select sum(conifer_cov) from result_all_targets"
-        readNrDF = ss.sql(countQuery)
-        val endTimeEnd = System.currentTimeMillis()
-
-        println("Select count time: " + (endTimeEnd - startTime) / 1000)
-      }
-
-      resultMap += (sample -> (resultDF, readNrDF))
+      resultMap += (sample -> (resultDF, readsNr))
     }
     return resultMap
   }

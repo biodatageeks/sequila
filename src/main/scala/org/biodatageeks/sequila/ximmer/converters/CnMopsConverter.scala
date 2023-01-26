@@ -1,6 +1,6 @@
 package org.biodatageeks.sequila.ximmer.converters
 
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.{Row, SparkSession}
 import org.biodatageeks.sequila.utils.InternalParams
 
 import java.io.{File, PrintWriter}
@@ -14,7 +14,7 @@ class CnMopsConverter {
   val targetLengthList: ListBuffer[Int] = ListBuffer[Int]()
   var targetsNr = 0
 
-  def convertToCnMopsFormat(targetCountResult: mutable.Map[String, (DataFrame, DataFrame)], outputPath: String): Unit = {
+  def convertToCnMopsFormat(targetCountResult: mutable.Map[String, (Array[Row], Long)], outputPath: String): Unit = {
     val spark = SparkSession.builder().getOrCreate()
     val sampleNames = targetCountResult.keys.toList
     val samplesValues: ListBuffer[List[String]] = ListBuffer[List[String]]()
@@ -61,14 +61,14 @@ class CnMopsConverter {
     }
   }
 
-  private def fillValuesForSample(sampleDF: DataFrame): List[String] = {
-    sampleDF.collect().map(row => {
+  private def fillValuesForSample(sampleDF: Array[Row]): List[String] = {
+    sampleDF.map(row => {
       row.getLong(4).toString
     }).toList
   }
 
-  private def fillTargetsInfo(df: DataFrame): List[String] = {
-    df.collect().map(row => {
+  private def fillTargetsInfo(df: Array[Row]): List[String] = {
+    df.map(row => {
       val chr = row.getString(0)
       val start = row.getString(1)
       val end = row.getString(2)

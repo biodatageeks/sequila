@@ -11,7 +11,7 @@ class ExomeDepthConverter {
 
   val recordsByChr: mutable.Map[String, ListBuffer[ListBuffer[String]]] = mutable.LinkedHashMap[String, ListBuffer[ListBuffer[String]]]()
 
-  def convertToExomeDepthFormat(targetCountResult: mutable.Map[String, (DataFrame, DataFrame)], outputPath: String): Unit = {
+  def convertToExomeDepthFormat(targetCountResult: mutable.Map[String, (Array[Row], Long)], outputPath: String): Unit = {
     val spark = SparkSession.builder().getOrCreate()
     val sampleNames = targetCountResult.keys.toList
     val header = List(addExtraQuotes("chromosome"), addExtraQuotes("start"), addExtraQuotes("end"), addExtraQuotes("exon"))
@@ -24,13 +24,12 @@ class ExomeDepthConverter {
     val sampleList = targetCountResult.map(x => x._2._1).toList
     var beforeInit = true
     for (sampleDF <- sampleList) {
-      val collected = sampleDF.collect()
       if (beforeInit) {
-        initTargets(collected)
+        initTargets(sampleDF)
         beforeInit = false
       }
 
-      fillCoveragesForSample(collected)
+      fillCoveragesForSample(sampleDF)
     }
 
     recordsByChr.foreach(x => {

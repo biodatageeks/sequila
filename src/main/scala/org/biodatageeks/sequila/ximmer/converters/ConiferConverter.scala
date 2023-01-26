@@ -1,6 +1,6 @@
 package org.biodatageeks.sequila.ximmer.converters
 
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.{Row, SparkSession}
 import org.biodatageeks.sequila.utils.InternalParams
 
 import java.io.{File, PrintWriter}
@@ -8,17 +8,17 @@ import scala.collection.mutable.ListBuffer
 
 class ConiferConverter {
 
-  def convertToConiferFormat(targetCountResult: (String, (DataFrame, DataFrame)), outputPath: String) : Unit = {
+  def convertToConiferFormat(targetCountResult: (String, (Array[Row], Long)), outputPath: String) : Unit = {
     val spark = SparkSession.builder().getOrCreate()
-    val readsNumber = targetCountResult._2._2.first().getLong(0)
     val sample = targetCountResult._1
+    val readsNumber = targetCountResult._2._2
     val filename = outputPath + "/" + sample + ".rpkm"
     val fileObject = new File(filename)
     val pw = new PrintWriter(fileObject)
     var iterator = 1
 
     val resultList = ListBuffer[String]()
-    targetCountResult._2._1.collect().foreach(row => {
+    targetCountResult._2._1.foreach(row => {
       val targetStart = row.getString(1).toInt
       val targetEnd = row.getString(2).toInt
       val cov = row.getLong(6)

@@ -1,6 +1,6 @@
 package org.biodatageeks.sequila.apps
 
-import org.apache.spark.sql.{DataFrame, SequilaSession}
+import org.apache.spark.sql.{DataFrame, Row, SequilaSession}
 import org.biodatageeks.sequila.apps.PileupApp.createSparkSessionWithExtraStrategy
 import org.biodatageeks.sequila.utils.SystemFilesUtil._
 import org.biodatageeks.sequila.ximmer.converters._
@@ -35,38 +35,45 @@ object XimmerApp {
     val shouldCallCnmops = runConf.callers().contains("cnmops")
     val shouldCallExomedepth = runConf.callers().contains("exomedepth")
 
-    var targetCountsResult = mutable.Map[String, (DataFrame, DataFrame)]()
+    var targetCounts = mutable.Map[String, (Array[Row], Long)]()
 
     if (shouldCalculateTargetCounts(runConf)) {
       val targetCountsStart = System.currentTimeMillis()
-      targetCountsResult = new TargetCounts().calculateTargetCounts(spark, runConf.targets(), bamFiles, shouldCallConifer)
+      val targetCountsResult = new TargetCounts().calculateTargetCounts(spark, runConf.targets(), bamFiles, shouldCallConifer)
       val targetCountsEnd = System.currentTimeMillis()
       println("Whole targetCouns time: " + (targetCountsEnd - targetCountsStart) / 1000)
+
+      val collectStart = System.currentTimeMillis()
+      targetCounts = targetCountsResult map {case (sampleName, (dataFrame, readsNr)) =>
+        (sampleName, (dataFrame.collect(), readsNr))
+      }
+      val collectEnd = System.currentTimeMillis()
+      println("Collecting time: " + (collectEnd - collectStart) / 1000)
     }
     val codexTimeStart = System.currentTimeMillis()
     if (shouldCallCodex) {
       val codexOutput = runConf.output_path() + "/codex"
       Files.createDirectories(Paths.get(codexOutput))
-      new CodexConverter().convertToCodexFormat(targetCountsResult, codexOutput)
+      new CodexConverter().convertToCodexFormat(targetCounts, codexOutput)
     }
     val codexTimeEnd = System.currentTimeMillis()
     val cnmopsTimeStart = System.currentTimeMillis()
     if (shouldCallCnmops) {
       val cnmopsOutput = runConf.output_path() + "/cnmops"
       Files.createDirectories(Paths.get(cnmopsOutput))
-      new CnMopsConverter().convertToCnMopsFormat(targetCountsResult, cnmopsOutput)
+      new CnMopsConverter().convertToCnMopsFormat(targetCounts, cnmopsOutput)
     }
     val cnmopsTimeEnd = System.currentTimeMillis()
     val coniferTimeStart = System.currentTimeMillis()
     if (shouldCallConifer) {
-      convertToConiferFormat(targetCountsResult, runConf.output_path())
+      convertToConiferFormat(targetCounts, runConf.output_path())
     }
     val coniferTimeEnd = System.currentTimeMillis()
     val edTimeStart = System.currentTimeMillis()
     if (shouldCallExomedepth) {
       val exomedepthOutput = runConf.output_path() + "/exomedepth"
       Files.createDirectories(Paths.get(exomedepthOutput))
-      new ExomeDepthConverter().convertToExomeDepthFormat(targetCountsResult, exomedepthOutput)
+      new ExomeDepthConverter().convertToExomeDepthFormat(targetCounts, exomedepthOutput)
     }
     val edTimeEnd = System.currentTimeMillis()
 
@@ -104,7 +111,7 @@ object XimmerApp {
     )
   }
 
-  private def convertToConiferFormat(targetCountResult: mutable.Map[String, (DataFrame, DataFrame)], outputPath: String) : Unit = {
+  private def convertToConiferFormat(targetCountResult: mutable.Map[String, (Array[Row], Long)], outputPath: String) : Unit = {
     val coniferOutput = outputPath + "/conifer"
     Files.createDirectories(Paths.get(coniferOutput))
     val converter = new ConiferConverter()

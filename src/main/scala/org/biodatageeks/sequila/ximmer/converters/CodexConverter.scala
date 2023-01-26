@@ -1,6 +1,6 @@
 package org.biodatageeks.sequila.ximmer.converters
 
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.{Row, SparkSession}
 import org.biodatageeks.sequila.utils.InternalParams
 
 import java.io.{File, PrintWriter}
@@ -23,7 +23,7 @@ class CodexConverter {
 
   var coveragesByChrMap: mutable.Map[String, ListBuffer[Int]] = mutable.Map[String, ListBuffer[Int]]()
 
-  def convertToCodexFormat(targetCountResult: mutable.Map[String, (DataFrame, DataFrame)], outputPath: String): Unit = {
+  def convertToCodexFormat(targetCountResult: mutable.Map[String, (Array[Row], Long)], outputPath: String): Unit = {
     val spark = SparkSession.builder().getOrCreate()
     val samplesCount = targetCountResult.size
 
@@ -53,8 +53,8 @@ class CodexConverter {
     }
   }
 
-  private def readAndFillCoveragesByChrMap(targetCount: DataFrame): Unit = {
-    targetCount.collect().foreach(row => {
+  private def readAndFillCoveragesByChrMap(targetCount: Array[Row]): Unit = {
+    targetCount.foreach(row => {
       val chr = row.getString(0)
       val cov = row.getLong(3).toInt
       if (!coveragesByChrMap.contains(chr)) {

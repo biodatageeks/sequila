@@ -24,9 +24,9 @@ trait SequilaApp {
     val spark = SparkSession
       .builder()
 //      .appName("SeQuiLa-DoC")
-//      .config("spark.master", "local[4]")
+//      .config("spark.master", "local[1]")
       .config(InternalParams.saveAsSparkFormat, sparkSave)
-//      .config("spark.sql.files.maxPartitionBytes", "16777216")
+//      .config("spark.sql.files.maxPartitionBytes", "134217728")
 //      .config("spark.sql.files.maxPartitionBytes", "134217728")
       .getOrCreate()
 

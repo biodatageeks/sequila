@@ -34,7 +34,7 @@ class TargetsCountTest extends FunSuite
     var errorsConifer = 0
 
     assertEquals("XI001", result.head._1)
-    assertEquals(626359, result.head._2._2.first().getLong(0))
+    assertEquals(626359, result.head._2._2)
     val resultDF = result.head._2._1
     resultDF.collect().foreach(row => {
       val expectedCnmopsCov = expectedCnmops.readLine().toLong
