@@ -17,7 +17,7 @@ class XimmerConverterTestBase extends FunSuite
 
   val tempDir = "src/test/resources/ximmer/temp"
   val ximmerResourceDir = "src/test/resources/ximmer"
-  val targetCountsResult: mutable.Map[String, (Array[Row], Long)] = mutable.SortedMap[String, (DataFrame, DataFrame)]()
+  val targetCountsResult: mutable.Map[String, (Array[Row], Long)] = mutable.SortedMap[String, (Array[Row], Long)]()
 
   val schema = StructType(
     Seq(StructField("chr", StringType),

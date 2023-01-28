@@ -24,18 +24,6 @@ class TargetCounts {
            |USING org.biodatageeks.sequila.datasources.BAM.BAMDataSource
            |OPTIONS(path '$bam')""".stripMargin)
 
-      var readsNr = 0L
-      if (saveBamInfo) {
-        val startTime = System.currentTimeMillis()
-        val countQuery = "Select count(*) from reads"
-        readsNr = ss.sql(countQuery)
-          .first()
-          .getLong(0)
-        val endTimeEnd = System.currentTimeMillis()
-
-        println("Select count time: " + (endTimeEnd - startTime) / 1000)
-      }
-
       val sample = getFilename(bam)
 
       val intervalJoinQuery =
@@ -92,6 +80,18 @@ class TargetCounts {
 
       val resultDF = ss.sql(includeAllTargetsQuery).cache()
       resultDF.createOrReplaceTempView("result_all_targets")
+
+      var readsNr = 0L
+      if (saveBamInfo) {
+        val startTime = System.currentTimeMillis()
+        val countQuery = "Select sum(conifer_cov) from result_all_targets"
+        readsNr = ss.sql(countQuery)
+          .first()
+          .getLong(0)
+        val endTimeEnd = System.currentTimeMillis()
+
+        println("Select count time: " + (endTimeEnd - startTime) / 1000)
+      }
 
       resultMap += (sample -> (resultDF, readsNr))
     }

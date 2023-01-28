@@ -47,10 +47,11 @@ class PerBaseCoverage {
           |ON (
           |  t._c0 = concat('chr', r._1)
           |  AND
-          |  r._2 >= CAST(t._c1 AS INTEGER)
+          |  r._2 >= CAST(t._c1 AS INTEGER) - 1
           |  AND
-          |  r._2 <= CAST(t._c2 AS INTEGER) - 2
+          |  r._2 <= CAST(t._c2 AS INTEGER) - 1
           |)
+          |Where r._1 is not null and r._2 < r._3
        """.stripMargin
 
       val narrowPerBaseCoverage = ss.sql(intervalQuery)
