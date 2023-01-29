@@ -47,7 +47,7 @@ class XimmerConverterTestBase extends FunSuite
     spark.conf.set(InternalParams.saveAsSparkFormat, "false")
   }
 
-  def after: Unit = {
+  after {
     val directory = new Directory(new File(tempDir))
     directory.deleteRecursively()
   }

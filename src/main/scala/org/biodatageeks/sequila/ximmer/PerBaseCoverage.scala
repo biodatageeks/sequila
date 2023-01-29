@@ -9,7 +9,7 @@ import scala.collection.mutable
 
 class PerBaseCoverage {
 
-  def calculatePerBaseCoverage(ss: SparkSession, bamFiles: List[String], targetsPath: String): mutable.Map[String, (DataFrame, DataFrame, Short)] = {
+  def calculatePerBaseCoverage(ss: SparkSession, bamFiles: List[String], targetsPath: String): mutable.Map[String, (DataFrame, DataFrame)] = {
     ss.sqlContext.setConf(InternalParams.filterReadsByFlag, "2316")
     ss.sqlContext.setConf(InternalParams.filterReadsByMQ, "1")
 
@@ -20,7 +20,7 @@ class PerBaseCoverage {
       .csv(targetsPath)
       .createOrReplaceTempView("targets")
 
-    val resultMap = mutable.SortedMap[String, (DataFrame, DataFrame, Short)]()
+    val resultMap = mutable.SortedMap[String, (DataFrame, DataFrame)]()
 
     for (bam <- bamFiles) {
       ss.sql(s"""DROP TABLE IF EXISTS reads""")
@@ -47,11 +47,12 @@ class PerBaseCoverage {
           |ON (
           |  t._c0 = concat('chr', r._1)
           |  AND
-          |  r._2 >= CAST(t._c1 AS INTEGER) - 1
+          |  r._2 >= CAST(t._c1 AS INTEGER)
           |  AND
-          |  r._2 <= CAST(t._c2 AS INTEGER) - 1
+          |  r._2 <= CAST(t._c2 AS INTEGER) - 2
           |)
-          |Where r._1 is not null and r._2 < r._3
+          |Where r._1 is not null and
+          |   CAST(t._c1 AS INTEGER) < CAST(t._c2 AS INTEGER) - 2
        """.stripMargin
 
       val narrowPerBaseCoverage = ss.sql(intervalQuery)
@@ -79,15 +80,22 @@ class PerBaseCoverage {
 
       val allMeanCoverage = ss.sql(includeAllTargetsQuery)
 
-      val medianQuery =
+      val statsQuery =
         """
-          |Select percentile_approx(r._5, 0.5)
+          |Select percentile_approx(r._5, 0.5) as Median,
+          | avg(r._5) as Mean,
+          | Count(*) as reads_nr,
+          | SUM(CASE WHEN r._5 > 1 THEN 1 ELSE 0 END) AS above_1,
+          | SUM(CASE WHEN r._5 > 5 THEN 1 ELSE 0 END) AS above_5,
+          | SUM(CASE WHEN r._5 > 10 THEN 1 ELSE 0 END) AS above_10,
+          | SUM(CASE WHEN r._5 > 20 THEN 1 ELSE 0 END) AS above_20,
+          | SUM(CASE WHEN r._5 > 50 THEN 1 ELSE 0 END) AS above_50
           |FROM narrow_reads_pb_cov r
           |""".stripMargin
 
-      val median = ss.sql(medianQuery).first().getShort(0)
+      val stats = ss.sql(statsQuery)
 
-      resultMap += (sample -> (allMeanCoverage, narrowPerBaseCoverage, median))
+      resultMap += (sample -> (allMeanCoverage, stats))
     }
 
     return resultMap

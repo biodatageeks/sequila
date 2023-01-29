@@ -101,13 +101,13 @@ object XimmerApp {
     runConf.callers().exists(callers.contains)
   }
 
-  private def convertToXhmmFormat(outputPath: String, perBaseResult: mutable.Map[String, (DataFrame, DataFrame, Short)]) : Unit = {
+  private def convertToXhmmFormat(outputPath: String, perBaseResult: mutable.Map[String, (DataFrame, DataFrame)]) : Unit = {
     val xhmmOutput = outputPath + "/xhmm"
     Files.createDirectories(Paths.get(xhmmOutput))
     val converter = new GngsConverter()
 
     perBaseResult.foreach(pair =>
-      converter.calculateStatsAndConvertToGngsFormat(xhmmOutput, pair._1, pair._2._1, pair._2._2, pair._2._3)
+      converter.calculateStatsAndConvertToGngsFormat(xhmmOutput, pair._1, pair._2._1, pair._2._2)
     )
   }
 

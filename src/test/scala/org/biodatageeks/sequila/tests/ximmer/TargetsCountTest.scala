@@ -18,7 +18,6 @@ class TargetsCountTest extends FunSuite
   test("Test calculated coverage for Codex, cnmops, exomedepth, conifer") {
     //given
     val spark = createSparkSessionWithExtraStrategy()
-    val ss = SequilaSession(spark)
     val targetsPath = ximmerResourceDir + "/coverage_test_input/hg38.bed"
     val bamFile = ximmerResourceDir + "/coverage_test_input/XI001.hg38.sorted.bam"
     val expectedCnmops = scala.io.Source.fromFile(ximmerResourceDir + "/cnmops/expected_cov_cnmops_XI001.txt").bufferedReader()
@@ -28,7 +27,7 @@ class TargetsCountTest extends FunSuite
     val epsilon = 1
     implicit val longEq: Equality[Long] = TolerantNumerics.tolerantLongEquality(epsilon)
     //when
-    val result = new TargetCounts().calculateTargetCounts(ss, targetsPath, List(bamFile), saveBamInfo = true)
+    val result = new TargetCounts().calculateTargetCounts(spark, targetsPath, List(bamFile), saveBamInfo = true)
     //then
     var errorsCodex = 0
     var errorsConifer = 0
