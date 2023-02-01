@@ -11,8 +11,13 @@ class GngsConverter extends Serializable{
   def calculateStatsAndConvertToGngsFormat(outputPath: String, sample: String, meanCoverage : DataFrame,
                                            statsDF : DataFrame): Unit = {
     val spark = SparkSession.builder().getOrCreate()
+    var statsStart = System.currentTimeMillis()
     calculateAndWriteStats(statsDF, outputPath, sample, spark)
+    var statsEnd = System.currentTimeMillis()
     writeSampleIntervalSummary(meanCoverage, outputPath, sample, spark)
+    var summaryEnd = System.currentTimeMillis()
+    println("Gngs stats time: " + (statsEnd - statsStart) / 1000)
+    println("Gngs summary time: " + (summaryEnd - statsEnd) / 1000)
   }
 
   private def calculateAndWriteStats(statsDF: DataFrame,outputPath: String, sample: String, spark: SparkSession) : Unit = {
