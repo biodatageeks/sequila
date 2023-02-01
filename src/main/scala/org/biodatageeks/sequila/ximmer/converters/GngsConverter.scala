@@ -21,7 +21,10 @@ class GngsConverter extends Serializable{
   }
 
   private def calculateAndWriteStats(statsDF: DataFrame,outputPath: String, sample: String, spark: SparkSession) : Unit = {
+    var statsCollectStart = System.currentTimeMillis()
     val row = statsDF.first();
+    var statsCollectEnd = System.currentTimeMillis()
+    println("Gngs stats collect time: " + (statsCollectEnd - statsCollectStart) / 1000)
     val median = row.getShort(0)
     val mean = row.getDouble(1)
     val countNr = row.getLong(2).toDouble
@@ -58,6 +61,7 @@ class GngsConverter extends Serializable{
   private def writeSampleIntervalSummary(meanCoverage: DataFrame, outputPath: String, sample: String, spark: SparkSession): Unit = {
     import spark.implicits._
 
+    var summaryCollectStart = System.currentTimeMillis()
     val regionsAndMeans = meanCoverage.mapPartitions(rowIterator => rowIterator.map(
       row => {
         val chr = row.getString(0)
@@ -69,6 +73,9 @@ class GngsConverter extends Serializable{
         (region, mean)
       }
     )).collect()
+
+    var summaryCollectEnd = System.currentTimeMillis()
+    println("Gngs summary collect time: " + (summaryCollectEnd - summaryCollectStart) / 1000)
 
     var regions = regionsAndMeans
       .map(x => x._1)
