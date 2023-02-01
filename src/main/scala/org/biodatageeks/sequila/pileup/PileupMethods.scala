@@ -46,12 +46,12 @@ object PileupMethods {
     val result =
       if (conf.value.coverageOnly && conf.value.useVectorizedOrcWriter) {
         aggregates
-          .toCoverageVectorizedWriter(bounds, output, conf)
+          .toCoverageVectorizedWriter(refPath, bounds, output, conf)
           .count()
         spark.sparkContext.emptyRDD[InternalRow]
       }
       else if (conf.value.coverageOnly){
-          aggregates.toCoverage(bounds)
+          aggregates.toCoverage(refPath,bounds)
       }
       else if(conf.value.useVectorizedOrcWriter) {
         aggregates.toPileupVectorizedWriter(refPath, bounds, output, conf)

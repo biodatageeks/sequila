@@ -180,14 +180,14 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
     }
   }
 
-  def toCoverage(bounds: Broadcast[Array[PartitionBounds]] ) : RDD[InternalRow] = {
+  def toCoverage(refPath: String, bounds: Broadcast[Array[PartitionBounds]] ) : RDD[InternalRow] = {
 
     this.rdd.mapPartitionsWithIndex { (index, part) =>
 
       part.map { agg => {
-        val contigMap = new mutable.HashMap[String, Array[Byte]]()
-        contigMap += (agg.contig -> UTF8String.fromString(agg.contig).getBytes)
-        PileupProjection.contigByteMap=contigMap
+        val reference = new Reference(refPath)
+        val contigMap = reference.getNormalizedContigMap
+        PileupProjection.setContigMap(contigMap)
 
         var cov, ind, i, currPos = 0
         val allPos = false
@@ -232,15 +232,15 @@ case class AggregateRDD(rdd: RDD[ContigAggregate]) {
   }
 
 
-  def toCoverageVectorizedWriter(bounds: Broadcast[Array[PartitionBounds]], output: Seq[Attribute], conf: Broadcast[Conf]) : RDD[Int] = {
+  def toCoverageVectorizedWriter(refPath: String, bounds: Broadcast[Array[PartitionBounds]], output: Seq[Attribute], conf: Broadcast[Conf]) : RDD[Int] = {
 
     logger.info(s"### Coverage: using Vectorized ORC output optimization with ${conf.value.orcCompressCodec} compression")
     this.rdd.mapPartitionsWithIndex { (index, part) =>
 
       part.map { agg => {
-        val contigMap = new mutable.HashMap[String, Array[Byte]]()
-        contigMap += (agg.contig -> UTF8String.fromString(agg.contig).getBytes)
-        PileupProjection.contigByteMap=contigMap
+        val reference = new Reference(refPath)
+        val contigMap = reference.getNormalizedContigMap
+        PileupProjection.setContigMap(contigMap)
 
         var cov, ind, i, currPos = 0
         val maxIndex = FastMath.findMaxIndex(agg.events)
