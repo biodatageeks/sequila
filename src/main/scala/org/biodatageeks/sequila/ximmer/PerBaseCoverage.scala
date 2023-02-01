@@ -9,7 +9,8 @@ import scala.collection.mutable
 
 class PerBaseCoverage {
 
-  def calculatePerBaseCoverage(ss: SparkSession, bamFiles: List[String], targetsPath: String): mutable.Map[String, (DataFrame, DataFrame)] = {
+  def calculatePerBaseCoverage(ss: SparkSession, bamFiles: List[String], targetsPath: String, fastaPath: String)
+  : mutable.Map[String, (DataFrame, DataFrame)] = {
     ss.sqlContext.setConf(InternalParams.filterReadsByFlag, "2316")
     ss.sqlContext.setConf(InternalParams.filterReadsByMQ, "1")
 
@@ -34,7 +35,7 @@ class PerBaseCoverage {
       val coverageQuery =
         s"""
            |SELECT *
-           |FROM  coverage('reads', '${sample}', 'bases')
+           |FROM  coverage('reads', '${sample}', '${fastaPath}')
        """.stripMargin
 
       val coverageDf = ss.sql(coverageQuery)
@@ -59,11 +60,11 @@ class PerBaseCoverage {
       narrowPerBaseCoverage.createOrReplaceTempView("narrow_reads_pb_cov")
 
       val meanCoverageQuery =
-      """SELECT chr, start, end,
-        |sum(r._5) / (CAST(end AS INTEGER) - CAST(start AS INTEGER) - 1) AS mean_cov
-        |FROM narrow_reads_pb_cov r
-        |GROUP BY chr, start, end
-        |""".stripMargin
+        """SELECT chr, start, end,
+          |sum(r._5) / (CAST(end AS INTEGER) - CAST(start AS INTEGER) - 1) AS mean_cov
+          |FROM narrow_reads_pb_cov r
+          |GROUP BY chr, start, end
+          |""".stripMargin
 
       val meanCoverage = ss.sql(meanCoverageQuery)
       meanCoverage.createOrReplaceTempView("mean_coverage")

@@ -15,6 +15,7 @@ object XimmerApp {
   class RunConf(args: Array[String]) extends ScallopConf(args) {
     val bam_dir = opt[String](required = true)
     val targets = opt[String](required = true)
+    val fasta = opt[String](required = true)
     val output_path = opt[String](required = true)
     val spark_save = opt[Boolean](default = Some(false))
     val callers = trailArg[List[String]](required = true)
@@ -80,7 +81,7 @@ object XimmerApp {
     var xhmmTimeStart = System.currentTimeMillis()
     if (shouldCallXhmm) {
       val perBaseCoverageStart = System.currentTimeMillis()
-      val perBaseResults = new PerBaseCoverage().calculatePerBaseCoverage(ss, bamFiles, runConf.targets())
+      val perBaseResults = new PerBaseCoverage().calculatePerBaseCoverage(ss, bamFiles, runConf.targets(), runConf.fasta())
       val perBaseCoverageEnd = System.currentTimeMillis()
       println("PerBase time: " + (perBaseCoverageEnd - perBaseCoverageStart) / 1000)
       xhmmTimeStart = System.currentTimeMillis()

@@ -13,6 +13,7 @@ class PerBaseCoverageTest extends FunSuite
   with BeforeAndAfter  {
 
   val ximmerResourceDir: String = getClass.getResource("/ximmer").getPath
+  val refPath: String = getClass.getResource("/NA12878.slice.fasta").getPath
 
   test("Test calculated perBaseCoverage and meanCoverage") {
     val spark = createSparkSessionWithExtraStrategy()
@@ -22,7 +23,7 @@ class PerBaseCoverageTest extends FunSuite
     val expectedMeanCoverage = scala.io.Source.fromFile(ximmerResourceDir + "/xhmm/expected_mean_coverage.csv").bufferedReader()
     val expectedStats = scala.io.Source.fromFile(ximmerResourceDir + "/xhmm/expected_calculated_stats.csv").bufferedReader()
     //when
-    val result = new PerBaseCoverage().calculatePerBaseCoverage(ss, List(bamFile), targetsPath)
+    val result = new PerBaseCoverage().calculatePerBaseCoverage(ss, List(bamFile), targetsPath, refPath)
     //then
     assertEquals("XI001", result.head._1)
     val meanCoverageDF = result.head._2._1
