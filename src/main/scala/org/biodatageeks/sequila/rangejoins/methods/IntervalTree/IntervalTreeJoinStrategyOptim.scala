@@ -40,7 +40,8 @@ class IntervalTreeJoinStrategyOptim(spark: SparkSession) extends Strategy with S
           minOverlap.toInt,
           maxGap.toInt,
           useJoinOrder.toBoolean,
-          intervalHolderClassName) :: Nil
+          intervalHolderClassName,
+          ) :: Nil
       }
       case _ =>
         Nil

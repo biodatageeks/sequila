@@ -74,3 +74,19 @@ parameter. There are 2 prerequisites:
 2. node class used for storing intervals must extend `org.biodatageeks.sequila.rangejoins.methods.base.BaseNode[V]`
 
 Both Scala and Java classes are supported. Please use default interval tree implementation for reference.
+
+---
+title: "Available custom interval structures"
+linkTitle: "Available custom interval structures"
+weight: 3
+description: >
+Custom interval structures
+---
+|            Structure             | spark.biodatageeks.rangejoin.intervalHolderClass         | Reference                                                                            |
+|-----------------------------------------|-----------------|------------------------------------------------------------------------------------|
+| Nested Containment List | org.biodatageeks.sequila.rangejoins.exp.nclist.NCList | [link](https://academic.oup.com/bioinformatics/article/23/11/1386/199545) |
+| Augmented Interval List | org.biodatageeks.sequila.rangejoins.exp.ailist.AIList | [link](https://academic.oup.com/bioinformatics/article/35/23/4907/5509521) |
+| Implicit Interval Tree | org.biodatageeks.sequila.rangejoins.exp.iit.IITree | [link](https://pubmed.ncbi.nlm.nih.gov/32966548/)|
+| Implicit Interval Tree With Interpolation Index | org.biodatageeks.sequila.rangejoins.exp.iitii.ImplicitIntervalTreeWithInterpolationIndex | [link](https://github.com/mlin/iitii) |
+
+

@@ -54,7 +54,5 @@ object InternalParams {
   final val maxGap = "spark.biodatageeks.rangejoin.maxGap"
   final val minOverlap = "spark.biodatageeks.rangejoin.minOverlap"
   final val intervalHolderClass = "spark.biodatageeks.rangejoin.intervalHolderClass"
-
-
-
+  final val domainsNum = "spark.biodatageeks.rangejoin.iitii.domainsNum"
 }

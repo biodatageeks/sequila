@@ -27,7 +27,6 @@ package org.biodatageeks.sequila.rangejoins.methods.IntervalTree
 
 
 import org.openjdk.jol.info.GraphLayout
-
 import org.apache.log4j.Logger
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -36,6 +35,7 @@ import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.util.SizeEstimator
 import org.biodatageeks.sequila.rangejoins.IntervalTree.Interval
 import org.biodatageeks.sequila.rangejoins.optimizer.{JoinOptimizerChromosome, RangeJoinMethod}
+import org.biodatageeks.sequila.utils.InternalParams
 
 import scala.collection.JavaConversions._
 
@@ -88,7 +88,7 @@ object IntervalTreeJoinOptimChromosomeImpl extends Serializable {
         .collect()
 
   val intervalTree = {
-    val tree = new IntervalHolderChromosome[InternalRow](localIntervals, intervalHolderClassName)
+    val tree = new IntervalHolderChromosome[InternalRow](localIntervals, intervalHolderClassName, spark.sqlContext.getAllConfs)
     try{
       val treeSize = GraphLayout.parseInstance(tree).totalSize()
       logger.info(s"Real broadcast size of the interval structure is ${treeSize} bytes")
@@ -139,7 +139,7 @@ object IntervalTreeJoinOptimChromosomeImpl extends Serializable {
 
       /* Create and broadcast an interval tree */
       val intervalTree = {
-        val tree = new IntervalHolderChromosome[Long](localIntervals, intervalHolderClassName)
+        val tree = new IntervalHolderChromosome[Long](localIntervals, intervalHolderClassName ,spark.sqlContext.getAllConfs)
         spark.sparkContext.broadcast(tree)
       }
       val kvrdd2 = rdd2
