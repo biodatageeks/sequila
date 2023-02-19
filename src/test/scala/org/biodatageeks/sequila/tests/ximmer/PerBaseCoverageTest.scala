@@ -1,3 +1,6 @@
+/**
+  * Created by Krzysztof Kobyliński
+  */
 package org.biodatageeks.sequila.tests.ximmer
 
 import com.holdenkarau.spark.testing.{DataFrameSuiteBase, SharedSparkContext}

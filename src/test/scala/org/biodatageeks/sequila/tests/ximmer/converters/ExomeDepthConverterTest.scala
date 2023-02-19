@@ -1,11 +1,10 @@
+/**
+  * Created by Krzysztof Kobyliński
+  */
 package org.biodatageeks.sequila.tests.ximmer.converters
 
 import org.biodatageeks.sequila.ximmer.converters.ExomeDepthConverter
 
-/**
-  * Testujemy tylko konwerter, z oczekiwanego rezultatu została usunięta kolumna GC.
-  * Oczekiwane pokrycie zostało również zmodyfikowane
-  */
 class ExomeDepthConverterTest extends XimmerConverterTestBase {
 
   test("Convert to exomeDepth format") {

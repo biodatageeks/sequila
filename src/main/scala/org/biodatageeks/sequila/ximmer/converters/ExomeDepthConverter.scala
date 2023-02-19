@@ -1,6 +1,9 @@
+/**
+  * Created by Krzysztof Kobyliński
+  */
 package org.biodatageeks.sequila.ximmer.converters
 
-import org.apache.spark.sql.{DataFrame, Row, SparkSession}
+import org.apache.spark.sql.{Row, SparkSession}
 import org.biodatageeks.sequila.utils.InternalParams
 
 import java.io.{File, PrintWriter}
@@ -9,7 +12,7 @@ import scala.collection.mutable.ListBuffer
 
 class ExomeDepthConverter {
 
-  val recordsByChr: mutable.Map[String, ListBuffer[ListBuffer[String]]] = mutable.LinkedHashMap[String, ListBuffer[ListBuffer[String]]]()
+  val recordsByChr: mutable.Map[String, ListBuffer[ListBuffer[String]]] = mutable.SortedMap[String, ListBuffer[ListBuffer[String]]]()
 
   def convertToExomeDepthFormat(targetCountResult: mutable.Map[String, (Array[Row], Long)], outputPath: String): Unit = {
     val spark = SparkSession.builder().getOrCreate()

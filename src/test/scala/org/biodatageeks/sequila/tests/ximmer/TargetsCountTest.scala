@@ -1,7 +1,9 @@
+/**
+  * Created by Krzysztof Kobyliński
+  */
 package org.biodatageeks.sequila.tests.ximmer
 
 import com.holdenkarau.spark.testing.{DataFrameSuiteBase, SharedSparkContext}
-import org.apache.spark.sql.SequilaSession
 import org.biodatageeks.sequila.apps.PileupApp.createSparkSessionWithExtraStrategy
 import org.biodatageeks.sequila.ximmer.TargetCounts
 import org.junit.Assert.assertEquals

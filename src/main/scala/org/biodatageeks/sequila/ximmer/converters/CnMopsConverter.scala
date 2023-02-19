@@ -1,3 +1,7 @@
+/**
+  * Created by Krzysztof Kobyliński
+  */
+
 package org.biodatageeks.sequila.ximmer.converters
 
 import org.apache.spark.sql.{Row, SparkSession}
@@ -9,7 +13,7 @@ import scala.collection.mutable.ListBuffer
 
 class CnMopsConverter {
 
-  val targetsNumberByChr: mutable.Map[String, Int] = mutable.LinkedHashMap[String, Int]()
+  val targetsNumberByChr: mutable.Map[String, Int] = mutable.SortedMap[String, Int]()
   val targetStartList: ListBuffer[String] = ListBuffer[String]()
   val targetLengthList: ListBuffer[Int] = ListBuffer[Int]()
   var targetsNr = 0
@@ -110,25 +114,15 @@ class CnMopsConverter {
        |}
        |""".stripMargin
 
-  // Lista chromosomow ["chrX"]
   var chromosomeList: String = ""
-  // Tyle ile chromosomow [1, 2, 3]
   var chrIterators: String = ""
-  // Ilosc targetow dla kazdego chr [6157, 1, 2]
   var targetsNumberPerChr: String = ""
-  // Poczatki targetow [2782017, 155545028]
   var rangeStartList: String = ""
-  // Szerokosci kazdego z targetow [218, 188]
   var rangeWidthList: String = ""
-  //["NA", "NA", "NA"]
   var naXChrSize: String = ""
-  //[null, null, null]
   var nullXChrSize: String = ""
-  // ["XI001", "XI002", "XI003", "XI004", "XI005", "XI006", "XI007", "XI008", "XI009", "XI010", "XI011", "XI012", "XI013", "XI014"
   var sampleNames: String = ""
-  // Lista singleSampleCoverages - pokrycia dla kazdej probki
   var sampleCoverageList: String = ""
-  // Ilosc targetow [15]
   var targetsNumberAll: String = ""
 
   private def writeResultJson(outputPath: String): String = {

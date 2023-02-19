@@ -1,3 +1,7 @@
+/**
+  * Created by Krzysztof Kobyliński
+  */
+
 package org.biodatageeks.sequila.utils
 
 import java.io.File
@@ -26,21 +30,6 @@ object SystemFilesUtil {
     }
 
     file.getName.split('.')(0)
-  }
-
-  def findCsvFile(dirPath: String) : String = {
-    val dir = new File(dirPath)
-    if (!dir.exists() || !dir.isDirectory) {
-      return null
-    }
-
-    dir.listFiles
-      .filter(_.isFile)
-      .filter(_.getName.endsWith(".csv"))
-      .map(_.getPath)
-      .map(x => x.replace("\\", "/"))
-      .toList
-      .head
   }
 
 }

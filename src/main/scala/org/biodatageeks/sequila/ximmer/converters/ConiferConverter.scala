@@ -1,3 +1,6 @@
+/**
+  * Created by Krzysztof Kobyliński
+  */
 package org.biodatageeks.sequila.ximmer.converters
 
 import org.apache.spark.sql.{Row, SparkSession}

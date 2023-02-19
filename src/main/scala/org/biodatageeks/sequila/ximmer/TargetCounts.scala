@@ -1,3 +1,6 @@
+/**
+  * Created by Krzysztof Kobyliński
+  */
 package org.biodatageeks.sequila.ximmer
 
 import org.apache.spark.sql.{DataFrame, SparkSession}
@@ -7,7 +10,7 @@ import scala.collection.mutable
 
 class TargetCounts {
 
-  def calculateTargetCounts(ss: SparkSession, targetsPath: String, bamFiles: List[String], saveBamInfo: Boolean): mutable.Map[String, (DataFrame, Long)] = {
+  def calculateTargetCounts(ss: SparkSession, targetsPath: String, bamFiles: List[String], saveBamInfo: Boolean): mutable.SortedMap[String, (DataFrame, Long)] = {
     val resultMap = mutable.SortedMap[String, (DataFrame, Long)]()
 
     ss

@@ -1,7 +1,10 @@
+/**
+  * Created by Krzysztof Kobyliński
+  */
 package org.biodatageeks.sequila.tests.ximmer.converters
 
 import com.holdenkarau.spark.testing.{DataFrameSuiteBase, SharedSparkContext}
-import org.apache.spark.sql.{DataFrame, Row}
+import org.apache.spark.sql.Row
 import org.apache.spark.sql.types.{LongType, StringType, StructField, StructType}
 import org.biodatageeks.sequila.utils.InternalParams
 import org.scalatest.{BeforeAndAfter, FunSuite}
@@ -29,7 +32,6 @@ class XimmerConverterTestBase extends FunSuite
       StructField("conifer_cov", LongType)))
 
   before {
-    import spark.implicits._
     val directory = new Directory(new File(tempDir))
     directory.createDirectory()
 

@@ -1,3 +1,7 @@
+/**
+  * Created by Krzysztof Kobyliński
+  */
+
 package org.biodatageeks.sequila.apps
 
 import org.apache.spark.sql.{DataFrame, Row, SequilaSession}
@@ -10,7 +14,7 @@ import org.rogach.scallop.ScallopConf
 import java.nio.file.{Files, Paths}
 import scala.collection.mutable
 
-object XimmerApp {
+object XimmerDist {
 
   class RunConf(args: Array[String]) extends ScallopConf(args) {
     val bam_dir = opt[String](required = true)
@@ -23,7 +27,6 @@ object XimmerApp {
   }
 
   def main(args: Array[String]): Unit = {
-    val startTime = System.currentTimeMillis()
     val runConf = new RunConf(args)
     val spark = createSparkSessionWithExtraStrategy(runConf.spark_save())
     val ss = SequilaSession(spark)
@@ -36,65 +39,41 @@ object XimmerApp {
     val shouldCallCnmops = runConf.callers().contains("cnmops")
     val shouldCallExomedepth = runConf.callers().contains("exomedepth")
 
-    var targetCounts = mutable.Map[String, (Array[Row], Long)]()
+    var targetCounts = mutable.SortedMap[String, (Array[Row], Long)]()
 
     if (shouldCalculateTargetCounts(runConf)) {
-      val targetCountsStart = System.currentTimeMillis()
       val targetCountsResult = new TargetCounts().calculateTargetCounts(spark, runConf.targets(), bamFiles, shouldCallConifer)
-      val targetCountsEnd = System.currentTimeMillis()
-      println("Whole targetCouns time: " + (targetCountsEnd - targetCountsStart) / 1000)
-
-      val collectStart = System.currentTimeMillis()
       targetCounts = targetCountsResult map {case (sampleName, (dataFrame, readsNr)) =>
         (sampleName, (dataFrame.collect(), readsNr))
       }
-      val collectEnd = System.currentTimeMillis()
-      println("Collecting time: " + (collectEnd - collectStart) / 1000)
     }
-    val codexTimeStart = System.currentTimeMillis()
+
     if (shouldCallCodex) {
       val codexOutput = runConf.output_path() + "/codex"
       Files.createDirectories(Paths.get(codexOutput))
       new CodexConverter().convertToCodexFormat(targetCounts, codexOutput)
     }
-    val codexTimeEnd = System.currentTimeMillis()
-    val cnmopsTimeStart = System.currentTimeMillis()
+
     if (shouldCallCnmops) {
       val cnmopsOutput = runConf.output_path() + "/cnmops"
       Files.createDirectories(Paths.get(cnmopsOutput))
       new CnMopsConverter().convertToCnMopsFormat(targetCounts, cnmopsOutput)
     }
-    val cnmopsTimeEnd = System.currentTimeMillis()
-    val coniferTimeStart = System.currentTimeMillis()
+
     if (shouldCallConifer) {
       convertToConiferFormat(targetCounts, runConf.output_path())
     }
-    val coniferTimeEnd = System.currentTimeMillis()
-    val edTimeStart = System.currentTimeMillis()
+
     if (shouldCallExomedepth) {
       val exomedepthOutput = runConf.output_path() + "/exomedepth"
       Files.createDirectories(Paths.get(exomedepthOutput))
       new ExomeDepthConverter().convertToExomeDepthFormat(targetCounts, exomedepthOutput)
     }
-    val edTimeEnd = System.currentTimeMillis()
 
-    var xhmmTimeStart = System.currentTimeMillis()
     if (shouldCallXhmm) {
-      val perBaseCoverageStart = System.currentTimeMillis()
       val perBaseResults = new PerBaseCoverage().calculatePerBaseCoverage(ss, bamFiles, runConf.targets(), runConf.fasta())
-      val perBaseCoverageEnd = System.currentTimeMillis()
-      println("PerBase time: " + (perBaseCoverageEnd - perBaseCoverageStart) / 1000)
-      xhmmTimeStart = System.currentTimeMillis()
       convertToXhmmFormat(runConf.output_path(), perBaseResults)
     }
-    val xhmmTimeEnd = System.currentTimeMillis()
-
-    println("xhmmConvert time: " + (xhmmTimeEnd - xhmmTimeStart) / 1000)
-    println("codexConvert time: " + (codexTimeEnd - codexTimeStart) / 1000)
-    println("CnmopsConvert time: " + (cnmopsTimeEnd - cnmopsTimeStart) / 1000)
-    println("ConiferConvert time: " + (coniferTimeEnd - coniferTimeStart) / 1000)
-    println("ExomeDepthConvert time: " + (edTimeEnd - edTimeStart) / 1000)
-    println("Whole time: " + (xhmmTimeEnd - startTime) / 1000)
   }
 
   private def shouldCalculateTargetCounts(runConf: RunConf): Boolean = {

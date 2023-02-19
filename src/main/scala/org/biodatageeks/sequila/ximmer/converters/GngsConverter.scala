@@ -1,3 +1,6 @@
+/**
+  * Created by Krzysztof Kobyliński
+  */
 package org.biodatageeks.sequila.ximmer.converters
 
 import org.apache.spark.sql.{DataFrame, SparkSession}
@@ -11,20 +14,13 @@ class GngsConverter extends Serializable{
   def calculateStatsAndConvertToGngsFormat(outputPath: String, sample: String, meanCoverage : DataFrame,
                                            statsDF : DataFrame): Unit = {
     val spark = SparkSession.builder().getOrCreate()
-    var statsStart = System.currentTimeMillis()
     calculateAndWriteStats(statsDF, outputPath, sample, spark)
-    var statsEnd = System.currentTimeMillis()
     writeSampleIntervalSummary(meanCoverage, outputPath, sample, spark)
-    var summaryEnd = System.currentTimeMillis()
-    println("Gngs stats time: " + (statsEnd - statsStart) / 1000)
-    println("Gngs summary time: " + (summaryEnd - statsEnd) / 1000)
   }
 
   private def calculateAndWriteStats(statsDF: DataFrame,outputPath: String, sample: String, spark: SparkSession) : Unit = {
-    var statsCollectStart = System.currentTimeMillis()
     val row = statsDF.first();
-    var statsCollectEnd = System.currentTimeMillis()
-    println("Gngs stats collect time: " + (statsCollectEnd - statsCollectStart) / 1000)
+
     val median = row.getShort(0)
     val mean = row.getDouble(1)
     val countNr = row.getLong(2).toDouble
@@ -61,7 +57,6 @@ class GngsConverter extends Serializable{
   private def writeSampleIntervalSummary(meanCoverage: DataFrame, outputPath: String, sample: String, spark: SparkSession): Unit = {
     import spark.implicits._
 
-    var summaryCollectStart = System.currentTimeMillis()
     val regionsAndMeans = meanCoverage.mapPartitions(rowIterator => rowIterator.map(
       row => {
         val chr = row.getString(0)
@@ -73,9 +68,6 @@ class GngsConverter extends Serializable{
         (region, mean)
       }
     )).collect()
-
-    var summaryCollectEnd = System.currentTimeMillis()
-    println("Gngs summary collect time: " + (summaryCollectEnd - summaryCollectStart) / 1000)
 
     var regions = regionsAndMeans
       .map(x => x._1)

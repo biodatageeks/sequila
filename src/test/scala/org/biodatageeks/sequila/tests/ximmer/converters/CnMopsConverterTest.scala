@@ -1,11 +1,11 @@
+/**
+  * Created by Krzysztof Kobyliński
+  */
 package org.biodatageeks.sequila.tests.ximmer.converters
 
 import org.biodatageeks.sequila.ximmer.converters.CnMopsConverter
 import org.skyscreamer.jsonassert.{JSONAssert, JSONCompareMode}
 
-/**
-  * Testujemy tutaj samo formatowanie - oczekiwane pokrycie, różni się od tego które produkuje ximmer
-  */
 class CnMopsConverterTest extends XimmerConverterTestBase {
 
   test("Convert to cnmops format") {

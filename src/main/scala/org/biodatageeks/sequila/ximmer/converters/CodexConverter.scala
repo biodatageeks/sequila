@@ -1,3 +1,7 @@
+/**
+  * Created by Krzysztof Kobyliński
+  */
+
 package org.biodatageeks.sequila.ximmer.converters
 
 import org.apache.spark.sql.{Row, SparkSession}
@@ -21,7 +25,7 @@ class CodexConverter {
        |  "value": %s
        |}""".stripMargin
 
-  var coveragesByChrMap: mutable.Map[String, ListBuffer[Int]] = mutable.Map[String, ListBuffer[Int]]()
+  var coveragesByChrMap: mutable.Map[String, ListBuffer[Int]] = mutable.SortedMap[String, ListBuffer[Int]]()
 
   def convertToCodexFormat(targetCountResult: mutable.Map[String, (Array[Row], Long)], outputPath: String): Unit = {
     val spark = SparkSession.builder().getOrCreate()
