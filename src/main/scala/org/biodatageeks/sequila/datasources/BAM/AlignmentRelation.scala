@@ -242,7 +242,7 @@ trait BDGAlignFileReaderWriter [T <: BDGAlignInputFormat]{
       case Columns.POS    =>    r.getStart
       case Columns.RNEXT  =>    DataQualityFuncs.cleanContig(r.getMateReferenceName) //FIXME: to check if the mapping is correct
       case Columns.PNEXT  =>    r.getMateAlignmentStart //FIXME: to check if the mapping is correct
-      case Columns.TLEN   =>    r.getLengthOnReference //FIXME: to check if the mapping is correct
+      case Columns.TLEN   =>    r.getInferredInsertSize
       case s if s.startsWith("tag_")    => {
         val fields = ScalaFuncs.classAccessors[Alignment]
         val tagField = fields.filter(_.name.toString == s).head

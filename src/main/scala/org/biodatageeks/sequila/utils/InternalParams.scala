@@ -55,6 +55,6 @@ object InternalParams {
   final val minOverlap = "spark.biodatageeks.rangejoin.minOverlap"
   final val intervalHolderClass = "spark.biodatageeks.rangejoin.intervalHolderClass"
 
-
+  final val saveAsSparkFormat = "spark.biodatageeks.saveAsSparkFormat"
 
 }

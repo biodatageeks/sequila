@@ -1,0 +1,19 @@
+#!/bin/bash
+cores=( "local[1]" "local[2]" "local[4]" "local[8]" "local[16]" )
+results=()
+
+for i in "${!cores[@]}"; do
+	for j in 1 2 3 4 5;  do
+		START=$(date +%s.%N)
+		spark-shell -v --master ${cores[i]} --driver-memory 50g --jars /home/k_kobylinski98/sequila/target/scala-2.12/sequila-assembly-0.1.0.jar --class org.biodatageeks.sequila.apps.XimmerApp -b /home/k_kobylinski98/ximmer_3/data_gs -t /home/k_kobylinski98/ximmer_3/data_gs/big.bed -o /home/k_kobylinski98/ximmer_3/data_gs/ximmer_sequila -f /home/k_kobylinski98/ximmer_3/data/hg38.fasta xhmm conifer exomedepth codex cnmops 
+		END=$(date +%s.%N)
+		exec_time=$(echo "$END - $START" | bc)
+		results+=( "$exec_time" )
+		echo "$exec_time " >>  ./wyniki_xhmm 
+	done 
+done
+
+echo "-----------------------------"
+for i in "${results[@]}"; do
+    echo "$i"
+done
