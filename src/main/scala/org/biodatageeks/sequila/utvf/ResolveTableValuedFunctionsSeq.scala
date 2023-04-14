@@ -20,7 +20,6 @@ package org.apache.spark.sql
 
 
 import java.util.Locale
-
 import org.apache.spark.sql.ResolveTableValuedFunctionsSeq.tvf
 import org.apache.spark.sql.catalyst.analysis.{MultiInstanceRelation, TypeCoercion, UnresolvedTableValuedFunction}
 import org.apache.spark.sql.catalyst.expressions.{Alias, Attribute, Expression}
@@ -28,9 +27,9 @@ import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.catalyst.rules._
 import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.types.{StructField, _}
+import org.biodatageeks.sequila.flagStat.FlagStat
 import org.biodatageeks.sequila.pileup.conf.QualityConstants
 import org.biodatageeks.sequila.utils.Columns
-
 
 /**
   * Rule that resolves table-valued function references.
@@ -109,6 +108,19 @@ object ResolveTableValuedFunctionsSeq extends Rule[LogicalPlan] {
       }
     ),
 
+    "flagstat" -> Map(
+      /* flagStat(tableName) */
+      tvf("tableName" -> StringType)
+      { case Seq(tableName: Any) =>
+        FlagStatTemplate(tableName.toString, null)
+      },
+      /* flagStat(tableNameOrPath, sampleId) */
+      tvf("tableNameOrPath" -> StringType, "sampleId" -> StringType)
+      { case Seq(tableNameOrPath: Any, sampleId: Any) =>
+        FlagStatTemplate(tableNameOrPath.toString, sampleId.toString)
+      }
+    ),
+
     "coverage" -> Map(
       /* coverage(tableName) */
       tvf("table" -> StringType, "sampleId" -> StringType, "refPath" -> StringType)
@@ -169,6 +181,35 @@ object ResolveTableValuedFunctionsSeq extends Rule[LogicalPlan] {
       }
   }
 }
+
+case class FlagStatTemplate(tableNameOrPath: String, sampleId: String, output: Seq[Attribute])
+  extends LeafNode with MultiInstanceRelation {
+
+  override def newInstance(): FlagStatTemplate = copy(output = output.map(_.newInstance()))
+
+  def toSQL(): String = {
+    s"""
+          SELECT RCount, QCFail, DUPES, MAPPED, UNMAPPED, PiSEQ, Read1, Read2, PPAired, WIaMM, Singletons
+          AS `${output.head.name}`
+          FROM flagStat('$tableNameOrPath')"""
+  }
+
+  override def toString: String = {
+    s"FlagStatFunction ('$tableNameOrPath')"
+  }
+}
+
+object FlagStatTemplate {
+  private def output() = {
+    FlagStat.Schema.toAttributes;
+  }
+
+  def apply(tableNameOrPath: String, sampleId: String) = {
+    new FlagStatTemplate(tableNameOrPath, sampleId, output());
+  }
+}
+
+
 
 
 object PileupTemplate {
