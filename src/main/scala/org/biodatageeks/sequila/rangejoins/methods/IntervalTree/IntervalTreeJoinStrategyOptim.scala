@@ -1,14 +1,12 @@
 package org.biodatageeks.sequila.rangejoins.IntervalTree
 
-import org.biodatageeks.sequila.rangejoins.common.{ExtractRangeJoinKeys, ExtractRangeJoinKeysWithEquality}
-import org.biodatageeks.sequila.rangejoins.methods.IntervalTree.IntervalTreeJoinOptimChromosome
 import org.apache.spark.sql.catalyst.expressions.PredicateHelper
+import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.execution.SparkPlan
-import org.apache.spark.sql.{SparkSession, Strategy}
-import org.apache.spark.sql.catalyst.plans.logical.{Filter, LogicalPlan}
+import org.apache.spark.sql.{FeatureCountsTemplate, SparkSession, Strategy}
+import org.biodatageeks.sequila.rangejoins.common.{ExtractRangeJoinKeys, ExtractRangeJoinKeysWithEquality}
+import org.biodatageeks.sequila.rangejoins.methods.IntervalTree.{FeatureCountsPlan, IntervalTreeJoinOptimChromosome}
 import org.biodatageeks.sequila.utils.InternalParams
-
-import scala.annotation.tailrec
 
 /**
   * Created by marek on 27/01/2018.
@@ -42,6 +40,17 @@ class IntervalTreeJoinStrategyOptim(spark: SparkSession) extends Strategy with S
           useJoinOrder.toBoolean,
           intervalHolderClassName) :: Nil
       }
+      case FeatureCountsTemplate(reads, genes, output) =>
+        val minOverlap = spark.sqlContext.getConf(InternalParams.minOverlap,"1")
+        val maxGap = spark.sqlContext.getConf(InternalParams.maxGap,"0")
+        FeatureCountsPlan(
+          spark,
+          reads,
+          genes,
+          output,
+          minOverlap.toInt,
+          maxGap.toInt,
+          intervalHolderClassName) :: Nil
       case _ =>
         Nil
     }

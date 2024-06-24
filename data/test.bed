@@ -1,0 +1,4 @@
+GeneId	Chr	Start	End	Strand
+1	chr1	11	99	sss
+2	chr1	222	257	a
+3	chr1	800	2200	test

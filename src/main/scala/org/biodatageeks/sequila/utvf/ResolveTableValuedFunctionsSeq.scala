@@ -19,17 +19,14 @@ package org.apache.spark.sql
  */
 
 
-import java.util.Locale
-
-import org.apache.spark.sql.ResolveTableValuedFunctionsSeq.tvf
 import org.apache.spark.sql.catalyst.analysis.{MultiInstanceRelation, TypeCoercion, UnresolvedTableValuedFunction}
 import org.apache.spark.sql.catalyst.expressions.{Alias, Attribute, Expression}
 import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.catalyst.rules._
-import org.apache.spark.sql.internal.SQLConf
-import org.apache.spark.sql.types.{StructField, _}
-import org.biodatageeks.sequila.pileup.conf.QualityConstants
+import org.apache.spark.sql.types._
 import org.biodatageeks.sequila.utils.Columns
+
+import java.util.Locale
 
 
 /**
@@ -108,12 +105,16 @@ object ResolveTableValuedFunctionsSeq extends Rule[LogicalPlan] {
         PileupTemplate(table.toString, sampleId.toString, refPath.toString, alts.toString.toBoolean, quals.toString.toBoolean, Some(binSize.toString.toInt))
       }
     ),
-
     "coverage" -> Map(
       /* coverage(tableName) */
       tvf("table" -> StringType, "sampleId" -> StringType, "refPath" -> StringType)
       { case Seq(table: Any, sampleId: Any, refPath: Any) =>
         PileupTemplate(table.toString, sampleId.toString, refPath.toString, false, false, None)
+      }),
+    "feature_counts" -> Map(
+      tvf("reads" -> StringType, "genes" -> StringType) {
+        case Seq(reads: Any, genes: Any) =>
+          FeatureCountsTemplate(reads.toString, genes.toString)
       }),
     "range" -> Map(
       /* range(end) */
