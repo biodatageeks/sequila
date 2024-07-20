@@ -14,6 +14,7 @@ import org.apache.spark.sql.execution.datasources.DataSourceStrategy.selectFilte
 import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql._
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
+import org.apache.spark.sql.execution.datasources.v2.PushedDownOperators
 import org.apache.spark.sql.sources._
 import org.apache.spark.sql.types.{StringType, StructType}
 import org.apache.spark.unsafe.types.UTF8String
@@ -102,7 +103,7 @@ case class SequilaDataSourceStrategy(spark: SparkSession) extends Strategy
         l.output.toStructType,
         Set.empty,
         Set.empty,
-        None,
+        PushedDownOperators(None, None, None, None, Seq.empty, Seq.empty),
         toCatalystRDD(l, baseRelation.buildScan()),
         baseRelation,
         None) :: Nil
@@ -216,7 +217,7 @@ case class SequilaDataSourceStrategy(spark: SparkSession) extends Strategy
         projects.map(_.toAttribute).toStructType,
         Set.empty,
         Set.empty,
-        None,
+        PushedDownOperators(None, None, None, None, Seq.empty, Seq.empty),
         scanBuilder(requestedColumns, candidatePredicates, pushedFilters),
         relation.relation,
         relation.catalogTable.map(_.identifier))
@@ -231,7 +232,7 @@ case class SequilaDataSourceStrategy(spark: SparkSession) extends Strategy
         requestedColumns.toStructType,
         Set.empty,
         Set.empty,
-        None,
+        PushedDownOperators(None, None, None, None, Seq.empty, Seq.empty),
         scanBuilder(requestedColumns, candidatePredicates, pushedFilters),
         relation.relation,
         relation.catalogTable.map(_.identifier))
