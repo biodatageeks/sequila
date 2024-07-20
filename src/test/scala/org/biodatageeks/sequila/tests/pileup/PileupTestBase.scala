@@ -3,13 +3,14 @@ package org.biodatageeks.sequila.tests.pileup
 import com.holdenkarau.spark.testing.{DataFrameSuiteBase, SharedSparkContext}
 import org.apache.spark.storage.StorageLevel
 import org.biodatageeks.sequila.utils.InternalParams
-import org.scalatest.{BeforeAndAfter, FunSuite}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.{BeforeAndAfter}
 
 import java.io.File
 import scala.reflect.io.Directory
 
 
-class PileupTestBase extends FunSuite
+class PileupTestBase extends AnyFunSuite
   with DataFrameSuiteBase
   with BeforeAndAfter
   with SharedSparkContext{

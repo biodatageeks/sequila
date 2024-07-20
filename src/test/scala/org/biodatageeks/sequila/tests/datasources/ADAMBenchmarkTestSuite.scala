@@ -1,15 +1,15 @@
 package org.biodatageeks.sequila.tests.datasources
 
 import java.io.{OutputStreamWriter, PrintWriter}
-
 import com.holdenkarau.spark.testing.{DataFrameSuiteBase, SharedSparkContext}
 import org.biodatageeks.sequila.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
 import org.biodatageeks.sequila.rangejoins.genApp.IntervalTreeJoinStrategy
 import org.biodatageeks.sequila.utils.{Columns, InternalParams}
-import org.scalatest.{BeforeAndAfter, FunSuite}
+import org.scalatest.BeforeAndAfter
+import org.scalatest.funsuite.AnyFunSuite
 
 class ADAMBenchmarkTestSuite
-    extends FunSuite
+    extends AnyFunSuite
     with DataFrameSuiteBase
     with BeforeAndAfter
     with SharedSparkContext {

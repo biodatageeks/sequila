@@ -1,15 +1,15 @@
 package org.biodatageeks.sequila.tests.rangejoins
 
 import java.io.{OutputStreamWriter, PrintWriter}
-
 import com.holdenkarau.spark.testing.{DataFrameSuiteBase, SharedSparkContext}
 import org.apache.spark.sql.{Row, SequilaSession}
 import org.biodatageeks.sequila.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
 import org.biodatageeks.sequila.utils.{Columns, InternalParams, Interval, UDFRegister}
-import org.scalatest.{BeforeAndAfter, FunSuite}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.{BeforeAndAfter}
 
 class GRangesTestSuite
-    extends FunSuite
+    extends AnyFunSuite
     with DataFrameSuiteBase
     with BeforeAndAfter
     with SharedSparkContext

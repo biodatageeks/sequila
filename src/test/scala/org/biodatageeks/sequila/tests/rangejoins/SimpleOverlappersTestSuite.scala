@@ -1,11 +1,11 @@
 package org.biodatageeks.sequila.tests.rangejoins
 
 import org.biodatageeks.sequila.rangejoins.methods.IntervalTree.IntervalTreeRedBlack
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import org.sparkproject.guava.collect.Iterators
 
 
-class SimpleOverlappersTestSuite extends FunSuite {
+class SimpleOverlappersTestSuite extends AnyFunSuite {
 
   test("overlappers without end #13") {
 

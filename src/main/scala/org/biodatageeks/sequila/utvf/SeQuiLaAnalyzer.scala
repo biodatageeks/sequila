@@ -15,9 +15,6 @@ import org.apache.spark.sql.execution.analysis.DetectAmbiguousSelfJoin
 import org.apache.spark.sql.execution.command.CommandCheck
 import org.apache.spark.sql.execution.datasources.v2.{DataSourceV2Relation, TableCapabilityCheck}
 import org.apache.spark.sql.execution.datasources.{DataSourceAnalysis, FallBackFileSourceV2, FindDataSourceTable, HiveOnlyCheck, PreReadCheck, PreWriteCheck, PreprocessTableCreation, PreprocessTableInsertion, ResolveSQLOnFile}
-import org.apache.spark.sql.util.SchemaUtils
-import org.apache.spark.util.collection.{Utils => CUtils}
-
 
 
 class SeQuiLaAnalyzer(session: SparkSession) extends
@@ -29,8 +26,9 @@ class SeQuiLaAnalyzer(session: SparkSession) extends
     new FindDataSourceTable(session) +:
       new ResolveSQLOnFile(session) +:
       new FallBackFileSourceV2(session) +:
-      new ResolveSessionCatalog(
-        catalogManager) +:
+  //FIXME: After upgrade to Spark - 3.4.0, this line is commented out
+//      new ResolveSessionCatalog(
+//        catalogManager) +:
       ResolveEncodersInScalaAgg +: session.extensions.buildResolutionRules(session)
 
 

@@ -1,10 +1,10 @@
 package org.biodatageeks.sequila.tests.pileup.processing
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import scala.collection.mutable
 
-class IntMapTestSuite extends FunSuite{
+class IntMapTestSuite extends AnyFunSuite{
 
   test ("iIntMap") {
     val map = new mutable.IntMap[String]()

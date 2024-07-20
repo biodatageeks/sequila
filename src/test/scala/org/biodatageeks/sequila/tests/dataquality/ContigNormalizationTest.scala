@@ -1,9 +1,9 @@
 package org.biodatageeks.sequila.tests.dataquality
 
 import org.biodatageeks.sequila.utils.DataQualityFuncs
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
-class ContigNormalizationTest extends FunSuite{
+class ContigNormalizationTest extends AnyFunSuite{
 
   test("Test contig") {
     val chrInTest1 = "chr1"

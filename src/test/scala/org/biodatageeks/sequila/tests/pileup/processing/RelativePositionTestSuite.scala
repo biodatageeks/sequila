@@ -2,12 +2,13 @@ package org.biodatageeks.sequila.tests.pileup.processing
 
 import htsjdk.samtools.{Cigar, CigarElement, CigarOperator}
 import org.biodatageeks.sequila.pileup.model.{CigarDerivedConf, ReadSummary}
-import org.scalatest.FunSuite
+
+import org.scalatest.funsuite.AnyFunSuite
 
 import scala.collection.JavaConversions.seqAsJavaList
 
 
-class RelativePositionTestSuite extends FunSuite{
+class RelativePositionTestSuite extends AnyFunSuite{
 
   test("relative test #1") {
     val cElement1 = new CigarElement(78, CigarOperator.M)

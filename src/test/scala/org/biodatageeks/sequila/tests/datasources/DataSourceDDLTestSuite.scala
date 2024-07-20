@@ -1,11 +1,13 @@
 package org.biodatageeks.sequila.tests.datasources
 
 import com.holdenkarau.spark.testing.{DataFrameSuiteBase, SharedSparkContext}
+import org.apache.spark.SparkConf
 import org.apache.spark.sql.SequilaSession
-import org.scalatest.FunSuite
+import org.apache.spark.sql.internal.StaticSQLConf.CATALOG_IMPLEMENTATION
+import org.scalatest.funsuite.AnyFunSuite
 
 class DataSourceDDLTestSuite
-      extends FunSuite
+      extends AnyFunSuite
         with DataFrameSuiteBase
       with SharedSparkContext {
 

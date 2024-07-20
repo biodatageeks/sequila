@@ -6,14 +6,15 @@ import org.apache.hadoop.io.LongWritable
 import org.biodatageeks.sequila.apps.FeatureCounts.Region
 import org.biodatageeks.sequila.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
 import org.biodatageeks.sequila.utils.{Columns, DataQualityFuncs}
-import org.scalatest.{BeforeAndAfter, FunSuite}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.BeforeAndAfter
 import org.seqdoop.hadoop_bam.util.SAMHeaderReader
 import org.seqdoop.hadoop_bam.{BAMInputFormat, SAMRecordWritable}
 
 
 
 class FeatureCountsTestSuite
-    extends FunSuite
+    extends AnyFunSuite
     with DataFrameSuiteBase
     with BeforeAndAfter
     with SharedSparkContext {

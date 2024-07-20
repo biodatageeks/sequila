@@ -1,9 +1,10 @@
 package org.biodatageeks.sequila.tests.pileup.processing
 
 import org.biodatageeks.sequila.pileup.converters.samtools.PileupStringUtils
-import org.scalatest.FunSuite
 
-class PileupUtilsTest extends FunSuite{
+import org.scalatest.funsuite.AnyFunSuite
+
+class PileupUtilsTest extends AnyFunSuite{
 
   test("clean Pileup") {
 
