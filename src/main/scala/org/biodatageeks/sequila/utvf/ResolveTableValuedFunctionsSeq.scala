@@ -20,9 +20,8 @@ package org.apache.spark.sql
 
 
 import java.util.Locale
-
-import org.apache.spark.sql.ResolveTableValuedFunctionsSeq.tvf
 import org.apache.spark.sql.catalyst.analysis.{MultiInstanceRelation, TypeCoercion, UnresolvedTableValuedFunction}
+import org.apache.spark.sql.catalyst.catalog.SessionCatalog
 import org.apache.spark.sql.catalyst.expressions.{Alias, Attribute, Expression}
 import org.apache.spark.sql.catalyst.plans.logical._
 import org.apache.spark.sql.catalyst.rules._
@@ -35,7 +34,7 @@ import org.biodatageeks.sequila.utils.Columns
 /**
   * Rule that resolves table-valued function references.
   */
-object ResolveTableValuedFunctionsSeq extends Rule[LogicalPlan] {
+case class ResolveTableValuedFunctionsSeq(catalog: SessionCatalog) extends Rule[LogicalPlan] {
   /**
     * List of argument names and their types, used to declare a function.
     */
@@ -130,7 +129,7 @@ object ResolveTableValuedFunctionsSeq extends Rule[LogicalPlan] {
 
   override def apply(plan: LogicalPlan): LogicalPlan = plan transformUp {
     case u: UnresolvedTableValuedFunction if u.functionArgs.forall(_.resolved) =>
-      val resolvedFunc = builtinFunctions.get(u.name.funcName.toLowerCase(Locale.ROOT)) match {
+      val resolvedFunc = builtinFunctions.get(u.name.head.toLowerCase(Locale.ROOT)) match {
         case Some(tvf) =>
           val resolved = tvf.flatMap { case (argList, resolver) =>
             argList.implicitCast(u.functionArgs) match {
@@ -143,12 +142,12 @@ object ResolveTableValuedFunctionsSeq extends Rule[LogicalPlan] {
           resolved.headOption.getOrElse {
             val argTypes = u.functionArgs.map(_.dataType.typeName).mkString(", ")
             u.failAnalysis(
-              s"""error: table-valued function ${u.name.funcName} with alternatives:
+              s"""error: table-valued function ${u.name.head} with alternatives:
                  |${tvf.keys.map(_.toString).toSeq.sorted.map(x => s" ($x)").mkString("\n")}
-                 |cannot be applied to: (${argTypes})""".stripMargin)
+                 |cannot be applied to: (${argTypes})""".stripMargin, Map.empty)
           }
         case _ =>
-          u.failAnalysis(s"could not resolve `${u.name.funcName}` to a table-valued function")
+          u.failAnalysis(s"could not resolve `${u.name.head}` to a table-valued function", Map.empty)
       }
 
       // If alias names assigned, add `Project` with the aliases
@@ -157,8 +156,8 @@ object ResolveTableValuedFunctionsSeq extends Rule[LogicalPlan] {
         // Checks if the number of the aliases is equal to expected one
         if (u.output.size != outputAttrs.size) {
           u.failAnalysis(s"Number of given aliases does not match number of output columns. " +
-            s"Function name: ${u.name.funcName}; number of aliases: " +
-            s"${u.output.size}; number of output columns: ${outputAttrs.size}.")
+            s"Function name: ${u.name.head}; number of aliases: " +
+            s"${u.output.size}; number of output columns: ${outputAttrs.size}.", Map.empty)
         }
         val aliases = outputAttrs.zip(u.output).map {
           case (attr, name) => Alias(attr, name.toString())()

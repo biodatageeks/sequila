@@ -4,9 +4,10 @@ import com.holdenkarau.spark.testing.{DataFrameSuiteBase, SharedSparkContext}
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
 import org.biodatageeks.sequila.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
-import org.scalatest.{BeforeAndAfter, FunSuite}
+import org.scalatest.{BeforeAndAfter}
+import org.scalatest.funsuite.AnyFunSuite
 
-class IntervalJoinBaseTestSuite  extends FunSuite
+class IntervalJoinBaseTestSuite  extends AnyFunSuite
   with DataFrameSuiteBase
   with SharedSparkContext
   with BeforeAndAfter {

@@ -1,16 +1,16 @@
 package org.biodatageeks.sequila.tests.datasources
 
 import java.io.{OutputStreamWriter, PrintWriter}
-
 import com.holdenkarau.spark.testing.{DataFrameSuiteBase, SharedSparkContext}
 import org.apache.log4j.Logger
 import org.biodatageeks.sequila.apps.FeatureCounts.Region
 import org.biodatageeks.sequila.utils.Columns
-import org.scalatest.{BeforeAndAfter, FunSuite}
+import org.scalatest.BeforeAndAfter
+import org.scalatest.funsuite.AnyFunSuite
 
 
 class BAMADAMDataSourceTestSuite
-    extends FunSuite
+    extends AnyFunSuite
     with DataFrameSuiteBase
     with BeforeAndAfter
     with SharedSparkContext {

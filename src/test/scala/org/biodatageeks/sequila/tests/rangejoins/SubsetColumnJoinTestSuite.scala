@@ -1,24 +1,18 @@
 package org.biodatageeks.sequila.tests.rangejoins
 
 import java.io.{OutputStreamWriter, PrintWriter}
-
 import com.holdenkarau.spark.testing.DataFrameSuiteBase
 import org.apache.spark.sql.Row
-import org.apache.spark.sql.types.{
-  IntegerType,
-  StringType,
-  StructField,
-  StructType
-}
-
+import org.apache.spark.sql.types.{IntegerType, StringType, StructField, StructType}
 import org.biodatageeks.sequila.rangejoins.IntervalTree.IntervalTreeJoinStrategyOptim
 import org.biodatageeks.sequila.utils.Columns
-import org.scalatest.{BeforeAndAfter, FunSuite}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.{BeforeAndAfter}
 
 import scala.util.Random
 
 class SubsetColumnJoinTestSuite
-    extends FunSuite
+    extends AnyFunSuite
     with DataFrameSuiteBase
     with BeforeAndAfter {
 

@@ -133,6 +133,7 @@ case class SequilaSessionState(sparkSession: SparkSession, customAnalyzer: Analy
     sparkSession.sessionState.executePlan,
     (sparkSession:SparkSession,sessionState: SessionState) => sessionState.clone(sparkSession),
     sparkSession.sessionState.columnarRules,
-    sparkSession.sessionState.queryStagePrepRules
+    sparkSession.sessionState.adaptiveRulesHolder,
+    sparkSession.sessionState.planNormalizationRules
   ){
 }

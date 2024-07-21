@@ -3,7 +3,7 @@ import sbtassembly.AssemblyPlugin.autoImport.ShadeRule
 import scala.util.Properties
 
 name := """sequila"""
-val DEFAULT_SPARK_3_VERSION = "3.2.2"
+val DEFAULT_SPARK_3_VERSION = "3.4.3"
 lazy val sparkVersion = Properties.envOrElse("SPARK_VERSION", DEFAULT_SPARK_3_VERSION)
 
 version := s"${sys.env.getOrElse("VERSION", "0.1.0")}"
@@ -14,7 +14,7 @@ scalaVersion := "2.12.13"
 val isSnapshotVersion = settingKey[Boolean]("Is snapshot")
 isSnapshotVersion := version.value.toLowerCase.contains("snapshot")
 
-val DEFAULT_HADOOP_VERSION = "3.1.2"
+val DEFAULT_HADOOP_VERSION = "3.3.6"
 
 lazy val hadoopVersion = Properties.envOrElse("SPARK_HADOOP_VERSION", DEFAULT_HADOOP_VERSION)
 
@@ -29,8 +29,9 @@ dependencyOverrides += "io.netty" % "netty-transport" % nettyVersion
 dependencyOverrides += "io.netty" % "netty-transport-native-epoll" % nettyVersion
 dependencyOverrides += "io.netty" % "netty-transport-native-unix-common" % nettyVersion
 dependencyOverrides += "com.google.guava" % "guava" % "15.0"
-dependencyOverrides += "org.apache.orc" % "orc-core" % "1.6.9"
-dependencyOverrides += "org.apache.logging.log4j" % "log4j-core" % "2.3"
+//dependencyOverrides += "org.apache.orc" % "orc-core" % "1.7.5"
+//dependencyOverrides += "org.apache.logging.log4j" % "log4j-core" % "2.20.0"
+//dependencyOverrides += "org.scalatest" %% "scalatest" % "3.0.3" % "test"
 
 
 //removing hadoop-bam to used a patched one with support for htsjdk 2.22
@@ -40,10 +41,10 @@ libraryDependencies += "org.apache.spark" %% "spark-core" % sparkVersion
 libraryDependencies += "org.apache.spark" %% "spark-sql" % sparkVersion
 libraryDependencies += "com.github.mrpowers" %% "spark-fast-tests" % "0.21.3"
 libraryDependencies += "com.github.mrpowers" %% "spark-daria" % "0.38.2"
-libraryDependencies += "com.holdenkarau" %% "spark-testing-base" % "3.2.0_1.2.0" % "test" excludeAll ExclusionRule(organization = "javax.servlet") excludeAll (ExclusionRule("org.apache.hadoop"))
-libraryDependencies += "org.bdgenomics.adam" %% "adam-core-spark3" % "0.36.0" excludeAll (ExclusionRule("org.seqdoop"))
-libraryDependencies += "org.bdgenomics.adam" %% "adam-apis-spark3" % "0.36.0" excludeAll (ExclusionRule("org.seqdoop"))
-libraryDependencies += "org.bdgenomics.adam" %% "adam-cli-spark3" % "0.36.0" excludeAll (ExclusionRule("org.seqdoop"))
+libraryDependencies += "com.holdenkarau" %% "spark-testing-base" % "3.4.1_1.4.4" % "test" excludeAll ExclusionRule(organization = "javax.servlet") excludeAll (ExclusionRule("org.apache.hadoop"))
+libraryDependencies += "org.bdgenomics.adam" %% "adam-core-spark3" % "1.0.1" excludeAll (ExclusionRule("org.seqdoop"))
+libraryDependencies += "org.bdgenomics.adam" %% "adam-apis-spark3" % "1.0.1" excludeAll (ExclusionRule("org.seqdoop"))
+libraryDependencies += "org.bdgenomics.adam" %% "adam-cli-spark3" % "1.0.1" excludeAll (ExclusionRule("org.seqdoop"))
 libraryDependencies += "org.scala-lang" % "scala-library" % scalaVersion.value
 libraryDependencies += "org.rogach" %% "scallop" % "3.1.2"
 libraryDependencies += "com.github.samtools" % "htsjdk" % "2.24.1"
@@ -54,9 +55,9 @@ libraryDependencies += "org.apache.commons" % "commons-lang3" % "3.7"
 libraryDependencies += "org.eclipse.jetty" % "jetty-servlet" % "9.3.24.v20180605"
 libraryDependencies += "org.apache.derby" % "derbyclient" % "10.14.2.0"
 //libraryDependencies += "org.disq-bio" % "disq" % "0.3.8" <-disabled since we use patched version of HtsjdkReadsTraversalParameters
-libraryDependencies += "io.projectglow" %% "glow-spark3" % "1.0.1" excludeAll (ExclusionRule("com.github.samtools")) excludeAll (ExclusionRule("org.seqdoop")) //FIXME:: remove togehter with disq
+libraryDependencies += "io.projectglow" %% "glow-spark3" % "2.0.0" excludeAll (ExclusionRule("com.github.samtools")) excludeAll (ExclusionRule("org.seqdoop")) //FIXME:: remove togehter with disq
 libraryDependencies += "com.intel.gkl" % "gkl" % "0.8.8"
-libraryDependencies += "org.openjdk.jol" % "jol-core" % "0.16" % "provided"
+libraryDependencies += "org.openjdk.jol" % "jol-core" % "0.17" % "provided"
 libraryDependencies += "com.github.jsr203hadoop" % "jsr203hadoop" % "1.0.3"
 
 

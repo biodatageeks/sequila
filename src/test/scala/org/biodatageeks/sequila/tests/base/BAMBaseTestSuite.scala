@@ -2,10 +2,11 @@ package org.biodatageeks.sequila.tests.base
 
 import com.holdenkarau.spark.testing.{DataFrameSuiteBase, SharedSparkContext}
 import org.apache.spark.sql.SequilaSession
-import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, FunSuite}
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 
 class BAMBaseTestSuite
-    extends FunSuite
+    extends AnyFunSuite
     with DataFrameSuiteBase
     with SharedSparkContext with BeforeAndAfter{
 
