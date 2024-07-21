@@ -6,7 +6,7 @@ addSbtPlugin("com.orrsella" % "sbt-stats" % "1.0.7")
 
 addSbtPlugin("com.julianpeeters" % "sbt-avrohugger" % "2.0.0-RC19")
 
-addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.9.4")
+addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.11.0")
 addSbtPlugin("com.jsuereth" % "sbt-pgp" % "2.0.1")
 addSbtPlugin("org.scalastyle" %% "scalastyle-sbt-plugin" % "1.0.0")
 
