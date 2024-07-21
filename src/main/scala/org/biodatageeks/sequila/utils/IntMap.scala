@@ -470,7 +470,7 @@ object IntMap {
     *
     *  This builder can be reused to create multiple instances.
     */
-  final class IntMapBuilder[V] extends ReusableBuilder[(Int, V), IntMap[V]] {
+  final class IntMapBuilder[V] extends ReusableMapBuilder[(Int, V), IntMap[V]] {
     private[collection] var elems: IntMap[V] = new IntMap[V]
     def +=(entry: (Int, V)): this.type = {
       elems += entry
@@ -521,7 +521,7 @@ object IntMap {
   }
 }
 
-trait ReusableBuilder[-Elem, +To] extends mutable.Builder[Elem, To] {
+trait ReusableMapBuilder[-Elem, +To] extends mutable.Builder[Elem, To] {
   /** Clears the contents of this builder.
     *  After execution of this method, the builder will contain no elements.
     *
