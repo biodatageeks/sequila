@@ -18,27 +18,11 @@ val DEFAULT_HADOOP_VERSION = "3.3.6"
 
 lazy val hadoopVersion = Properties.envOrElse("SPARK_HADOOP_VERSION", DEFAULT_HADOOP_VERSION)
 
-val nettyVersion = "4.1.68.Final"
-dependencyOverrides += "io.netty" % "netty-all" % nettyVersion
-dependencyOverrides += "io.netty" % "netty-buffer" % nettyVersion
-dependencyOverrides += "io.netty" % "netty-codec" % nettyVersion
-dependencyOverrides += "io.netty" % "netty-common" % nettyVersion
-dependencyOverrides += "io.netty" % "netty-handler" % nettyVersion
-dependencyOverrides += "io.netty" % "netty-resolver" % nettyVersion
-dependencyOverrides += "io.netty" % "netty-transport" % nettyVersion
-dependencyOverrides += "io.netty" % "netty-transport-native-epoll" % nettyVersion
-dependencyOverrides += "io.netty" % "netty-transport-native-unix-common" % nettyVersion
-dependencyOverrides += "com.google.guava" % "guava" % "15.0"
-//dependencyOverrides += "org.apache.orc" % "orc-core" % "1.7.5"
-//dependencyOverrides += "org.apache.logging.log4j" % "log4j-core" % "2.20.0"
-//dependencyOverrides += "org.scalatest" %% "scalatest" % "3.0.3" % "test"
-
-
 //removing hadoop-bam to used a patched one with support for htsjdk 2.22
 //libraryDependencies += "org.seqdoop" % "hadoop-bam" % "7.10.0"
-libraryDependencies += "org.apache.hadoop" % "hadoop-client" % hadoopVersion
-libraryDependencies += "org.apache.spark" %% "spark-core" % sparkVersion
-libraryDependencies += "org.apache.spark" %% "spark-sql" % sparkVersion
+libraryDependencies += "org.apache.hadoop" % "hadoop-client" % hadoopVersion % "provided"
+libraryDependencies += "org.apache.spark" %% "spark-core" % sparkVersion % "provided"
+libraryDependencies += "org.apache.spark" %% "spark-sql" % sparkVersion % "provided"
 libraryDependencies += "com.github.mrpowers" %% "spark-fast-tests" % "0.21.3"
 libraryDependencies += "com.github.mrpowers" %% "spark-daria" % "0.38.2"
 libraryDependencies += "com.holdenkarau" %% "spark-testing-base" % "3.4.1_1.4.4" % "test" excludeAll ExclusionRule(organization = "javax.servlet") excludeAll (ExclusionRule("org.apache.hadoop"))
