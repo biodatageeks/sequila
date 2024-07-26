@@ -11,8 +11,11 @@ import org.apache.spark.sql.catalyst.plans.Inner
  */
 
 object ExtractRangeJoinKeysWithEquality extends Logging with  PredicateHelper {
+
+  //joinType, rangeJoinKeys, left, right, condition
+  //(JoinType, Seq[Expression], LogicalPlan, LogicalPlan)
   type ReturnType =
-    (JoinType, Seq[Expression], LogicalPlan, LogicalPlan)
+    (JoinType, Seq[Expression], LogicalPlan, LogicalPlan, Option[Expression])
   def unapply(plan: LogicalPlan): Option[ReturnType] = plan match {
     case join @ Join(left, right, joinType, condition, hint) =>
       logDebug(s"Considering join on: $condition")
@@ -24,21 +27,20 @@ object ExtractRangeJoinKeysWithEquality extends Logging with  PredicateHelper {
       if (condition.size!=0 && joinType == Inner) {
         condition.head match {
           case And(And(EqualTo(l3, r3), LessThanOrEqual(l1, g1)), LessThanOrEqual(l2, g2)) =>
-            Some((joinType,
-              getKeys(l1, l2, g1, g2, l3, r3, left, right),
-              left, right))
+            val rangeJoinKeys = getKeys(l1, l2, g1, g2, l3, r3, left, right)
+            Some((joinType, rangeJoinKeys, left, right, condition))
           case And(And(EqualTo(l3, r3), GreaterThanOrEqual(g1, l1)), LessThanOrEqual(l2, g2)) =>
             Some((joinType,
               getKeys(l1, l2, g1, g2, l3, r3, left, right),
-              left, right))
+              left, right,condition))
           case And(And(EqualTo(l3, r3), LessThanOrEqual(l1, g1)), GreaterThanOrEqual(g2, l2)) =>
             Some((joinType,
               getKeys(l1, l2, g1, g2, l3, r3, left, right),
-              left, right))
+              left, right, condition))
           case And(And(EqualTo(l3, r3), GreaterThanOrEqual(g1, l1)), GreaterThanOrEqual(g2, l2)) =>
             Some((joinType,
               getKeys(l1, l2, g1, g2, l3, r3, left, right),
-              left, right))
+              left, right, condition))
           case _ => None
         }
       } else {

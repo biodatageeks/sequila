@@ -14,7 +14,7 @@ case class
 IntervalTreeJoinChromosome(left: SparkPlan,
                              right: SparkPlan,
                              condition: Seq[Expression],
-                             context: SparkSession) extends BinaryExecNode {
+                             context: SparkSession, conditionExact: Option[Expression]) extends BinaryExecNode {
   def output = left.output ++ right.output
 
   lazy val (buildPlan, streamedPlan) = (left, right)

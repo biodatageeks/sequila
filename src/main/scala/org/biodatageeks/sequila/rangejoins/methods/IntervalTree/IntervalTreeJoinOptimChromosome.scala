@@ -23,6 +23,7 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.expressions.codegen.GenerateUnsafeRowJoiner
+import org.apache.spark.sql.catalyst.plans.JoinType
 import org.apache.spark.sql.catalyst.plans.logical.LogicalPlan
 import org.apache.spark.sql.execution.{SparkPlan, _}
 import org.apache.spark.sql.internal.SQLConf
@@ -36,7 +37,9 @@ case class IntervalTreeJoinOptimChromosome(left: SparkPlan,
                                            context: SparkSession,
                                            minOverlap: Int, maxGap: Int,
                                            useJoinOrder: Boolean,
-                                           intervalHolderClassName: String
+                                           intervalHolderClassName: String,
+                                           conditionExact: Option[Expression],
+                                           joinType: JoinType
                                           ) extends BinaryExecNode with Serializable {
   @transient lazy val output = left.output ++ right.output
 

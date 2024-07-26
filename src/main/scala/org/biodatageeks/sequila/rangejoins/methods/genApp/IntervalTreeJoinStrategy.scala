@@ -11,8 +11,8 @@ class IntervalTreeJoinStrategy(spark: SparkSession) extends Strategy with Serial
   def apply(plan: LogicalPlan): Seq[SparkPlan] = plan match {
     case ExtractRangeJoinKeys(joinType, rangeJoinKeys, left, right) =>
       IntervalTreeJoin(planLater(left), planLater(right), rangeJoinKeys, spark) :: Nil
-    case ExtractRangeJoinKeysWithEquality(joinType, rangeJoinKeys, left, right) =>
-      IntervalTreeJoinChromosome(planLater(left), planLater(right), rangeJoinKeys, spark) :: Nil
+    case ExtractRangeJoinKeysWithEquality(joinType, rangeJoinKeys, left, right,condition) =>
+      IntervalTreeJoinChromosome(planLater(left), planLater(right), rangeJoinKeys, spark, condition) :: Nil
     case _ =>
       Nil
   }

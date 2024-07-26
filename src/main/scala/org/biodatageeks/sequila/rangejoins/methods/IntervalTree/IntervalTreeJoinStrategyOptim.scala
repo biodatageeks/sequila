@@ -21,7 +21,7 @@ class IntervalTreeJoinStrategyOptim(spark: SparkSession) extends Strategy with S
     plan match {
       case ExtractRangeJoinKeys(joinType, rangeJoinKeys, left, right) =>
         IntervalTreeJoinOptim(planLater(left), planLater(right), rangeJoinKeys, spark,left,right,intervalHolderClassName) :: Nil
-      case ExtractRangeJoinKeysWithEquality(joinType, rangeJoinKeys, left, right) => {
+      case ExtractRangeJoinKeysWithEquality(joinType, rangeJoinKeys, left, right, condition) => {
         val minOverlap = spark.sqlContext.getConf(InternalParams.minOverlap,"1")
         val maxGap = spark.sqlContext.getConf(InternalParams.maxGap,"0")
         val useJoinOrder = spark.sqlContext.getConf(InternalParams.useJoinOrder,"false")
@@ -40,7 +40,7 @@ class IntervalTreeJoinStrategyOptim(spark: SparkSession) extends Strategy with S
           minOverlap.toInt,
           maxGap.toInt,
           useJoinOrder.toBoolean,
-          intervalHolderClassName) :: Nil
+          intervalHolderClassName, condition, joinType) :: Nil
       }
       case _ =>
         Nil
