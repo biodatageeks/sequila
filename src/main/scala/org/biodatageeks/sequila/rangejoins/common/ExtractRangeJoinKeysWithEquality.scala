@@ -28,19 +28,19 @@ object ExtractRangeJoinKeysWithEquality extends Logging with  PredicateHelper {
         condition.head match {
           case And(And(EqualTo(l3, r3), LessThanOrEqual(l1, g1)), LessThanOrEqual(l2, g2)) =>
             val rangeJoinKeys = getKeys(l1, l2, g1, g2, l3, r3, left, right)
-            Some((joinType, rangeJoinKeys, left, right, condition))
+            Some((joinType, rangeJoinKeys, left, right, Some(And(LessThanOrEqual(l1, g1), LessThanOrEqual(l2, g2)) ) ) )
           case And(And(EqualTo(l3, r3), GreaterThanOrEqual(g1, l1)), LessThanOrEqual(l2, g2)) =>
             Some((joinType,
               getKeys(l1, l2, g1, g2, l3, r3, left, right),
-              left, right,condition))
+              left, right, Some(And(GreaterThanOrEqual(g1, l1), LessThanOrEqual(l2, g2)) ) ) )
           case And(And(EqualTo(l3, r3), LessThanOrEqual(l1, g1)), GreaterThanOrEqual(g2, l2)) =>
             Some((joinType,
               getKeys(l1, l2, g1, g2, l3, r3, left, right),
-              left, right, condition))
+              left, right, Some( And( LessThanOrEqual(l1, g1), GreaterThanOrEqual(g2, l2)))))
           case And(And(EqualTo(l3, r3), GreaterThanOrEqual(g1, l1)), GreaterThanOrEqual(g2, l2)) =>
             Some((joinType,
               getKeys(l1, l2, g1, g2, l3, r3, left, right),
-              left, right, condition))
+              left, right, Some(And(GreaterThanOrEqual(g1, l1), GreaterThanOrEqual(g2, l2)))))
           case _ => None
         }
       } else {
