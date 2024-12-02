@@ -1,0 +1,211 @@
+{
+  "type": "S4",
+  "attributes": {
+    "seqnames": {
+      "type": "S4",
+      "attributes": {
+        "values": {
+          "type": "integer",
+          "attributes": {
+            "levels": {
+              "type": "character",
+              "attributes": {},
+              "value": ["chr1", "chr2", "chrX"]
+            },
+            "class": {
+              "type": "character",
+              "attributes": {},
+              "value": ["factor"]
+            }
+          },
+          "value": [1, 2, 3]
+        },
+        "lengths": {
+          "type": "integer",
+          "attributes": {},
+          "value": [2, 1, 11]
+        },
+        "elementMetadata": {
+          "type": "NULL"
+        },
+        "metadata": {
+          "type": "list",
+          "attributes": {},
+          "value": []
+        }
+      },
+      "value": {
+        "class": "Rle",
+        "package": "S4Vectors"
+      }
+    },
+    "ranges": {
+      "type": "S4",
+      "attributes": {
+        "start": {
+          "type": "integer",
+          "attributes": {},
+          "value": [2781951, 2781992, 2782031, 2789524, 2794531, 2830004, 2843068, 2854014, 115640328, 115643298, 115644992, 154993001, 154996864, 154999442]
+        },
+        "width": {
+          "type": "integer",
+          "attributes": {},
+          "value": [40, 38, 76, 176, 212, 179, 276, 218, 191, 221, 182, 197, 206, 194]
+        },
+        "NAMES": {
+          "type": "NULL"
+        },
+        "elementType": {
+          "type": "character",
+          "attributes": {},
+          "value": ["ANY"]
+        },
+        "elementMetadata": {
+          "type": "NULL"
+        },
+        "metadata": {
+          "type": "list",
+          "attributes": {},
+          "value": []
+        }
+      },
+      "value": {
+        "class": "IRanges",
+        "package": "IRanges"
+      }
+    },
+    "strand": {
+      "type": "S4",
+      "attributes": {
+        "values": {
+          "type": "integer",
+          "attributes": {
+            "levels": {
+              "type": "character",
+              "attributes": {},
+              "value": ["+", "-", "*"]
+            },
+            "class": {
+              "type": "character",
+              "attributes": {},
+              "value": ["factor"]
+            }
+          },
+          "value": [3]
+        },
+        "lengths": {
+          "type": "integer",
+          "attributes": {},
+          "value": [14]
+        },
+        "elementMetadata": {
+          "type": "NULL"
+        },
+        "metadata": {
+          "type": "list",
+          "attributes": {},
+          "value": []
+        }
+      },
+      "value": {
+        "class": "Rle",
+        "package": "S4Vectors"
+      }
+    },
+    "seqinfo": {
+      "type": "S4",
+      "attributes": {
+        "seqnames": {
+          "type": "character",
+          "attributes": {},
+          "value": ["chr1", "chr2", "chrX"]
+        },
+        "seqlengths": {
+          "type": "integer",
+          "attributes": {},
+          "value": ["NA", "NA", "NA"]
+        },
+        "is_circular": {
+          "type": "logical",
+          "attributes": {},
+          "value": [null, null, null]
+        },
+        "genome": {
+          "type": "character",
+          "attributes": {},
+          "value": [null, null, null]
+        }
+      },
+      "value": {
+        "class": "Seqinfo",
+        "package": "GenomeInfoDb"
+      }
+    },
+    "elementMetadata": {
+      "type": "S4",
+      "attributes": {
+        "rownames": {
+          "type": "NULL"
+        },
+        "nrows": {
+          "type": "integer",
+          "attributes": {},
+          "value": [14]
+        },
+        "listData": {
+          "type": "list",
+          "attributes": {
+            "names": {
+              "type": "character",
+              "attributes": {},
+              "value": ["XI001", "XI002"]
+            }
+          },
+          "value": [
+            {
+              "type": "integer",
+              "attributes": {},
+              "value": [9, 21, 32, 30, 73, 32, 60, 67, 75, 58, 64, 61, 55, 90]
+            },
+            {
+              "type": "integer",
+              "attributes": {},
+              "value": [13, 24, 56, 44, 82, 47, 76, 81, 105, 67, 66, 58, 60, 127]
+            }
+          ]
+        },
+        "elementType": {
+          "type": "character",
+          "attributes": {},
+          "value": ["ANY"]
+        },
+        "elementMetadata": {
+          "type": "NULL"
+        },
+        "metadata": {
+          "type": "list",
+          "attributes": {},
+          "value": []
+        }
+      },
+      "value": {
+        "class": "DFrame",
+        "package": "S4Vectors"
+      }
+    },
+    "elementType": {
+      "type": "character",
+      "attributes": {},
+      "value": ["ANY"]
+    },
+    "metadata": {
+      "type": "list",
+      "attributes": {},
+      "value": []
+    }
+  },
+  "value": {
+    "class": "GRanges",
+    "package": "GenomicRanges"
+  }
+}

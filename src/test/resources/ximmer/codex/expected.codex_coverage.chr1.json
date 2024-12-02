@@ -1,0 +1,11 @@
+{
+  "type": "integer",
+  "attributes": {
+    "dim": {
+      "type": "integer",
+      "attributes": {},
+      "value": [2, 2]
+    }
+  },
+  "value": [5, 14, 9, 20]
+}

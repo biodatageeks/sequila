@@ -1,0 +1,71 @@
+/**
+  * Created by Krzysztof Kobyliński
+  */
+
+package org.biodatageeks.sequila.ximmer.converters
+
+import org.apache.spark.sql.{Row, SparkSession}
+import org.biodatageeks.sequila.utils.InternalParams
+
+import java.io.{File, PrintWriter}
+import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
+
+class CodexConverter {
+  val mergedFormatJson: String =
+    s"""{
+       |  "type": "integer",
+       |  "attributes": {
+       |    "dim": {
+       |      "type": "integer",
+       |      "attributes": {},
+       |      "value": [%s, %s]
+       |    }
+       |  },
+       |  "value": %s
+       |}""".stripMargin
+
+  var coveragesByChrMap: mutable.Map[String, ListBuffer[Int]] = mutable.SortedMap[String, ListBuffer[Int]]()
+
+  def convertToCodexFormat(targetCountResult: mutable.Map[String, (Array[Row], Long)], outputPath: String): Unit = {
+    val spark = SparkSession.builder().getOrCreate()
+    val samplesCount = targetCountResult.size
+
+    for (targetCountResult <- targetCountResult) {
+      readAndFillCoveragesByChrMap(targetCountResult._2._1)
+    }
+
+    for ((chr, values) <- coveragesByChrMap) {
+      val fileName = "analysis.codex_coverage." + chr + ".json"
+      val fileObject = new File(outputPath + "/" + fileName)
+      val pw = new PrintWriter(fileObject)
+
+      val stringValue = mergedFormatJson.format(
+        values.size / samplesCount,
+        samplesCount,
+        "[" + values.toList.mkString(", ") + "]"
+      )
+
+      pw.write(stringValue)
+      pw.close()
+
+      if (spark.conf.get(InternalParams.saveAsSparkFormat).toBoolean) {
+        import spark.implicits._
+        val resultDF = spark.sparkContext.parallelize(Seq(stringValue)).toDF()
+        resultDF.write.text(outputPath + "/spark" + chr)
+      }
+    }
+  }
+
+  private def readAndFillCoveragesByChrMap(targetCount: Array[Row]): Unit = {
+    targetCount.foreach(row => {
+      val chr = row.getString(0)
+      val cov = row.getLong(3).toInt
+      if (!coveragesByChrMap.contains(chr)) {
+        coveragesByChrMap += (chr -> new ListBuffer[Int])
+      }
+      coveragesByChrMap(chr) += cov
+    })
+  }
+
+}

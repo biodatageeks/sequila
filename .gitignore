@@ -32,3 +32,5 @@ src/main/scala/org/biodatageeks/sequila/pileup/PileupRunner.scala
 
 page/resources/_gen/
 page/public/
+
+data/
